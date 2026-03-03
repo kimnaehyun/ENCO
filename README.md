@@ -1,1 +1,1 @@
-test
+test-gitlab-jira-automatic
