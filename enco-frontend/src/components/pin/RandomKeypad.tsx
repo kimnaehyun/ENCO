@@ -1,25 +1,24 @@
 import React, { useMemo } from "react";
 import { View, Text, Pressable } from "react-native";
+import { shuffle } from "../../utils/shuffle";
 
-function shuffle(arr: string[]) {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
+type Props = {
+  resetKey?: number;      // 키패드 재셔플 트리거
+  onDigit: (d: string) => void;
+  onBackspace: () => void;
+  onReset: () => void;    // 전체삭제(핀 초기화)
+};
 
 export default function RandomKeypad({
+  resetKey = 0,
   onDigit,
   onBackspace,
   onReset,
-}: {
-  onDigit: (d: string) => void;
-  onBackspace: () => void;
-  onReset: () => void;
-}) {
-  const digits = useMemo(() => shuffle(Array.from({ length: 10 }, (_, i) => String(i))), []);
+}: Props) {
+  const digits = useMemo(
+    () => shuffle(Array.from({ length: 10 }, (_, i) => String(i))),
+    [resetKey]
+  );
 
   const keys = useMemo(() => {
     const first9 = digits.slice(0, 9).map((d) => ({ type: "digit" as const, v: d }));
