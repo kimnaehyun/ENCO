@@ -4,7 +4,7 @@ npx @react-native-community/cli init 프로젝트명
 
 # 실행 (Android)
 
-npx react-native run-android
+npm run android
 
 # 폴더 구조 예시
 
