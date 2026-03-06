@@ -1,4 +1,4 @@
-// src/types/auth.ts
+// src/types/navigation.ts
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
 export type AuthStackParamList = {
@@ -13,7 +13,11 @@ export type AuthStackParamList = {
   };
 };
 
-export type AuthStackScreenProps<T extends keyof AuthStackParamList> =
-  NativeStackScreenProps<AuthStackParamList, T>;
+export type RootStackParamList = {
+  Splash: undefined;
+  Auth: undefined;
+  App: undefined;
+};
 
-export type Step = "name" | "birth" | "phone" | "email" | "done";
+export type AuthScreenProps<T extends keyof AuthStackParamList> =
+  NativeStackScreenProps<AuthStackParamList, T>;
