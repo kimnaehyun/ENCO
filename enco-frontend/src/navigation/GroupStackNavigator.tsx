@@ -8,6 +8,9 @@ import GroupInfoScreen from '../screens/group/GroupInfoScreen';
 import GroupVotesScreen from '../screens/group/GroupVotesScreen';
 import GroupPayScreen from '../screens/group/GroupPayScreen';
 import GroupChatScreen from '../screens/group/GroupChatScreen';
+import GroupCreateScreen from '../screens/group/GroupCreateScreen';
+import GroupCardRecommendScreen from '../screens/group/GroupCardRecommendScreen';
+import GroupPinSetupScreen from '../screens/group/GroupPinSetupScreen.tsx';
 
 export type GroupStackParamList = {
   GroupList: undefined;
@@ -16,6 +19,18 @@ export type GroupStackParamList = {
   GroupVotes: { groupId?: string; groupName?: string } | undefined;
   GroupPay: { groupId?: string; groupName?: string } | undefined;
   GroupChat: { groupId?: string; groupName?: string } | undefined;
+  GroupCreate: undefined,
+  GroupCardRecommend: {
+    groupName: string;
+    address: string;
+    tags: string[];
+  };
+  GroupPinSetup: {
+    groupName: string;
+    address: string;
+    tags: string[];
+    selectedCardId: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<GroupStackParamList>();
@@ -29,6 +44,9 @@ export default function GroupStackNavigator() {
       <Stack.Screen name="GroupVotes" component={GroupVotesScreen} />
       <Stack.Screen name="GroupPay" component={GroupPayScreen} />
       <Stack.Screen name="GroupChat" component={GroupChatScreen} />
+      <Stack.Screen name="GroupCreate" component={GroupCreateScreen} />
+      <Stack.Screen name="GroupCardRecommend" component={GroupCardRecommendScreen} />
+      <Stack.Screen name="GroupPinSetup" component={GroupPinSetupScreen} />
     </Stack.Navigator>
   );
 }
