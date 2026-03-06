@@ -1,9 +1,9 @@
 import { Text, View } from 'react-native';
 
-export default function AccountScreen() {
+export default function GPSScanScreen() {
   return (
     <View>
-      <Text>AccountScreen</Text>
+      <Text>GPSScanScreen</Text>
     </View>
   );
 }
