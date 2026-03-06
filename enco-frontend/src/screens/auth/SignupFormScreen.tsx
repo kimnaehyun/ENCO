@@ -1,14 +1,14 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { View, Text, TextInput, Button, Pressable } from 'react-native';
-import { RootStackScreenProps, Step } from '../../types/auth';
+import { AuthStackScreenProps, Step } from '../../types/auth';
 
 export default function SignupFormScreen({
   navigation,
-}: RootStackScreenProps<'SignupForm'>) {
+}: AuthStackScreenProps<'SignupForm'>) {
   const [step, setStep] = useState<Step>('name');
 
   const [name, setName] = useState('');
-  const [birth, setBirth] = useState(''); // YYYYMMDD
+  const [birth, setBirth] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
 
@@ -20,9 +20,9 @@ export default function SignupFormScreen({
   const nPhone = phone.replace(/[^\d]/g, '');
 
   const canName = name.trim().length >= 2;
-  const canBirth = nBirth.length === 8; // 목업: YYYYMMDD
-  const canPhone = nPhone.length >= 10; // 목업
-  const canEmail = email.includes('@'); // 목업
+  const canBirth = nBirth.length === 8;
+  const canPhone = nPhone.length >= 10;
+  const canEmail = email.includes('@');
 
   const canDone = useMemo(
     () => canName && canBirth && canPhone && canEmail,
@@ -31,7 +31,7 @@ export default function SignupFormScreen({
 
   const go = (next: Step) => {
     setStep(next);
-    // 다음 입력창 포커스
+
     setTimeout(() => {
       if (next === 'birth') birthRef.current?.focus();
       if (next === 'phone') phoneRef.current?.focus();
@@ -47,7 +47,6 @@ export default function SignupFormScreen({
 
       <Text style={{ fontSize: 20, fontWeight: '700' }}>회원가입</Text>
 
-      {/* 1) 이름 */}
       <View style={{ gap: 6 }}>
         <Text>이름</Text>
         <TextInput
@@ -69,7 +68,6 @@ export default function SignupFormScreen({
         )}
       </View>
 
-      {/* 2) 생년월일 */}
       {step !== 'name' && (
         <View style={{ gap: 6 }}>
           <Text>생년월일(YYYYMMDD)</Text>
@@ -96,7 +94,6 @@ export default function SignupFormScreen({
         </View>
       )}
 
-      {/* 3) 전화번호 */}
       {step !== 'name' && step !== 'birth' && (
         <View style={{ gap: 6 }}>
           <Text>전화번호</Text>
@@ -122,8 +119,7 @@ export default function SignupFormScreen({
         </View>
       )}
 
-      {/* 4) 이메일 */}
-      {step === 'email' || step === 'done' ? (
+      {(step === 'email' || step === 'done') && (
         <View style={{ gap: 6 }}>
           <Text>이메일</Text>
           <TextInput
@@ -148,9 +144,8 @@ export default function SignupFormScreen({
             />
           )}
         </View>
-      ) : null}
+      )}
 
-      {/* 5) PIN 설정으로 */}
       {step === 'done' && (
         <Button
           title="PIN(6자리) 설정하러 가기"

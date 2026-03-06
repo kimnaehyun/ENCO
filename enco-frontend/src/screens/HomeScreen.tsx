@@ -1,53 +1,122 @@
-// scr/screens/HomeScreen.tsx
-// 로그인 완료 가정 -> 로그인 상태에 따라 화면이 달라지는 경우는 추후 구현
-// 사용자가 가입한 모임이 있다고 가정하고 임시 페이지 제작
-
+// src/screens/HomeScreen.tsx
 import React from 'react';
-import {Image, Pressable, Text, View } from 'react-native';
-import { useNavigation } from "@react-navigation/native";
+import { Dimensions, FlatList, Pressable, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { ROUTES } from '../navigation/routes';
-
 import ScreenLayout from '../components/ScreenLayout';
-// 로그인
-import { useAuthStore } from "../store/useAuthStore";
-import { use } from "react";
 
 type GroupSummary = {
   id: string;
   name: string;
-  coverImage?: any; // 일단 로컬도 require도 가능하게 any
+  coverImage?: any;
 };
+
+type CardItem =
+  | { type: 'group'; group: GroupSummary }
+  | { type: 'add' };
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const HORIZONTAL_PADDING = 24;
+const CARD_GAP = 12;
+const CARD_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
 
-  // UI 완성용 하드 코딩
-  const me = {displayName: '나기'};
-  const groups : GroupSummary[] = [
+  const me = { displayName: '나기' };
+  const groups: GroupSummary[] = [
     {
       id: 'g1',
       name: '회식주의자',
       coverImage: require('../assets/images/group1.png'),
-    }
+    },
   ];
 
-  const hasGroup = groups.length > 0;
-  const firstGroup = groups[0];
+  const cards: CardItem[] =
+    groups.length > 0
+      ? [
+          ...groups.map((group) => ({ type: 'group' as const, group })),
+          { type: 'add' as const },
+        ]
+      : [{ type: 'add' as const }];
 
-  const onPressGroupCard = () => {
-    const groupId = 'g1';
-    const groupName = '회식주의자';
-
+  const onPressGroupCard = (group: GroupSummary) => {
     navigation.navigate(ROUTES.TAB_GROUP as any, {
-      screen: 'GroupDashboard',
-      params: { groupId, groupName },
+      screen: ROUTES.GROUP_DASHBOARD,
+      params: {
+        groupId: group.id,
+        groupName: group.name,
+      },
     });
   };
-  
-  return(
+
+  const onPressCreateGroup = () => {
+    navigation.navigate(ROUTES.TAB_GROUP as any, {
+      screen: ROUTES.GROUP_CREATE,
+    });
+  };
+
+  const renderCard = ({ item }: { item: CardItem }) => {
+    if (item.type === 'group') {
+      return (
+        <Pressable
+          onPress={() => onPressGroupCard(item.group)}
+          style={{
+            width: CARD_WIDTH,
+            height: 180,
+            borderRadius: 16,
+            backgroundColor: '#D1D5DB',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <Text style={{ fontSize: 18, fontWeight: '600' }}>
+            {item.group.name} 모임통장
+          </Text>
+          <Text style={{ marginTop: 8, color: '#374151' }}>
+            눌러서 대시보드로 이동
+          </Text>
+        </Pressable>
+      );
+    }
+
+    return (
+      <Pressable
+        onPress={onPressCreateGroup}
+        style={{
+          width: CARD_WIDTH,
+          height: 180,
+          borderRadius: 16,
+          backgroundColor: '#E5E7EB',
+          justifyContent: 'center',
+          alignItems: 'center',
+          borderWidth: 1.5,
+          borderStyle: 'dashed',
+          borderColor: '#9CA3AF',
+        }}
+      >
+        <Text style={{ fontSize: 40, fontWeight: '300', color: '#4B5563' }}>+</Text>
+        <Text style={{ marginTop: 8, fontSize: 17, fontWeight: '700', color: '#111827' }}>
+          모임 추가하기
+        </Text>
+        <Text style={{ marginTop: 6, color: '#6B7280' }}>
+          새 모임을 만들어보세요
+        </Text>
+      </Pressable>
+    );
+  };
+
+  return (
     <ScreenLayout>
       {/* Header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 8 }}>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 12,
+          marginTop: 8,
+        }}
+      >
         <View
           style={{
             width: 44,
@@ -58,7 +127,6 @@ export default function HomeScreen() {
             alignItems: 'center',
           }}
         >
-          {/* 아바타 이미지 나중에 붙이면 됨 */}
           <Text>🙂</Text>
         </View>
 
@@ -67,42 +135,29 @@ export default function HomeScreen() {
         </Text>
       </View>
 
-      {/* Group Card */}
+      {/* Card Slider */}
       <View style={{ marginTop: 24 }}>
-        {hasGroup ? (
-          <Pressable
-            onPress={onPressGroupCard}
-            style={{
-              height: 180,
-              borderRadius: 16,
-              backgroundColor: '#D1D5DB',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            {/* 지금은 이미지 대신 텍스트로 */}
-            <Text style={{ fontSize: 18, fontWeight: '600' }}>{firstGroup.name} 모임통장</Text>
-            <Text style={{ marginTop: 8, color: '#374151' }}>눌러서 대시보드로 이동</Text>
-          </Pressable>
-        ) : (
-          <View
-            style={{
-              height: 180,
-              borderRadius: 16,
-              backgroundColor: '#E5E7EB',
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
-            <Text style={{ fontSize: 16, fontWeight: '600' }}>모임이 없습니다</Text>
-            <Text style={{ marginTop: 8, color: '#6B7280' }}>모임을 개설해보세요</Text>
-          </View>
-        )}
+        <FlatList
+          data={cards}
+          keyExtractor={(item, index) =>
+            item.type === 'group' ? item.group.id : `add-${index}`
+          }
+          renderItem={renderCard}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          snapToInterval={CARD_WIDTH + CARD_GAP}
+          decelerationRate="fast"
+          contentContainerStyle={{
+            paddingRight: HORIZONTAL_PADDING,
+          }}
+          ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
+        />
       </View>
 
-      {/* 안내 텍스트(와이어프레임의 스와이프 힌트 같은 것) */}
+      {/* 안내 텍스트 */}
       <Text style={{ marginTop: 16, textAlign: 'center', color: '#6B7280' }}>
-        상하/좌우로 스와이프
+        좌우로 넘겨서 모임 카드와 추가 카드를 볼 수 있어요
       </Text>
     </ScreenLayout>
   );
