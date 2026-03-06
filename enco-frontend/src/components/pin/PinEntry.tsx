@@ -25,8 +25,13 @@ export default function PinEntry({
   const handleDigit = (d: string) => {
     setPin((prev) => {
       if (prev.length >= length) return prev;
+
       const next = prev + d;
-      if (next.length === length) onComplete(next);
+
+      if (next.length === length) {
+        onComplete(next);
+      }
+
       return next;
     });
   };
@@ -59,7 +64,10 @@ export default function PinEntry({
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#FFFFFF" },
+  root: {
+    flex: 1,
+    backgroundColor: "#FFFFFF",
+  },
   header: {
     flex: 1,
     alignItems: "center",

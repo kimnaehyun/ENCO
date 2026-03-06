@@ -14,6 +14,9 @@ export const ROUTES = {
   GROUP_VOTE_DETAIL: 'GroupVoteDetail',                                                                                                                                       
   GROUP_PAY: 'GroupPay', // 납부(placeholder)
   GROUP_CHAT: 'GroupChat', // 커뮤니티/톡방(placeholder)
+  GROUP_CREATE: 'GroupCreate', //모임 생성
+  GROUP_CARD_RECOMMEND: 'GroupCardRecommend',
+  GROUP_PIN_SETUP: 'GroupPinSetup',
 
   // Payment Stack Screens (나중에 확장용)
   PAYMENT_MAIN: 'PAYMENT_MAIN',

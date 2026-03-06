@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
-
-/*--스크린--*/
-import SplashScreen from '../screens/SplashScreen';
-import AuthLandingScreen from '../screens/auth/AuthLandingScreen';
-import SignupFormScreen from '../screens/auth/SignupFormScreen';
-import SignupPinSetupScreen from '../screens/auth/SignupPinSetupScreen.tsx';
+import React, { useEffect, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import BottomNavigator from './BottomNavigator.tsx';
 
-// const Stack = createNativeStackNavigator<RootStackParamList>();
-const Stack = createNativeStackNavigator();
+import SplashScreen from '../screens/SplashScreen';
+import AuthNavigator from './AuthNavigator';
+import BottomNavigator from './BottomNavigator';
+import { useAuthStore } from '../store/useAuthStore';
+import type { RootStackParamList } from '../types/navigation';
+
+const Stack = createNativeStackNavigator<RootStackParamList>();
+
 export default function RootNavigator() {
   const [isBooting, setIsBooting] = useState(true);
+  const user = useAuthStore(s => s.user);
 
   useEffect(() => {
     const t = setTimeout(() => setIsBooting(false), 800);
@@ -19,26 +19,14 @@ export default function RootNavigator() {
   }, []);
 
   return (
-    // <Stack.Navigator screenOptions={{ headerShown: false }}>
-    //   {isBooting ? (
-    //     <Stack.Screen name="Splash" component={SplashScreen} />
-    //   ) : (
-    //     <>
-    //       <Stack.Screen name="AuthLanding" component={AuthLandingScreen} />
-    //       <Stack.Screen name="SignupForm" component={SignupFormScreen} />
-    //       <Stack.Screen
-    //         name="SignupPinSetup"
-    //         component={SignupPinSetupScreen}
-    //       />
-    //     </>
-    //   )}
-    // </Stack.Navigator>
-    <Stack.Navigator>
-      <Stack.Screen
-        name="BottomNavigator"
-        options={{ headerShown: false }}
-        component={BottomNavigator}
-      />
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {isBooting ? (
+        <Stack.Screen name="Splash" component={SplashScreen} />
+      ) : user ? (
+        <Stack.Screen name="App" component={BottomNavigator} />
+      ) : (
+        <Stack.Screen name="Auth" component={AuthNavigator} />
+      )}
     </Stack.Navigator>
   );
 }

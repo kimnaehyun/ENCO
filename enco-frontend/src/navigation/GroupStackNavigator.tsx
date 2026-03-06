@@ -19,6 +19,9 @@ import AdminReceiptScreen from '../screens/admin/AdminReceiptScreen';
 import AdminMembersScreen from '../screens/admin/AdminMembersScreen';
 import AdminSettleScreen from '../screens/admin/AdminSettleScreen';
 import AdminCardScreen from '../screens/admin/AdminCardScreen';
+import GroupCreateScreen from '../screens/group/GroupCreateScreen';
+import GroupCardRecommendScreen from '../screens/group/GroupCardRecommendScreen';
+import GroupPinSetupScreen from '../screens/group/GroupPinSetupScreen.tsx';
 
 export type GroupStackParamList = {
   GroupList: undefined;
@@ -37,6 +40,18 @@ export type GroupStackParamList = {
 
   // (선택) 투표 상세 같은 거 추가되면 여기 확장
   GroupVoteDetail?: { voteId: string; groupId?: string; groupName?: string };
+  GroupCreate: undefined,
+  GroupCardRecommend: {
+    groupName: string;
+    address: string;
+    tags: string[];
+  };
+  GroupPinSetup: {
+    groupName: string;
+    address: string;
+    tags: string[];
+    selectedCardId: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<GroupStackParamList>();
@@ -65,6 +80,9 @@ export default function GroupStackNavigator() {
       <Stack.Screen name="AdminCard" component={AdminCardScreen} />
       <Stack.Screen name="GroupVoteCreate" component={GroupVoteCreateScreen} />
       <Stack.Screen name="AdminSettle" component={AdminSettleScreen} />
+      <Stack.Screen name="GroupCreate" component={GroupCreateScreen} />
+      <Stack.Screen name="GroupCardRecommend" component={GroupCardRecommendScreen} />
+      <Stack.Screen name="GroupPinSetup" component={GroupPinSetupScreen} />
     </Stack.Navigator>
   );
 }

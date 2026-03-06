@@ -4,11 +4,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ROUTES } from './routes';
 
 import HomeScreen from '../screens/HomeScreen';
-import AccountScreen from '../screens/AccountScreen';
 import GroupStackNavigator from './GroupStackNavigator';
+import GPSScanScreen from '../screens/OnsitePayment/GPSScanScreen';
 // 하단 메뉴바 임시
 // 결제 / 홈 / 모임 으로 설정
-
 
 const Tab = createBottomTabNavigator();
 
@@ -21,11 +20,11 @@ export default function BottomNavigator() {
         tabBarShowLabel: false,
         headerShown: false,
       }}
-    > 
-    {/* 결제 */}
+    >
+      {/* 결제 */}
       <Tab.Screen
         name={ROUTES.TAB_PAYMENT}
-        component={AccountScreen}
+        component={GPSScanScreen}
         options={{
           tabBarIcon: ({ focused, size }) => (
             <Image
