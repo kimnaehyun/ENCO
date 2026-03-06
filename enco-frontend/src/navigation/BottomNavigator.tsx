@@ -5,7 +5,7 @@ import { ROUTES } from './routes';
 
 import HomeScreen from '../screens/HomeScreen';
 import GroupStackNavigator from './GroupStackNavigator';
-import GPSScanScreen from '../screens/OnsitePayment/GPSScanScreen';
+import OnsitePaymentNavigator from './OnsitePaymentNavigator';
 // 하단 메뉴바 임시
 // 결제 / 홈 / 모임 으로 설정
 
@@ -22,7 +22,7 @@ export default function BottomNavigator() {
       {/* 결제 */}
       <Tab.Screen
         name={ROUTES.TAB_PAYMENT}
-        component={GPSScanScreen}
+        component={OnsitePaymentNavigator}
         options={{
           tabBarIcon: ({ focused, size }) => (
             <Image
