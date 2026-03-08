@@ -1,7 +1,6 @@
 // src/navigation/GroupStackNavigator.tsx
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-
 import TogetherScreen from '../screens/TogetherScreen';
 
 // group screens
@@ -22,37 +21,7 @@ import AdminCardScreen from '../screens/admin/AdminCardScreen';
 import GroupCreateScreen from '../screens/group/GroupCreateScreen';
 import GroupCardRecommendScreen from '../screens/group/GroupCardRecommendScreen';
 import GroupPinSetupScreen from '../screens/group/GroupPinSetupScreen.tsx';
-
-export type GroupStackParamList = {
-  GroupList: undefined;
-
-  GroupDashboard: { groupId?: string; groupName?: string } | undefined;
-  GroupInfo: { groupId?: string; groupName?: string; isAdmin?: boolean } | undefined;
-  GroupVotes: { groupId?: string; groupName?: string } | undefined;
-  GroupPay: { groupId?: string; groupName?: string } | undefined;
-  GroupChat: { groupId?: string; groupName?: string } | undefined;
-  GroupLedger: { groupId?: string; groupName?: string } | undefined;
-
-  AdminMenu: { groupId?: string; groupName?: string } | undefined;
-  AdminReceipt: { groupId?: string; groupName?: string } | undefined;
-  AdminMembers: { groupId?: string; groupName?: string } | undefined;
-  AdminCard: { groupId?: string; groupName?: string } | undefined;
-
-  // (선택) 투표 상세 같은 거 추가되면 여기 확장
-  GroupVoteDetail?: { voteId: string; groupId?: string; groupName?: string };
-  GroupCreate: undefined,
-  GroupCardRecommend: {
-    groupName: string;
-    address: string;
-    tags: string[];
-  };
-  GroupPinSetup: {
-    groupName: string;
-    address: string;
-    tags: string[];
-    selectedCardId: string;
-  };
-};
+import { GroupStackParamList } from '../types/navigation.ts';
 
 const Stack = createNativeStackNavigator<GroupStackParamList>();
 

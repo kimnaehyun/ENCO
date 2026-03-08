@@ -10,9 +10,9 @@ import {
   View,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { GroupStackParamList } from '../../navigation/GroupStackNavigator';
-import { ROUTES } from '../../navigation/routes';
 import { useVotes, Vote } from '../../contexts/VotesContext';
+import { GroupStackParamList } from '../../types/navigation';
+import { ROUTES } from '../../constants/routes';
 
 type Props = NativeStackScreenProps<GroupStackParamList, 'GroupVotes'>;
 

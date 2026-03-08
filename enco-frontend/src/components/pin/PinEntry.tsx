@@ -1,21 +1,15 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import RandomKeypad from "./RandomKeypad";
 import PinDots from "./PinDots";
-
-type Props = {
-  title: string;
-  resetKey?: number;
-  length?: number;
-  onComplete: (pin: string) => void;
-};
+import { PinEntryProps } from "../../types/pin";
 
 export default function PinEntry({
   title,
   resetKey = 0,
   length = 6,
   onComplete,
-}: Props) {
+}: PinEntryProps) {
   const [pin, setPin] = useState("");
 
   useEffect(() => {

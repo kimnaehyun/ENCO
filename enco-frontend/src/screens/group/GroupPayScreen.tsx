@@ -1,4 +1,3 @@
-// src/screens/group/GroupPayScreen.tsx
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -11,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import type { GroupStackParamList } from '../../navigation/GroupStackNavigator';
+import { GroupStackParamList } from '../../types/navigation';
 
 type Props = NativeStackScreenProps<GroupStackParamList, 'GroupPay'>;
 

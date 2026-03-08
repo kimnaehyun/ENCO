@@ -2,19 +2,14 @@
 import React from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-
-import { ROUTES } from '../../navigation/routes';
-
-type Params = {
-  groupId?: string;
-  groupName?: string;
-};
+import { ROUTES } from '../../constants/routes';
+import { GroupParams } from '../../types/common';
 
 export default function GroupDashboardScreen() {
   const route = useRoute();
   const navigation = useNavigation<any>();
 
-  const params = (route.params ?? {}) as Params;
+  const params = (route.params ?? {}) as GroupParams;
   const groupName = params.groupName ?? '모임명';
 
   const onPressGroupInfo = () => {

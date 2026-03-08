@@ -1,7 +1,7 @@
 // src/screens/auth/AuthLandingScreen.tsx
 import React from 'react';
 import { View, Text, Image, Button, Pressable } from 'react-native';
-import { images } from '../../assets/images';
+import { images } from '../../types/images';
 import { AuthStackScreenProps } from '../../types/auth';
 
 export default function AuthLandingScreen({
