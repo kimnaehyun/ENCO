@@ -13,7 +13,7 @@ export default function GroupDashboardScreen() {
   const groupName = params.groupName ?? '모임명';
 
   const onPressGroupInfo = () => {
-    const payload = { groupId: params.groupId, groupName };
+    const payload = { groupId: params.groupId, groupName, isAdmin: false };
 
     // 1) 같은 스택 안에서 GroupInfo로 이동 시도
     navigation.navigate('GroupInfo', payload);
@@ -24,6 +24,14 @@ export default function GroupDashboardScreen() {
     navigation.navigate(ROUTES.TAB_GROUP, {
       screen: 'GroupInfo',
       params: payload,
+    });
+  };
+
+  const onPressLedger = () => {
+    console.log('onPressLedger called');
+    navigation.navigate('GroupLedger', {
+      groupId: params.groupId,
+      groupName,
     });
   };
 
@@ -43,6 +51,13 @@ export default function GroupDashboardScreen() {
 
   const onPressCommunity = () => {
   navigation.navigate('GroupChat', {
+    groupId: params.groupId,
+    groupName,
+  });
+};
+
+const onPressAdmin = () => {
+  navigation.navigate('AdminMenu', {
     groupId: params.groupId,
     groupName,
   });
@@ -116,19 +131,21 @@ export default function GroupDashboardScreen() {
       </View>
 
       {/* Balance */}
-      <View
-        style={{
-          marginTop: 16,
-          height: 88,
-          borderRadius: 24,
-          backgroundColor: '#E5E7EB',
-          paddingHorizontal: 20,
-          justifyContent: 'center',
-        }}
+      <Pressable
+          onPress={onPressLedger}
+          hitSlop={10}
+          style={{
+            marginTop: 16,
+            height: 88,
+            borderRadius: 24,
+            backgroundColor: '#E5E7EB',
+            paddingHorizontal: 20,
+            justifyContent: 'center',
+          }}
       >
         <Text style={{ color: '#374151', fontWeight: '600' }}>남은 금액</Text>
         <Text style={{ marginTop: 6, fontSize: 18, fontWeight: '800' }}>₩ 0 (임시)</Text>
-      </View>
+      </Pressable>
 
       {/* Vote status */}
       <Pressable
@@ -178,7 +195,22 @@ export default function GroupDashboardScreen() {
         >
           <Text style={{ fontWeight: '800' }}>커뮤니티(톡방)</Text>
         </Pressable>
+
       </View>
+        <Pressable
+          onPress={onPressAdmin}
+          hitSlop={10}
+          style={{
+            marginTop: 16,
+            height: 56,
+            borderRadius: 18,
+            backgroundColor: '#D9D9D9',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Text style={{ fontWeight: '900' }}>관리하기</Text>
+        </Pressable>
     </View>
   );
 }

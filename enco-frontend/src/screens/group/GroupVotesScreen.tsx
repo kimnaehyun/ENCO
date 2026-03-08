@@ -105,31 +105,57 @@ export default function GroupVotesScreen({ navigation, route }: GroupProps<'Grou
   };
 
   return (
-    <ScreenLayout>
-      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={{ fontSize: 20, fontWeight: '900' }}>
-          투표 목록 {params.groupName ? `- ${params.groupName}` : ''}
-        </Text>
-
-        <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={{ fontSize: 16, fontWeight: '700' }}>닫기</Text>
-        </Pressable>
+    <View style={styles.container}>
+      <View style={styles.headerPill}>
+        <Text style={styles.headerText}>투표 목록</Text>
       </View>
 
-      <View
-        style={{
-          marginTop: 16,
-          borderRadius: 24,
-          backgroundColor: '#E5E7EB',
-          padding: 16,
-          gap: 10,
-        }}
-      >
-        <Text style={{ fontWeight: '800' }}>임시 투표 리스트</Text>
-        <Text>- 1위: 오늘 회식 장소 정하기</Text>
-        <Text>- 2위: 다음 모임 날짜 투표</Text>
-        <Text>- 3위: 회비 인상 여부</Text>
-      </View>
-    </ScreenLayout>
+      <FlatList
+        data={sortedVotes}
+        keyExtractor={(item) => item.id}
+        renderItem={renderItem}
+        contentContainerStyle={{ paddingBottom: 28 }}
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+      />
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 18, paddingTop: 18 },
+  headerPill: {
+    backgroundColor: '#D9D9D9',
+    borderRadius: 26,
+    paddingVertical: 12,
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  headerText: { fontSize: 18, fontWeight: '700' },
+
+  card: { backgroundColor: '#D9D9D9', borderRadius: 22, paddingHorizontal: 16, paddingVertical: 14 },
+  cardDimmed: { opacity: 0.45 },
+
+  rowBetween: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  titleLine: { fontSize: 16, fontWeight: '700', flex: 1, paddingRight: 8 },
+
+  rightArea: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  choiceDot: { width: 10, height: 10, borderRadius: 5 },
+  chevron: { fontSize: 12, fontWeight: '800' },
+
+  expandedArea: { marginTop: 10, gap: 10 },
+  subTitle: { fontSize: 14, fontWeight: '600' },
+
+  metaLabel: { fontSize: 14, fontWeight: '700' },
+  metaValue: { fontSize: 14, fontWeight: '700' },
+
+  desc: { fontSize: 13, lineHeight: 18 },
+
+  detailBtn: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#EFEFEF',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 14,
+  },
+  detailBtnText: { fontSize: 13, fontWeight: '700' },
+});

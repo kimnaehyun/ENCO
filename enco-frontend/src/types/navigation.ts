@@ -48,6 +48,7 @@ type GroupStackParamList = {
     address: string;
     tags: string[];
   };
+  
   GroupPinSetup: {
     groupName: string;
     address: string;
