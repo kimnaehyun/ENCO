@@ -11,6 +11,7 @@ export const ROUTES = {
   GROUP_DASHBOARD: 'GroupDashboard', // 모임 대시보드
   GROUP_INFO: 'GroupInfo', // 모임 정보(placeholder)
   GROUP_VOTES: 'GroupVotes', // 투표 목록(placeholder)
+  GROUP_VOTE_DETAIL: 'GroupVoteDetail',                                                                                                                                       
   GROUP_PAY: 'GroupPay', // 납부(placeholder)
   GROUP_CHAT: 'GroupChat', // 커뮤니티/톡방(placeholder)
   GROUP_CREATE: 'GroupCreate', //모임 생성
