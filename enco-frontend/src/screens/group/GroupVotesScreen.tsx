@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   FlatList,
   LayoutAnimation,
@@ -9,12 +9,9 @@ import {
   UIManager,
   View,
 } from 'react-native';
-import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useVotes, Vote } from '../../contexts/VotesContext';
-import { GroupStackParamList } from '../../types/navigation';
 import { ROUTES } from '../../constants/routes';
-
-type Props = NativeStackScreenProps<GroupStackParamList, 'GroupVotes'>;
+import { GroupProps } from '../../types/group';
 
 const formatKRW = (n: number) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
@@ -24,7 +21,7 @@ const choiceColor = (choice: Vote['myChoice']) => {
   return '#B0B0B0';
 };
 
-export default function GroupVotesScreen({ navigation, route }: Props) {
+export default function GroupVotesScreen({ navigation, route }: GroupProps<'GroupVotes'>) {
   const { votes } = useVotes();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 

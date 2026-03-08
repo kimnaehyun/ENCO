@@ -13,15 +13,14 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { useVotes } from '../../contexts/VotesContext';
-
-type Params = { groupId?: string; groupName?: string };
+import { CommonParams } from '../../types/common';
 
 const digitsOnly = (s: string) => s.replace(/[^0-9]/g, '');
 
 export default function GroupVoteCreateScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const params = (route.params ?? {}) as Params;
+  const params = (route.params ?? {}) as CommonParams;
 
   const { createVote } = useVotes(); // ✅ 아래 주의 참고
   const groupName = params.groupName ?? '모임명';

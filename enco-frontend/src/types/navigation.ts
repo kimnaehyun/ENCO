@@ -1,6 +1,6 @@
 // src/types/navigation.ts
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { GroupParams } from "./common";
+import { CommonParams } from "./common";
 
 type AuthStackParamList = {
   AuthLanding: undefined;
@@ -26,20 +26,22 @@ type AuthScreenProps<T extends keyof AuthStackParamList> =
 type GroupStackParamList = {
   GroupList: undefined;
 
-  GroupDashboard: GroupParams | undefined;
-  GroupInfo: GroupParams | undefined;
-  GroupVotes: GroupParams | undefined;
-  GroupPay: GroupParams | undefined;
-  GroupChat: GroupParams | undefined;
-  GroupLedger: GroupParams | undefined;
+  GroupDashboard: CommonParams | undefined;
+  GroupInfo: CommonParams | undefined;
+  GroupVotes: CommonParams | undefined;
+  GroupPay: CommonParams | undefined;
+  GroupChat: CommonParams | undefined;
+  GroupLedger: CommonParams | undefined;
 
-  AdminMenu: { groupId?: string; groupName?: string } | undefined;
-  AdminReceipt: { groupId?: string; groupName?: string } | undefined;
-  AdminMembers: { groupId?: string; groupName?: string } | undefined;
-  AdminCard: { groupId?: string; groupName?: string } | undefined;
+  AdminMenu: CommonParams | undefined;
+  AdminReceipt: CommonParams | undefined;
+  AdminMembers: CommonParams | undefined;
+  AdminCard: CommonParams | undefined;
+  AdminSettle: CommonParams | undefined
 
    // (선택) 투표 상세 같은 거 추가되면 여기 확장
-  GroupVoteDetail?: { voteId: string; groupId?: string; groupName?: string };
+  GroupVoteDetail: { voteId: string } & CommonParams;
+  GroupVoteCreate : {}
   GroupCreate: undefined;
   GroupCardRecommend: {
     groupName: string;

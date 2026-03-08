@@ -3,20 +3,8 @@ import React, { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-
-type Params = {
-  groupId?: string;
-  groupName?: string;
-};
-
-type LedgerItem = {
-  id: string;
-  date: string; // YYYY-MM-DD
-  amount: number; // + / -
-  title: string;
-  memo?: string;
-  hasReceipt?: boolean;
-};
+import { CommonParams } from '../../types/common';
+import { LedgerItem } from '../../types/group';
 
 function formatMoney(n: number) {
   const sign = n >= 0 ? '+' : '-';
@@ -27,7 +15,7 @@ function formatMoney(n: number) {
 export default function GroupLedgerScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const params = (route.params ?? {}) as Params;
+  const params = (route.params ?? {}) as CommonParams;
 
   const groupName = params.groupName ?? '모임명';
 

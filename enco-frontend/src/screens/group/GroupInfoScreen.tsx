@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { GroupParams } from '../../types/common';
+import { CommonParams } from '../../types/common';
 
 function SectionCard({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
@@ -57,7 +57,7 @@ function EditField({
 export default function GroupInfoScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const params = (route.params ?? {}) as GroupParams;
+  const params = (route.params ?? {}) as CommonParams;
   const groupName = params.groupName ?? '모임명';
   const isAdmin = !!params.isAdmin;
 

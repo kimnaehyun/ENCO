@@ -3,27 +3,18 @@ import React from 'react';
 import { Pressable, Text, View, StyleSheet } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-
-type Params = {
-  groupId?: string;
-  groupName?: string;
-};
-
-type MenuItem = {
-  key: string;
-  title: string;
-  onPress: () => void;
-};
+import { CommonParams } from '../../types/common';
+import { AdminMenuItem } from '../../types/admin';
 
 export default function AdminMenuScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const params = (route.params ?? {}) as Params;
+  const params = (route.params ?? {}) as CommonParams;
 
   const groupName = params.groupName ?? '관리자 페이지';
 
   // ✅ "이미 만든 페이지"는 연결, 없으면 placeholder로 연결(다음 단계에서 만들 예정)
-  const menus: MenuItem[] = [
+  const menus: AdminMenuItem[] = [
     {
       key: 'settle',
       title: '정산하기 - 미납자 관리, 입출금',

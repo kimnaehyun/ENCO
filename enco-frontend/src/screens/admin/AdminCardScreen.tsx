@@ -3,25 +3,15 @@ import React, { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-
-type Params = { groupId?: string; groupName?: string };
-
-type Card = {
-  id: string;
-  name: string;
-  short: string;
-  recommendedFor: string[]; // 태그
-  benefits: string[];
-};
-
-type Step = 'main' | 'list' | 'detail' | 'pin' | 'done';
+import { CommonParams } from '../../types/common';
+import { AdminCard, AdminStep } from '../../types/admin';
 
 const PIN_LEN = 6;
 
 export default function AdminCardScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const params = (route.params ?? {}) as Params;
+  const params = (route.params ?? {}) as CommonParams;
 
   const groupName = params.groupName ?? '모임명';
 
@@ -39,7 +29,7 @@ export default function AdminCardScreen() {
   const tasteOptions = useMemo(() => ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'], []);
 
   // ✅ 카드 데이터(임시)
-  const cards: Card[] = useMemo(
+  const cards: AdminCard[] = useMemo(
     () => [
       {
         id: 'c1',
@@ -101,13 +91,13 @@ export default function AdminCardScreen() {
   );
 
   // ===== step/state =====
-  const [step, setStep] = useState<Step>('main');
+  const [step, setStep] = useState<AdminStep>('main');
 
   // ✅ 다중 선택 태그
   const [selectedTastes, setSelectedTastes] = useState<string[]>(['음식']); // 임시 기본값
   const [didRecommend, setDidRecommend] = useState(false);
 
-  const [selectedCard, setSelectedCard] = useState<Card | null>(null);
+  const [selectedCard, setSelectedCard] = useState<AdminCard | null>(null);
 
   // PIN
   const [pin, setPin] = useState('');
@@ -146,7 +136,7 @@ export default function AdminCardScreen() {
 
   const openCardList = () => setStep('list');
 
-  const openCardDetail = (card: Card) => {
+  const openCardDetail = (card: AdminCard) => {
     setSelectedCard(card);
     setStep('detail');
   };

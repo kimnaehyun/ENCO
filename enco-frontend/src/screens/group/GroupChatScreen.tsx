@@ -3,12 +3,12 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { GroupParams } from '../../types/common';
+import { CommonParams } from '../../types/common';
 
 export default function GroupChatScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const params = (route.params ?? {}) as GroupParams;
+  const params = (route.params ?? {}) as CommonParams;
 
   return (
     <ScreenLayout>

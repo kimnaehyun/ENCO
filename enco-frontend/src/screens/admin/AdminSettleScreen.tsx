@@ -13,24 +13,15 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-
-type Params = { groupId?: string; groupName?: string };
-
-type MemberPay = {
-  id: string;
-  name: string;
-  joinedAt: string; // 가입일(임시)
-  memo?: string;
-  isPaid: boolean;
-  dueAmount: number; // 회비(임시)
-};
+import { CommonParams } from '../../types/common';
+import { AdminMemberPay } from '../../types/admin';
 
 const formatKRW = (n: number) => `₩ ${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 
 export default function AdminSettleScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const params = (route.params ?? {}) as Params;
+  const params = (route.params ?? {}) as CommonParams;
 
   const groupName = params.groupName ?? '모임명';
 
@@ -45,7 +36,7 @@ export default function AdminSettleScreen() {
   }, []);
 
   // ✅ 임시 데이터(나중에 API로 교체)
-  const members: MemberPay[] = useMemo(
+  const members: AdminMemberPay[] = useMemo(
     () => [
       { id: 'm1', name: '김싸피', joinedAt: '2026-03-01', memo: '총무(임시)', isPaid: true, dueAmount: 10000 },
       { id: 'm2', name: '이싸피', joinedAt: '2026-03-02', memo: '회계 담당(임시)', isPaid: false, dueAmount: 10000 },
@@ -60,7 +51,7 @@ export default function AdminSettleScreen() {
     setExpandedId(prev => (prev === id ? null : id));
   };
 
-  const sendRequest = (m: MemberPay) => {
+  const sendRequest = (m: AdminMemberPay) => {
     // TODO: 실제 알림/푸시/챗봇 연동
     Alert.alert(
       '입금요청 알림(임시)',

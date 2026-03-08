@@ -11,25 +11,18 @@ import {
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-
-type Params = { groupId?: string; groupName?: string };
-
-type Member = {
-  id: string;
-  name: string;
-  joinedAt: string; // YYYY-MM-DD
-  memo?: string;
-};
+import { CommonParams } from '../../types/common';
+import { AdminMember } from '../../types/admin';
 
 export default function AdminMembersScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const params = (route.params ?? {}) as Params;
+  const params = (route.params ?? {}) as CommonParams;
 
   const groupName = params.groupName ?? '모임명';
 
   // ✅ 임시 멤버 데이터
-  const members: Member[] = useMemo(
+  const members: AdminMember[] = useMemo(
     () => [
       { id: 'm1', name: '김싸피', joinedAt: '2026-03-01', memo: '총무(임시)' },
       { id: 'm2', name: '이싸피', joinedAt: '2026-03-02', memo: '회계 담당(임시)' },

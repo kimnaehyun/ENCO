@@ -1,8 +1,8 @@
 import React, { useMemo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { GroupStackParamList } from '../../navigation/GroupStackNavigator';
 import { useVotes, VoteChoice } from '../../contexts/VotesContext';
+import { GroupStackParamList } from '../../types/navigation';
 
 type Props = NativeStackScreenProps<GroupStackParamList, 'GroupVoteDetail'>;
 
