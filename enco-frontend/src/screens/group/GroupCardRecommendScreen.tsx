@@ -10,28 +10,18 @@ import {
   Text,
   View,
 } from 'react-native';
-import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { ROUTES } from '../../navigation/routes';
-import type { GroupStackParamList } from '../../navigation/GroupStackNavigator';
+import { ROUTES } from '../../constants/routes';
+import { GroupCardItem, CardRecommendRouteProp } from '../../types/group';
 
-type CardRecommendRouteProp = RouteProp<GroupStackParamList, 'GroupCardRecommend'>;
-
-type CardItem = {
-  id: string;
-  name: string;
-  brand: string;
-  imageUrl: string;
-  summary: string;
-  detail: string;
-};
 
 export default function GroupCardRecommendScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<CardRecommendRouteProp>();
   const { groupName, address, tags } = route.params;
 
-  const cards = useMemo<CardItem[]>(
+  const cards = useMemo<GroupCardItem[]>(
     () => [
       {
         id: 'card-shinhan-1',
@@ -75,7 +65,7 @@ export default function GroupCardRecommendScreen() {
   );
 
   const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  const [detailCard, setDetailCard] = useState<CardItem | null>(null);
+  const [detailCard, setDetailCard] = useState<GroupCardItem | null>(null);
 
   const selectedCard = cards.find((card) => card.id === selectedCardId) ?? null;
 

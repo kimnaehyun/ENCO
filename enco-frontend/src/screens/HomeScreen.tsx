@@ -2,18 +2,9 @@
 import React from 'react';
 import { Dimensions, FlatList, Pressable, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ROUTES } from '../navigation/routes';
+import { ROUTES } from '../constants/routes';
 import ScreenLayout from '../components/ScreenLayout';
-
-type GroupSummary = {
-  id: string;
-  name: string;
-  coverImage?: any;
-};
-
-type CardItem =
-  | { type: 'group'; group: GroupSummary }
-  | { type: 'add' };
+import { HomeCardItem, HomeGroupSummary } from '../types/screen';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 24;
@@ -24,7 +15,7 @@ export default function HomeScreen() {
   const navigation = useNavigation<any>();
 
   const me = { displayName: '나기' };
-  const groups: GroupSummary[] = [
+  const groups: HomeGroupSummary[] = [
     {
       id: 'g1',
       name: '회식주의자',
@@ -32,7 +23,7 @@ export default function HomeScreen() {
     },
   ];
 
-  const cards: CardItem[] =
+  const cards: HomeCardItem[] =
     groups.length > 0
       ? [
           ...groups.map((group) => ({ type: 'group' as const, group })),
@@ -40,7 +31,7 @@ export default function HomeScreen() {
         ]
       : [{ type: 'add' as const }];
 
-  const onPressGroupCard = (group: GroupSummary) => {
+  const onPressGroupCard = (group: HomeGroupSummary) => {
     navigation.navigate(ROUTES.TAB_GROUP as any, {
       screen: ROUTES.GROUP_DASHBOARD,
       params: {
@@ -56,7 +47,7 @@ export default function HomeScreen() {
     });
   };
 
-  const renderCard = ({ item }: { item: CardItem }) => {
+  const renderCard = ({ item }: { item: HomeCardItem }) => {
     if (item.type === 'group') {
       return (
         <Pressable

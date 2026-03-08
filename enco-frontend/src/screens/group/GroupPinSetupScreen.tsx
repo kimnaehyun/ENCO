@@ -1,13 +1,10 @@
-import React, { useState } from "react";
-import { Alert, Text, View } from "react-native";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { useState } from "react";
+import { Text, View } from "react-native";
 import PinEntry from "../../components/pin/PinEntry";
-import { ROUTES } from "../../navigation/routes";
-import type { GroupStackParamList } from "../../navigation/GroupStackNavigator";
+import { ROUTES } from "../../constants/routes";
+import { GroupPinSetupProps } from "../../types/group";
 
-type Props = NativeStackScreenProps<GroupStackParamList, "GroupPinSetup">;
-
-export default function GroupPinSetupScreen({ route, navigation }: Props) {
+export default function GroupPinSetupScreen({ route, navigation }: GroupPinSetupProps) {
   const { groupName, address, tags, selectedCardId } = route.params;
 
   const [step, setStep] = useState<"set" | "confirm">("set");

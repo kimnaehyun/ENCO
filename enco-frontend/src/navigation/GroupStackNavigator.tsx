@@ -11,27 +11,7 @@ import GroupChatScreen from '../screens/group/GroupChatScreen';
 import GroupCreateScreen from '../screens/group/GroupCreateScreen';
 import GroupCardRecommendScreen from '../screens/group/GroupCardRecommendScreen';
 import GroupPinSetupScreen from '../screens/group/GroupPinSetupScreen.tsx';
-
-export type GroupStackParamList = {
-  GroupList: undefined;
-  GroupDashboard: { groupId?: string; groupName?: string } | undefined;
-  GroupInfo: { groupId?: string; groupName?: string } | undefined;
-  GroupVotes: { groupId?: string; groupName?: string } | undefined;
-  GroupPay: { groupId?: string; groupName?: string } | undefined;
-  GroupChat: { groupId?: string; groupName?: string } | undefined;
-  GroupCreate: undefined,
-  GroupCardRecommend: {
-    groupName: string;
-    address: string;
-    tags: string[];
-  };
-  GroupPinSetup: {
-    groupName: string;
-    address: string;
-    tags: string[];
-    selectedCardId: string;
-  };
-};
+import { GroupStackParamList } from '../types/navigation.ts';
 
 const Stack = createNativeStackNavigator<GroupStackParamList>();
 

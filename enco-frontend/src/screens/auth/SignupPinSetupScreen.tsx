@@ -1,13 +1,9 @@
 import React, { useState } from "react";
 import { View, Text, Button } from "react-native";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import type { AuthStackParamList } from "../../types/auth";
-
+import type { AuthStackScreenProps } from "../../types/auth";
 import PinEntry from "../../components/pin/PinEntry";
 
-type Props = NativeStackScreenProps<AuthStackParamList, "SignupPinSetup">;
-
-export default function SignupPinSetupScreen({ route, navigation }: Props) {
+export default function SignupPinSetupScreen({ route, navigation }: AuthStackScreenProps<"SignupPinSetup">) {
   const { name, birth, phone, email } = route.params;
 
   const [step, setStep] = useState<"set" | "confirm" | "done">("set");
