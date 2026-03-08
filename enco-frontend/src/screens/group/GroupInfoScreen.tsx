@@ -3,11 +3,7 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-
-type Params = {
-  groupId?: string;
-  groupName?: string;
-};
+import { GroupParams } from '../../types/common';
 
 function SectionCard({ title, children }: { title: string; children?: React.ReactNode }) {
   return (
@@ -30,7 +26,7 @@ function SectionCard({ title, children }: { title: string; children?: React.Reac
 
 export default function GroupInfoScreen() {
   const route = useRoute();
-  const params = (route.params ?? {}) as Params;
+  const params = (route.params ?? {}) as GroupParams;
   const navigation = useNavigation<any>();
   const groupName = params.groupName ?? '모임명';
 

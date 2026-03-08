@@ -3,16 +3,12 @@ import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-
-type Params = {
-  groupId?: string;
-  groupName?: string;
-};
+import { GroupParams } from '../../types/common';
 
 export default function GroupVotesScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const params = (route.params ?? {}) as Params;
+  const params = (route.params ?? {}) as GroupParams;
 
   return (
     <ScreenLayout>

@@ -1,15 +1,8 @@
-// src//components/ScreenLayout.tsx
-
-import React from 'react';
-import {View, type ViewStyle } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScreenLayoutProps } from '../types/layout';
 
-type Props = {
-  children: React.ReactNode;
-  style?: ViewStyle;
-};
-
-export default function ScreenLayout({children, style}: Props) {
+export default function ScreenLayout({children, style}: ScreenLayoutProps) {
   return (
     <SafeAreaView style={{ flex: 1}}>
       <View style={[{flex: 1, paddingHorizontal: 16, paddingTop: 12}, style]}>
