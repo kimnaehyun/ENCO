@@ -13,6 +13,18 @@ type GroupCardItem = {
   detail: string;
 };
 
-type GroupPinSetupProps = NativeStackScreenProps<GroupStackParamList, "GroupPinSetup">;
+type GroupProps<T extends keyof GroupStackParamList> =
+  NativeStackScreenProps<GroupStackParamList, T>;
 
-export type {CardRecommendRouteProp, GroupCardItem, GroupPinSetupProps}
+type LedgerItem = {
+  id: string;
+  date: string; // YYYY-MM-DD
+  amount: number; // + / -
+  title: string;
+  memo?: string;
+  hasReceipt?: boolean;
+};
+
+type GroupPayStep = 'summary' | 'form' | 'pin' | 'success';
+
+export type {CardRecommendRouteProp, GroupCardItem, GroupProps, LedgerItem, GroupPayStep}

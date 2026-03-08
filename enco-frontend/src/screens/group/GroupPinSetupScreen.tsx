@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Text, View } from "react-native";
 import PinEntry from "../../components/pin/PinEntry";
 import { ROUTES } from "../../constants/routes";
-import { GroupPinSetupProps } from "../../types/group";
+import { GroupProps } from "../../types/group";
 
-export default function GroupPinSetupScreen({ route, navigation }: GroupPinSetupProps) {
+export default function GroupPinSetupScreen({ route, navigation }: GroupProps<"GroupPinSetup">) {
   const { groupName, address, tags, selectedCardId } = route.params;
 
   const [step, setStep] = useState<"set" | "confirm">("set");

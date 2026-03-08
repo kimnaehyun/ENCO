@@ -26,12 +26,8 @@ function SectionCard({ title, children }: { title: string; children?: React.Reac
 
 export default function GroupInfoScreen() {
   const route = useRoute();
-<<<<<<< Updated upstream
-  const params = (route.params ?? {}) as GroupParams;
-  const navigation = useNavigation<any>();
-=======
   const params = (route.params ?? {}) as CommonParams;
->>>>>>> Stashed changes
+  const navigation = useNavigation<any>();
   const groupName = params.groupName ?? '모임명';
 
   // ✅ 임시 데이터 (나중에 API/스토어로 교체, 관리자만 수정 가능하게 확장)

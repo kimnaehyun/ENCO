@@ -1,15 +1,120 @@
 // src/screens/group/GroupPayScreen.tsx
-import React from 'react';
-import { Pressable, Text, View } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { GroupParams } from '../../types/common';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  Alert,
+  Pressable,
+  Text,
+  View,
+} from 'react-native';
+import { GroupPayStep, GroupProps } from '../../types/group';
 
-export default function GroupPayScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const params = (route.params ?? {}) as GroupParams;
+const PIN_LEN = 6;
 
+const formatKRW = (n: number) => `₩ ${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+
+export default function GroupPayScreen({ navigation, route }: GroupProps<'GroupPay'>) {
+  const groupId = route.params?.groupId;
+  const groupName = route.params?.groupName ?? '모임명';
+
+  // ====== 임시 데이터(나중에 API로 교체) ======
+  const monthlyDue = 10000;
+
+  const accounts = useMemo(
+    () => [
+      { id: 'a1', name: '우리은행 110-****-1234' },
+      { id: 'a2', name: '국민은행 012-****-5678' },
+    ],
+    []
+  );
+
+  // ====== 화면 상태 =====
+  const [step, setStep] = useState<GroupPayStep>('summary');
+
+  // 폼 값
+  const [amountText, setAmountText] = useState<string>(String(monthlyDue));
+  const [accountIndex, setAccountIndex] = useState<number>(0);
+  const [senderLabel, setSenderLabel] = useState<string>('내통장 표시(임시)');
+  const [receiverLabel, setReceiverLabel] = useState<string>('받는분 표시(임시)');
+  const [memo, setMemo] = useState<string>('회비 납부');
+
+  // PIN
+  const [pin, setPin] = useState<string>('');
+
+  // PIN 6자리 입력 완료 시 success로
+  useEffect(() => {
+    if (step !== 'pin') return;
+    if (pin.length === PIN_LEN) {
+      // 임시로 즉시 완료 처리
+      setTimeout(() => {
+        setStep('success');
+      }, 250);
+    }
+  }, [pin, step]);
+
+  const selectedAccount = accounts[accountIndex]?.name ?? '계좌 선택';
+
+  const goBackLike = () => {
+    if (step === 'summary') {
+      navigation.goBack();
+      return;
+    }
+    if (step === 'form') {
+      setStep('summary');
+      return;
+    }
+    if (step === 'pin') {
+      setPin('');
+      setStep('form');
+      return;
+    }
+    if (step === 'success') {
+      // 완료 화면에서 뒤로는 요약으로
+      setPin('');
+      setStep('summary');
+      return;
+    }
+  };
+
+  // ====== 액션 ======
+  const onPressPayStart = () => {
+    setStep('form');
+  };
+
+  const onPressSubmitTransfer = () => {
+    const parsed = parseInt(amountText.replace(/[^0-9]/g, ''), 10);
+
+    if (!parsed || parsed <= 0) {
+      Alert.alert('확인', '금액을 입력해주세요.');
+      return;
+    }
+    if (!selectedAccount || selectedAccount === '계좌 선택') {
+      Alert.alert('확인', '계좌를 선택해주세요.');
+      return;
+    }
+    // PIN 단계 진입
+    setPin('');
+    setStep('pin');
+  };
+
+  const onPressNotify = () => {
+    Alert.alert('알림', 'TODO: 송금 완료 알림 보내기');
+    // 필요하면 모임 대시보드로 복귀:
+    setPin('');
+    setStep('summary');
+  };
+
+  // ====== PIN 키패드 ======
+  const appendPin = (digit: string) => {
+    if (pin.length >= PIN_LEN) return;
+    setPin(prev => prev + digit);
+  };
+
+  const backspacePin = () => {
+    setPin(prev => prev.slice(0, -1));
+  };
+
+  // ====== 렌더 ======
   return (
     <ScreenLayout>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>

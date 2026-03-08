@@ -1,3 +1,3 @@
-type GroupParams = { groupId?: string; groupName?: string };
+type CommonParams = { groupId?: string; groupName?: string; isAdmin?: boolean; };
 
-export type {GroupParams}
+export type {CommonParams}
