@@ -1,7 +1,7 @@
 import React from "react";
-import {View , Text ,ActivityIndicator, Image} from "react-native"
+import {View, Image} from "react-native"
 
-import {images} from "../assets/images"
+import {images} from "../types/images"
 
 export default function SplashScreen(){
     return(

@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { ROUTES } from '../../navigation/routes';
+import { ROUTES } from '../../constants/routes';
 
 const TAG_OPTIONS = ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'];
 

@@ -1,7 +1,7 @@
 import { Image } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-import { ROUTES } from './routes';
+import { ROUTES } from '../constants/routes';
 
 import HomeScreen from '../screens/HomeScreen';
 import GroupStackNavigator from './GroupStackNavigator';

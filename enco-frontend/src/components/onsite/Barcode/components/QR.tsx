@@ -1,6 +1,6 @@
 import { View, Image } from 'react-native';
 import React from 'react';
-import { images } from '../../../../assets/images';
+import { images } from '../../../../types/images';
 
 export default function QR() {
   return (
