@@ -22,4 +22,3 @@ export const ROUTES = {
   PAYMENT_HISTORY: 'PAYMENT_HISTORY',
 } as const;
 
-export type RouteName = (typeof ROUTES)[keyof typeof ROUTES];
