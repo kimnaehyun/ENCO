@@ -16,6 +16,18 @@ pipeline {
             }
         }
 
+        stage('Verify Backend Dir') {
+            steps {
+                sh '''
+                echo "===== ROOT ====="
+                pwd
+                ls -al
+                echo "===== enco-backend ====="
+                ls -al enco-backend
+                '''
+            }
+        }
+
         stage('Backend Build') {
             steps {
                 dir('enco-backend') {
@@ -49,26 +61,20 @@ pipeline {
                 '''
             }
         }
-
-        stage('Frontend Placeholder') {
-            steps {
-                sh 'echo "frontend build will be added next"'
-            }
-        }
     }
 
     post {
         success {
             sh '''
             curl -X POST -H "Content-Type: application/json" \
-            --data "{\"text\":\"✅ develop 배포 성공: ${JOB_NAME} #${BUILD_NUMBER}\\n백엔드: http://j14e104.p.ssafy.io:8081\"}" \
+            --data "{\"text\":\"✅ Backend 배포 성공: ${JOB_NAME} #${BUILD_NUMBER}\\n백엔드: http://j14e104.p.ssafy.io:8081\"}" \
             "$NOTIFY_WEBHOOK"
             '''
         }
         failure {
             sh '''
             curl -X POST -H "Content-Type: application/json" \
-            --data "{\"text\":\"❌ develop 배포 실패: ${JOB_NAME} #${BUILD_NUMBER}\\n로그: ${BUILD_URL}\"}" \
+            --data "{\"text\":\"❌ Backend 배포 실패: ${JOB_NAME} #${BUILD_NUMBER}\\n로그: ${BUILD_URL}\"}" \
             "$NOTIFY_WEBHOOK"
             '''
         }

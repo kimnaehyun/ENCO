@@ -1,0 +1,68 @@
+pipeline {
+    agent any
+
+    environment {
+        WEB_DEPLOY_PATH = '/var/www/enco-shoppingmall'
+        NOTIFY_WEBHOOK = credentials('mattermost-notification')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Verify Shoppingmall Dir') {
+            steps {
+                sh '''
+                echo "===== ROOT ====="
+                pwd
+                ls -al
+                echo "===== enco-shoppingmall ====="
+                ls -al enco-shoppingmall
+                '''
+            }
+        }
+
+        stage('Build Shoppingmall Web') {
+            steps {
+                dir('enco-shoppingmall') {
+                    sh '''
+                    node --version
+                    npm --version
+                    npm ci
+                    npm run build
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy Shoppingmall Web') {
+            steps {
+                sh '''
+                mkdir -p ${WEB_DEPLOY_PATH}
+                rm -rf ${WEB_DEPLOY_PATH:?}/*
+                cp -r enco-shoppingmall/dist/* ${WEB_DEPLOY_PATH}/
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            sh '''
+            curl -X POST -H "Content-Type: application/json" \
+            --data "{\"text\":\"✅ 쇼핑몰 웹 배포 성공: ${JOB_NAME} #${BUILD_NUMBER}\"}" \
+            "$NOTIFY_WEBHOOK"
+            '''
+        }
+        failure {
+            sh '''
+            curl -X POST -H "Content-Type: application/json" \
+            --data "{\"text\":\"❌ 쇼핑몰 웹 배포 실패: ${JOB_NAME} #${BUILD_NUMBER}\\n로그: ${BUILD_URL}\"}" \
+            "$NOTIFY_WEBHOOK"
+            '''
+        }
+    }
+}
