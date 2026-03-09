@@ -15,7 +15,7 @@ export default function BottomNavigator() {
     <Tab.Navigator
       initialRouteName={ROUTES.TAB_HOME}
       backBehavior="none"
-      screenOptions={{
+      screenOptions={{   
         tabBarShowLabel: false,
         headerShown: false,
       }}

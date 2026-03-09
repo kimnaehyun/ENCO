@@ -1,5 +1,5 @@
 // src/screens/group/GroupPayScreen.tsx
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -9,7 +9,6 @@ import {
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
-  BackHandler,
 } from 'react-native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { GroupPayStep, GroupProps } from '../../types/group';
@@ -20,6 +19,7 @@ const formatKRW = (n: number) =>
   `₩ ${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 
 export default function GroupPayScreen({ navigation, route }: GroupProps<'GroupPay'>) {
+  const groupId = route.params?.groupId;
   const groupName = route.params?.groupName ?? '모임명';
 
   const monthlyDue = 10000;
@@ -36,6 +36,8 @@ export default function GroupPayScreen({ navigation, route }: GroupProps<'GroupP
 
   const [amountText, setAmountText] = useState<string>(String(monthlyDue));
   const [accountIndex, setAccountIndex] = useState<number>(0);
+  const [senderLabel, setSenderLabel] = useState<string>('내통장 표시(임시)');
+  const [receiverLabel, setReceiverLabel] = useState<string>('받는분 표시(임시)');
   const [memo, setMemo] = useState<string>('회비 납부');
 
   const [pin, setPin] = useState<string>('');
@@ -43,17 +45,17 @@ export default function GroupPayScreen({ navigation, route }: GroupProps<'GroupP
   useEffect(() => {
     if (step !== 'pin') return;
     if (pin.length === PIN_LEN) {
-      const t = setTimeout(() => setStep('success'), 250);
-      return () => clearTimeout(t);
+      setTimeout(() => {
+        setStep('success');
+      }, 250);
     }
   }, [pin, step]);
 
   const selectedAccount = accounts[accountIndex]?.name ?? '계좌 선택';
 
-  // ✅ step 기반 뒤로가기 로직(헤더 버튼 + 하드웨어 백에서 같이 사용)
-  const goBackLike = useCallback(() => {
+  const goBackLike = () => {
     if (step === 'summary') {
-      navigation.goBack(); // summary에서는 스크린 pop이 정상
+      navigation.goBack();
       return;
     }
     if (step === 'form') {
@@ -70,25 +72,11 @@ export default function GroupPayScreen({ navigation, route }: GroupProps<'GroupP
       setStep('summary');
       return;
     }
-  }, [navigation, step]);
+  };
 
-  // ✅ 안드로이드 하드웨어 뒤로가기 가로채기
-  useEffect(() => {
-    if (Platform.OS !== 'android') return;
-
-    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      // summary가 아니면 스크린 pop을 막고 내부 step만 뒤로 이동
-      if (step !== 'summary') {
-        goBackLike();
-        return true; // 이벤트 처리 완료(=pop 막음)
-      }
-      return false; // summary에서는 기본 동작(=pop 허용)
-    });
-
-    return () => sub.remove();
-  }, [goBackLike, step]);
-
-  const onPressPayStart = () => setStep('form');
+  const onPressPayStart = () => {
+    setStep('form');
+  };
 
   const onPressSubmitTransfer = () => {
     const parsed = parseInt(amountText.replace(/[^0-9]/g, ''), 10);
@@ -117,7 +105,9 @@ export default function GroupPayScreen({ navigation, route }: GroupProps<'GroupP
     setPin(prev => prev + digit);
   };
 
-  const backspacePin = () => setPin(prev => prev.slice(0, -1));
+  const backspacePin = () => {
+    setPin(prev => prev.slice(0, -1));
+  };
 
   return (
     <KeyboardAvoidingView
@@ -126,11 +116,14 @@ export default function GroupPayScreen({ navigation, route }: GroupProps<'GroupP
     >
       <ScreenLayout>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>납부 {groupName ? `- ${groupName}` : ''}</Text>
+          <Text style={styles.headerTitle}>
+            납부 {groupName ? `- ${groupName}` : ''}
+          </Text>
 
-          {/* ✅ 헤더 뒤로/닫기도 동일 로직 */}
           <Pressable onPress={goBackLike} hitSlop={12}>
-            <Text style={styles.closeText}>{step === 'summary' ? '닫기' : '뒤로'}</Text>
+            <Text style={styles.closeText}>
+              {step === 'summary' ? '닫기' : '뒤로'}
+            </Text>
           </Pressable>
         </View>
 
@@ -194,13 +187,16 @@ export default function GroupPayScreen({ navigation, route }: GroupProps<'GroupP
               {Array.from({ length: PIN_LEN }).map((_, idx) => {
                 const filled = idx < pin.length;
                 return (
-                  <View key={idx} style={[styles.pinDot, filled && styles.pinDotFilled]} />
+                  <View
+                    key={idx}
+                    style={[styles.pinDot, filled && styles.pinDotFilled]}
+                  />
                 );
               })}
             </View>
 
             <View style={styles.keypad}>
-              {['1','2','3','4','5','6','7','8','9','.','0','⌫'].map(k => {
+              {['1','2','3','4','5','6','7','8','9','.','0','⌫'].map((k) => {
                 const isBack = k === '⌫';
                 const isDot = k === '.';
 
@@ -240,30 +236,129 @@ export default function GroupPayScreen({ navigation, route }: GroupProps<'GroupP
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { fontSize: 20, fontWeight: '900' },
-  closeText: { fontSize: 16, fontWeight: '700' },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between'
+  },
 
-  bigCard: { borderRadius: 24, backgroundColor: '#E5E7EB', padding: 18, minHeight: 120, justifyContent: 'center' },
-  bigCardText: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: '900'
+  },
 
-  primaryBtn: { marginTop: 16, height: 56, borderRadius: 18, backgroundColor: '#D1D5DB', alignItems: 'center', justifyContent: 'center' },
-  primaryBtnText: { fontSize: 16, fontWeight: '900' },
+  closeText: {
+    fontSize: 16,
+    fontWeight: '700'
+  },
 
-  formBox: { borderRadius: 22, backgroundColor: '#E5E7EB', paddingHorizontal: 16, paddingVertical: 14 },
-  formLabel: { fontSize: 14, fontWeight: '900', marginBottom: 10 },
-  formInput: { height: 44, borderRadius: 12, backgroundColor: '#F3F4F6', paddingHorizontal: 12 },
-  formValue: { fontSize: 15, fontWeight: '700' },
-  formHint: { marginTop: 6, fontSize: 12 },
+  bigCard: {
+    borderRadius: 24,
+    backgroundColor: '#E5E7EB',
+    padding: 18,
+    minHeight: 120,
+    justifyContent: 'center'
+  },
 
-  pinTitle: { fontSize: 22, fontWeight: '900', textAlign: 'center', marginTop: 20 },
-  pinDotsRow: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 26 },
-  pinDot: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#D1D5DB' },
-  pinDotFilled: { backgroundColor: '#6B7280' },
+  bigCardText: {
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center'
+  },
 
-  keypad: { marginTop: 26, flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
-  keyBtn: { width: '30%', height: 54, borderRadius: 12, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
-  keyText: { fontSize: 18, fontWeight: '800' },
+  primaryBtn: {
+    marginTop: 16,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: '#D1D5DB',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
 
-  successTitle: { fontSize: 22, fontWeight: '900' },
+  primaryBtnText: {
+    fontSize: 16,
+    fontWeight: '900'
+  },
+
+  formBox: {
+    borderRadius: 22,
+    backgroundColor: '#E5E7EB',
+    paddingHorizontal: 16,
+    paddingVertical: 14
+  },
+
+  formLabel: {
+    fontSize: 14,
+    fontWeight: '900',
+    marginBottom: 10
+  },
+
+  formInput: {
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    paddingHorizontal: 12
+  },
+
+  formValue: {
+    fontSize: 15,
+    fontWeight: '700'
+  },
+
+  formHint: {
+    marginTop: 6,
+    fontSize: 12
+  },
+
+  pinTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginTop: 20
+  },
+
+  pinDotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 10,
+    marginTop: 26
+  },
+
+  pinDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#D1D5DB'
+  },
+
+  pinDotFilled: {
+    backgroundColor: '#6B7280'
+  },
+
+  keypad: {
+    marginTop: 26,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    justifyContent: 'center'
+  },
+
+  keyBtn: {
+    width: '30%',
+    height: 54,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+
+  keyText: {
+    fontSize: 18,
+    fontWeight: '800'
+  },
+
+  successTitle: {
+    fontSize: 22,
+    fontWeight: '900'
+  }
 });
