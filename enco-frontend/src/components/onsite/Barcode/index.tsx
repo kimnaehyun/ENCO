@@ -3,6 +3,7 @@ import React from 'react';
 import Barcode from './components/Barcode';
 import QR from './components/QR';
 import { Text } from 'react-native-gesture-handler';
+import CardRecommendation from './components/CardRecommendation';
 
 export default function index() {
   return (
@@ -16,10 +17,9 @@ export default function index() {
         </View>
       </View>
       <View>
-        <Text className="text-lg font-bold border-2 border-black text-center">
-          결제 카드 추천
-        </Text>
+        <Text className="text-lg font-bold text-center">결제 추천 카드</Text>
       </View>
+      <CardRecommendation />
     </View>
   );
 }
