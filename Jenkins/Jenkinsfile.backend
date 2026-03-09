@@ -6,7 +6,7 @@ pipeline {
         BACKEND_CONTAINER = 'enco-backend'
         BACKEND_HOST_PORT = '8081'
         BACKEND_CONTAINER_PORT = '8080'
-        NOTIFY_WEBHOOK = credentials('mattermost-notification')
+        NOTIFY_WEBHOOK = credentials('mattermost-webhook')
     }
 
     stages {

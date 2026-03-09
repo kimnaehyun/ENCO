@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         WEB_DEPLOY_PATH = '/var/www/enco-shoppingmall'
-        NOTIFY_WEBHOOK = credentials('mattermost-notification')
+        NOTIFY_WEBHOOK = credentials('mattermost-webhook')
     }
 
     stages {
