@@ -17,7 +17,6 @@ const TAG_OPTIONS = ['여행', '스포츠', '문화생활', '경조사', '공과
 export default function GroupCreateScreen() {
   const navigation = useNavigation<any>();
 
-  // TODO: 나중에 로그인 유저 정보로 교체
   const manager = useMemo(
     () => ({
       name: '나기',
@@ -73,7 +72,7 @@ export default function GroupCreateScreen() {
     return;
   }
   console.log('GROUP_CARD_RECOMMEND =', ROUTES.GROUP_CARD_RECOMMEND);
-  navigation.navigate(ROUTES.GROUP_CARD_RECOMMEND as any, {
+  navigation.navigate('GroupCardRecommend', {
     groupName,
     address,
     tags: selectedTags,

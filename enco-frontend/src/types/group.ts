@@ -1,8 +1,8 @@
 import { RouteProp } from "@react-navigation/native";
-import { GroupStackParamList } from "./navigation";
+import { GroupStackParamList, RootStackParamList } from "./navigation";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 
-type CardRecommendRouteProp = RouteProp<GroupStackParamList, 'GroupCardRecommend'>;
+type CardRecommendRouteProp = RouteProp<RootStackParamList, 'GroupCardRecommend'>;
 
 type GroupCardItem = {
   id: string;

@@ -2,7 +2,6 @@
 import React from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { ROUTES } from '../../constants/routes';
 import { CommonParams } from '../../types/common';
 import { useNotifications } from '../../contexts/NotificationsContext';
 
@@ -15,59 +14,36 @@ export default function GroupDashboardScreen() {
   const { unreadCount } = useNotifications();
   
   const onPressGroupInfo = () => {
-    const payload = { groupId: params.groupId, groupName, isAdmin: false };
-
-    // 1) 같은 스택 안에서 GroupInfo로 이동 시도
-    navigation.navigate('GroupInfo', payload);
-
-    // 2) (안 먹히는 환경 대비) 탭 + 스택 중첩 네비게이션으로 fallback
-    // - 탭 라우트: ROUTES.TAB_GROUP (= 'Together')
-    // - 스택 화면: GroupInfo
-    navigation.navigate(ROUTES.TAB_GROUP, {
-      screen: 'GroupInfo',
-      params: payload,
+    navigation.navigate('GroupInfo', {
+      groupId: params.groupId,
+      groupName,
+      isAdmin: false,
     });
   };
 
   const onPressLedger = () => {
-    console.log('onPressLedger called');
-    navigation.navigate('GroupLedger', {
-      groupId: params.groupId,
-      groupName,
-    });
+    navigation.navigate('GroupLedger', { groupId: params.groupId, groupName });
   };
 
   const onPressVotes = () => {
-  navigation.navigate('GroupVotes', {
-    groupId: params.groupId,
-    groupName,
-  });
-};
+    navigation.navigate('GroupVotes', { groupId: params.groupId, groupName });
+  };
 
   const onPressPay = () => {
-  navigation.navigate('GroupPay', {
-    groupId: params.groupId,
-    groupName,
-  });
-};
+    navigation.navigate('GroupPay', { groupId: params.groupId, groupName });
+  };
 
   const onPressCommunity = () => {
-  navigation.navigate('GroupChat', {
-    groupId: params.groupId,
-    groupName,
-  });
-};
+    navigation.navigate('GroupChat', { groupId: params.groupId, groupName });
+  };
 
-const onPressAdmin = () => {
-  navigation.navigate('AdminMenu', {
-    groupId: params.groupId,
-    groupName,
-  });
-};
+  const onPressAdmin = () => {
+    navigation.navigate('AdminMenu', { groupId: params.groupId, groupName });
+  };
 
   return (
     <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 12 }}>
-      {/* Header: 회색박스로 영역 분리 */}
+      {/* Header */}
       <View
         style={{
           marginTop: 8,
@@ -77,7 +53,6 @@ const onPressAdmin = () => {
           gap: 12,
         }}
       >
-        {/* 모임명 회색 박스(클릭 영역 확실) */}
         <Pressable
           onPress={onPressGroupInfo}
           hitSlop={12}
@@ -101,7 +76,6 @@ const onPressAdmin = () => {
           <Text style={{ fontSize: 16, color: '#6B7280' }}>ⓘ</Text>
         </Pressable>
 
-        {/* 알림 회색 박스 */}
         <Pressable
           onPress={() => navigation.navigate('UserNotifications', { groupId: params.groupId, groupName })}
           hitSlop={12}
@@ -148,16 +122,16 @@ const onPressAdmin = () => {
 
       {/* Balance */}
       <Pressable
-          onPress={onPressLedger}
-          hitSlop={10}
-          style={{
-            marginTop: 16,
-            height: 88,
-            borderRadius: 24,
-            backgroundColor: '#E5E7EB',
-            paddingHorizontal: 20,
-            justifyContent: 'center',
-          }}
+        onPress={onPressLedger}
+        hitSlop={10}
+        style={{
+          marginTop: 16,
+          height: 88,
+          borderRadius: 24,
+          backgroundColor: '#E5E7EB',
+          paddingHorizontal: 20,
+          justifyContent: 'center',
+        }}
       >
         <Text style={{ color: '#374151', fontWeight: '600' }}>남은 금액</Text>
         <Text style={{ marginTop: 6, fontSize: 18, fontWeight: '800' }}>₩ 0 (임시)</Text>
@@ -211,22 +185,22 @@ const onPressAdmin = () => {
         >
           <Text style={{ fontWeight: '800' }}>커뮤니티(톡방)</Text>
         </Pressable>
-
       </View>
-        <Pressable
-          onPress={onPressAdmin}
-          hitSlop={10}
-          style={{
-            marginTop: 16,
-            height: 56,
-            borderRadius: 18,
-            backgroundColor: '#D9D9D9',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ fontWeight: '900' }}>관리하기</Text>
-        </Pressable>
+
+      <Pressable
+        onPress={onPressAdmin}
+        hitSlop={10}
+        style={{
+          marginTop: 16,
+          height: 56,
+          borderRadius: 18,
+          backgroundColor: '#D9D9D9',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Text style={{ fontWeight: '900' }}>관리하기</Text>
+      </Pressable>
     </View>
   );
 }
