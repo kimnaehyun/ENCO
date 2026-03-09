@@ -1,10 +1,12 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
 import PinEntry from "../../components/pin/PinEntry";
-import { ROUTES } from "../../constants/routes";
-import { GroupProps } from "../../types/group";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../../types/navigation";
 
-export default function GroupPinSetupScreen({ route, navigation }: GroupProps<"GroupPinSetup">) {
+type Props = NativeStackScreenProps<RootStackParamList, "GroupPinSetup">;
+
+export default function GroupPinSetupScreen({ route, navigation }: Props) {
   const { groupName, address, tags, selectedCardId } = route.params;
 
   const [step, setStep] = useState<"set" | "confirm">("set");
@@ -14,40 +16,70 @@ export default function GroupPinSetupScreen({ route, navigation }: GroupProps<"G
 
   const resetPinEntry = () => setResetKey((k) => k + 1);
 
+  const handleComplete = (pin: string) => {
+    if (step === "set") {
+      setFirstPin(pin);
+      setError("");
+      setStep("confirm");
+      resetPinEntry();
+      return;
+    }
+
+    if (pin !== firstPin) {
+      setError("비밀번호가 일치하지 않아요. 다시 설정해주세요.");
+      setFirstPin(null);
+      setStep("set");
+      resetPinEntry();
+      return;
+    }
+
+    setError("");
+
+    const groupId = `temp-${Date.now()}`;
+
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: "App",
+          state: {
+            routes: [
+              {
+                name: "HomeTab",
+                state: {
+                  routes: [
+                    {
+                      name: "Home",
+                    },
+                    {
+                      name: "GroupDashboard",
+                      params: {
+                        groupId,
+                        groupName,
+                        address,
+                        tags,
+                        selectedCard: selectedCardId,
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
+  };
+
   return (
     <View style={{ flex: 1, padding: 20, gap: 12 }}>
       {error ? <Text style={{ color: "red" }}>{error}</Text> : null}
 
       <PinEntry
+        key={`${step}-${resetKey}`}
         title={step === "set" ? "결제 비밀번호 설정" : "결제 비밀번호 재입력"}
         resetKey={resetKey}
-        onComplete={(pin) => {
-          if (step === "set") {
-            setFirstPin(pin);
-            setError("");
-            setStep("confirm");
-            resetPinEntry();
-            return;
-          }
-
-          if (pin !== firstPin) {
-            setError("비밀번호가 일치하지 않아요. 다시 설정해주세요.");
-            setFirstPin(null);
-            setStep("set");
-            resetPinEntry();
-            return;
-          }
-
-          setError("");
-
-          navigation.navigate(ROUTES.GROUP_DASHBOARD as any, {
-            groupId: `temp-${Date.now()}`,
-            groupName,
-            address,
-            tags,
-            selectedCard: selectedCardId,
-          });
-        }}
+        onComplete={handleComplete}
       />
 
       <Text

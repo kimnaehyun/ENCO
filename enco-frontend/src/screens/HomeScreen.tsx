@@ -1,8 +1,6 @@
-// src/screens/HomeScreen.tsx
 import React from 'react';
 import { Dimensions, FlatList, Pressable, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ROUTES } from '../constants/routes';
 import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
 
@@ -31,20 +29,18 @@ export default function HomeScreen() {
         ]
       : [{ type: 'add' as const }];
 
+  // HomeStack 안에서 직접 push → 뒤로가기 시 HomeScreen으로 복귀
   const onPressGroupCard = (group: HomeGroupSummary) => {
-    navigation.navigate(ROUTES.TAB_GROUP as any, {
-      screen: ROUTES.GROUP_DASHBOARD,
-      params: {
-        groupId: group.id,
-        groupName: group.name,
-      },
+    navigation.navigate('GroupDashboard', {
+      groupId: group.id,
+      groupName: group.name,
     });
   };
 
+  // 모임 생성: RootNavigator 모달 스택으로 진입
+  // → 탭 히스토리와 완전 분리되어 완료/취소 후 HomeScreen으로 자연스럽게 복귀
   const onPressCreateGroup = () => {
-    navigation.navigate(ROUTES.TAB_GROUP as any, {
-      screen: ROUTES.GROUP_CREATE,
-    });
+    navigation.navigate('GroupCreate');
   };
 
   const renderCard = ({ item }: { item: HomeCardItem }) => {
@@ -99,7 +95,6 @@ export default function HomeScreen() {
 
   return (
     <ScreenLayout>
-      {/* Header */}
       <View
         style={{
           flexDirection: 'row',
@@ -126,7 +121,6 @@ export default function HomeScreen() {
         </Text>
       </View>
 
-      {/* Card Slider */}
       <View style={{ marginTop: 24 }}>
         <FlatList
           data={cards}
@@ -146,7 +140,6 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* 안내 텍스트 */}
       <Text style={{ marginTop: 16, textAlign: 'center', color: '#6B7280' }}>
         좌우로 넘겨서 모임 카드와 추가 카드를 볼 수 있어요
       </Text>

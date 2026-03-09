@@ -6,8 +6,7 @@ import ScreenLayout from '../components/ScreenLayout';
 
 export default function TogetherScreen() {
   const navigation = useNavigation<any>();
-
-  // ✅ 임시 모임 1개 (나중에 API/스토어로 교체)
+  
   const group = { id: 'g1', name: '회식주의자' };
 
   const onPressGroup = () => {
@@ -15,6 +14,10 @@ export default function TogetherScreen() {
       groupId: group.id,
       groupName: group.name,
     });
+  };
+
+  const onPressCreateGroup = () => {
+    navigation.navigate('GroupCreate');
   };
 
   return (
@@ -36,6 +39,20 @@ export default function TogetherScreen() {
         <Text style={{ marginTop: 6, color: '#6B7280' }}>
           눌러서 모임 대시보드로 이동
         </Text>
+      </Pressable>
+
+      <Pressable
+        onPress={onPressCreateGroup}
+        style={{
+          marginTop: 12,
+          height: 56,
+          borderRadius: 16,
+          backgroundColor: '#D1D5DB',
+          justifyContent: 'center',
+          alignItems: 'center',
+        }}
+      >
+        <Text style={{ fontSize: 16, fontWeight: '700' }}>+ 모임 만들기</Text>
       </Pressable>
     </ScreenLayout>
   );
