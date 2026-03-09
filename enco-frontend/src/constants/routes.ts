@@ -1,4 +1,4 @@
-// src/navigation/routes.ts
+// src/constants/routes.ts
 
 export const ROUTES = {
   // Bottom Tabs (✅ 기존 Tab name 문자열 유지)

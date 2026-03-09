@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Text, View } from "react-native";
 import PinEntry from "../../components/pin/PinEntry";
-import { GroupScreenProps } from "../../types/navigation";
+import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { RootStackParamList } from "../../types/navigation";
 
-export default function GroupPinSetupScreen({
-  route,
-  navigation,
-}: GroupScreenProps<"GroupPinSetup">) {
+type Props = NativeStackScreenProps<RootStackParamList, "GroupPinSetup">;
+
+export default function GroupPinSetupScreen({ route, navigation }: Props) {
   const { groupName, address, tags, selectedCardId } = route.params;
 
   const [step, setStep] = useState<"set" | "confirm">("set");
@@ -35,22 +35,40 @@ export default function GroupPinSetupScreen({
 
     setError("");
 
-  navigation.reset({
-  index: 1,
-  routes: [
-    { name: 'Home' as never },
-    {
-      name: 'GroupDashboard' as never,
-      params: {
-        groupId: `temp-${Date.now()}`,
-        groupName,
-        address,
-        tags,
-        selectedCard: selectedCardId,
-      } as never,
-    },
-  ],
-});
+    const groupId = `temp-${Date.now()}`;
+
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: "App",
+          state: {
+            routes: [
+              {
+                name: "HomeTab",
+                state: {
+                  routes: [
+                    {
+                      name: "Home",
+                    },
+                    {
+                      name: "GroupDashboard",
+                      params: {
+                        groupId,
+                        groupName,
+                        address,
+                        tags,
+                        selectedCard: selectedCardId,
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ],
+    });
   };
 
   return (

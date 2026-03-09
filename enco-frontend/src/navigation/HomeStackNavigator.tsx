@@ -3,12 +3,47 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeScreen from "../screens/HomeScreen";
 import { HomeStackParamList } from "../types/navigation";
 
+// group screens (HomeStack에서도 접근 가능하도록)
+import GroupDashboardScreen from "../screens/group/GroupDashboardScreen";
+import GroupInfoScreen from "../screens/group/GroupInfoScreen";
+import GroupVotesScreen from "../screens/group/GroupVotesScreen";
+import GroupPayScreen from "../screens/group/GroupPayScreen";
+import GroupChatScreen from "../screens/group/GroupChatScreen";
+import GroupLedgerScreen from "../screens/group/GroupLedgerScreen";
+import GroupVoteDetailScreen from "../screens/group/GroupVoteDetailScreen";
+import GroupVoteCreateScreen from "../screens/group/GroupVoteCreateScreen";
+import AdminMenuScreen from "../screens/admin/AdminMenuScreen";
+import AdminReceiptScreen from "../screens/admin/AdminReceiptScreen";
+import AdminMembersScreen from "../screens/admin/AdminMembersScreen";
+import AdminCardScreen from "../screens/admin/AdminCardScreen";
+import AdminSettleScreen from "../screens/admin/AdminSettleScreen";
+
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
 export default function HomeStackNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
+      {/* 홈 (루트) */}
       <Stack.Screen name="Home" component={HomeScreen} />
+
+      {/*
+       * 모임 관련 화면들을 HomeStack에 포함.
+       * HomeScreen에서 모임 카드를 누르면 TAB_GROUP으로 점프하지 않고
+       * 이 스택 안에서 push → 뒤로가기 시 HomeScreen으로 자연스럽게 복귀.
+       */}
+      <Stack.Screen name="GroupDashboard" component={GroupDashboardScreen} />
+      <Stack.Screen name="GroupInfo" component={GroupInfoScreen} />
+      <Stack.Screen name="GroupVotes" component={GroupVotesScreen} />
+      <Stack.Screen name="GroupPay" component={GroupPayScreen} />
+      <Stack.Screen name="GroupChat" component={GroupChatScreen} />
+      <Stack.Screen name="GroupLedger" component={GroupLedgerScreen} />
+      <Stack.Screen name="GroupVoteDetail" component={GroupVoteDetailScreen} />
+      <Stack.Screen name="GroupVoteCreate" component={GroupVoteCreateScreen} />
+      <Stack.Screen name="AdminMenu" component={AdminMenuScreen} />
+      <Stack.Screen name="AdminReceipt" component={AdminReceiptScreen} />
+      <Stack.Screen name="AdminMembers" component={AdminMembersScreen} />
+      <Stack.Screen name="AdminCard" component={AdminCardScreen} />
+      <Stack.Screen name="AdminSettle" component={AdminSettleScreen} />
     </Stack.Navigator>
   );
 }

@@ -1,13 +1,12 @@
 import { Image } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { CommonActions } from '@react-navigation/native';
 
 import { ROUTES } from '../constants/routes';
 
 import HomeStackNavigator from './HomeStackNavigator';
 import GroupStackNavigator from './GroupStackNavigator';
 import OnsitePaymentNavigator from './OnsitePaymentNavigator';
-// 하단 메뉴바 임시
-// 결제 / 홈 / 모임 으로 설정
 
 const Tab = createBottomTabNavigator();
 
@@ -62,11 +61,14 @@ export default function BottomNavigator() {
         name={ROUTES.TAB_GROUP}
         component={GroupStackNavigator}
         listeners={({ navigation }) => ({
-          tabPress: e => {
+          tabPress: (e) => {
             e.preventDefault();
-            (navigation as any).navigate(ROUTES.TAB_GROUP, {
-              screen: 'GroupList',
-            });
+            navigation.dispatch(
+              CommonActions.navigate({
+                name: ROUTES.TAB_GROUP,
+                params: { screen: 'GroupList' },
+              })
+            );
           },
         })}
         options={{

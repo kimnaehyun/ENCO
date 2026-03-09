@@ -3,13 +3,11 @@ import { Dimensions, FlatList, Pressable, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
-import { ROUTES } from '../constants/routes';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 24;
 const CARD_GAP = 12;
 const CARD_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
-
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
@@ -31,18 +29,20 @@ export default function HomeScreen() {
         ]
       : [{ type: 'add' as const }];
 
- const onPressGroupCard = (group: HomeGroupSummary) => {
-  navigation.navigate(ROUTES.TAB_GROUP, {
-    screen: 'GroupDashboard',
-    params: { groupId: group.id, groupName: group.name },
-  });
-};
-
-  const onPressCreateGroup = () => {
-    navigation.navigate(ROUTES.TAB_GROUP, {
-      screen: 'GroupCreate',
+  // HomeStack 안에서 직접 push → 뒤로가기 시 HomeScreen으로 복귀
+  const onPressGroupCard = (group: HomeGroupSummary) => {
+    navigation.navigate('GroupDashboard', {
+      groupId: group.id,
+      groupName: group.name,
     });
   };
+
+  // 모임 생성: RootNavigator 모달 스택으로 진입
+  // → 탭 히스토리와 완전 분리되어 완료/취소 후 HomeScreen으로 자연스럽게 복귀
+  const onPressCreateGroup = () => {
+    navigation.navigate('GroupCreate');
+  };
+
   const renderCard = ({ item }: { item: HomeCardItem }) => {
     if (item.type === 'group') {
       return (
