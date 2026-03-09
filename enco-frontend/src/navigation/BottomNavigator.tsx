@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
 import { ROUTES } from '../constants/routes';
 
-import HomeScreen from '../screens/HomeScreen';
+import HomeStackNavigator from './HomeStackNavigator';
 import GroupStackNavigator from './GroupStackNavigator';
 import OnsitePaymentNavigator from './OnsitePaymentNavigator';
 // 하단 메뉴바 임시
@@ -42,7 +42,7 @@ export default function BottomNavigator() {
       {/* 홈 */}
       <Tab.Screen
         name={ROUTES.TAB_HOME}
-        component={HomeScreen}
+        component={HomeStackNavigator}
         options={{
           tabBarIcon: ({ focused, size }) => (
             <Image
@@ -63,7 +63,6 @@ export default function BottomNavigator() {
         component={GroupStackNavigator}
         listeners={({ navigation }) => ({
           tabPress: e => {
-            // ✅ 탭 누르면 항상 모임목록으로
             e.preventDefault();
             (navigation as any).navigate(ROUTES.TAB_GROUP, {
               screen: 'GroupList',

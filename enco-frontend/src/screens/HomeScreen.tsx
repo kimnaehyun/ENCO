@@ -1,15 +1,15 @@
-// src/screens/HomeScreen.tsx
 import React from 'react';
 import { Dimensions, FlatList, Pressable, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ROUTES } from '../constants/routes';
 import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
+import { ROUTES } from '../constants/routes';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 24;
 const CARD_GAP = 12;
 const CARD_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
+
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
@@ -31,22 +31,18 @@ export default function HomeScreen() {
         ]
       : [{ type: 'add' as const }];
 
-  const onPressGroupCard = (group: HomeGroupSummary) => {
-    navigation.navigate(ROUTES.TAB_GROUP as any, {
-      screen: ROUTES.GROUP_DASHBOARD,
-      params: {
-        groupId: group.id,
-        groupName: group.name,
-      },
-    });
-  };
+ const onPressGroupCard = (group: HomeGroupSummary) => {
+  navigation.navigate(ROUTES.TAB_GROUP, {
+    screen: 'GroupDashboard',
+    params: { groupId: group.id, groupName: group.name },
+  });
+};
 
   const onPressCreateGroup = () => {
-    navigation.navigate(ROUTES.TAB_GROUP as any, {
-      screen: ROUTES.GROUP_CREATE,
+    navigation.navigate(ROUTES.TAB_GROUP, {
+      screen: 'GroupCreate',
     });
   };
-
   const renderCard = ({ item }: { item: HomeCardItem }) => {
     if (item.type === 'group') {
       return (
@@ -99,7 +95,6 @@ export default function HomeScreen() {
 
   return (
     <ScreenLayout>
-      {/* Header */}
       <View
         style={{
           flexDirection: 'row',
@@ -126,7 +121,6 @@ export default function HomeScreen() {
         </Text>
       </View>
 
-      {/* Card Slider */}
       <View style={{ marginTop: 24 }}>
         <FlatList
           data={cards}
@@ -146,7 +140,6 @@ export default function HomeScreen() {
         />
       </View>
 
-      {/* 안내 텍스트 */}
       <Text style={{ marginTop: 16, textAlign: 'center', color: '#6B7280' }}>
         좌우로 넘겨서 모임 카드와 추가 카드를 볼 수 있어요
       </Text>

@@ -2,7 +2,7 @@
 
 export const ROUTES = {
   // Bottom Tabs (✅ 기존 Tab name 문자열 유지)
-  TAB_HOME: 'Home', // 홈
+  TAB_HOME: 'HomeTab', // 홈
   TAB_GROUP: 'Together', // 모임(=모임목록 탭)
   TAB_PAYMENT: 'Account', // 결제
 
@@ -22,4 +22,3 @@ export const ROUTES = {
   PAYMENT_MAIN: 'PAYMENT_MAIN',
   PAYMENT_HISTORY: 'PAYMENT_HISTORY',
 } as const;
-

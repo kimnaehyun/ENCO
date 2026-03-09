@@ -1,5 +1,6 @@
-// src/types/navigation.ts
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
+import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+import { CompositeScreenProps, NavigatorScreenParams } from "@react-navigation/native";
 import { CommonParams } from "./common";
 
 type AuthStackParamList = {
@@ -20,12 +21,15 @@ type RootStackParamList = {
   App: undefined;
 };
 
-type AuthScreenProps<T extends keyof AuthStackParamList> =
-  NativeStackScreenProps<AuthStackParamList, T>;
+// ✅ 추가
+type BottomTabParamList = {
+  Account: undefined;
+  HomeTab: undefined;
+  Together: NavigatorScreenParams<GroupStackParamList>;
+};
 
 type GroupStackParamList = {
   GroupList: undefined;
-
   GroupDashboard: CommonParams | undefined;
   GroupInfo: CommonParams | undefined;
   GroupVotes: CommonParams | undefined;
@@ -37,18 +41,17 @@ type GroupStackParamList = {
   AdminReceipt: CommonParams | undefined;
   AdminMembers: CommonParams | undefined;
   AdminCard: CommonParams | undefined;
-  AdminSettle: CommonParams | undefined
+  AdminSettle: CommonParams | undefined;
 
-   // (선택) 투표 상세 같은 거 추가되면 여기 확장
   GroupVoteDetail: { voteId: string } & CommonParams;
-  GroupVoteCreate : {}
+  GroupVoteCreate: undefined;
+
   GroupCreate: undefined;
   GroupCardRecommend: {
     groupName: string;
     address: string;
     tags: string[];
   };
-  
   GroupPinSetup: {
     groupName: string;
     address: string;
@@ -57,4 +60,22 @@ type GroupStackParamList = {
   };
 };
 
-export type {AuthStackParamList, RootStackParamList, AuthScreenProps, GroupStackParamList}
+type HomeStackParamList = {
+  Home: undefined;
+};
+
+type AuthScreenProps<T extends keyof AuthStackParamList> =
+  NativeStackScreenProps<AuthStackParamList, T>;
+
+type GroupScreenProps<T extends keyof GroupStackParamList> =
+  NativeStackScreenProps<GroupStackParamList, T>;
+
+export type {
+  AuthStackParamList,
+  RootStackParamList,
+  BottomTabParamList,   // ✅ 추가
+  AuthScreenProps,
+  GroupStackParamList,
+  GroupScreenProps,
+  HomeStackParamList,
+};

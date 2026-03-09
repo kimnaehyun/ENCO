@@ -5,13 +5,18 @@ import SplashScreen from '../screens/SplashScreen';
 import AuthNavigator from './AuthNavigator';
 import BottomNavigator from './BottomNavigator';
 import { useAuthStore } from '../store/useAuthStore';
-import type { RootStackParamList } from '../types/navigation';
+
+export type RootStackParamList = {
+  Splash: undefined;
+  Auth: undefined;
+  App: undefined;
+};
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
   const [isBooting, setIsBooting] = useState(true);
-  const user = useAuthStore(s => s.user);
+  const user = useAuthStore((s) => s.user);
 
   useEffect(() => {
     const t = setTimeout(() => setIsBooting(false), 800);

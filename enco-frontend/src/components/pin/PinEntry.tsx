@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import RandomKeypad from "./RandomKeypad";
 import PinDots from "./PinDots";
@@ -11,31 +11,35 @@ export default function PinEntry({
   onComplete,
 }: PinEntryProps) {
   const [pin, setPin] = useState("");
+  const completedRef = useRef(false);
 
   useEffect(() => {
     setPin("");
+    completedRef.current = false;
   }, [resetKey]);
+
+  useEffect(() => {
+    if (pin.length === length && !completedRef.current) {
+      completedRef.current = true;
+      onComplete(pin);
+    }
+  }, [pin, length, onComplete]);
 
   const handleDigit = (d: string) => {
     setPin((prev) => {
       if (prev.length >= length) return prev;
-
-      const next = prev + d;
-
-      if (next.length === length) {
-        onComplete(next);
-      }
-
-      return next;
+      return prev + d;
     });
   };
 
   const handleBackspace = () => {
     setPin((p) => p.slice(0, -1));
+    completedRef.current = false;
   };
 
   const handleReset = () => {
     setPin("");
+    completedRef.current = false;
   };
 
   return (
