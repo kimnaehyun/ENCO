@@ -20,8 +20,8 @@ pipeline {
             steps {
                 dir('enco-backend') {
                     sh '''
-                    chmod +x gradlew || true
-                    ./gradlew clean build -x test
+                    pwd
+                    ls -al
                     '''
                 }
             }
