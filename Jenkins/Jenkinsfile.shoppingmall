@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true)
+    }
+    
     environment {
         WEB_DEPLOY_PATH = '/var/www/enco-shoppingmall'
         NOTIFY_WEBHOOK = credentials('mattermost-webhook')
@@ -52,16 +56,14 @@ pipeline {
     post {
         success {
             sh '''
-            curl -X POST -H "Content-Type: application/json" \
-            --data "{\"text\":\"✅ 쇼핑몰 웹 배포 성공: ${JOB_NAME} #${BUILD_NUMBER}\"}" \
-            "$NOTIFY_WEBHOOK"
+            printf '%s' "{\"text\":\"✅ 쇼핑몰 웹 배포 성공: ${JOB_NAME} #${BUILD_NUMBER}\"}" > payload.json
+            curl -X POST -H "Content-Type: application/json" --data @payload.json "$NOTIFY_WEBHOOK"
             '''
         }
         failure {
             sh '''
-            curl -X POST -H "Content-Type: application/json" \
-            --data "{\"text\":\"❌ 쇼핑몰 웹 배포 실패: ${JOB_NAME} #${BUILD_NUMBER}\\n로그: ${BUILD_URL}\"}" \
-            "$NOTIFY_WEBHOOK"
+            printf '%s' "{\"text\":\"❌ 쇼핑몰 웹 배포 실패: ${JOB_NAME} #${BUILD_NUMBER}\\n로그: ${BUILD_URL}\"}" > payload.json
+            curl -X POST -H "Content-Type: application/json" --data @payload.json "$NOTIFY_WEBHOOK"
             '''
         }
     }
