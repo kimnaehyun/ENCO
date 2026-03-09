@@ -22,6 +22,7 @@ import GroupCreateScreen from '../screens/group/GroupCreateScreen';
 import GroupCardRecommendScreen from '../screens/group/GroupCardRecommendScreen';
 import GroupPinSetupScreen from '../screens/group/GroupPinSetupScreen.tsx';
 import { GroupStackParamList } from '../types/navigation.ts';
+import NotificationCenterScreen from '../screens/user/NotificationCenterScreen.tsx';
 
 const Stack = createNativeStackNavigator<GroupStackParamList>();
 
@@ -52,6 +53,7 @@ export default function GroupStackNavigator() {
       <Stack.Screen name="GroupCreate" component={GroupCreateScreen} />
       <Stack.Screen name="GroupCardRecommend" component={GroupCardRecommendScreen} />
       <Stack.Screen name="GroupPinSetup" component={GroupPinSetupScreen} />
+      <Stack.Screen name="UserNotifications" component={NotificationCenterScreen} />
     </Stack.Navigator>
   );
 }
