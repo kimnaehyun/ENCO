@@ -1,0 +1,316 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+}
+
+body {
+  font-family: Arial, Helvetica, sans-serif;
+  background: #f3f4f6;
+  color: #111827;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button {
+  font: inherit;
+  border: none;
+  cursor: pointer;
+}
+
+.page {
+  max-width: 430px;
+  margin: 0 auto;
+  min-height: 100vh;
+  background: #ffffff;
+}
+
+.header {
+  padding: 20px 16px 8px;
+}
+
+.header-subtitle {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.header-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.list {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.card {
+  overflow: hidden;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+}
+
+.card-image {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  display: block;
+}
+
+.card-body {
+  padding: 14px;
+}
+
+.card-header-row,
+.detail-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.card-rating,
+.detail-rating {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.card-location,
+.detail-location {
+  margin: 8px 0 0;
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.card-quantity {
+  margin: 10px 0 0;
+  font-size: 14px;
+  color: #374151;
+}
+
+.card-price {
+  margin: 14px 0 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.benefit-badge {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: #ecfdf3;
+  color: #047857;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.benefit-badge.large {
+  margin-top: 16px;
+}
+
+.detail-page {
+  padding-bottom: 92px;
+}
+
+.detail-image {
+  width: 100%;
+  height: 290px;
+  object-fit: cover;
+  display: block;
+}
+
+.detail-content {
+  padding: 18px 16px;
+}
+
+.detail-title {
+  margin: 4px 0 0;
+  font-size: 24px;
+  font-weight: 800;
+}
+
+.detail-description {
+  margin: 20px 0;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.info-box {
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  background: #f9fafb;
+}
+
+.section-title {
+  margin: 0 0 12px;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.info-box p {
+  margin: 8px 0;
+  color: #4b5563;
+}
+
+.bottom-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 430px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+  border-top: 1px solid #e5e7eb;
+  background: #ffffff;
+}
+
+.bottom-label {
+  margin: 0 0 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.bottom-price {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.enco-pay-button {
+  min-width: 168px;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.success-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  background: #f3f4f6;
+}
+
+.success-card {
+  width: 100%;
+  padding: 24px 20px;
+  border-radius: 20px;
+  background: #ffffff;
+  text-align: center;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.success-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 16px;
+  border-radius: 999px;
+  background: #ecfdf3;
+  color: #047857;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34px;
+  font-weight: 800;
+}
+
+.success-label {
+  margin: 0;
+  color: #047857;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.success-title {
+  margin: 10px 0 22px;
+  font-size: 24px;
+  line-height: 1.4;
+}
+
+.success-info {
+  margin-bottom: 16px;
+  padding: 14px;
+  border-radius: 14px;
+  background: #f9fafb;
+  text-align: left;
+}
+
+.success-info p {
+  margin: 4px 0;
+}
+
+.primary-button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: #111827;
+  color: #ffffff;
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.text-link {
+  display: inline-block;
+  margin-top: 16px;
+  color: #2563eb;
+  font-weight: 700;
+}
+
+.text-link.centered {
+  text-align: center;
+}
+
+.empty-state {
+  padding: 40px 16px;
+}
+.app-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+
+  padding: 16px;
+}
+
+.logo {
+  font-size: 22px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+
+.logo-highlight {
+  color: #2563eb;
+}
