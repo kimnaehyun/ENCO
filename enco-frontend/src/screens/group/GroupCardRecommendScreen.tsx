@@ -12,7 +12,6 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { ROUTES } from '../../constants/routes';
 import { GroupCardItem, CardRecommendRouteProp } from '../../types/group';
 
 
@@ -75,7 +74,7 @@ export default function GroupCardRecommendScreen() {
       return;
     }
 
-    navigation.navigate(ROUTES.GROUP_PIN_SETUP as any, {
+    navigation.navigate('GroupPinSetup', {
       groupName,
       address,
       tags,
