@@ -1,0 +1,5 @@
+const CARD_WIDTH = 180;
+const SPACING = 16;
+
+const ITEM_SIZE = CARD_WIDTH + SPACING;
+export { CARD_WIDTH, SPACING, ITEM_SIZE };
