@@ -6,4 +6,5 @@ export const images = {
   card2: require('../assets/images/card2.png'),
   card3: require('../assets/images/card3.png'),
   card4: require('../assets/images/card4.png'),
+  user: require('../assets/images/user.png'),
 };
