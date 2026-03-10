@@ -17,6 +17,7 @@ import AdminReceiptScreen from "../screens/admin/AdminReceiptScreen";
 import AdminMembersScreen from "../screens/admin/AdminMembersScreen";
 import AdminCardScreen from "../screens/admin/AdminCardScreen";
 import AdminSettleScreen from "../screens/admin/AdminSettleScreen";
+import OcrTestScreen from "../screens/OcrTestScreen";
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -44,6 +45,8 @@ export default function HomeStackNavigator() {
       <Stack.Screen name="AdminMembers" component={AdminMembersScreen} />
       <Stack.Screen name="AdminCard" component={AdminCardScreen} />
       <Stack.Screen name="AdminSettle" component={AdminSettleScreen} />
+
+      <Stack.Screen name="OcrTest" component={OcrTestScreen} />
     </Stack.Navigator>
   );
 }
