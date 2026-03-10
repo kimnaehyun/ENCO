@@ -1,30 +1,36 @@
 // src/screens/group/GroupChatScreen.tsx
-import React from 'react';
-import { Pressable, Text, View } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
-import ScreenLayout from '../../components/ScreenLayout';
+import { Text, View } from 'react-native';
+import { useRoute } from '@react-navigation/native';
+
 import { CommonParams } from '../../types/common';
+import ChatInput from '../../components/groupChat/ChatInput';
+import SubmitButton from '../../components/groupChat/SubmitButton';
 
 export default function GroupChatScreen() {
-  const navigation = useNavigation<any>();
   const route = useRoute();
   const params = (route.params ?? {}) as CommonParams;
 
   return (
-    <ScreenLayout>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+    <View className="flex-1">
+      <View
+        style={{
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+        }}
+        className=" border border-black border-solid "
+      >
         <Text style={{ fontSize: 20, fontWeight: '900' }}>
           커뮤니티(톡방) {params.groupName ? `- ${params.groupName}` : ''}
         </Text>
-        <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={{ fontSize: 16, fontWeight: '700' }}>닫기</Text>
-        </Pressable>
       </View>
-
-      <View style={{ marginTop: 16, borderRadius: 24, backgroundColor: '#E5E7EB', padding: 16 }}>
-        <Text style={{ fontWeight: '800' }}>임시 톡방 화면</Text>
-        <Text style={{ marginTop: 8 }}>- 실제 채팅은 다른 팀원 작업 범위</Text>
+      <View className="flex-1">
+        <Text>채팅창</Text>
       </View>
-    </ScreenLayout>
+      <View className="flex-row border border-black border-solid p-3 items-center">
+        <ChatInput className="flex-[9] bg-gray-300 rounded-xl px-4 max-h-40" />
+        <SubmitButton className="flex-[1] ml-5 rounded-full h-10" />
+      </View>
+    </View>
   );
 }
