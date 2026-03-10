@@ -17,22 +17,22 @@ import AdminReceiptScreen from '../screens/admin/AdminReceiptScreen';
 import AdminMembersScreen from '../screens/admin/AdminMembersScreen';
 import AdminSettleScreen from '../screens/admin/AdminSettleScreen';
 import AdminCardScreen from '../screens/admin/AdminCardScreen';
-<<<<<<< HEAD
 import GroupCreateScreen from '../screens/group/GroupCreateScreen';
 import GroupCardRecommendScreen from '../screens/group/GroupCardRecommendScreen';
 import GroupPinSetupScreen from '../screens/group/GroupPinSetupScreen.tsx';
-import { GroupStackParamList } from '../types/navigation.ts';
+
 import NotificationCenterScreen from '../screens/user/NotificationCenterScreen.tsx';
-=======
 
 import { GroupStackParamList } from '../types/navigation';
->>>>>>> 4c616ea3ba9bbd11f6845ed0ddd14ac4f33dbc10
 
 const Stack = createNativeStackNavigator<GroupStackParamList>();
 
 export default function GroupStackNavigator() {
   return (
-    <Stack.Navigator initialRouteName="GroupList" screenOptions={{ headerShown: false }}>
+    <Stack.Navigator
+      initialRouteName="GroupList"
+      screenOptions={{ headerShown: false }}
+    >
       {/* 모임 목록 */}
       <Stack.Screen name="GroupList" component={TogetherScreen} />
 
@@ -55,9 +55,15 @@ export default function GroupStackNavigator() {
       <Stack.Screen name="AdminCard" component={AdminCardScreen} />
       <Stack.Screen name="AdminSettle" component={AdminSettleScreen} />
       <Stack.Screen name="GroupCreate" component={GroupCreateScreen} />
-      <Stack.Screen name="GroupCardRecommend" component={GroupCardRecommendScreen} />
+      <Stack.Screen
+        name="GroupCardRecommend"
+        component={GroupCardRecommendScreen}
+      />
       <Stack.Screen name="GroupPinSetup" component={GroupPinSetupScreen} />
-      <Stack.Screen name="UserNotifications" component={NotificationCenterScreen} />
+      <Stack.Screen
+        name="UserNotifications"
+        component={NotificationCenterScreen}
+      />
     </Stack.Navigator>
   );
 }
