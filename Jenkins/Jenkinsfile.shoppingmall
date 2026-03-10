@@ -56,17 +56,13 @@ pipeline {
     post {
         success {
             sh '''
-            cat > payload.json <<EOF
-    {"text":"✅ 쇼핑몰 웹 배포 성공: ${JOB_NAME} #${BUILD_NUMBER}"}
-    EOF
+            printf '%s\n' '{"text":"✅ 쇼핑몰 웹 배포 성공: '"${JOB_NAME}"' #'"${BUILD_NUMBER}"'"}' > payload.json
             curl -X POST -H "Content-Type: application/json" --data @payload.json "$NOTIFY_WEBHOOK"
             '''
         }
         failure {
             sh '''
-            cat > payload.json <<EOF
-    {"text":"❌ 쇼핑몰 웹 배포 실패: ${JOB_NAME} #${BUILD_NUMBER}\\n로그: ${BUILD_URL}"}
-    EOF
+            printf '%s\n' '{"text":"❌ 쇼핑몰 웹 배포 실패: '"${JOB_NAME}"' #'"${BUILD_NUMBER}"'\\n로그: '"${BUILD_URL}"'"}' > payload.json
             curl -X POST -H "Content-Type: application/json" --data @payload.json "$NOTIFY_WEBHOOK"
             '''
         }
