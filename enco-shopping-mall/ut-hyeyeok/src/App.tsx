@@ -2,7 +2,6 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import AccommodationDetailPage from './pages/AccommodationDetailPage';
 import AccommodationListPage from './pages/AccommodationListPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
-import TestDeepLink from './pages/TestDeepLink';
 export default function App() {
   return (
     <BrowserRouter>
@@ -13,7 +12,6 @@ export default function App() {
           element={<AccommodationDetailPage />}
         />
         <Route path="/payment-success" element={<PaymentSuccessPage />} />
-        <Route path = "/deepLinktest" element={<TestDeepLink/>}/>
       </Routes>
     </BrowserRouter>
   );

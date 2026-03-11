@@ -1,12 +1,40 @@
 import 'react-native-gesture-handler';
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  type LinkingOptions,
+} from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import RootNavigator from './src/navigation/RootNavigator';
 import { VotesProvider } from './src/contexts/VotesContext';
 import { NotificationsProvider } from './src/contexts/NotificationsContext';
 import './global.css';
+import type { RootStackParamList } from './src/types/navigation';
+
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ['enco://app'],
+  config: {
+    screens: {
+      App: {
+        screens: {
+          InternetPay: {
+            screens: {
+              PaymentSuccess: {
+                path: 'pay/success',
+                parse: {
+                  amount: (value: string) => Number(value),
+                  callbackUrl: (value: string) => value,
+                  orderId: (value: string) => value,
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  },
+};
 
 function App() {
   return (
@@ -14,7 +42,7 @@ function App() {
       <NotificationsProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <SafeAreaProvider>
-            <NavigationContainer>
+            <NavigationContainer linking={linking}>
               <RootNavigator />
             </NavigationContainer>
           </SafeAreaProvider>
