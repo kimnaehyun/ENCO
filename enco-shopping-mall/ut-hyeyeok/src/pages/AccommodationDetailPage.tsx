@@ -1,10 +1,9 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { accommodations } from '../data/accommodations';
 import Header from "../components/Header";
 
 export default function AccommodationDetailPage() {
   const { accommodationId } = useParams();
-  const navigate = useNavigate();
 
   const accommodation = accommodations.find(
     (item) => item.id === Number(accommodationId)
