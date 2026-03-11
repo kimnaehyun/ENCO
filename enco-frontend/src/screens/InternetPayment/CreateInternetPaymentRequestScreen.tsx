@@ -24,7 +24,7 @@ export default function CreateInternetPaymentRequestScreen({
         placeholder="마감 시간"
       />
       <Pressable
-        onPress={() => navigation.navigate('PaymentApprovalPending')}
+        onPress={() => navigation.replace('PaymentApprovalPending')}
         className="border border-black w-full rounded-xl py-3 items-center"
       >
         <Text className="font-bold">완료</Text>
