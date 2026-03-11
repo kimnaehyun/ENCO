@@ -1,37 +1,38 @@
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 
-type PaymentState = {
-  name?: string;
-  price?: number;
-};
-
 export default function PaymentSuccessPage() {
   const location = useLocation();
   const navigate = useNavigate();
-  const state = (location.state ?? {}) as PaymentState;
 
-  const name = state.name ?? '선택한 숙소';
-  const price = state.price ?? 0;
+  const params = new URLSearchParams(location.search);
+
+  const status = params.get('status');
+  const amount = Number(params.get('amount') ?? 0);
+  const orderId = params.get('orderId');
 
   return (
     <div className="page success-page">
       <div className="success-card">
         <div className="success-icon">✓</div>
-        <p className="success-label">결제 완료</p>
-        <h1 className="success-title">ENCO PAY 결제가 완료되었습니다</h1>
+        <p className="success-label">
+          {status === 'success' ? '결제 완료' : '결제 상태 확인'}
+        </p>
+        <h1 className="success-title">
+          {amount.toLocaleString()}원 결제가 완료되었습니다
+        </h1>
 
         <div className="success-info">
           <p>
-            <strong>숙소명</strong>
+            <strong>주문번호</strong>
           </p>
-          <p>{name}</p>
+          <p>{orderId ?? '-'}</p>
         </div>
 
         <div className="success-info">
           <p>
             <strong>결제금액</strong>
           </p>
-          <p>{price.toLocaleString()}원</p>
+          <p>{amount.toLocaleString()}원</p>
         </div>
 
         <button className="primary-button" onClick={() => navigate('/')}>

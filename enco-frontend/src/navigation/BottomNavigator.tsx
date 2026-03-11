@@ -7,7 +7,6 @@ import { ROUTES } from '../constants/routes';
 import HomeStackNavigator from './HomeStackNavigator';
 import GroupStackNavigator from './GroupStackNavigator';
 import OnsitePaymentNavigator from './OnsitePaymentNavigator';
-import InternetPayNavigator from './InternetPaymentNavigator';
 
 const Tab = createBottomTabNavigator();
 
@@ -21,26 +20,6 @@ export default function BottomNavigator() {
         headerShown: false,
       }}
     >
-      {/* 인터넷 결제 */}
-      {/*  <Tab.Screen
-        name={ROUTES.TAB_PAYMENT}
-        component={InternetPayNavigator}
-        options={{
-          tabBarIcon: ({ focused, size }) => (
-            <Image
-              source={
-                focused
-                  ? require('../assets/icons/home_active.png')
-                  : require('../assets/icons/home.png')
-              }
-              style={{ width: size, height: size }}
-              resizeMode="contain"
-            />
-          ),
-        }}
-      />
-      */}
-      {/* 현장 결제 */}
       <Tab.Screen
         name={ROUTES.TAB_PAYMENT}
         component={OnsitePaymentNavigator}
@@ -69,7 +48,7 @@ export default function BottomNavigator() {
           },
         })}
       />
-      {/* 홈 */}
+
       <Tab.Screen
         name={ROUTES.TAB_HOME}
         component={HomeStackNavigator}
@@ -87,7 +66,7 @@ export default function BottomNavigator() {
           ),
         }}
       />
-      {/* 모임 */}
+
       <Tab.Screen
         name={ROUTES.TAB_GROUP}
         component={GroupStackNavigator}

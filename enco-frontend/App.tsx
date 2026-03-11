@@ -17,18 +17,17 @@ const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ['enco://app'],
   config: {
     screens: {
-      App: {
+      InternetPayFlow: {
         screens: {
-          InternetPay: {
-            screens: {
-              PaymentSuccess: {
-                path: 'pay/success',
-                parse: {
-                  amount: (value: string) => Number(value),
-                  callbackUrl: (value: string) => value,
-                  orderId: (value: string) => value,
-                },
-              },
+          CreateInternetPaymentRequest: 'pay',
+          PaymentApprovalPending: 'pay/pending',
+          InternetPaymentPin: 'pay/pin',
+          PaymentSuccess: {
+            path: 'pay/success',
+            parse: {
+              amount: (value: string) => Number(value),
+              callbackUrl: (value: string) => value,
+              orderId: (value: string) => value,
             },
           },
         },
@@ -55,9 +54,14 @@ function App() {
       <NotificationsProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <SafeAreaProvider>
-            <NavigationContainer linking={linking}>
-              <RootNavigator />
-            </NavigationContainer>
+            <NavigationContainer
+            linking={linking}
+              onStateChange={(state) => {
+                console.log('nav state:', JSON.stringify(state, null, 2));
+              }}
+                >
+                <RootNavigator />
+              </NavigationContainer>
           </SafeAreaProvider>
         </GestureHandlerRootView>
       </NotificationsProvider>
