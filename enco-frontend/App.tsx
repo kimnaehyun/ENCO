@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler';
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   NavigationContainer,
   type LinkingOptions,
@@ -11,6 +11,7 @@ import { VotesProvider } from './src/contexts/VotesContext';
 import { NotificationsProvider } from './src/contexts/NotificationsContext';
 import './global.css';
 import type { RootStackParamList } from './src/types/navigation';
+import { Linking } from 'react-native';
 
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ['enco://app'],
@@ -37,6 +38,18 @@ const linking: LinkingOptions<RootStackParamList> = {
 };
 
 function App() {
+  useEffect(() => {
+    Linking.getInitialURL().then((url) => {
+      console.log('initialURL:', url);
+    });
+
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      console.log('runtimeURL:', url);
+    });
+
+    return () => sub.remove();
+  }, []);
+
   return (
     <VotesProvider>
       <NotificationsProvider>
