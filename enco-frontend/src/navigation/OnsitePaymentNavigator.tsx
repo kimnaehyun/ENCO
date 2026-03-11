@@ -8,7 +8,11 @@ import PaymentPinScreen from '../screens/payment/PaymentPinScreen';
 export default function OnsitePaymentNavigator() {
   const Stack = createNativeStackNavigator();
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerBackVisible: false,
+      }}
+    >
       <Stack.Screen
         name="OnsitePaymentPin"
         component={PaymentPinScreen}
