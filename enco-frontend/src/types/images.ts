@@ -1,7 +1,17 @@
 export const images = {
   logo: require('../assets/logo.png'),
-  barcode: require('../assets/images/barcode.png'),
-  qr: require('../assets/images/qr.png'),
+  qr: [
+    require('../assets/images/qr0.png'),
+    require('../assets/images/qr1.png'),
+    require('../assets/images/qr2.png'),
+    require('../assets/images/qr3.png'),
+  ],
+  barcode: [
+    require('../assets/images/barcode0.png'),
+    require('../assets/images/barcode1.png'),
+    require('../assets/images/barcode2.png'),
+    require('../assets/images/barcode3.png'),
+  ],
   card1: require('../assets/images/card1.png'),
   card2: require('../assets/images/card2.png'),
   card3: require('../assets/images/card3.png'),
