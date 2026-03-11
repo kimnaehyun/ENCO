@@ -42,6 +42,7 @@ type BottomTabParamList = {
   Account: undefined;
   HomeTab: undefined;
   Together: NavigatorScreenParams<GroupStackParamList>;
+  InternetPay :NavigatorScreenParams<InternetPayStackParamList>;
 };
 
 // ─── Group Stack (탭 내부) ────────────────────────────────────────────────────
@@ -86,6 +87,14 @@ type HomeStackParamList = {
   AdminSettle: CommonParams | undefined;
 };
 
+// ─── Internet Payment Stack ───────────────────────────────────────────────
+type InternetPayStackParamList = {
+  CreateInternetPaymentRequest: undefined;
+  PaymentApprovalPending: undefined;
+  InternetPaymentPin: { screen?: string } | undefined;
+  PaymentSuccess: undefined;
+};
+
 // ─── Screen Props ─────────────────────────────────────────────────────────────
 type AuthScreenProps<T extends keyof AuthStackParamList> =
   NativeStackScreenProps<AuthStackParamList, T>;
@@ -107,4 +116,5 @@ export type {
   GroupStackParamList,
   GroupScreenProps,
   HomeStackParamList,
+  InternetPayStackParamList,
 };

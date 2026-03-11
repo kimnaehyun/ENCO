@@ -6,7 +6,26 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import RootNavigator from './src/navigation/RootNavigator';
 import { VotesProvider } from './src/contexts/VotesContext';
 import { NotificationsProvider } from './src/contexts/NotificationsContext';
+import type { RootStackParamList } from './src/types/navigation';
+import { LinkingOptions } from '@react-navigation/native';
 import './global.css';
+
+const linking : LinkingOptions<RootStackParamList> ={
+  prefixes: ["enco://app"],
+  config:{
+    screens:{
+      App: {
+        screens:{
+          InternetPay :{
+            screens:{
+              PaymentSuccess: 'pay/success',
+            }
+          }
+        }
+      }
+    }
+  }
+}
 
 function App() {
   return (
@@ -14,7 +33,7 @@ function App() {
       <NotificationsProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <SafeAreaProvider>
-            <NavigationContainer>
+            <NavigationContainer linking={linking}>
               <RootNavigator />
             </NavigationContainer>
           </SafeAreaProvider>

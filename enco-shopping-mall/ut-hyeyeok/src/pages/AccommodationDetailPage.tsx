@@ -12,13 +12,16 @@ export default function AccommodationDetailPage() {
 
   const handleEncoPay = () => {
     if (!accommodation) return;
+    const orderId = accommodation.id;
+    const price = accommodation.price;
 
-    navigate('/payment-success', {
-      state: {
-        name: accommodation.name,
-        price: accommodation.price,
-      },
-    });
+    const callbackUrl = encodeURIComponent(
+      "http://j14e104.p.ssafy.io/payment-success"
+    );
+
+    const deepLink = `enco://app/pay?orderId=${orderId}&amount=${price}&callbackUrl=${callbackUrl}`;
+
+    window.location.href = deepLink;
   };
 
   if (!accommodation) {
