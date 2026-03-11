@@ -1,8 +1,8 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import CreateInternetPaymentRequestScreen from '../screens/InternetPayment/CreateInternetPaymentRequestScreen';
 import PaymentApprovalPendingScreen from '../screens/InternetPayment/PaymentApprovalPendingScreen';
-import PaymentPasswordScreen from '../screens/InternetPayment/PaymentPasswordScreen';
 import PaymentSuccessScreen from '../screens/InternetPayment/PaymentSuccessScreen';
+import PaymentPinScreen from '../screens/payment/PaymentPinScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -10,7 +10,7 @@ export default function InternetPayNavigator() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerTitleAlign: 'center',
+        headerBackVisible: false,
       }}
     >
       <Stack.Screen
@@ -21,7 +21,12 @@ export default function InternetPayNavigator() {
         name="PaymentApprovalPending"
         component={PaymentApprovalPendingScreen}
       />
-      <Stack.Screen name="PaymentPassword" component={PaymentPasswordScreen} />
+      <Stack.Screen
+        name="InternetPaymentPin"
+        component={PaymentPinScreen}
+        initialParams={{ screen: 'PaymentSuccess' }}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
     </Stack.Navigator>
   );
