@@ -1,10 +1,10 @@
-import { Button, Text, View } from 'react-native';
+import { Text, View } from 'react-native';
 
 export default function PaymentApprovalPendingScreen({ navigation }: any) {
   (() => {
     setTimeout(() => {
-      navigation.navigate('PaymentPassword');
-    }, 3000);
+      navigation.replace('InternetPaymentPin');
+    }, 2000);
   })();
   return (
     <View className="flex items-center justify-center h-full">
