@@ -13,11 +13,16 @@ const data = [
   { image: images.card4 },
 ];
 
-export default function CardRecommendation() {
+export default function CardRecommendation({
+  onSelectCard,
+}: {
+  onSelectCard: React.Dispatch<React.SetStateAction<number>>;
+}) {
   const scrollX = useRef(new Animated.Value(0)).current;
 
   return (
     <Animated.FlatList
+      style={{ flex: 1 }}
       data={data}
       horizontal
       showsHorizontalScrollIndicator={false}
@@ -38,7 +43,7 @@ export default function CardRecommendation() {
       onMomentumScrollEnd={event => {
         const offsetX = event.nativeEvent.contentOffset.x;
         const index = Math.round(offsetX / ITEM_SIZE);
-        Alert.alert(`index: ${index}`);
+        onSelectCard(index);
       }}
     />
   );
