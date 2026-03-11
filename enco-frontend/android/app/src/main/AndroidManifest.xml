@@ -25,10 +25,12 @@
         android:launchMode="singleTask"
         android:windowSoftInputMode="adjustResize"
         android:exported="true">
+        <!--앱 실행-->
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
+        <!--딥링크-->
         <intent-filter>
         <action android:name="android.intent.action.VIEW" />
 
@@ -38,7 +40,7 @@
         <data
             android:scheme="enco"
             android:host="app" />
-    </intent-filter>
+        </intent-filter>
       </activity>
     </application>
 </manifest>
