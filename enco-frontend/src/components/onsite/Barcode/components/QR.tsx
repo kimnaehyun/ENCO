@@ -9,5 +9,11 @@ export default function QR({
   cardNumber: number;
   className: string;
 }) {
-  return <Image className={className} source={images.qr[cardNumber]} />;
+  return (
+    <Image
+      className={className}
+      source={images.qr[cardNumber]}
+      resizeMode="contain"
+    />
+  );
 }

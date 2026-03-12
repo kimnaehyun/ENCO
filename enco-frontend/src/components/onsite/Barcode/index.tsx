@@ -1,4 +1,4 @@
-import { View, Modal, TouchableOpacity } from 'react-native';
+import { View, Modal, TouchableOpacity, Button, Pressable } from 'react-native';
 import React, { useState } from 'react';
 import Barcode from './components/Barcode';
 import QR from './components/QR';
@@ -41,20 +41,20 @@ export default function index() {
         animationType="fade"
         onRequestClose={() => setModalVisible(false)}
       >
-        <TouchableOpacity
-          className="flex-1 justify-center items-center bg-black/90"
-          onPress={() => setModalVisible(false)}
-        >
+        <View className="flex-1 justify-center items-center bg-white">
           <View
-            className={`bg-white p-6 rounded-2xl ${modalType === 'barcode' ? 'rotate-90' : ''}`}
+            className={`bg-white flex items-end ${modalType === 'barcode' ? 'rotate-90' : ''}`}
           >
+            <Pressable onPress={() => setModalVisible(false)}>
+              <Text className="text-5xl">x</Text>
+            </Pressable>
             {modalType === 'barcode' ? (
-              <Barcode className="" cardNumber={cardNumber} />
+              <Barcode className="h-60 w-[650px]" cardNumber={cardNumber} />
             ) : (
-              <QR className="w-40 h-40" cardNumber={cardNumber} />
+              <QR className="w-80 h-80" cardNumber={cardNumber} />
             )}
           </View>
-        </TouchableOpacity>
+        </View>
       </Modal>
     </View>
   );
