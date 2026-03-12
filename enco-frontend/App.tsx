@@ -38,13 +38,9 @@ const linking: LinkingOptions<RootStackParamList> = {
 
 function App() {
   useEffect(() => {
-    Linking.getInitialURL().then((url) => {
-      console.log('initialURL:', url);
-    });
+    Linking.getInitialURL().then(url => {});
 
-    const sub = Linking.addEventListener('url', ({ url }) => {
-      console.log('runtimeURL:', url);
-    });
+    const sub = Linking.addEventListener('url', ({ url }) => {});
 
     return () => sub.remove();
   }, []);
@@ -54,14 +50,9 @@ function App() {
       <NotificationsProvider>
         <GestureHandlerRootView style={{ flex: 1 }}>
           <SafeAreaProvider>
-            <NavigationContainer
-            linking={linking}
-              onStateChange={(state) => {
-                console.log('nav state:', JSON.stringify(state, null, 2));
-              }}
-                >
-                <RootNavigator />
-              </NavigationContainer>
+            <NavigationContainer linking={linking} onStateChange={state => {}}>
+              <RootNavigator />
+            </NavigationContainer>
           </SafeAreaProvider>
         </GestureHandlerRootView>
       </NotificationsProvider>
