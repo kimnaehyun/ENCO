@@ -1,25 +1,31 @@
-import { Link, useNavigate, useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { accommodations } from '../data/accommodations';
 import Header from "../components/Header";
 
 export default function AccommodationDetailPage() {
   const { accommodationId } = useParams();
-  const navigate = useNavigate();
 
   const accommodation = accommodations.find(
     (item) => item.id === Number(accommodationId)
   );
 
   const handleEncoPay = () => {
-    if (!accommodation) return;
+  if (!accommodation) return;
 
-    navigate('/payment-success', {
-      state: {
-        name: accommodation.name,
-        price: accommodation.price,
-      },
-    });
-  };
+  const orderId = accommodation.id;
+  const price = accommodation.price;
+
+  const callbackUrl = encodeURIComponent(
+    'http://j14e104.p.ssafy.io/payment-success'
+  );
+
+  const deepLink =
+    `enco://app/pay/success?orderId=${orderId}` +
+    `&amount=${price}` +
+    `&callbackUrl=${callbackUrl}`;
+
+  window.location.href = deepLink;
+};
 
   if (!accommodation) {
     return (

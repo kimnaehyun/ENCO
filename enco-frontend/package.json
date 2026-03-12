@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@op-engineering/op-sqlite": "^15.2.5",
     "@react-native-clipboard/clipboard": "^1.16.3",
     "@react-native/new-app-screen": "0.84.1",
     "@react-navigation/bottom-tabs": "^7.15.5",
@@ -20,8 +21,8 @@
     "prettier-plugin-tailwindcss": "^0.5.14",
     "react": "19.2.3",
     "react-native": "0.84.1",
+    "react-native-geolocation-service": "^5.3.1",
     "react-native-gesture-handler": "^2.30.0",
-    "react-native-image-picker": "^8.2.1",
     "react-native-reanimated": "^4.2.2",
     "react-native-safe-area-context": "^5.7.0",
     "react-native-screens": "^4.24.0",

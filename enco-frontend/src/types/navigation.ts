@@ -1,6 +1,9 @@
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
-import { CompositeScreenProps, NavigatorScreenParams } from "@react-navigation/native";
+import {
+  CompositeScreenProps,
+  NavigatorScreenParams,
+} from "@react-navigation/native";
 import { CommonParams } from "./common";
 
 // ─── Auth ────────────────────────────────────────────────────────────────────
@@ -16,13 +19,24 @@ type AuthStackParamList = {
   };
 };
 
+// ─── Internet Payment Stack ──────────────────────────────────────────────────
+type InternetPayStackParamList = {
+  CreateInternetPaymentRequest: undefined;
+  PaymentApprovalPending: undefined;
+  InternetPaymentPin: { screen?: string } | undefined;
+  PaymentSuccess: {
+    amount?: number;
+    callbackUrl?: string;
+    orderId?: string;
+  } | undefined;
+};
+
 // ─── Root ─────────────────────────────────────────────────────────────────────
-// 그룹 생성 3단계 플로우가 여기 포함됨 (모달 스택으로 탭과 분리)
 type RootStackParamList = {
   Splash: undefined;
   Auth: undefined;
   App: undefined;
-  // 그룹 생성 모달 플로우
+
   GroupCreate: undefined;
   GroupCardRecommend: {
     groupName: string;
@@ -35,6 +49,8 @@ type RootStackParamList = {
     tags: string[];
     selectedCardId: string;
   };
+
+  InternetPayFlow: NavigatorScreenParams<InternetPayStackParamList>;
 };
 
 // ─── Bottom Tab ───────────────────────────────────────────────────────────────
@@ -44,9 +60,7 @@ type BottomTabParamList = {
   Together: NavigatorScreenParams<GroupStackParamList>;
 };
 
-// ─── Group Stack (탭 내부) ────────────────────────────────────────────────────
-// 생성 플로우(GroupCreate / GroupCardRecommend / GroupPinSetup)는 제거됨.
-// → RootStackParamList 에서 모달로 관리.
+// ─── Group Stack ──────────────────────────────────────────────────────────────
 type GroupStackParamList = {
   GroupList: undefined;
   GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
@@ -67,8 +81,6 @@ type GroupStackParamList = {
 };
 
 // ─── Home Stack ───────────────────────────────────────────────────────────────
-// GroupDashboard 및 하위 그룹 화면들을 HomeStack에 포함.
-// HomeScreen → GroupDashboard push → 뒤로가기 시 HomeScreen 복귀.
 type HomeStackParamList = {
   Home: undefined;
   GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
@@ -109,4 +121,5 @@ export type {
   GroupStackParamList,
   GroupScreenProps,
   HomeStackParamList,
+  InternetPayStackParamList,
 };

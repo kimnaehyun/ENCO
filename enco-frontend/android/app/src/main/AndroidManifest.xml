@@ -1,7 +1,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.INTERNET" />
-
+    <!--  위치 권한  -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <!--  카메라 권한  -->
     <uses-permission android:name="android.permission.CAMERA" />
 
@@ -9,6 +11,8 @@
     <uses-feature
         android:name="android.hardware.camera"
         android:required="false" />
+
+
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"
@@ -25,9 +29,21 @@
         android:launchMode="singleTask"
         android:windowSoftInputMode="adjustResize"
         android:exported="true">
+        <!--앱 실행-->
         <intent-filter>
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
+        </intent-filter>
+        <!--딥링크-->
+        <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+
+        <data
+            android:scheme="enco"
+            android:host="app" />
         </intent-filter>
       </activity>
     </application>

@@ -3,6 +3,7 @@ import AccommodationDetailPage from './pages/AccommodationDetailPage';
 import AccommodationListPage from './pages/AccommodationListPage';
 import PaymentSuccessPage from './pages/PaymentSuccessPage';
 
+
 export default function App() {
   return (
     <BrowserRouter>

@@ -15,12 +15,11 @@ export default function BottomNavigator() {
     <Tab.Navigator
       initialRouteName={ROUTES.TAB_HOME}
       backBehavior="none"
-      screenOptions={{   
+      screenOptions={{
         tabBarShowLabel: false,
         headerShown: false,
       }}
     >
-      {/* 결제 */}
       <Tab.Screen
         name={ROUTES.TAB_PAYMENT}
         component={OnsitePaymentNavigator}
@@ -37,8 +36,19 @@ export default function BottomNavigator() {
             />
           ),
         }}
+        listeners={({ navigation }) => ({
+          tabPress: e => {
+            e.preventDefault();
+            navigation.dispatch(
+              CommonActions.navigate({
+                name: ROUTES.TAB_PAYMENT,
+                params: { screen: 'OnsitePaymentPin' },
+              }),
+            );
+          },
+        })}
       />
-      {/* 홈 */}
+
       <Tab.Screen
         name={ROUTES.TAB_HOME}
         component={HomeStackNavigator}
@@ -56,18 +66,18 @@ export default function BottomNavigator() {
           ),
         }}
       />
-      {/* 모임 */}
+
       <Tab.Screen
         name={ROUTES.TAB_GROUP}
         component={GroupStackNavigator}
         listeners={({ navigation }) => ({
-          tabPress: (e) => {
+          tabPress: e => {
             e.preventDefault();
             navigation.dispatch(
               CommonActions.navigate({
                 name: ROUTES.TAB_GROUP,
                 params: { screen: 'GroupList' },
-              })
+              }),
             );
           },
         })}

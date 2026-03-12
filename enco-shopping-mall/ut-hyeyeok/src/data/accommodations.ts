@@ -37,7 +37,7 @@ export const accommodations: Accommodation[] = [
     price: 1000,
     quantity: 2,
     imageUrl: images.boxjpg,
-    rating: 4.9,
+    rating: 1289.9,
     description:
       '박스 속에서 종이 내음과 자연의 소리를 즐기세요',
     checkIn: '15:00',
