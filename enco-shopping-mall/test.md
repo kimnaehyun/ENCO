@@ -1,1 +1,0 @@
-jenkins - mm webhook 테스트용 markdown 파일
