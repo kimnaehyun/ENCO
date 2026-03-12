@@ -1,12 +1,11 @@
-// src/screens/auth/AuthLandingScreen.tsx
 import React from 'react';
 import { View, Text, Image, Button, Pressable } from 'react-native';
 import { images } from '../../types/images';
-import { AuthStackScreenProps } from '../../types/auth';
+import { AuthScreenProps } from '../../types/navigation'; 
 
 export default function AuthLandingScreen({
   navigation,
-}: AuthStackScreenProps<'AuthLanding'>) {
+}: AuthScreenProps<'AuthLanding'>) {
   return (
     <View
       style={{
@@ -22,15 +21,10 @@ export default function AuthLandingScreen({
         resizeMode="contain"
       />
 
-      {/* 로그인 */}
-      <Button
-        title="로그인"
-        onPress={() => navigation.navigate('Login')}
-      />
+      <Button title="로그인" onPress={() => navigation.navigate('Login')} />
 
       <Text>회원이 아니신가요?</Text>
 
-      {/* 회원가입 */}
       <Pressable onPress={() => navigation.navigate('SignupForm')}>
         <Text style={{ textDecorationLine: 'underline' }}>
           회원가입하러 가기

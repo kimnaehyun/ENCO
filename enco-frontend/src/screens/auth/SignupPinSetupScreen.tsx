@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { View, Text } from "react-native";
-import type { AuthStackScreenProps } from "../../types/auth";
+import type { AuthScreenProps } from "../../types/navigation";
 import PinEntry from "../../components/pin/PinEntry";
 
 export default function SignupPinSetupScreen({
   route,
   navigation,
-}: AuthStackScreenProps<"SignupPinSetup">) {
-  const { name, birth, phone, email } = route.params;
+}: AuthScreenProps<"SignupPinSetup">) {
 
   const [step, setStep] = useState<"set" | "confirm">("set");
   const [firstPin, setFirstPin] = useState<string | null>(null);
