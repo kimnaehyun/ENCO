@@ -8,7 +8,13 @@ export default function PaymentMethodScreen() {
   const paymentMethodType = usePaymentStore(state => state.paymentMethod);
   return (
     <View className="flex-1">
-      <View className="absolute top-0 left-0 right-0 z-50">
+      <View
+        className={
+          paymentMethodType === 'barcode'
+            ? ''
+            : 'absolute top-0 left-0 right-0 z-50'
+        }
+      >
         <PaymentToggleButton />
       </View>
       <View className="flex-1">

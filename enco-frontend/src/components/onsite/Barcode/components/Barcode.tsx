@@ -1,11 +1,19 @@
-import { View, Image } from 'react-native';
+import { Image } from 'react-native';
 import React from 'react';
 import { images } from '../../../../types/images';
 
-export default function Barcode() {
+export default function Barcode({
+  cardNumber,
+  className,
+}: {
+  cardNumber: number;
+  className: string;
+}) {
   return (
-    <View>
-      <Image source={images.barcode} />
-    </View>
+    <Image
+      className={className}
+      source={images.barcode[cardNumber]}
+      resizeMode="contain"
+    />
   );
 }
