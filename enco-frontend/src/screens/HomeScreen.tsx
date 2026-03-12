@@ -143,6 +143,10 @@ export default function HomeScreen() {
       <Text style={{ marginTop: 16, textAlign: 'center', color: '#6B7280' }}>
         좌우로 넘겨서 모임 카드와 추가 카드를 볼 수 있어요
       </Text>
+
+      <Pressable onPress={() => navigation.navigate('OcrTest')}>
+        <Text>OCR 테스트 페이지로 이동</Text>
+      </Pressable>
     </ScreenLayout>
   );
 }

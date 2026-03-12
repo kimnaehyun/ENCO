@@ -96,6 +96,8 @@ type HomeStackParamList = {
   AdminMembers: CommonParams | undefined;
   AdminCard: CommonParams | undefined;
   AdminSettle: CommonParams | undefined;
+
+  OcrTest: CommonParams | undefined;
 };
 
 // ─── Screen Props ─────────────────────────────────────────────────────────────
