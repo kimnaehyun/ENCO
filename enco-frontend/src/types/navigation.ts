@@ -1,13 +1,14 @@
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { BottomTabScreenProps } from "@react-navigation/bottom-tabs";
+// src/navigation/types.ts
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import {
   CompositeScreenProps,
   NavigatorScreenParams,
-} from "@react-navigation/native";
-import { CommonParams } from "./common";
+} from '@react-navigation/native';
+import { CommonParams } from './common';
 
-// ─── Auth ────────────────────────────────────────────────────────────────────
-type AuthStackParamList = {
+// Auth
+export type AuthStackParamList = {
   AuthLanding: undefined;
   Login: undefined;
   SignupForm: undefined;
@@ -19,8 +20,8 @@ type AuthStackParamList = {
   };
 };
 
-// ─── Internet Payment Stack ──────────────────────────────────────────────────
-type InternetPayStackParamList = {
+// Internet Payment
+export type InternetPayStackParamList = {
   CreateInternetPaymentRequest: undefined;
   PaymentApprovalPending: undefined;
   InternetPaymentPin: { screen?: string } | undefined;
@@ -31,10 +32,54 @@ type InternetPayStackParamList = {
   } | undefined;
 };
 
-// ─── Root ─────────────────────────────────────────────────────────────────────
-type RootStackParamList = {
+// Group
+export type GroupStackParamList = {
+  GroupList: undefined;
+  GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
+  GroupInfo: CommonParams | undefined;
+  GroupVotes: CommonParams | undefined;
+  GroupPay: CommonParams | undefined;
+  GroupChat: CommonParams | undefined;
+  GroupLedger: CommonParams | undefined;
+  AdminMenu: CommonParams | undefined;
+  AdminReceipt: CommonParams | undefined;
+  AdminMembers: CommonParams | undefined;
+  AdminCard: CommonParams | undefined;
+  AdminSettle: CommonParams | undefined;
+  GroupVoteDetail: { voteId: string } & CommonParams;
+  GroupVoteCreate: undefined;
+};
+
+// Home
+export type HomeStackParamList = {
+  Home: undefined;
+  GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
+  GroupInfo: CommonParams | undefined;
+  GroupVotes: CommonParams | undefined;
+  GroupPay: CommonParams | undefined;
+  GroupChat: CommonParams | undefined;
+  GroupLedger: CommonParams | undefined;
+  GroupVoteDetail: { voteId: string } & CommonParams;
+  GroupVoteCreate: undefined;
+  AdminMenu: CommonParams | undefined;
+  AdminReceipt: CommonParams | undefined;
+  AdminMembers: CommonParams | undefined;
+  AdminCard: CommonParams | undefined;
+  AdminSettle: CommonParams | undefined;
+  OcrTest: CommonParams | undefined;
+};
+
+// Bottom Tab
+export type BottomTabParamList = {
+  Account: undefined;
+  HomeTab: undefined;
+  Together: NavigatorScreenParams<GroupStackParamList>;
+};
+
+// Root
+export type RootStackParamList = {
   Splash: undefined;
-  Auth: undefined;
+  Auth: NavigatorScreenParams<AuthStackParamList>;
   App: undefined;
 
   GroupCreate: undefined;
@@ -53,73 +98,18 @@ type RootStackParamList = {
   InternetPayFlow: NavigatorScreenParams<InternetPayStackParamList>;
 };
 
-// ─── Bottom Tab ───────────────────────────────────────────────────────────────
-type BottomTabParamList = {
-  Account: undefined;
-  HomeTab: undefined;
-  Together: NavigatorScreenParams<GroupStackParamList>;
-};
-
-// ─── Group Stack ──────────────────────────────────────────────────────────────
-type GroupStackParamList = {
-  GroupList: undefined;
-  GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
-  GroupInfo: CommonParams | undefined;
-  GroupVotes: CommonParams | undefined;
-  GroupPay: CommonParams | undefined;
-  GroupChat: CommonParams | undefined;
-  GroupLedger: CommonParams | undefined;
-
-  AdminMenu: CommonParams | undefined;
-  AdminReceipt: CommonParams | undefined;
-  AdminMembers: CommonParams | undefined;
-  AdminCard: CommonParams | undefined;
-  AdminSettle: CommonParams | undefined;
-
-  GroupVoteDetail: { voteId: string } & CommonParams;
-  GroupVoteCreate: undefined;
-};
-
-// ─── Home Stack ───────────────────────────────────────────────────────────────
-type HomeStackParamList = {
-  Home: undefined;
-  GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
-  GroupInfo: CommonParams | undefined;
-  GroupVotes: CommonParams | undefined;
-  GroupPay: CommonParams | undefined;
-  GroupChat: CommonParams | undefined;
-  GroupLedger: CommonParams | undefined;
-  GroupVoteDetail: { voteId: string } & CommonParams;
-  GroupVoteCreate: undefined;
-  AdminMenu: CommonParams | undefined;
-  AdminReceipt: CommonParams | undefined;
-  AdminMembers: CommonParams | undefined;
-  AdminCard: CommonParams | undefined;
-  AdminSettle: CommonParams | undefined;
-
-  OcrTest: CommonParams | undefined;
-};
-
-// ─── Screen Props ─────────────────────────────────────────────────────────────
-type AuthScreenProps<T extends keyof AuthStackParamList> =
+// Screen Props
+export type AuthScreenProps<T extends keyof AuthStackParamList> =
   NativeStackScreenProps<AuthStackParamList, T>;
 
-type RootScreenProps<T extends keyof RootStackParamList> =
+export type RootScreenProps<T extends keyof RootStackParamList> =
   NativeStackScreenProps<RootStackParamList, T>;
 
-type GroupScreenProps<T extends keyof GroupStackParamList> = CompositeScreenProps<
-  NativeStackScreenProps<GroupStackParamList, T>,
-  BottomTabScreenProps<BottomTabParamList>
->;
+export type GroupScreenProps<T extends keyof GroupStackParamList> =
+  CompositeScreenProps<
+    NativeStackScreenProps<GroupStackParamList, T>,
+    BottomTabScreenProps<BottomTabParamList>
+  >;
 
-export type {
-  AuthStackParamList,
-  RootStackParamList,
-  BottomTabParamList,
-  AuthScreenProps,
-  RootScreenProps,
-  GroupStackParamList,
-  GroupScreenProps,
-  HomeStackParamList,
-  InternetPayStackParamList,
-};
+// 공통 step 같은 순수 타입
+export type SignupStep = 'name' | 'birth' | 'phone' | 'email' | 'done';
