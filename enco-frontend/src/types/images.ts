@@ -1,5 +1,6 @@
 export const images = {
-  logo: require('../assets/logo.png'),
+  logo: require('../assets/icons/ENCOLOGO_hamco.png'),
+  phone: require('../assets/icons/phone_hamco.png'),
   qr: [
     require('../assets/images/qr0.png'),
     require('../assets/images/qr1.png'),
