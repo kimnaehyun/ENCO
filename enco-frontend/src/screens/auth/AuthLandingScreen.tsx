@@ -8,28 +8,31 @@ export default function AuthLandingScreen({
 }: AuthScreenProps<'AuthLanding'>) {
   return (
     <View
-      style={{
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        gap: 20,
-      }}
+      className ="flex-1 bg-gray-100 px-6"
     >
+      <View
+        className = "flex-1 justify-center items-center"
+      >
       <Image
         source={images.logo}
-        style={{ width: 120, height: 120 }}
+        style={{ width: 350, height: 350 }}
         resizeMode="contain"
       />
-
-      <Button title="로그인" onPress={() => navigation.navigate('Login')} />
-
-      <Text>회원이 아니신가요?</Text>
-
-      <Pressable onPress={() => navigation.navigate('SignupForm')}>
-        <Text style={{ textDecorationLine: 'underline' }}>
+      <Pressable className='bg-[#1428A0] rounded-2xl px-12 py-3 items-center' onPress={() => navigation.navigate('Login')}>
+        <Text style ={{fontFamily : 'GmarketSansTTFBold' , color: 'white', fontSize:24}}>
+          LOGIN
+        </Text>
+        </Pressable>
+  </View>
+      
+      <View className = "items-center mb-10">
+      <Text style = {{fontFamily :'GmarketSansTTFMedium' , fontSize : 16}}>ENCO에 처음 오셨나요?</Text>
+      <Pressable onPress={() => navigation.navigate('SignupVerify')}>
+        <Text style={{ textDecorationLine: 'underline', color : "blue" , fontFamily :'GmarketSansTTFMedium', fontSize:16}}>
           회원가입하러 가기
         </Text>
       </Pressable>
+      </View>
     </View>
   );
 }

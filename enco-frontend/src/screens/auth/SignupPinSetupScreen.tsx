@@ -7,7 +7,6 @@ export default function SignupPinSetupScreen({
   route,
   navigation,
 }: AuthScreenProps<"SignupPinSetup">) {
-
   const [step, setStep] = useState<"set" | "confirm">("set");
   const [firstPin, setFirstPin] = useState<string | null>(null);
   const [error, setError] = useState("");
@@ -34,10 +33,7 @@ export default function SignupPinSetupScreen({
 
     setError("");
 
-    navigation.reset({
-      index: 0,
-      routes: [{ name: "AuthLanding" }],
-    });
+    navigation.replace("SignupComplete");
   };
 
   return (
@@ -46,7 +42,7 @@ export default function SignupPinSetupScreen({
 
       <PinEntry
         key={`${step}-${resetKey}`}
-        title={step === "set" ? "6자리 비밀번호(PIN) 설정" : "비밀번호(PIN) 재입력"}
+        title={step === "set" ? "4자리 비밀번호(PIN) 설정" : "비밀번호(PIN) 재입력"}
         resetKey={resetKey}
         onComplete={handleComplete}
       />

@@ -7,7 +7,7 @@ import { PinEntryProps } from "../../types/pin";
 export default function PinEntry({
   title,
   resetKey = 0,
-  length = 6,
+  length = 4,
   onComplete,
 }: PinEntryProps) {
   const [pin, setPin] = useState("");
