@@ -1,5 +1,5 @@
-import { View, Text, Button } from 'react-native';
-import React from 'react';
+import { View, Text, Button, BackHandler } from 'react-native';
+import React, { useEffect } from 'react';
 import { CommonActions, useRoute } from '@react-navigation/native';
 import { ROUTES } from '../../constants/routes';
 
@@ -8,6 +8,16 @@ export default function PaymentSuccess({ navigation }: { navigation: any }) {
 
   const { storeName, amount } = route.params;
 
+  useEffect(() => {
+    const sub = BackHandler.addEventListener('hardwareBackPress', () => {
+      navigation.navigate('App', {
+        screen: ROUTES.TAB_HOME,
+      });
+      return true;
+    });
+
+    return () => sub.remove();
+  }, [navigation]);
   return (
     <View>
       <Text>결제 성공</Text>
@@ -16,19 +26,9 @@ export default function PaymentSuccess({ navigation }: { navigation: any }) {
       <Button
         title="확인"
         onPress={() => {
-          navigation.dispatch(
-            CommonActions.reset({
-              index: 0,
-              routes: [
-                {
-                  name: 'App',
-                  state: {
-                    routes: [{ name: ROUTES.TAB_HOME }],
-                  },
-                },
-              ],
-            }),
-          );
+          navigation.navigate('App', {
+            screen: ROUTES.TAB_HOME,
+          });
         }}
       />
     </View>
