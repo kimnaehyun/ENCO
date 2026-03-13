@@ -24,25 +24,28 @@ export default function SignupPinSetupScreen({
     }
 
     if (pin !== firstPin) {
-      setError("비밀번호가 일치하지 않아요. 다시 설정해주세요.");
+      setError("비밀번호가 일치하지 않아요");
       setFirstPin(null);
       setStep("set");
       resetPinEntry();
       return;
     }
 
-    setError("");
-
     navigation.replace("SignupComplete");
   };
 
   return (
-    <View style={{ flex: 1, padding: 20, gap: 12 }}>
-      {error ? <Text style={{ color: "red" }}>{error}</Text> : null}
+    <View className="flex-1 bg-gray-200 p-6">
+
+      {error ? (
+        <Text className="text-red-500 text-center mb-4">
+          {error}
+        </Text>
+      ) : null}
 
       <PinEntry
         key={`${step}-${resetKey}`}
-        title={step === "set" ? "4자리 비밀번호(PIN) 설정" : "비밀번호(PIN) 재입력"}
+        title={step === "set" ? "비밀번호를 입력해주세요" : "한번 더 입력해주세요"}
         resetKey={resetKey}
         onComplete={handleComplete}
       />

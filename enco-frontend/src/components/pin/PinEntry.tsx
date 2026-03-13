@@ -65,21 +65,25 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     backgroundColor: "#FFFFFF",
+    justifyContent: "space-between",
   },
+
   header: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    gap: 30,
+    gap: 40,
   },
+
   title: {
-    fontSize: 18,
-    fontWeight: "500",
+    fontSize: 32,
+    fontWeight: "700",
     color: "#1C1C1E",
-    letterSpacing: -0.3,
+    fontFamily:"GmarketSansTTFBold"
   },
+
   keypadContainer: {
     paddingHorizontal: 20,
-    paddingBottom: 30,
+    paddingBottom: 40,
   },
 });

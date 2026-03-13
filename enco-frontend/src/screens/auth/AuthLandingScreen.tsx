@@ -8,7 +8,7 @@ export default function AuthLandingScreen({
 }: AuthScreenProps<'AuthLanding'>) {
   return (
     <View
-      className ="flex-1 bg-gray-100 px-6"
+      className ="flex-1 px-6"
     >
       <View
         className = "flex-1 justify-center items-center"

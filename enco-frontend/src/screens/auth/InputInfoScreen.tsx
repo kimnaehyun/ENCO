@@ -59,98 +59,90 @@ export default function InputInfoScreen({
   }, [canEmail]);
 
   return (
-    <View className="flex-1 bg-gray-200 px-6 pt-10">
+  <View className="flex-1 px-6 pt-10">
 
-      <Text className="text-2xl font-bold mb-6 text-gray-700">
-        회원가입
-      </Text>
 
-      <View className="bg-gray-100 rounded-2xl p-6">
+    <View className="flex-1 rounded-2xl p-6 justify-between">
 
-        <Pressable className="bg-blue-800 rounded-xl py-3 mb-8">
+      {/* 입력 영역 */}
+      <View className="gap-10">
+
+        <Pressable className="bg-[#1428A0]-800 rounded-xl py-3">
           <Text className="text-white text-center text-lg font-bold">
             회원가입
           </Text>
         </Pressable>
 
-        {/* 이름 */}
-        <View className="mb-8">
-          <TextInput
-            value={name}
-            onChangeText={setName}
-            placeholder="이름"
-            className="border-b border-gray-500 py-2 text-2xl"
-          />
-        </View>
+        <TextInput
+          value={name}
+          onChangeText={setName}
+          placeholder="이름"
+          className="border-b border-gray-500 py-2 text-2xl"
+        />
 
-        {/* 생년월일 */}
         {(step === "birth" ||
           step === "phone" ||
           step === "email" ||
           step === "done") && (
-          <View className="mb-8">
-            <TextInput
-              ref={birthRef}
-              value={birth}
-              onChangeText={(t) => setBirth(t.replace(/[^\d]/g, ""))}
-              placeholder="생년월일 8자리"
-              keyboardType="number-pad"
-              maxLength={8}
-              className="border-b border-gray-500 py-2 text-2xl"
-            />
-          </View>
+          <TextInput
+            ref={birthRef}
+            value={birth}
+            onChangeText={(t) => setBirth(t.replace(/[^\d]/g, ""))}
+            placeholder="생년월일 8자리"
+            keyboardType="number-pad"
+            maxLength={8}
+            className="border-b border-gray-500 py-2 text-2xl"
+          />
         )}
 
-        {/* 전화번호 */}
         {(step === "phone" || step === "email" || step === "done") && (
-          <View className="mb-8">
-            <TextInput
-              ref={phoneRef}
-              value={phone}
-              onChangeText={(t) => setPhone(t.replace(/[^\d]/g, ""))}
-              placeholder="전화번호-010-XXXX-XXXX"
-              keyboardType="phone-pad"
-              className="border-b border-gray-500 py-2 text-2xl"
-            />
-          </View>
+          <TextInput
+            ref={phoneRef}
+            value={phone}
+            onChangeText={(t) => setPhone(t.replace(/[^\d]/g, ""))}
+            placeholder="전화번호-010-XXXX-XXXX"
+            keyboardType="phone-pad"
+            className="border-b border-gray-500 py-2 text-2xl"
+          />
         )}
 
-        {/* 이메일 */}
         {(step === "email" || step === "done") && (
-          <View className="mb-8">
-            <TextInput
-              ref={emailRef}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="이메일"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              className="border-b border-gray-500 py-2 text-2xl"
-            />
-          </View>
+          <TextInput
+            ref={emailRef}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="이메일"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            className="border-b border-gray-500 py-2 text-2xl"
+          />
         )}
 
-        {step === "done" && (
-          <Pressable
-            disabled={!canDone}
-            onPress={() =>
-              navigation.navigate("SignupPinSetup", {
-                name: name.trim(),
-                birth: nBirth,
-                phone: nPhone,
-                email: email.trim(),
-              })
-            }
-            className={`rounded-xl py-3 ${
-              canDone ? "bg-blue-800" : "bg-gray-400"
-            }`}
-          >
-            <Text className="text-white text-center font-bold text-2xl">
-              PIN 설정하기
-            </Text>
-          </Pressable>
-        )}
       </View>
+
+      {/* 하단 버튼 */}
+      {step === "done" && (
+        <Pressable
+          disabled={!canDone}
+          onPress={() =>
+            navigation.navigate("SignupPinSetup", {
+              name: name.trim(),
+              birth: nBirth,
+              phone: nPhone,
+              email: email.trim(),
+            })
+          }
+          className={`rounded-xl py-4 ${
+            canDone ? "bg-blue-800" : "bg-gray-400"
+          }`}
+        >
+          <Text className="text-white text-center font-bold text-2xl">
+            비밀번호 설정하기
+          </Text>
+        </Pressable>
+      )}
+
     </View>
-  );
+  </View>
+);
 }
