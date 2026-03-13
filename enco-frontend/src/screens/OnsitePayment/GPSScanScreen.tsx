@@ -64,7 +64,7 @@ export default function GPSScanScreen({ navigation }: any) {
           </Text>
           <Button
             title="결제 방법 선택 페이지로"
-            onPress={() => navigation.replace('PaymentMethod')}
+            onPress={() => navigation.navigate('PaymentMethod')}
           />
         </View>
       ) : (

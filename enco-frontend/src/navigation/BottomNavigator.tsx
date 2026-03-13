@@ -24,6 +24,7 @@ export default function BottomNavigator() {
         name={ROUTES.TAB_PAYMENT}
         component={OnsitePaymentNavigator}
         options={{
+          popToTopOnBlur: true,
           tabBarIcon: ({ focused, size }) => (
             <Image
               source={
@@ -36,17 +37,6 @@ export default function BottomNavigator() {
             />
           ),
         }}
-        listeners={({ navigation }) => ({
-          tabPress: e => {
-            e.preventDefault();
-            navigation.dispatch(
-              CommonActions.navigate({
-                name: ROUTES.TAB_PAYMENT,
-                params: { screen: 'OnsitePaymentPin' },
-              }),
-            );
-          },
-        })}
       />
 
       <Tab.Screen
@@ -70,17 +60,6 @@ export default function BottomNavigator() {
       <Tab.Screen
         name={ROUTES.TAB_GROUP}
         component={GroupStackNavigator}
-        listeners={({ navigation }) => ({
-          tabPress: e => {
-            e.preventDefault();
-            navigation.dispatch(
-              CommonActions.navigate({
-                name: ROUTES.TAB_GROUP,
-                params: { screen: 'GroupList' },
-              }),
-            );
-          },
-        })}
         options={{
           tabBarIcon: ({ focused, size }) => (
             <Image

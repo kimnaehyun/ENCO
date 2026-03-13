@@ -12,7 +12,7 @@ export default function PaymentPinScreen({ navigation, route }: any) {
     const isValid = pin === TEST_PIN;
 
     if (isValid) {
-      return navigation.replace(screen);
+      return navigation.navigate(screen);
     }
 
     Alert.alert('인증 실패', 'pin 번호가 올바르지 않습니다.');
