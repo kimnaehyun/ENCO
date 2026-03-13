@@ -1,6 +1,6 @@
 import { View, Modal, TouchableOpacity, Button, Pressable } from 'react-native';
 import React, { useState } from 'react';
-import Barcode from './components/Barcode';
+
 import QR from './components/QR';
 import { Text } from 'react-native-gesture-handler';
 import CardRecommendation from './components/CardRecommendation';
@@ -18,9 +18,6 @@ export default function index() {
   return (
     <View className="flex-1">
       <View className="flex-row w-full py-4 justify-around items-center">
-        <TouchableOpacity onPress={() => openModal('barcode')}>
-          <Barcode cardNumber={cardNumber} className="w-50 h-24" />
-        </TouchableOpacity>
         <TouchableOpacity onPress={() => openModal('qr')}>
           <QR cardNumber={cardNumber} className="w-24 h-24" />
         </TouchableOpacity>
@@ -42,17 +39,12 @@ export default function index() {
         onRequestClose={() => setModalVisible(false)}
       >
         <View className="flex-1 justify-center items-center bg-white">
-          <View
-            className={`bg-white flex items-end ${modalType === 'barcode' ? 'rotate-90' : ''}`}
-          >
+          <View className={`bg-white flex items-end`}>
             <Pressable onPress={() => setModalVisible(false)}>
               <Text className="text-5xl">x</Text>
             </Pressable>
-            {modalType === 'barcode' ? (
-              <Barcode className="h-60 w-[650px]" cardNumber={cardNumber} />
-            ) : (
-              <QR className="w-80 h-80" cardNumber={cardNumber} />
-            )}
+
+            <QR className="w-80 h-80" cardNumber={cardNumber} />
           </View>
         </View>
       </Modal>
