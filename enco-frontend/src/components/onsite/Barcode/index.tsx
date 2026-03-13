@@ -9,15 +9,14 @@ export default function index() {
 
   return (
     <View className="flex-1">
-      <View className="flex-row w-full py-4 justify-around items-center">
-        <QR cardNumber={cardNumber} className="w-24 h-24" />
+      <View className="flex-1 border border-solid border-black">
+        <QR cardNumber={cardNumber} className="w-full h-full" />
       </View>
-
       <View className="flex-1">
-        <Text className="text-2xl font-bold text-center py-10">
-          결제 추천 카드
+        <Text className="text-xl font-bold bg-white rounded-full p-5">
+          회식주의자
         </Text>
-        <View className="flex-1 pt-10">
+        <View className="flex-1 border border-solid border-black items-center">
           <CardRecommendation onSelectCard={setCardNumber} />
         </View>
       </View>
