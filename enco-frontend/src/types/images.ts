@@ -6,6 +6,12 @@ export const images = {
   profileIcon:require('../assets/icons/Profile.png'),
   walletIcon: require('../assets/icons/Wallet.png'),
   settingIcon:require('../assets/icons/setting.png'),
+  alertCircleIcon :require('../assets/icons/alert-circle.png'),
+  balanceIcon : require('../assets/icons/balance.png'),
+  chatIcon : require('../assets/icons/chat.png'),
+  notificationIcon: require('../assets/icons/Notification.png'),
+  paymentIcon : require('../assets/icons/payment.png'),
+  voteIcon : require('../assets/icons/vote.png'),
   qr: [
     require('../assets/images/qr0.png'),
     require('../assets/images/qr1.png'),

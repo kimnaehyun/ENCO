@@ -51,7 +51,7 @@ export type GroupStackParamList = {
   AdminCard: CommonParams | undefined;
   AdminSettle: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
-  GroupVoteCreate: undefined;
+  GroupVoteCreate: CommonParams | undefined;
 };
 
 // Home
@@ -64,7 +64,7 @@ export type HomeStackParamList = {
   GroupChat: CommonParams | undefined;
   GroupLedger: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
-  GroupVoteCreate: undefined;
+  GroupVoteCreate: CommonParams | undefined;
   AdminMenu: CommonParams | undefined;
   AdminReceipt: CommonParams | undefined;
   AdminMembers: CommonParams | undefined;
