@@ -1,0 +1,56 @@
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      server:
+        webflux:
+          globalcors:
+            cors-configurations:
+              '[/**]':
+                allowedOrigins:
+                  - 'http://localhost:3000'
+                  - 'http://j14e104.p.ssafy.io'
+                  - 'https://j14e104.p.ssafy.io'
+                  - 'https://ssafywte.site'
+                  - 'http://ssafywte.site'
+                allowedMethods: '*'
+                allowedHeaders: '*'
+#                allowedCredentials: true
+          routes:
+            - id: auth-service
+              uri: http://${AUTH_SERVICE_HOST}:8082
+              predicates:
+                - Path=/auth-service/api/**
+              filters:
+                - StripPrefix=1
+#                - name: AuthFilter
+#                  args:
+#                    exclude: /api/auth-service/login, /api/auth-service/signup
+
+            - id: payment-service
+              uri: http://${PAYMENT_SERVICE_HOST}:8083
+              predicates:
+                - Path=/payment-service/api/**
+              filters:
+                - StripPrefix=1
+#                - AuthFilter
+
+            - id: chat-service
+              uri: http://${CHAT_SERVICE_HOST}:8084
+              predicates:
+                - Path=/chat-service/api/**
+              filters:
+                - StripPrefix=1
+#                - AuthFilter
+
+            - id: travel-service
+              uri: http://${TRAVEL_SERVICE_HOST}:8085
+              predicates:
+                - Path=/travel-service/api/**
+              filters:
+                - StripPrefix=1
+#                - AuthFilter
+
+server:
+  port: 8081
