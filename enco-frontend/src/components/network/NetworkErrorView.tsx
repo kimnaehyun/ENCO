@@ -1,3 +1,7 @@
+// TODO: API 연동 후 각 페이지의 조회 실패 시 공통 네트워크 에러 UI로 사용
+// TODO: onRetry에 페이지별 재조회 함수 연결
+// TODO: retryDisabled로 재시도 중 중복 클릭 방지
+
 import React from 'react';
 import {
   View,
