@@ -13,6 +13,7 @@ export const images = {
   paymentIcon: require('../assets/icons/payment.png'),
   voteIcon: require('../assets/icons/vote.png'),
   internetPaymentHamco: require('../assets/icons/internet_payment_hamco.png'),
+  left_arrow: require('../assets/icons/left_arrow.png'),
   qr: [
     require('../assets/images/qr0.png'),
     require('../assets/images/qr1.png'),
