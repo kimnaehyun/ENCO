@@ -12,7 +12,7 @@ public enum ErrorCode {
 
     private final HttpStatus httpStatusCode;
     private final String errorMessage;
-    private final String errorType;
+    private final String errorName;
 }
 
 

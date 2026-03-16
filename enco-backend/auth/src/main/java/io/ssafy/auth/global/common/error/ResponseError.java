@@ -12,7 +12,7 @@ public record ResponseError (
         return ResponseError.builder()
                 .httpCode(e.getHttpStatusCode().value())
                 .message(e.getErrorMessage())
-                .errorType(e.getErrorType())
+                .errorType(e.getErrorName())
                 .build();
     }
 }
