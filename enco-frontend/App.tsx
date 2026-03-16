@@ -122,3 +122,25 @@ function App() {
 }
 
 export default App;
+
+
+
+
+// 에러페이지 테스트용 코드
+// import 'react-native-gesture-handler';
+// import React from 'react';
+// import { GestureHandlerRootView } from 'react-native-gesture-handler';
+// import { SafeAreaProvider } from 'react-native-safe-area-context';
+// import NetworkErrorTestScreen from './src/screens/test/NetworkErrorTestScreen';
+
+// function App() {
+//   return (
+//     <GestureHandlerRootView style={{ flex: 1 }}>
+//       <SafeAreaProvider>
+//         <NetworkErrorTestScreen />
+//       </SafeAreaProvider>
+//     </GestureHandlerRootView>
+//   );
+// }
+
+// export default App;

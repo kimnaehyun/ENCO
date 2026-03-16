@@ -22,13 +22,14 @@ export default function CardRecommendation({
 
   return (
     <Animated.FlatList
-      style={{ flex: 1 }}
+      className="flex-1"
       data={data}
       horizontal
       showsHorizontalScrollIndicator={false}
       snapToInterval={ITEM_SIZE}
       decelerationRate="fast"
       contentContainerStyle={{
+        alignItems: 'center',
         paddingHorizontal: (width - CARD_WIDTH) / 2,
       }}
       keyExtractor={(_, index) => index.toString()}

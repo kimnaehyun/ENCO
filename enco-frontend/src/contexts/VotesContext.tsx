@@ -50,6 +50,7 @@ const seedVotes: Vote[] = [
     currentParticipants: 2,
     totalParticipants: 4,
     createdAt: '2026-03-06T01:10:00.000Z',
+    endsAt: '2026-04-30T12:00:00.000Z', // 진행 중
     myChoice: null,
   },
   {
@@ -61,6 +62,7 @@ const seedVotes: Vote[] = [
     currentParticipants: 2,
     totalParticipants: 4,
     createdAt: '2026-03-05T09:10:00.000Z',
+    endsAt: '2026-03-12T12:00:00.000Z', // 종료
     myChoice: 'agree',
   },
 ];

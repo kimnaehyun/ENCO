@@ -5,7 +5,7 @@ import {images} from "../types/images"
 
 export default function SplashScreen(){
     return(
-        <View style ={{flex : 1, alignItems:"center",justifyContent:"center"}}>
+        <View className="flex-1 items-center justify-center bg-[#F0F4FF]">
             <Image
             source={images.logo}
             style={{width:550, height: 300}} //여긴 반응형으로 사이즈 조절 필요

@@ -10,8 +10,6 @@ spring:
               '[/**]':
                 allowedOrigins:
                   - 'http://localhost:3000'
-                  - 'http://j14e104.p.ssafy.io'
-                  - 'https://j14e104.p.ssafy.io'
                   - 'https://ssafywte.site'
                   - 'http://ssafywte.site'
                 allowedMethods: '*'
@@ -19,7 +17,7 @@ spring:
 #                allowedCredentials: true
           routes:
             - id: auth-service
-              uri: http://${AUTH_SERVICE_HOST}:8082
+              uri: http://${AUTH_SERVICE_HOST}:${AUTH_SERVICE_PORT}
               predicates:
                 - Path=/auth-service/api/**
               filters:
@@ -29,7 +27,7 @@ spring:
 #                    exclude: /api/auth-service/login, /api/auth-service/signup
 
             - id: payment-service
-              uri: http://${PAYMENT_SERVICE_HOST}:8083
+              uri: http://${PAYMENT_SERVICE_HOST}:${PAYMENT_SERVICE_PORT}
               predicates:
                 - Path=/payment-service/api/**
               filters:
@@ -37,7 +35,7 @@ spring:
 #                - AuthFilter
 
             - id: chat-service
-              uri: http://${CHAT_SERVICE_HOST}:8084
+              uri: http://${CHAT_SERVICE_HOST}:${CHAT_SERVICE_PORT}
               predicates:
                 - Path=/chat-service/api/**
               filters:
@@ -45,7 +43,7 @@ spring:
 #                - AuthFilter
 
             - id: travel-service
-              uri: http://${TRAVEL_SERVICE_HOST}:8085
+              uri: http://${TRAVEL_SERVICE_HOST}:${TRAVEL_SERVICE_PORT}
               predicates:
                 - Path=/travel-service/api/**
               filters:

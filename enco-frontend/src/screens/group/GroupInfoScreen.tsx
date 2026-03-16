@@ -1,56 +1,21 @@
 // src/screens/group/GroupInfoScreen.tsx
-import React, { useMemo, useState } from 'react';
-import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
+import { images } from '../../types/images';
 
-function SectionCard({ title, children }: { title: string; children?: React.ReactNode }) {
+const TAGS = ['여행', '음식', '스터디', '운동', '문화', '게임', '기타'];
+
+function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <View
-      style={{
-        marginTop: 14,
-        borderRadius: 24,
-        backgroundColor: '#E5E7EB',
-        paddingHorizontal: 18,
-        paddingVertical: 18,
-        minHeight: 74,
-        justifyContent: 'center',
-      }}
-    >
-      <Text style={{ fontSize: 16, fontWeight: '800', marginBottom: 8 }}>{title}</Text>
-      {children}
+    <View className="flex-row items-center py-4 border-b border-gray-100">
+      <Text style={{ width: 80, fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
+        {label}
+      </Text>
+      <View style={{ flex: 1 }}>{children}</View>
     </View>
-  );
-}
-
-function EditField({
-  value,
-  onChange,
-  multiline,
-  minHeight,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  multiline?: boolean;
-  minHeight?: number;
-}) {
-  return (
-    <TextInput
-      value={value}
-      onChangeText={onChange}
-      multiline={multiline}
-      style={{
-        backgroundColor: '#F3F4F6',
-        borderRadius: 16,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-        minHeight: minHeight ?? 44,
-        textAlignVertical: multiline ? 'top' : 'center',
-        color: '#111827',
-      }}
-      placeholderTextColor="#6B7280"
-    />
   );
 }
 
@@ -61,25 +26,34 @@ export default function GroupInfoScreen() {
   const groupName = params.groupName ?? '모임명';
   const isAdmin = !!params.isAdmin;
 
-  const initial = useMemo(
-    () => ({
-      intro: '모임 소개(임시)\n- 간단한 소개 문장을 여기에 표시',
-      purpose: '목적(임시)\n- 예: 회식/스터디/여행 준비',
-      createdAt: '2026-03-05',
-      dues: '월 10,000원 / 매월 5일',
-      groundRules:
-        '그라운드룰(임시)\n- 정산은 모임 후 24시간 내\n- 지출은 영수증 첨부\n- 미납 시 자동 알림\n- 투표로 결제 승인',
-    }),
-    []
+  const [isEdit, setIsEdit] = useState(false);
+  const [intro, setIntro] = useState('회식좋아하는사람들');
+  const [selectedTags, setSelectedTags] = useState<string[]>(['여행', '음식']);
+  const [dues, setDues] = useState('매월 / 15일 / 10,000원 / 80%');
+  const [groundRules, setGroundRules] = useState(
+    '1. 아프면 사형\n2. 일정공유 잘하기\n3. MM 확인 체크하기\n4. 부드러운 말투로 대화해용'
   );
 
-  const [isEdit, setIsEdit] = useState(false);
+  // 임시 발급 카드 목록
+  const issuedCards = [images.card1, images.card2];
 
-  const [intro, setIntro] = useState(initial.intro);
-  const [purpose, setPurpose] = useState(initial.purpose);
-  const [createdAt, setCreatedAt] = useState(initial.createdAt);
-  const [dues, setDues] = useState(initial.dues);
-  const [groundRules, setGroundRules] = useState(initial.groundRules);
+  const toggleTag = (tag: string) => {
+    if (!isEdit) return;
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const onToggleEdit = () => {
+    if (!isAdmin) return;
+    if (isEdit) {
+      Alert.alert('저장', '모임 설정이 저장되었습니다.', [
+        { text: '확인', onPress: () => setIsEdit(false) },
+      ]);
+    } else {
+      setIsEdit(true);
+    }
+  };
 
   const onPressClose = () => {
     if (isEdit) {
@@ -92,115 +66,162 @@ export default function GroupInfoScreen() {
     navigation.goBack();
   };
 
-  const onToggleEditOrSave = () => {
-    if (!isAdmin) return;
-
-    if (!isEdit) {
-      setIsEdit(true);
-      return;
-    }
-
-    // ✅ 저장(임시)
-    Alert.alert('저장', '모임 설정이 저장되었습니다(임시).', [
-      {
-        text: '확인',
-        onPress: () => setIsEdit(false),
-      },
-    ]);
-
-    // TODO: 실제 저장 로직
-    // await api.updateGroupInfo(params.groupId, { intro, purpose, createdAt, dues, groundRules })
-  };
-
   return (
     <ScreenLayout>
-      {/* Header: 좌측 모임명 / 우측 닫기 + (관리자면 수정/저장) */}
-      <View
-        style={{
-          height: 56,
-          borderRadius: 12,
-          backgroundColor: '#F3F4F6',
-          paddingHorizontal: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: 12,
-        }}
-      >
-        <Text numberOfLines={1} style={{ fontSize: 20, fontWeight: '900', flex: 1, paddingRight: 12 }}>
-          {groupName}
-        </Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Pressable onPress={onPressClose} hitSlop={12}>
-            <Text style={{ fontSize: 16, fontWeight: '900' }}>닫기</Text>
-          </Pressable>
-
-          {isAdmin && (
-            <Pressable onPress={onToggleEditOrSave} hitSlop={12}>
-              <Text style={{ fontSize: 16, fontWeight: '900' }}>{isEdit ? '저장' : '수정하기'}</Text>
+        {/* 헤더 */}
+        <View className="flex-row items-center justify-between mb-5">
+          <Text style={{ fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
+            모임 정보
+          </Text>
+          <View className="flex-row items-center gap-4">
+            {isAdmin && (
+              <Pressable onPress={onToggleEdit} hitSlop={12}>
+                <Text style={{ fontSize: 14, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium' }}>
+                  {isEdit ? '저장' : '수정'}
+                </Text>
+              </Pressable>
+            )}
+            <Pressable onPress={onPressClose} hitSlop={12}>
+              <Text style={{ fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>닫기</Text>
             </Pressable>
+          </View>
+        </View>
+
+        {/* 기본 정보 카드 */}
+        <View
+          className="bg-white rounded-3xl px-6 mb-4"
+          style={{ shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}
+        >
+          {/* 모임명 */}
+          <InfoRow label="모임명">
+            <Text style={{ fontSize: 18, fontFamily: 'GmarketSansTTFBold', color: '#111827', textAlign: 'right' }}>
+              {groupName}
+            </Text>
+          </InfoRow>
+
+          {/* 모임소개 */}
+          <InfoRow label="모임소개">
+            {isEdit ? (
+              <TextInput
+                value={intro}
+                onChangeText={setIntro}
+                style={{ fontSize: 14, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' }}
+              />
+            ) : (
+              <Text style={{ fontSize: 14, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' }}>
+                {intro}
+              </Text>
+            )}
+          </InfoRow>
+
+          {/* 목적 태그 */}
+          <InfoRow label="목적">
+            <View className="flex-row flex-wrap justify-end gap-2">
+              {isEdit
+                ? TAGS.map(tag => (
+                  <Pressable
+                    key={tag}
+                    onPress={() => toggleTag(tag)}
+                    className="rounded-2xl px-3 py-1"
+                    style={{ backgroundColor: selectedTags.includes(tag) ? '#1428A0' : '#F3F4F6' }}
+                  >
+                    <Text style={{
+                      fontSize: 13,
+                      fontFamily: 'GmarketSansTTFMedium',
+                      color: selectedTags.includes(tag) ? '#fff' : '#6B7280',
+                    }}>
+                      {tag}
+                    </Text>
+                  </Pressable>
+                ))
+                : selectedTags.map(tag => (
+                  <View key={tag} className="rounded-2xl px-3 py-1" style={{ backgroundColor: '#F3F4F6' }}>
+                    <Text style={{ fontSize: 13, color: '#374151', fontFamily: 'GmarketSansTTFMedium' }}>
+                      {tag}
+                    </Text>
+                  </View>
+                ))
+              }
+            </View>
+          </InfoRow>
+
+          {/* 모임 개설일 */}
+          <InfoRow label="모임 개설일">
+            <Text style={{ fontSize: 14, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' }}>
+              2026.2.19
+            </Text>
+          </InfoRow>
+
+          {/* 회비 */}
+          <View className="flex-row items-center py-4">
+            <Text style={{ width: 80, fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
+              회비
+            </Text>
+            {isEdit ? (
+              <TextInput
+                value={dues}
+                onChangeText={setDues}
+                style={{ flex: 1, fontSize: 13, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' }}
+              />
+            ) : (
+              <Text style={{ flex: 1, fontSize: 13, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' }}>
+                {dues}
+              </Text>
+            )}
+          </View>
+        </View>
+
+        {/* 그라운드룰 카드 */}
+        <View
+          className="bg-white rounded-3xl px-6 py-5 mb-4"
+          style={{ shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}
+        >
+          <Text style={{ fontSize: 15, fontFamily: 'GmarketSansTTFBold', color: '#111827', marginBottom: 12 }}>
+            그라운드룰
+          </Text>
+          {isEdit ? (
+            <TextInput
+              value={groundRules}
+              onChangeText={setGroundRules}
+              multiline
+              style={{
+                fontSize: 14,
+                color: '#111827',
+                fontFamily: 'GmarketSansTTFMedium',
+                lineHeight: 22,
+                textAlignVertical: 'top',
+                minHeight: 100,
+                backgroundColor: '#F9FAFB',
+                borderRadius: 12,
+                padding: 12,
+              }}
+            />
+          ) : (
+            <Text style={{ fontSize: 14, color: '#374151', fontFamily: 'GmarketSansTTFMedium', lineHeight: 24 }}>
+              {groundRules}
+            </Text>
           )}
         </View>
-      </View>
 
-      {/* Sections */}
-      <SectionCard title="모임소개">
-        {isAdmin && isEdit ? (
-          <EditField value={intro} onChange={setIntro} multiline minHeight={90} />
-        ) : (
-          <Text style={{ color: '#374151', lineHeight: 20 }}>{intro}</Text>
-        )}
-      </SectionCard>
+        {/* 발급 카드 */}
 
-      <SectionCard title="목적">
-        {isAdmin && isEdit ? (
-          <EditField value={purpose} onChange={setPurpose} multiline minHeight={70} />
-        ) : (
-          <Text style={{ color: '#374151', lineHeight: 20 }}>{purpose}</Text>
-        )}
-      </SectionCard>
+        <View
+          className="bg-white rounded-3xl px-6 py-5"
+          style={{ shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}
+        >
+          <Text style={{ fontSize: 15, fontFamily: 'GmarketSansTTFBold', color: '#111827', marginBottom: 16 }}>
+            발급 카드
+          </Text>
+          <Image
+            source={{ uri: 'https://static11.samsungcard.com/wcms/svc/__icsFiles/artimage/2025/09/02/ccom02_1/dm_AAP1870_02.png' }}
+            style={{ width: '100%', height: 240, borderRadius: 16 }}
+            resizeMode="cover"
+          />
+        </View>
 
-      <SectionCard title="모임 개설일">
-        {isAdmin && isEdit ? (
-          <EditField value={createdAt} onChange={setCreatedAt} />
-        ) : (
-          <Text style={{ color: '#374151', lineHeight: 20 }}>{createdAt}</Text>
-        )}
-      </SectionCard>
-
-      <SectionCard title="회비">
-        {isAdmin && isEdit ? (
-          <EditField value={dues} onChange={setDues} />
-        ) : (
-          <Text style={{ color: '#374151', lineHeight: 20 }}>{dues}</Text>
-        )}
-      </SectionCard>
-
-      <View
-        style={{
-          marginTop: 14,
-          borderRadius: 24,
-          backgroundColor: '#E5E7EB',
-          paddingHorizontal: 18,
-          paddingVertical: 18,
-          minHeight: 150,
-        }}
-      >
-        <Text style={{ fontSize: 16, fontWeight: '800', marginBottom: 8 }}>그라운드룰</Text>
-        {isAdmin && isEdit ? (
-          <EditField value={groundRules} onChange={setGroundRules} multiline minHeight={140} />
-        ) : (
-          <Text style={{ color: '#374151', lineHeight: 20 }}>{groundRules}</Text>
-        )}
-      </View>
-
-      {/* 편집 안내 */}
-      {isAdmin && isEdit && (
-        <Text style={{ marginTop: 16, textAlign: 'center', color: '#6B7280' }}>
-          수정 후 우측 상단 “저장”을 눌러주세요.
-        </Text>
-      )}
+      </ScrollView>
     </ScreenLayout>
   );
 }
