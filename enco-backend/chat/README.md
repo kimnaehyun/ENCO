@@ -62,10 +62,6 @@ IntelliJ에서 `ChatApplication.java` 실행.
 
 Run > Edit Configurations > Environment variables에 아래 값을 추가합니다:
 
-```
-MONGO_INITDB_ROOT_USERNAME=root;MONGO_INITDB_ROOT_PASSWORD=ssafy1234;CHAT_DB_HOST=localhost;CHAT_DB_NAME=chat_db
-```
-
 서버 포트: `8084`
 
 ### 3. 테스트
@@ -183,14 +179,6 @@ MONGO_INITDB_ROOT_USERNAME=root;MONGO_INITDB_ROOT_PASSWORD=ssafy1234;CHAT_DB_HOS
 6. 발신자 제외 참여자에게 /sub/notification/{userId} 알림 전송
 ```
 
-## 환경변수
-
-| 변수명 | 설명 | 기본값 |
-|--------|------|--------|
-| MONGO_INITDB_ROOT_USERNAME | MongoDB 계정 | root |
-| MONGO_INITDB_ROOT_PASSWORD | MongoDB 비밀번호 | ssafy1234 |
-| CHAT_DB_HOST | MongoDB 호스트 | localhost |
-| CHAT_DB_NAME | 데이터베이스명 | chat_db |
 
 ## 주의사항
 
