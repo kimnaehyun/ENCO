@@ -3,6 +3,9 @@ import CreateInternetPaymentRequestScreen from '../screens/InternetPayment/Creat
 import PaymentApprovalPendingScreen from '../screens/InternetPayment/PaymentApprovalPendingScreen';
 import PaymentSuccessScreen from '../screens/InternetPayment/PaymentSuccessScreen';
 import PaymentPinScreen from '../screens/InternetPayment/PaymentPinScreen';
+import InternetPaymentStartScreen from '../screens/InternetPayment/InternetPaymentStartScreen';
+import SelectGroupScreen from '../screens/InternetPayment/SelectGroupScreen';
+import CardChoiceScreen from '../screens/InternetPayment/CardChoiceScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -10,9 +13,15 @@ export default function InternetPayNavigator() {
   return (
     <Stack.Navigator
       screenOptions={{
-        headerBackVisible: false,
+        headerShown: false,
       }}
     >
+      <Stack.Screen
+        name="InternetPaymentStartScreen"
+        component={InternetPaymentStartScreen}
+      />
+      <Stack.Screen name="SelectGroupScreen" component={SelectGroupScreen} />
+      <Stack.Screen name="CardChoiceScreen" component={CardChoiceScreen} />
       <Stack.Screen
         name="CreateInternetPaymentRequest"
         component={CreateInternetPaymentRequestScreen}
