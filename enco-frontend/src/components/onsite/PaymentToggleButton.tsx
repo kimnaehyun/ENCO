@@ -1,39 +1,26 @@
 import { View, Text, Pressable } from 'react-native';
 import { usePaymentStore } from '../../store/usePaymentStore';
+import { usePaymentMethod } from '../../hooks/usePaymentMethod';
 
 export default function ToggleButton() {
-  const paymentMethodType = usePaymentStore(state => state.paymentMethod);
   const barcode = usePaymentStore(state => state.barcode);
   const qr = usePaymentStore(state => state.qr);
+  const { isBarcode } = usePaymentMethod();
 
   return (
-    <View className="flex-row w-full items-center border-2 border-gray-300 rounded-lg overflow-hidden">
-      <Pressable
-        className={`flex-1 py-2 ${
-          paymentMethodType === 'barcode' ? 'bg-blue-500' : 'bg-white'
+    <View className="w-full bg-white border border-[#636363] rounded-[20px] overflow-hidden relative flex-row">
+      <View
+        className={`absolute top-0 bottom-0 w-1/2 bg-[#D9D9D9] rounded-[20px] ${
+          isBarcode ? 'left-0' : 'left-1/2'
         }`}
-        onPress={() => barcode()}
-      >
-        <Text
-          className={`text-center ${
-            paymentMethodType === 'barcode' ? 'text-white' : 'text-black'
-          }`}
-        >
-          바코드
-        </Text>
+      />
+
+      <Pressable className="flex-1 py-2" onPress={barcode}>
+        <Text className="text-center font-bold text-xl">QR코드</Text>
       </Pressable>
 
-      <Pressable
-        className={`flex-1 py-2 ${paymentMethodType === 'qr' ? 'bg-blue-500' : 'bg-white'}`}
-        onPress={() => qr()}
-      >
-        <Text
-          className={`text-center ${
-            paymentMethodType === 'qr' ? 'text-white' : 'text-black'
-          }`}
-        >
-          QR 스캔
-        </Text>
+      <Pressable className="flex-1 py-2" onPress={qr}>
+        <Text className="text-center font-bold text-xl">스캔하기</Text>
       </Pressable>
     </View>
   );

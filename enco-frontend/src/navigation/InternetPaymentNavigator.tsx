@@ -2,7 +2,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import CreateInternetPaymentRequestScreen from '../screens/InternetPayment/CreateInternetPaymentRequestScreen';
 import PaymentApprovalPendingScreen from '../screens/InternetPayment/PaymentApprovalPendingScreen';
 import PaymentSuccessScreen from '../screens/InternetPayment/PaymentSuccessScreen';
-import PaymentPinScreen from '../screens/payment/PaymentPinScreen';
+import PaymentPinScreen from '../screens/InternetPayment/PaymentPinScreen';
 
 const Stack = createNativeStackNavigator();
 

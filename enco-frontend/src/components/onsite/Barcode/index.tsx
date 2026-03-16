@@ -1,61 +1,95 @@
-import { View, Modal, TouchableOpacity, Button, Pressable } from 'react-native';
-import React, { useState } from 'react';
-import Barcode from './components/Barcode';
+import {
+  View,
+  PermissionsAndroid,
+  Platform,
+  ActivityIndicator,
+  Button,
+} from 'react-native';
+import { useEffect, useState } from 'react';
 import QR from './components/QR';
 import { Text } from 'react-native-gesture-handler';
 import CardRecommendation from './components/CardRecommendation';
+import PointToggleButton from './components/PointToggleButton';
+import Geolocation from 'react-native-geolocation-service';
 
 export default function index() {
   const [cardNumber, setCardNumber] = useState<number>(0);
-  const [modalVisible, setModalVisible] = useState(false);
-  const [modalType, setModalType] = useState<'barcode' | 'qr'>('barcode');
+  const [isGPS, setIsGPS] = useState<boolean>(false);
 
-  const openModal = (type: 'barcode' | 'qr') => {
-    setModalType(type);
-    setModalVisible(true);
+  type Location = {
+    latitude: number;
+    longitude: number;
   };
+  const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
 
+  useEffect(() => {
+    let watchId: number;
+
+    const startWatch = () => {
+      watchId = Geolocation.watchPosition(
+        position => {
+          const { latitude, longitude } = position.coords;
+          setCurrentLocation({ latitude, longitude });
+        },
+        error => {
+          console.log(error);
+        },
+        {
+          enableHighAccuracy: true,
+          distanceFilter: 0,
+        },
+      );
+    };
+
+    if (Platform.OS === 'android') {
+      PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      ).then(granted => {
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          startWatch();
+        }
+      });
+    } else {
+      startWatch();
+    }
+
+    return () => {
+      if (watchId !== undefined) {
+        Geolocation.clearWatch(watchId);
+      }
+    };
+  }, []);
   return (
-    <View className="flex-1">
-      <View className="flex-row w-full py-4 justify-around items-center">
-        <TouchableOpacity onPress={() => openModal('barcode')}>
-          <Barcode cardNumber={cardNumber} className="w-50 h-24" />
-        </TouchableOpacity>
-        <TouchableOpacity onPress={() => openModal('qr')}>
-          <QR cardNumber={cardNumber} className="w-24 h-24" />
-        </TouchableOpacity>
-      </View>
-
-      <View className="flex-1">
-        <Text className="text-2xl font-bold text-center py-10">
-          결제 추천 카드
-        </Text>
-        <View className="flex-1 pt-10">
-          <CardRecommendation onSelectCard={setCardNumber} />
-        </View>
-      </View>
-
-      <Modal
-        visible={modalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setModalVisible(false)}
-      >
-        <View className="flex-1 justify-center items-center bg-white">
-          <View
-            className={`bg-white flex items-end ${modalType === 'barcode' ? 'rotate-90' : ''}`}
-          >
-            <Pressable onPress={() => setModalVisible(false)}>
-              <Text className="text-5xl">x</Text>
-            </Pressable>
-            {modalType === 'barcode' ? (
-              <Barcode className="h-60 w-[650px]" cardNumber={cardNumber} />
-            ) : (
-              <QR className="w-80 h-80" cardNumber={cardNumber} />
-            )}
+    <View className="flex-1 gap-3">
+      <View className="flex-1 rounded-[20px] py-8 bg-white justify-center">
+        {isGPS ? (
+          <QR cardNumber={cardNumber} className="w-full h-full" />
+        ) : (
+          <View className="items-center">
+            <ActivityIndicator size="large" />
+            <Text>
+              GPS로 주변 모임원 찾는 중...
+              {'\n'}
+              위도:{currentLocation?.latitude.toFixed(6) ?? '가져오는 중'}
+              {'\n'}
+              경도: {currentLocation?.longitude.toFixed(6) ?? '가져오는 중'}
+            </Text>
+            <Button
+              title="다음으로"
+              onPress={() => {
+                setIsGPS(true);
+              }}
+            />
           </View>
-        </View>
-      </Modal>
+        )}
+      </View>
+      <View className="flex-row justify-between items-center bg-white rounded-full py-4 pl-10 pr-4">
+        <Text className="text-xl font-medium">회식주의자</Text>
+        <PointToggleButton />
+      </View>
+      <View className="flex-1">
+        <CardRecommendation onSelectCard={setCardNumber} />
+      </View>
     </View>
   );
 }
