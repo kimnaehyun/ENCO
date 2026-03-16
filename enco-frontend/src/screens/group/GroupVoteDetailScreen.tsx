@@ -82,7 +82,7 @@ export default function GroupVoteDetailScreen({ route, navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 18, paddingTop: 18, gap: 12 },
+  container: { flex: 1, backgroundColor: '#F0F4FF', paddingHorizontal: 18, paddingTop: 18, gap: 12 },
 
   pill: { backgroundColor: '#D9D9D9', borderRadius: 26, paddingVertical: 12, paddingHorizontal: 16 },
   pillText: { fontSize: 16, fontWeight: '700' },

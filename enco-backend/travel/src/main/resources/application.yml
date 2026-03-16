@@ -2,7 +2,7 @@ spring:
   application:
     name: travel-service
   datasource:
-    url: jdbc:mysql://${TRAVEL_DB_HOST}:3306/${TRAVEL_DB_NAME}
+    url: jdbc:mysql://${TRAVEL_DB_HOST}:${TRAVEL_DB_PORT}/${TRAVEL_DB_NAME}
     username: ${DB_USERNAME}
     password: ${MYSQL_ROOT_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -11,5 +11,18 @@ spring:
       ddl-auto: update
     show-sql: true
 
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: ${spring.application.name}
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+
+
 server:
-  port: 8085
+  port: ${TRAVEL_SERVICE_PORT}

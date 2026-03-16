@@ -1,12 +1,10 @@
 import { Image } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { CommonActions } from '@react-navigation/native';
-
 import { ROUTES } from '../constants/routes';
-
 import HomeStackNavigator from './HomeStackNavigator';
-import GroupStackNavigator from './GroupStackNavigator';
 import OnsitePaymentNavigator from './OnsitePaymentNavigator';
+import UserStackNavigator from './UserStackNavigator';
+import { images } from '../types/images';
 
 const Tab = createBottomTabNavigator();
 
@@ -18,6 +16,12 @@ export default function BottomNavigator() {
       screenOptions={{
         tabBarShowLabel: false,
         headerShown: false,
+        tabBarStyle: {
+          backgroundColor: '#FFFFFF',
+          borderTopWidth: 1,
+          borderTopColor: '#F3F4F6',
+          height: 64,
+        },
       }}
     >
       <Tab.Screen
@@ -27,12 +31,12 @@ export default function BottomNavigator() {
           popToTopOnBlur: true,
           tabBarIcon: ({ focused, size }) => (
             <Image
-              source={
-                focused
-                  ? require('../assets/icons/home_active.png')
-                  : require('../assets/icons/home.png')
-              }
-              style={{ width: size, height: size }}
+              source={images.walletIcon}
+              style={{
+                width: size,
+                height: size,
+                tintColor: focused ? '#1428A0' : '#9CA3AF',
+              }}
               resizeMode="contain"
             />
           ),
@@ -45,12 +49,12 @@ export default function BottomNavigator() {
         options={{
           tabBarIcon: ({ focused, size }) => (
             <Image
-              source={
-                focused
-                  ? require('../assets/icons/home_active.png')
-                  : require('../assets/icons/home.png')
-              }
-              style={{ width: size, height: size }}
+              source={images.homeIcon}
+              style={{
+                width: size,
+                height: size,
+                tintColor: focused ? '#1428A0' : '#9CA3AF',
+              }}
               resizeMode="contain"
             />
           ),
@@ -59,16 +63,16 @@ export default function BottomNavigator() {
 
       <Tab.Screen
         name={ROUTES.TAB_GROUP}
-        component={GroupStackNavigator}
+        component={UserStackNavigator}
         options={{
           tabBarIcon: ({ focused, size }) => (
             <Image
-              source={
-                focused
-                  ? require('../assets/icons/home_active.png')
-                  : require('../assets/icons/home.png')
-              }
-              style={{ width: size, height: size }}
+              source={images.profileIcon}
+              style={{
+                width: size,
+                height: size,
+                tintColor: focused ? '#1428A0' : '#9CA3AF',
+              }}
               resizeMode="contain"
             />
           ),

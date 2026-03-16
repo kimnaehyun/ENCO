@@ -1,7 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import PaymentMethodScreen from '../screens/OnsitePayment/PaymentMethodScreen';
-import PaymentSuccess from '../screens/OnsitePayment/PaymentSuccess';
+import PaymentSuccess from '../screens/Payment/PaymentSuccess';
 
 export default function OnsitePaymentNavigator() {
   const Stack = createNativeStackNavigator();

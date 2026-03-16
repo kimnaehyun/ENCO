@@ -26,9 +26,8 @@ export default function GroupPinSetupScreen({ route, navigation }: Props) {
     }
 
     if (pin !== firstPin) {
-      setError("비밀번호가 일치하지 않아요. 다시 설정해주세요.");
-      setFirstPin(null);
-      setStep("set");
+      // 틀렸을 때 → 에러 표시 후 재입력(confirm)만 다시
+      setError("비밀번호가 맞지 않아요");
       resetPinEntry();
       return;
     }
@@ -48,9 +47,7 @@ export default function GroupPinSetupScreen({ route, navigation }: Props) {
                 name: "HomeTab",
                 state: {
                   routes: [
-                    {
-                      name: "Home",
-                    },
+                    { name: "Home" },
                     {
                       name: "GroupDashboard",
                       params: {
@@ -72,27 +69,19 @@ export default function GroupPinSetupScreen({ route, navigation }: Props) {
   };
 
   return (
-    <View style={{ flex: 1, padding: 20, gap: 12 }}>
-      {error ? <Text style={{ color: "red" }}>{error}</Text> : null}
-
+    <View style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
       <PinEntry
         key={`${step}-${resetKey}`}
-        title={step === "set" ? "결제 비밀번호 설정" : "결제 비밀번호 재입력"}
+        title={
+  error
+    ? `비밀번호가 맞지 않아요\n다시 입력해주세요`
+    : step === "set"
+    ? `결제 비밀번호를\n설정해주세요`
+    : `비밀번호를\n한 번 더 입력해주세요`
+}
         resetKey={resetKey}
         onComplete={handleComplete}
       />
-
-      <Text
-        style={{
-          textAlign: "center",
-          color: "#6B7280",
-          marginTop: 8,
-        }}
-      >
-        {step === "set"
-          ? "사용할 6자리 비밀번호를 입력해주세요."
-          : "같은 비밀번호를 한 번 더 입력해주세요."}
-      </Text>
     </View>
   );
 }

@@ -1,4 +1,4 @@
-package io.ssafy.payment.test;
+package io.ssafy.chat.domain.test;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -8,6 +8,6 @@ public class TestController {
 
     @GetMapping("/api/v1/test")
     public String test(){
-        return "payment test 완료";
+        return "chat test 완료";
     }
 }

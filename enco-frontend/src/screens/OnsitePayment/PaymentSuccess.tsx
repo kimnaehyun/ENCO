@@ -19,7 +19,7 @@ export default function PaymentSuccess({ navigation }: { navigation: any }) {
     return () => sub.remove();
   }, [navigation]);
   return (
-    <View>
+    <View className='bg-[#F0F4FF]'>
       <Text>결제 성공</Text>
       <Text>매장: {storeName}</Text>
       <Text>금액: {amount}원</Text>

@@ -1,6 +1,6 @@
 // src/screens/admin/AdminMenuScreen.tsx
 import React from 'react';
-import { Pressable, Text, View, StyleSheet } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
@@ -11,104 +11,79 @@ export default function AdminMenuScreen() {
   const route = useRoute();
   const params = (route.params ?? {}) as CommonParams;
 
-  const groupName = params.groupName ?? '관리자 페이지';
-
-  // ✅ "이미 만든 페이지"는 연결, 없으면 placeholder로 연결(다음 단계에서 만들 예정)
   const menus: AdminMenuItem[] = [
     {
-      key: 'settle',
-      title: '정산하기 - 미납자 관리, 입출금',
-      onPress: () =>
-        navigation.navigate('AdminSettle', { 
-          groupId: params.groupId, 
-          groupName: params.groupName 
-        }),
+      key: 'groupInfo',
+      title: '모임 정보',
+      onPress: () => navigation.navigate('GroupInfo', { groupId: params.groupId, groupName: params.groupName, isAdmin: true }),
     },
     {
-      key: 'vote',
-      title: '투표 제의하기',
-      onPress: () =>
-        navigation.navigate('GroupVoteCreate', {
-          groupId: params.groupId,
-          groupName: params.groupName,
-        }),
-    },
-    {
-      key: 'receipt',
-      title: '증빙하기 - 영수증',
-      onPress: () =>
-        navigation.navigate('AdminReceipt', {
-          groupId: params.groupId,
-          groupName: params.groupName,
-        }),
+      key: 'ledger',
+      title: '모임 장부',
+      onPress: () => navigation.navigate('AdminReceipt', { groupId: params.groupId, groupName: params.groupName }),
     },
     {
       key: 'member',
-      title: '멤버관리 - 추방, 초대',
-      onPress: () =>
-        navigation.navigate('AdminMembers', {
-          groupId: params.groupId,
-          groupName: params.groupName,
-        }),
-    },
-    {
-      key: 'groupSetting',
-      title: '모임 설정',
-      onPress: () =>
-        navigation.navigate('GroupInfo', {
-          groupId: params.groupId,
-          groupName: params.groupName,
-          isAdmin: true,
-        }),
+      title: '멤버 관리',
+      onPress: () => navigation.navigate('AdminMembers', { groupId: params.groupId, groupName: params.groupName }),
     },
     {
       key: 'card',
       title: '카드 추가 발급',
-      onPress: () =>
-        navigation.navigate('AdminCard', {
-          groupId: params.groupId,
-          groupName: params.groupName,
-        }),
+      onPress: () => navigation.navigate('AdminCard', { groupId: params.groupId, groupName: params.groupName }),
     },
   ];
 
+  const onPressDissolve = () => {
+    Alert.alert('모임 해산하기', '정말로 모임을 해산하시겠습니까?', [
+      { text: '취소', style: 'cancel' },
+      { text: '해산', style: 'destructive', onPress: () => navigation.popToTop() },
+    ]);
+  };
+
   return (
     <ScreenLayout>
-      {/* Header */}
-      <View style={styles.headerPill}>
-        <Text style={styles.headerText}>{groupName}</Text>
-      </View>
+      <View style={{ flex: 1 }}>
 
-      <View style={{ marginTop: 14, gap: 14 }}>
-        {menus.map(m => (
-          <Pressable key={m.key} onPress={m.onPress} style={styles.menuBtn} hitSlop={10}>
-            <Text style={styles.menuText}>{m.title}</Text>
-          </Pressable>
-        ))}
-      </View>
+        {/* 헤더 */}
+        <View
+          className="rounded-3xl px-6 py-4 mb-6 items-start justify-center"
+          style={{ backgroundColor: '#1428A0' }}
+        >
+          <Text style={{ fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#fff' }}>
+            모임 관리
+          </Text>
+        </View>
 
-      <Pressable onPress={() => navigation.goBack()} style={{ marginTop: 18 }} hitSlop={12}>
-        <Text style={{ textAlign: 'center', fontWeight: '800' }}>닫기</Text>
-      </Pressable>
+        {/* 메뉴 리스트 */}
+        <View className="gap-3 flex-1">
+          {menus.map(m => (
+            <Pressable
+              key={m.key}
+              onPress={m.onPress}
+              hitSlop={8}
+              className="bg-white rounded-3xl px-6 justify-center"
+              style={{ height: 72, shadowColor: '#1428A0', shadowOpacity: 0.05, shadowRadius: 8, elevation: 1 }}
+            >
+              <Text style={{ fontSize: 18, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
+                {m.title}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {/* 모임 폐쇄하기 */}
+        <Pressable
+          onPress={onPressDissolve}
+         className="rounded-3xl items-center justify-center mt-6 mb-8"
+          style={{ height: 56, backgroundColor: '#FFBDBD' }}
+        >
+          <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFBold', color: '#C0392B' }}>
+            모임 해산하기
+          </Text>
+        </Pressable>
+
+      </View>
     </ScreenLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  headerPill: {
-    backgroundColor: '#D9D9D9',
-    borderRadius: 26,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  headerText: { fontSize: 18, fontWeight: '800' },
-
-  menuBtn: {
-    backgroundColor: '#D9D9D9',
-    borderRadius: 26,
-    paddingVertical: 18,
-    paddingHorizontal: 18,
-    justifyContent: 'center',
-  },
-  menuText: { fontSize: 16, fontWeight: '800' },
-});
