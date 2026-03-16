@@ -25,9 +25,9 @@ export default function RandomKeypad({
   }, [digits]);
 
   return (
-    <View style={{ gap: 10 }}>
+    <View className="gap-2">
       {Array.from({ length: 4 }, (_, row) => (
-        <View key={row} style={{ flexDirection: "row", gap: 10 }}>
+        <View key={row} className="flex-row gap-2">
           {keys.slice(row * 3, row * 3 + 3).map((k, idx) => (
             <Pressable
               key={idx}
@@ -36,18 +36,15 @@ export default function RandomKeypad({
                 if (k.type === "backspace") onBackspace();
                 if (k.type === "reset") onReset();
               }}
-              style={{
-                flex: 1,
-                height: 56,
-                alignItems: "center",
-                justifyContent: "center",
-                borderWidth: 1,
-                borderColor: "#ddd",
-                borderRadius: 10,
-              }}
+              className="flex-1 h-14 items-center justify-center rounded-2xl bg-[#F0F4FF] active:bg-[#D1D5DB]"
             >
-              <Text style={{ fontSize: 18 }}>
-                {k.type === "digit" ? k.v : k.type === "backspace" ? "⌫" : "전체삭제"}
+              <Text
+                className={`text-[#111827] text-lg ${
+                  k.type === "reset" ? "text-sm text-[#6B7280]" : ""
+                }`}
+                style={{ fontFamily: k.type === "digit" ? "GmarketSansTTFBold" : "GmarketSansTTFMedium" }}
+              >
+                {k.type === "digit" ? k.v : k.type === "backspace" ? "⌫" : "전체\n삭제"}
               </Text>
             </Pressable>
           ))}

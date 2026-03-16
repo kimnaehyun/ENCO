@@ -51,7 +51,7 @@ export type GroupStackParamList = {
   AdminCard: CommonParams | undefined;
   AdminSettle: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
-  GroupVoteCreate: undefined;
+  GroupVoteCreate: CommonParams | undefined;
 };
 
 // Home
@@ -64,7 +64,7 @@ export type HomeStackParamList = {
   GroupChat: CommonParams | undefined;
   GroupLedger: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
-  GroupVoteCreate: undefined;
+  GroupVoteCreate: CommonParams | undefined;
   AdminMenu: CommonParams | undefined;
   AdminReceipt: CommonParams | undefined;
   AdminMembers: CommonParams | undefined;
@@ -86,12 +86,27 @@ export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
   App: undefined;
 
-  GroupCreate: undefined;
-  GroupCardRecommend: {
-    groupName: string;
-    address: string;
-    tags: string[];
-  };
+// GroupCardRecommend 타입
+GroupCardRecommend: {
+  groupName: string;
+  address: string;
+  tags: string[];
+  prevGroupName?: string;
+  prevTags?: string[];
+  prevRecommendPressed?: boolean; 
+  prevViewAllPressed?: boolean;
+};
+
+// GroupCreate 타입
+GroupCreate: {
+  selectedCardId?: string;
+  selectedCardImage?: string;
+  selectedCardName?: string;
+  groupName?: string;
+  selectedTags?: string[];
+  recommendPressed?: boolean;  
+  viewAllPressed?: boolean;
+} | undefined;
   GroupPinSetup: {
     groupName: string;
     address: string;

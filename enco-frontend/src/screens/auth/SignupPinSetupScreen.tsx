@@ -35,7 +35,7 @@ export default function SignupPinSetupScreen({
   };
 
   return (
-    <View className="flex-1 bg-gray-200 p-6">
+    <View className="flex-1 bg-[#F0F4FF] p-6">
 
       {error ? (
         <Text className="text-red-500 text-center mb-4">
