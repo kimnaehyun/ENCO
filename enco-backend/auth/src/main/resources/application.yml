@@ -2,7 +2,7 @@ spring:
   application:
     name: auth-service
   datasource:
-    url: jdbc:mysql://${AUTH_SERVICE_HOST}:3306/${AUTH_DB_NAME}
+    url: jdbc:mysql://${AUTH_DB_HOST}:3306/${AUTH_DB_NAME}
     username: ${DB_USERNAME}
     password: ${MYSQL_ROOT_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -10,9 +10,8 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
 
 server:
   port: 8082
