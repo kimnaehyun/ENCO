@@ -10,8 +10,6 @@ spring:
               '[/**]':
                 allowedOrigins:
                   - 'http://localhost:3000'
-                  - 'http://j14e104.p.ssafy.io'
-                  - 'https://j14e104.p.ssafy.io'
                   - 'https://ssafywte.site'
                   - 'http://ssafywte.site'
                 allowedMethods: '*'

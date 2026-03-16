@@ -2,7 +2,7 @@ spring:
   application:
     name: travel-service
   datasource:
-    url: jdbc:mysql://${TRAVEL_SERVICE_HOST}:3308/${TRAVEL_DB_NAME}
+    url: jdbc:mysql://${TRAVEL_DB_HOST}:3306/${TRAVEL_DB_NAME}
     username: ${DB_USERNAME}
     password: ${MYSQL_ROOT_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver

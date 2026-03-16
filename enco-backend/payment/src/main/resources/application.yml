@@ -2,7 +2,7 @@ spring:
   application:
     name: payment-service
   datasource:
-    url: jdbc:mysql://${PAYMENT_SERVICE_HOST}:3307/${PAYMENT_DB_NAME}
+    url: jdbc:mysql://${PAYMENT_DB_HOST}:3306/${PAYMENT_DB_NAME}
     username: ${DB_USERNAME}
     password: ${MYSQL_ROOT_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -10,9 +10,8 @@ spring:
     hibernate:
       ddl-auto: update
     show-sql: true
-
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
     consumer:
       group-id: ${spring.application.name}
       auto-offset-reset: earliest
