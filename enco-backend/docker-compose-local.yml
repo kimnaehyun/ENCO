@@ -1,0 +1,137 @@
+services:
+
+  # ========== Databases ==========
+  auth-db:
+    image: mysql:8.4
+    container_name: auth-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${AUTH_DB_NAME}
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+09:00
+    volumes:
+      - ./auth_mysql_data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    networks:
+      - msa-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping" ]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  payment-db:
+    image: mysql:8.4
+    container_name: payment-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${PAYMENT_DB_NAME}
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+09:00
+    volumes:
+      - ./payment_mysql_data:/var/lib/mysql
+    ports:
+      - "3307:3306"
+    networks:
+      - msa-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping" ]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  travel-db:
+    image: mysql:8.4
+    container_name: travel-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${TRAVEL_DB_NAME}
+      TZ: Asia/Seoul
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+      - --default-time-zone=+09:00
+    volumes:
+      - ./travel_mysql_data:/var/lib/mysql
+    ports:
+      - "3308:3306"
+    networks:
+      - msa-network
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping" ]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  chat-db:
+    image: mongo:7.0
+    container_name: chat-db
+    environment:
+      TZ: Asia/Seoul
+    volumes:
+      - ./mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - msa-network
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  # ========== Infra ==========
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    environment:
+      TZ: Asia/Seoul
+    command: redis-server --appendonly yes
+    volumes:
+      - ./redis_data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - msa-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      retries: 10
+    restart: unless-stopped
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      TZ: Asia/Seoul
+    networks:
+      - msa-network
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      TZ: Asia/Seoul
+    networks:
+      - msa-network
+    restart: unless-stopped
+
+networks:
+  msa-network:
+    driver: bridge

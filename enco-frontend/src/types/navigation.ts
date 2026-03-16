@@ -1,4 +1,3 @@
-// src/navigation/types.ts
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import {
@@ -11,13 +10,18 @@ import { CommonParams } from './common';
 export type AuthStackParamList = {
   AuthLanding: undefined;
   Login: undefined;
-  SignupForm: undefined;
+
+  SignupVerify: undefined;
+  InputInfo: undefined;
+
   SignupPinSetup: {
     name: string;
     birth: string;
     phone: string;
     email: string;
   };
+
+  SignupComplete: undefined;
 };
 
 // Internet Payment
@@ -111,5 +115,4 @@ export type GroupScreenProps<T extends keyof GroupStackParamList> =
     BottomTabScreenProps<BottomTabParamList>
   >;
 
-// 공통 step 같은 순수 타입
 export type SignupStep = 'name' | 'birth' | 'phone' | 'email' | 'done';
