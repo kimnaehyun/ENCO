@@ -1,0 +1,9 @@
+.gradle
+out
+node_modules
+.git
+.gitignore
+
+build/*
+!build/libs/
+!build/libs/*.jar

@@ -1,5 +1,5 @@
-import React from 'react';
 import { Dimensions, FlatList, Image, Pressable, Text, View } from 'react-native';
+import React, { useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
@@ -11,6 +11,10 @@ const CARD_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
+
+  // 테스트용: true면 네트워크 에러 화면을 강제로 보여줌
+  const [isNetworkErrorTest, setIsNetworkErrorTest] = useState(true);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const me = { displayName: '나기' };
   const groups: HomeGroupSummary[] = [

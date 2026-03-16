@@ -62,6 +62,7 @@ export default function QRScanner() {
           navigation.navigate('PaymentSuccess', {
             storeName: data.storeName,
             amount: data.amount,
+            card: data.card,
           });
         }
       } catch (e) {
