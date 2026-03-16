@@ -1,4 +1,4 @@
-package io.ssafy.chat.global.config.error;
+package io.ssafy.chat.global.common.error;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

@@ -1,4 +1,4 @@
-package io.ssafy.chat.global.config.error;
+package io.ssafy.payment.global.common.error;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
