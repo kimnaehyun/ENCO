@@ -4,15 +4,13 @@ import PinEntry from '../../components/pin/PinEntry';
 
 const TEST_PIN = '258000';
 
-export default function PaymentPinScreen({ navigation, route }: any) {
+export default function PaymentPinScreen() {
   const [resetKey, setResetKey] = useState(0);
-  const { screen } = route.params;
 
   const handlePinComplete = (pin: string) => {
     const isValid = pin === TEST_PIN;
 
     if (isValid) {
-      return navigation.navigate(screen);
     }
 
     Alert.alert('인증 실패', 'pin 번호가 올바르지 않습니다.');
