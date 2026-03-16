@@ -1,21 +1,21 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import {
   Alert,
+  Image,
   Pressable,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { ROUTES } from '../../constants/routes';
 
 const TAG_OPTIONS = ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'];
 
 export default function GroupCreateScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute<any>();
 
   const manager = useMemo(
     () => ({
@@ -26,39 +26,26 @@ export default function GroupCreateScreen() {
     []
   );
 
-  const [captainConfirmed, setCaptainConfirmed] = useState(false);
+  const [groupName, setGroupName] = useState(route.params?.groupName ?? '');
+  const [selectedTags, setSelectedTags] = useState<string[]>(route.params?.selectedTags ?? []);
+  const [selectedCardId, setSelectedCardId] = useState(route.params?.selectedCardId ?? null);
+  const [selectedCardImage, setSelectedCardImage] = useState(route.params?.selectedCardImage ?? null);
+  const [selectedCardName, setSelectedCardName] = useState(route.params?.selectedCardName ?? null);
+  const [recommendPressed, setRecommendPressed] = useState(route.params?.recommendPressed ?? false);
+  const [viewAllPressed, setViewAllPressed] = useState(route.params?.viewAllPressed ?? false);
 
-  const [groupName, setGroupName] = useState('');
-  const [groupNameConfirmed, setGroupNameConfirmed] = useState(false);
-
-  const [address, setAddress] = useState('');
-  const [addressConfirmed, setAddressConfirmed] = useState(false);
-
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-
-  const canConfirmGroupName = groupName.trim().length > 0;
-  const canConfirmAddress = address.trim().length > 0;
-  const canGoNext = selectedTags.length > 0;
-
-  const handleConfirmCaptain = () => {
-    setCaptainConfirmed(true);
-  };
-
-  const handleConfirmGroupName = () => {
-    if (!canConfirmGroupName) {
-      Alert.alert('안내', '모임명을 입력해주세요.');
-      return;
+  // 카드 선택 후 돌아왔을 때 params 동기화
+  useEffect(() => {
+    if (route.params?.selectedCardId) {
+      setSelectedCardId(route.params.selectedCardId);
+      setSelectedCardImage(route.params.selectedCardImage ?? null);
+      setSelectedCardName(route.params.selectedCardName ?? null);
+      setRecommendPressed(route.params.recommendPressed ?? false);
+      setViewAllPressed(route.params.viewAllPressed ?? false);
     }
-    setGroupNameConfirmed(true);
-  };
+  }, [route.params?.selectedCardId]);
 
-  const handleConfirmAddress = () => {
-    if (!canConfirmAddress) {
-      Alert.alert('안내', '집 주소를 입력해주세요.');
-      return;
-    }
-    setAddressConfirmed(true);
-  };
+  const canGoNext = groupName.trim().length > 0 && selectedTags.length > 0;
 
   const toggleTag = (tag: string) => {
     setSelectedTags((prev) =>
@@ -66,268 +53,324 @@ export default function GroupCreateScreen() {
     );
   };
 
-  const handleNext = () => {
-  if (!canGoNext) {
-    Alert.alert('안내', '모임 성향을 1개 이상 선택해주세요.');
-    return;
-  }
-  console.log('GROUP_CARD_RECOMMEND =', ROUTES.GROUP_CARD_RECOMMEND);
-  navigation.navigate('GroupCardRecommend', {
-    groupName,
-    address,
-    tags: selectedTags,
-  });
-};
+  const handleRecommend = () => {
+    if (!groupName.trim()) {
+      Alert.alert('안내', '모임명을 입력해주세요.');
+      return;
+    }
+    if (selectedTags.length === 0) {
+      Alert.alert('안내', '모임 성향을 1개 이상 선택해주세요.');
+      return;
+    }
+    navigation.navigate('GroupCardRecommend', {
+      groupName,
+      address: '',
+      tags: selectedTags,
+      prevGroupName: groupName,
+      prevTags: selectedTags,
+      prevRecommendPressed: true,
+      prevViewAllPressed: viewAllPressed,
+    });
+  };
+
+  const handleViewAll = () => {
+    navigation.navigate('GroupCardRecommend', {
+      groupName,
+      address: '',
+      tags: [],
+      prevGroupName: groupName,
+      prevTags: selectedTags,
+      prevRecommendPressed: recommendPressed,
+      prevViewAllPressed: true,
+    });
+  };
+
+  const handleSubmit = () => {
+    if (!groupName.trim()) {
+      Alert.alert('안내', '모임명을 입력해주세요.');
+      return;
+    }
+    if (selectedTags.length === 0) {
+      Alert.alert('안내', '모임 성향을 1개 이상 선택해주세요.');
+      return;
+    }
+    if (!selectedCardId) {
+      Alert.alert('안내', '카드를 선택해주세요.');
+      return;
+    }
+    navigation.navigate('GroupPinSetup', {
+      groupName,
+      address: '',
+      tags: selectedTags,
+      selectedCardId,
+    });
+  };
+
   return (
     <ScreenLayout>
       <ScrollView
-        contentContainerStyle={styles.contentContainer}
+        contentContainerStyle={{ paddingTop: 8, paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.title}>모임통장 개설하기</Text>
+        {/* 헤더 */}
+        <Text
+          style={{
+            fontSize: 22,
+            color: '#111827',
+            fontFamily: 'GmarketSansTTFBold',
+            marginBottom: 28,
+          }}
+        >
+          모임통장 개설하기
+        </Text>
 
         {/* 총무 정보 */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>총무 정보(자동 입력)</Text>
-
-          <View style={styles.infoBox}>
-            <Text style={styles.infoText}>이름: {manager.name}</Text>
-            <Text style={styles.infoText}>이메일: {manager.email}</Text>
-            <Text style={styles.infoText}>전화번호: {manager.phone}</Text>
-          </View>
-
-          {!captainConfirmed ? (
-            <Pressable style={styles.primaryButton} onPress={handleConfirmCaptain}>
-              <Text style={styles.primaryButtonText}>확인</Text>
-            </Pressable>
-          ) : (
-            <View style={styles.confirmedBox}>
-              <Text style={styles.confirmedText}>확인 완료</Text>
+        <Text
+          style={{
+            fontSize: 14,
+            color: '#6B7280',
+            fontFamily: 'GmarketSansTTFMedium',
+            marginBottom: 8,
+          }}
+        >
+          총무 정보(자동 입력)
+        </Text>
+        <View
+          style={{
+            backgroundColor: '#FFFFFF',
+            borderRadius: 20,
+            paddingHorizontal: 18,
+            marginBottom: 20,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.05,
+            shadowRadius: 4,
+            elevation: 1,
+          }}
+        >
+          {[
+            { label: '이름', value: manager.name },
+            { label: '이메일', value: manager.email },
+            { label: '전화번호', value: manager.phone },
+          ].map((item, i) => (
+            <View
+              key={item.label}
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                paddingVertical: 14,
+                borderBottomWidth: i < 2 ? 1 : 0,
+                borderBottomColor: '#F3F4F6',
+              }}
+            >
+              <Text style={{ fontSize: 14, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium' }}>
+                {item.label}
+              </Text>
+              <Text style={{ fontSize: 14, color: '#111827', fontFamily: 'GmarketSansTTFMedium' }}>
+                {item.value}
+              </Text>
             </View>
-          )}
+          ))}
         </View>
 
         {/* 모임명 */}
-        {captainConfirmed && (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>모임명</Text>
+        <Text
+          style={{
+            fontSize: 14,
+            color: '#6B7280',
+            fontFamily: 'GmarketSansTTFMedium',
+            marginBottom: 8,
+          }}
+        >
+          모임명
+        </Text>
+        <TextInput
+          value={groupName}
+          onChangeText={setGroupName}
+          placeholder="모임명을 입력해주세요"
+          placeholderTextColor="#9CA3AF"
+          style={{
+            height: 56,
+            borderRadius: 16,
+            backgroundColor: '#FFFFFF',
+            paddingHorizontal: 18,
+            fontSize: 15,
+            color: '#111827',
+            fontFamily: 'GmarketSansTTFMedium',
+            marginBottom: 20,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.05,
+            shadowRadius: 4,
+            elevation: 1,
+          }}
+        />
 
-            <TextInput
-              value={groupName}
-              onChangeText={setGroupName}
-              placeholder="모임명을 입력해주세요"
-              placeholderTextColor="#9CA3AF"
-              editable={!groupNameConfirmed}
-              style={[
-                styles.input,
-                groupNameConfirmed && styles.inputDisabled,
-              ]}
-            />
-
-            {!groupNameConfirmed ? (
+        {/* 모임 성향 태그 */}
+        <Text
+          style={{
+            fontSize: 14,
+            color: '#6B7280',
+            fontFamily: 'GmarketSansTTFMedium',
+            marginBottom: 12,
+          }}
+        >
+          모임 성향(옵션 태그)
+        </Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
+          {TAG_OPTIONS.map((tag) => {
+            const selected = selectedTags.includes(tag);
+            return (
               <Pressable
-                style={[
-                  styles.primaryButton,
-                  !canConfirmGroupName && styles.primaryButtonDisabled,
-                ]}
-                onPress={handleConfirmGroupName}
+                key={tag}
+                onPress={() => toggleTag(tag)}
+                style={{
+                  width: '31%',
+                  paddingVertical: 18,
+                  borderRadius: 18,
+                  backgroundColor: selected ? '#1428A0' : '#C7D2FE',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  shadowColor: selected ? '#1428A0' : '#000',
+                  shadowOffset: { width: 0, height: selected ? 4 : 1 },
+                  shadowOpacity: selected ? 0.25 : 0.05,
+                  shadowRadius: selected ? 8 : 4,
+                  elevation: selected ? 4 : 1,
+                }}
               >
-                <Text style={styles.primaryButtonText}>확인</Text>
+                <Text style={{ fontSize: 15, color: '#FFFFFF', fontFamily: 'GmarketSansTTFBold' }}>
+                  {tag}
+                </Text>
               </Pressable>
-            ) : (
-              <View style={styles.confirmedBox}>
-                <Text style={styles.confirmedText}>확인 완료</Text>
-              </View>
-            )}
+            );
+          })}
+        </View>
+        <Text
+          style={{
+            fontSize: 12,
+            color: '#9CA3AF',
+            fontFamily: 'GmarketSansTTFMedium',
+            textAlign: 'center',
+            marginBottom: 28,
+          }}
+        >
+          중복 선택 가능
+        </Text>
+
+        {/* 선택된 카드 프리뷰 */}
+        {selectedCardImage && (
+          <View
+            style={{
+              backgroundColor: '#FFFFFF',
+              borderRadius: 20,
+              padding: 18,
+              alignItems: 'center',
+              marginBottom: 20,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.05,
+              shadowRadius: 4,
+              elevation: 1,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 13,
+                color: '#9CA3AF',
+                fontFamily: 'GmarketSansTTFMedium',
+                marginBottom: 12,
+              }}
+            >
+              선택한 카드
+            </Text>
+            <Image
+              source={{ uri: selectedCardImage }}
+              style={{ width: '60%', aspectRatio: 2, borderRadius: 12 }}
+              resizeMode="contain"
+            />
+            <Text
+              style={{
+                marginTop: 10,
+                fontSize: 14,
+                color: '#111827',
+                fontFamily: 'GmarketSansTTFBold',
+              }}
+            >
+              {selectedCardName}
+            </Text>
           </View>
         )}
 
-        {/* 주소 */}
-        {groupNameConfirmed && (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>집 주소</Text>
-
-            <TextInput
-              value={address}
-              onChangeText={setAddress}
-              placeholder="집 주소를 입력해주세요"
-              placeholderTextColor="#9CA3AF"
-              editable={!addressConfirmed}
-              style={[
-                styles.input,
-                addressConfirmed && styles.inputDisabled,
-              ]}
-            />
-
-            {!addressConfirmed ? (
-              <Pressable
-                style={[
-                  styles.primaryButton,
-                  !canConfirmAddress && styles.primaryButtonDisabled,
-                ]}
-                onPress={handleConfirmAddress}
-              >
-                <Text style={styles.primaryButtonText}>확인</Text>
-              </Pressable>
-            ) : (
-              <View style={styles.confirmedBox}>
-                <Text style={styles.confirmedText}>확인 완료</Text>
-              </View>
-            )}
-          </View>
-        )}
-
-        {/* 태그 */}
-        {addressConfirmed && (
-          <View style={styles.section}>
-            <Text style={styles.sectionLabel}>모임 성향(옵션 태그)</Text>
-
-            <View style={styles.tagContainer}>
-              {TAG_OPTIONS.map((tag) => {
-                const selected = selectedTags.includes(tag);
-
-                return (
-                  <Pressable
-                    key={tag}
-                    onPress={() => toggleTag(tag)}
-                    style={[
-                      styles.tagButton,
-                      selected && styles.tagButtonSelected,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.tagButtonText,
-                        selected && styles.tagButtonTextSelected,
-                      ]}
-                    >
-                      {tag}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            <Text style={styles.helperText}>중복 선택 가능</Text>
+        {/* 버튼 */}
+        <View style={{ gap: 10 }}>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Pressable
+              onPress={() => {
+                setRecommendPressed(true);
+                handleRecommend();
+              }}
+              style={{
+                flex: 1,
+                height: 54,
+                borderRadius: 16,
+                backgroundColor: recommendPressed ? '#C7D2FE' : '#1428A0',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{
+                color: '#FFFFFF',
+                fontSize: 14,
+                fontFamily: 'GmarketSansTTFBold',
+              }}>
+                카드 추천 받기
+              </Text>
+            </Pressable>
 
             <Pressable
-              style={[
-                styles.primaryButton,
-                !canGoNext && styles.primaryButtonDisabled,
-              ]}
-              onPress={handleNext}
+              onPress={() => {
+                setViewAllPressed(true);
+                handleViewAll();
+              }}
+              style={{
+                flex: 1,
+                height: 54,
+                borderRadius: 16,
+                backgroundColor: viewAllPressed ? '#C7D2FE' : '#1428A0',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
             >
-              <Text style={styles.primaryButtonText}>카드 추천받기</Text>
+              <Text style={{
+                color: '#FFFFFF',
+                fontSize: 14,
+                fontFamily: 'GmarketSansTTFBold',
+              }}>
+                전체 카드 보기
+              </Text>
             </Pressable>
           </View>
-        )}
+
+          {/* 개설하기 - 카드 선택 후에만 표시 */}
+          {selectedCardId && (
+            <Pressable
+              onPress={handleSubmit}
+              style={{
+                height: 54,
+                borderRadius: 16,
+                backgroundColor: '#1428A0',
+                justifyContent: 'center',
+                alignItems: 'center',
+              }}
+            >
+              <Text style={{ color: '#FFFFFF', fontSize: 16, fontFamily: 'GmarketSansTTFBold' }}>
+                모임통장 개설하기
+              </Text>
+            </Pressable>
+          )}
+        </View>
       </ScrollView>
     </ScreenLayout>
   );
 }
-
-const styles = StyleSheet.create({
-  contentContainer: {
-    paddingTop: 8,
-    paddingBottom: 32,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 20,
-  },
-  section: {
-    marginBottom: 18,
-  },
-  sectionLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 10,
-  },
-  infoBox: {
-    backgroundColor: '#E5E7EB',
-    borderRadius: 14,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  infoText: {
-    fontSize: 15,
-    color: '#374151',
-    marginBottom: 6,
-  },
-  input: {
-    height: 56,
-    borderRadius: 14,
-    backgroundColor: '#E5E7EB',
-    paddingHorizontal: 16,
-    fontSize: 15,
-    color: '#111827',
-  },
-  inputDisabled: {
-    color: '#6B7280',
-  },
-  primaryButton: {
-    marginTop: 10,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: '#D1D5DB',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  primaryButtonDisabled: {
-    opacity: 0.45,
-  },
-  primaryButtonText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  confirmedBox: {
-    marginTop: 10,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: '#F3F4F6',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  confirmedText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#6B7280',
-  },
-  tagContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  tagButton: {
-    minWidth: '30%',
-    paddingVertical: 14,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: '#E5E7EB',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tagButtonSelected: {
-    backgroundColor: '#D1D5DB',
-    borderWidth: 1,
-    borderColor: '#6B7280',
-  },
-  tagButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-  },
-  tagButtonTextSelected: {
-    color: '#111827',
-  },
-  helperText: {
-    marginTop: 10,
-    fontSize: 13,
-    color: '#6B7280',
-    textAlign: 'center',
-  },
-});

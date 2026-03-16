@@ -59,7 +59,7 @@ export default function InputInfoScreen({
   }, [canEmail]);
 
   return (
-  <View className="flex-1 px-6 pt-10">
+  <View className="flex-1 px-6 pt-10 bg-[#F0F4FF]">
 
 
     <View className="flex-1 rounded-2xl p-6 justify-between">

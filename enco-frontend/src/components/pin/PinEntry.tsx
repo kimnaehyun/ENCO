@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text } from "react-native";
 import RandomKeypad from "./RandomKeypad";
 import PinDots from "./PinDots";
 import { PinEntryProps } from "../../types/pin";
@@ -43,13 +43,29 @@ export default function PinEntry({
   };
 
   return (
-    <View style={styles.root}>
-      <View style={styles.header}>
-        <Text style={styles.title}>{title}</Text>
+    <View className="flex-1 bg-[#F0F4FF]">
+      {/* 상단 타이틀 + dots */}
+      <View className="flex-1 items-center justify-center gap-10 px-6">
+        <Text
+          className="text-[#111827] text-3xl text-center leading-10"
+          style={{ fontFamily: "GmarketSansTTFBold" }}
+        >
+          {title}
+        </Text>
         <PinDots length={length} filledCount={pin.length} />
       </View>
 
-      <View style={styles.keypadContainer}>
+      {/* 하단 키패드 */}
+      <View
+        className="bg-white rounded-t-3xl px-5 pt-5 pb-10"
+        style={{
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          elevation: 6,
+        }}
+      >
         <RandomKeypad
           resetKey={resetKey}
           onDigit={handleDigit}
@@ -60,30 +76,3 @@ export default function PinEntry({
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: "#FFFFFF",
-    justifyContent: "space-between",
-  },
-
-  header: {
-    flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 40,
-  },
-
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#1C1C1E",
-    fontFamily:"GmarketSansTTFBold"
-  },
-
-  keypadContainer: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
-  },
-});

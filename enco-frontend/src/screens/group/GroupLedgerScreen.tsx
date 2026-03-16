@@ -9,234 +9,168 @@ import { LedgerItem } from '../../types/group';
 function formatMoney(n: number) {
   const sign = n >= 0 ? '+' : '-';
   const abs = Math.abs(n);
-  return `${sign}₩ ${abs.toLocaleString()}`;
+  return `${sign}${abs.toLocaleString()}원`;
 }
 
 export default function GroupLedgerScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
   const params = (route.params ?? {}) as CommonParams;
-
   const groupName = params.groupName ?? '모임명';
 
-  // ✅ 임시 데이터
   const items: LedgerItem[] = useMemo(
     () => [
-      { id: 'l1', date: '2026-03-06', amount: +10000, title: '회비 입금', memo: '3월 회비', hasReceipt: false },
-      { id: 'l2', date: '2026-03-06', amount: -58000, title: '회식 결제', memo: '강남 ○○식당', hasReceipt: true },
-      { id: 'l3', date: '2026-03-05', amount: -12000, title: '간식 결제', memo: '편의점', hasReceipt: true },
-      { id: 'l4', date: '2026-03-03', amount: -25000, title: '장소 대관', memo: '스터디룸 2시간', hasReceipt: false },
+      { id: 'l1', date: '3.9', amount: +10,    title: '모임원출석', memo: '김채아', hasReceipt: false },
+      { id: 'l2', date: '3.8', amount: +10000, title: '김싸피 모임비 납입', memo: '', hasReceipt: false },
+      { id: 'l3', date: '3.8', amount: +10000, title: '이싸피 모임비 납입', memo: '', hasReceipt: false },
+      { id: 'l4', date: '3.7', amount: +10000, title: '최싸피 모임비 납입', memo: '', hasReceipt: false },
+      { id: 'l5', date: '3.5', amount: -50000, title: '출금', memo: '', hasReceipt: true },
     ],
     []
   );
 
-  const [selectedIds, setSelectedIds] = useState<Record<string, boolean>>({});
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const toggleSelect = (id: string) => {
-    setSelectedIds(prev => ({ ...prev, [id]: !prev[id] }));
-  };
+  const balance = 854440;
+  const paidAmount = 854000;
+  const pointAmount = 443;
 
-  const toggleExpand = (id: string) => {
-    setExpandedId(prev => (prev === id ? null : id));
-  };
-
-  const onPressFilter = () => {
-    Alert.alert('필터', 'TODO: 연간/월별, 기간, 정렬, 사용자별 필터 UI');
-  };
-
-  const onPressStartDate = () => {
-    Alert.alert('조회 시작 기간', 'TODO: 날짜 선택 모달');
-  };
-
-  const onPressEndDate = () => {
-    Alert.alert('조회 마감 기간', 'TODO: 날짜 선택 모달');
-  };
-
-  const onPressExport = () => {
-    const selected = Object.entries(selectedIds)
-      .filter(([, v]) => v)
-      .map(([k]) => k);
-
-    Alert.alert(
-      '내보내기',
-      selected.length === 0
-        ? '선택된 항목이 없습니다. 체크 후 내보내기를 눌러주세요.'
-        : `선택된 항목 ${selected.length}개를 PDF로 내보내기(임시)`
-    );
-  };
+  const onPressSettle = () => Alert.alert('정산하기', 'TODO: 정산 기능');
+  const onPressFilter = () => Alert.alert('필터', 'TODO: 필터 UI');
 
   return (
     <ScreenLayout>
-      {/* Header: 좌측 타이틀 / 우측 닫기 */}
-      <View
-        style={{
-          height: 56,
-          borderRadius: 12,
-          backgroundColor: '#F3F4F6',
-          paddingHorizontal: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-        }}
-      >
-        <Text numberOfLines={1} style={{ fontSize: 20, fontWeight: '900', flex: 1, paddingRight: 12 }}>
-          장부
-        </Text>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
 
-        <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={{ fontSize: 16, fontWeight: '800' }}>닫기</Text>
-        </Pressable>
-      </View>
-
-      <ScrollView style={{ marginTop: 12 }} contentContainerStyle={{ paddingBottom: 24 }}>
-        {/* 안내/기능 설명 + 버튼(필터/내보내기) */}
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontWeight: '800', marginBottom: 6 }}>{groupName}</Text>
-            <Text style={{ lineHeight: 20 }}>• 연간 / 월별</Text>
-            <Text style={{ lineHeight: 20 }}>• 기간, 사용자별</Text>
-            <Text style={{ lineHeight: 20 }}>• 정렬: 최신순/오래된 순서</Text>
-            <Text style={{ lineHeight: 20 }}>• 눌렀을 때 상세 정보</Text>
-          </View>
-
-          <View style={{ justifyContent: 'flex-start', gap: 10 }}>
-            <Pressable
-              onPress={onPressFilter}
-              hitSlop={10}
-              style={{
-                minWidth: 92,
-                height: 44,
-                borderRadius: 12,
-                backgroundColor: '#E5E7EB',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ fontWeight: '800' }}>필터</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={onPressExport}
-              hitSlop={10}
-              style={{
-                minWidth: 92,
-                height: 44,
-                borderRadius: 12,
-                backgroundColor: '#FBCFE8', // 연핑크(임시)
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Text style={{ fontWeight: '800' }}>내보내기</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        {/* 기간 선택 */}
-        <View style={{ marginTop: 14, flexDirection: 'row', gap: 10 }}>
-          <Pressable
-            onPress={onPressStartDate}
-            style={{
-              flex: 1,
-              height: 44,
-              borderRadius: 12,
-              backgroundColor: '#E5E7EB',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontWeight: '800' }}>조회 시작 기간</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={onPressEndDate}
-            style={{
-              flex: 1,
-              height: 44,
-              borderRadius: 12,
-              backgroundColor: '#E5E7EB',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}
-          >
-            <Text style={{ fontWeight: '800' }}>조회 마감 기간</Text>
+        {/* 헤더 타이틀 */}
+        <View className="flex-row items-center justify-between mb-4">
+          <Text style={{ fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
+            모임 장부
+          </Text>
+          <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
+            <Text style={{ fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>닫기</Text>
           </Pressable>
         </View>
 
-        {/* 리스트 */}
-        <View style={{ marginTop: 14, gap: 12 }}>
-          {items.map(it => {
-            const checked = !!selectedIds[it.id];
+        {/* 잔액 카드 */}
+        <View
+          className="bg-white rounded-3xl px-6 py-5 mb-4"
+          style={{ shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}
+        >
+          <Text style={{ fontSize: 13, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium', marginBottom: 4 }}>
+            현재 모임 통장 잔액
+          </Text>
+          <Text style={{ fontSize: 28, fontFamily: 'GmarketSansTTFBold', color: '#111827', textAlign: 'right', marginBottom: 12 }}>
+            {balance.toLocaleString()}원
+          </Text>
+
+          {/* 구분선 */}
+          <View className="h-px bg-gray-100 mb-3" />
+
+          <View className="flex-row justify-between">
+            <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>납부 금액</Text>
+            <Text style={{ fontSize: 13, color: '#111827', fontFamily: 'GmarketSansTTFBold' }}>
+              {paidAmount.toLocaleString()}원
+            </Text>
+          </View>
+          <View className="flex-row justify-between mt-1">
+            <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>포인트 금액</Text>
+            <Text style={{ fontSize: 13, color: '#111827', fontFamily: 'GmarketSansTTFBold' }}>
+              {pointAmount.toLocaleString()}원
+            </Text>
+          </View>
+        </View>
+
+        {/* 정산하기 / 필터 버튼 */}
+        <View className="flex-row gap-3 mb-4">
+          <Pressable
+            onPress={onPressSettle}
+            className="flex-1 rounded-2xl py-3 items-center justify-center"
+            style={{ backgroundColor: '#1428A0' }}
+          >
+            <Text style={{ fontSize: 15, color: '#fff', fontFamily: 'GmarketSansTTFBold' }}>정산하기</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={onPressFilter}
+            className="rounded-2xl py-3 px-6 items-center justify-center bg-white"
+            style={{ shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 8, elevation: 1 }}
+          >
+            <Text style={{ fontSize: 15, color: '#374151', fontFamily: 'GmarketSansTTFBold' }}>필터</Text>
+          </Pressable>
+        </View>
+
+        {/* 거래 내역 리스트 */}
+        <View className="gap-2">
+          {items.map((it) => {
+            const isPositive = it.amount >= 0;
             const expanded = expandedId === it.id;
 
             return (
               <View key={it.id}>
-                <View
-                  style={{
-                    borderRadius: 24,
-                    backgroundColor: '#E5E7EB',
-                    paddingHorizontal: 16,
-                    paddingVertical: 14,
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 12,
-                  }}
+                <Pressable
+                  onPress={() => setExpandedId(prev => prev === it.id ? null : it.id)}
+                  className="bg-white rounded-2xl px-5 py-4"
+                  style={{ shadowColor: '#1428A0', shadowOpacity: 0.04, shadowRadius: 8, elevation: 1 }}
                 >
-                  {/* 체크박스 */}
-                  <Pressable
-                    onPress={() => toggleSelect(it.id)}
-                    hitSlop={10}
-                    style={{
-                      width: 26,
-                      height: 26,
-                      borderRadius: 6,
-                      backgroundColor: '#F3F4F6',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                  >
-                    <Text style={{ fontWeight: '900' }}>{checked ? '✓' : ''}</Text>
-                  </Pressable>
+                  <View className="flex-row items-center justify-between">
+                    {/* 날짜 + 제목 */}
+                    <View style={{ flex: 1, marginRight: 12 }}>
+                      <Text style={{ fontSize: 13, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium', marginBottom: 2 }}>
+                        {it.date}
+                      </Text>
+                      <Text style={{ fontSize: 15, color: '#111827', fontFamily: 'GmarketSansTTFBold' }}>
+                        {it.title}
+                      </Text>
+                      {it.memo ? (
+                        <View
+                          className="mt-1 self-start rounded-lg px-2 py-0.5"
+                          style={{ backgroundColor: '#22C55E' }}
+                        >
+                          <Text style={{ fontSize: 12, color: '#fff', fontFamily: 'GmarketSansTTFBold' }}>
+                            {it.memo}
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
 
-                  {/* 내용(눌러서 상세) */}
-                  <Pressable onPress={() => toggleExpand(it.id)} style={{ flex: 1 }}>
-                    <Text style={{ fontWeight: '900' }}>
-                      {it.date} · {formatMoney(it.amount)}
-                    </Text>
-                    <Text style={{ marginTop: 6, color: '#374151' }}>
-                      {it.title} / 자세히 보기
-                    </Text>
-                  </Pressable>
-                </View>
+                    {/* 금액 */}
+                    <View className="items-end">
+                      <Text style={{
+                        fontSize: 18,
+                        fontFamily: 'GmarketSansTTFBold',
+                        color: isPositive ? '#1428A0' : '#EF4444',
+                      }}>
+                        {formatMoney(it.amount)}
+                      </Text>
+                      <Text style={{ fontSize: 12, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium', marginTop: 2 }}>
+                        {/* 잔액(임시) */}
+                        {(854440 - items.slice(0, items.findIndex(i => i.id === it.id)).reduce((s, i) => s + i.amount, 0)).toLocaleString()}원
+                      </Text>
+                    </View>
+                  </View>
+                </Pressable>
 
-                {/* 상세 정보(확장 영역) */}
+                {/* 상세 확장 */}
                 {expanded && (
                   <View
-                    style={{
-                      marginTop: 10,
-                      borderRadius: 24,
-                      backgroundColor: '#E5E7EB',
-                      padding: 16,
-                      gap: 8,
-                    }}
+                    className="bg-white rounded-2xl px-5 py-4 mt-1"
+                    style={{ shadowColor: '#1428A0', shadowOpacity: 0.04, shadowRadius: 8, elevation: 1 }}
                   >
-                    <Text style={{ fontWeight: '900' }}>세부 정보</Text>
-                    <Text>• 메모: {it.memo ?? '(없음)'}</Text>
-                    <Text>• 영수증 이미지: {it.hasReceipt ? '있음(임시)' : '없음(임시)'}</Text>
-
-                    <View
-                      style={{
-                        height: 110,
-                        borderRadius: 18,
-                        backgroundColor: '#D1D5DB',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginTop: 6,
-                      }}
-                    >
-                      <Text style={{ color: '#374151' }}>영수증/이미지 영역(임시)</Text>
-                    </View>
+                    <Text style={{ fontSize: 13, color: '#374151', fontFamily: 'GmarketSansTTFMedium' }}>
+                      메모: {it.memo || '(없음)'}
+                    </Text>
+                    <Text style={{ fontSize: 13, color: '#374151', fontFamily: 'GmarketSansTTFMedium', marginTop: 4 }}>
+                      영수증: {it.hasReceipt ? '있음' : '없음'}
+                    </Text>
+                    {it.hasReceipt && (
+                      <View
+                        className="mt-3 rounded-xl items-center justify-center"
+                        style={{ height: 100, backgroundColor: '#F3F4F6' }}
+                      >
+                        <Text style={{ color: '#9CA3AF' }}>영수증 이미지 영역</Text>
+                      </View>
+                    )}
                   </View>
                 )}
               </View>
@@ -244,20 +178,6 @@ export default function GroupLedgerScreen() {
           })}
         </View>
 
-        {/* 하단 내보내기 버튼(와이어프레임 큰 버튼) */}
-        <Pressable
-          onPress={onPressExport}
-          style={{
-            marginTop: 18,
-            height: 48,
-            borderRadius: 12,
-            backgroundColor: '#FBCFE8',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Text style={{ fontWeight: '900' }}>내보내기</Text>
-        </Pressable>
       </ScrollView>
     </ScreenLayout>
   );

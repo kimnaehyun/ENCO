@@ -1,44 +1,35 @@
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Image } from 'react-native';
 import { AuthScreenProps } from '../../types/navigation';
+import { images } from '../../types/images';
 
 export default function SignupCompleteScreen({
   navigation,
 }: AuthScreenProps<'SignupComplete'>) {
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: '#F5F6F8',
-        padding: 24,
-        justifyContent: 'center',
-      }}
-    >
+    <View className="flex-1 bg-[#F0F4FF] justify-center items-center px-6">
+      <Image
+        source={images.welcome}
+        className="w-[220px] h-[220px]"
+        resizeMode="contain"
+      />
+
+      {/* 환영 텍스트 */}
       <Text
-        style={{
-          fontSize: 30,
-          fontFamily: 'GmarketSansTTFBold',
-          marginBottom: 16,
-          color: '#111827',
-          textAlign: 'center',
-        }}
+        className="text-[#111827] text-3xl text-center mt-6"
+        style={{ fontFamily: 'GmarketSansTTFBold' }}
       >
-        가입 완료
+        환영합니다
+      </Text>
+      <Text
+        className="text-3xl text-center"
+        style={{ fontFamily: 'GmarketSansTTFBold' }}
+      >
+        <Text className="text-[#1428A0]">[사용자]</Text>
+        <Text className="text-[#111827]">님!</Text>
       </Text>
 
-      <Text
-        style={{
-          fontSize: 16,
-          fontFamily: 'GmarketSansTTFMedium',
-          color: '#6B7280',
-          lineHeight: 24,
-          textAlign: 'center',
-          marginBottom: 40,
-        }}
-      >
-        회원가입이 정상적으로 완료되었습니다.
-      </Text>
-
+      {/* 홈으로 버튼 */}
       <Pressable
         onPress={() =>
           navigation.reset({
@@ -46,22 +37,13 @@ export default function SignupCompleteScreen({
             routes: [{ name: 'AuthLanding' }],
           })
         }
-        style={{
-          backgroundColor: '#1428A0',
-          borderRadius: 16,
-          height: 56,
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
+        className="bg-[#1428A0] rounded-2xl h-14 px-16 items-center justify-center mt-16"
       >
         <Text
-          style={{
-            color: '#FFFFFF',
-            fontSize: 18,
-            fontFamily: 'GmarketSansTTFBold',
-          }}
+          className="text-white text-xl"
+          style={{ fontFamily: 'GmarketSansTTFBold' }}
         >
-          로그인 하러 가기
+          홈으로
         </Text>
       </Pressable>
     </View>

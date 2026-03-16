@@ -7,7 +7,7 @@ export default function SignupVerifyScreen({
   navigation,
 }: AuthScreenProps<'SignupVerify'>) {
   return (
-    <View className="flex-1 bg-[#FFFFFF] p-6 justify-center items-center">
+    <View className="flex-1 bg-[#F0F4FF] p-6 justify-center items-center">
       <Image
         source={images.phone}
         className="w-[350px] h-[350px]"
