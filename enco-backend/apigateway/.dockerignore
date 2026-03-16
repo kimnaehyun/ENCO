@@ -1,6 +1,9 @@
-build
 .gradle
+out
+node_modules
 .git
 .gitignore
-README.md
-*.log
+
+build/*
+!build/libs/
+!build/libs/*.jar
