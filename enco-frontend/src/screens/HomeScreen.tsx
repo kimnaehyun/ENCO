@@ -3,7 +3,7 @@ import { Dimensions, FlatList, Image, Pressable, Text, View } from 'react-native
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
-
+import {images} from "../types/images"
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 24;
 const CARD_GAP = 12;
@@ -237,7 +237,10 @@ export default function HomeScreen() {
             alignItems: 'center',
           }}
         >
-          <Text style={{ fontSize: 20 }}>⚙️</Text>
+          <Image 
+          source={images.settingIcon}
+          style={{width:25, height: 25}}
+          />
         </Pressable>
       </View>
 

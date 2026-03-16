@@ -5,6 +5,7 @@ export const images = {
   homeIcon: require('../assets/icons/Home.png'),
   profileIcon:require('../assets/icons/Profile.png'),
   walletIcon: require('../assets/icons/Wallet.png'),
+  settingIcon:require('../assets/icons/setting.png'),
   qr: [
     require('../assets/images/qr0.png'),
     require('../assets/images/qr1.png'),

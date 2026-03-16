@@ -2,8 +2,8 @@ import { Image } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { ROUTES } from '../constants/routes';
 import HomeStackNavigator from './HomeStackNavigator';
-import GroupStackNavigator from './GroupStackNavigator';
 import OnsitePaymentNavigator from './OnsitePaymentNavigator';
+import UserStackNavigator from './UserStackNavigator';
 import { images } from '../types/images';
 
 const Tab = createBottomTabNavigator();
@@ -63,7 +63,7 @@ export default function BottomNavigator() {
 
       <Tab.Screen
         name={ROUTES.TAB_GROUP}
-        component={GroupStackNavigator}
+        component={UserStackNavigator}
         options={{
           tabBarIcon: ({ focused, size }) => (
             <Image
