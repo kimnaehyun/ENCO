@@ -122,7 +122,7 @@ export default function GroupVotesScreen({ navigation, route }: GroupProps<'Grou
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 18, paddingTop: 18 },
+  container: { flex: 1, backgroundColor: '#F0F4FF', paddingHorizontal: 18, paddingTop: 18 },
   headerPill: {
     backgroundColor: '#D9D9D9',
     borderRadius: 26,

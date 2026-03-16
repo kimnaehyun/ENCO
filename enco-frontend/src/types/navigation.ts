@@ -86,12 +86,27 @@ export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
   App: undefined;
 
-  GroupCreate: undefined;
-  GroupCardRecommend: {
-    groupName: string;
-    address: string;
-    tags: string[];
-  };
+// GroupCardRecommend 타입
+GroupCardRecommend: {
+  groupName: string;
+  address: string;
+  tags: string[];
+  prevGroupName?: string;
+  prevTags?: string[];
+  prevRecommendPressed?: boolean; 
+  prevViewAllPressed?: boolean;
+};
+
+// GroupCreate 타입
+GroupCreate: {
+  selectedCardId?: string;
+  selectedCardImage?: string;
+  selectedCardName?: string;
+  groupName?: string;
+  selectedTags?: string[];
+  recommendPressed?: boolean;  
+  viewAllPressed?: boolean;
+} | undefined;
   GroupPinSetup: {
     groupName: string;
     address: string;

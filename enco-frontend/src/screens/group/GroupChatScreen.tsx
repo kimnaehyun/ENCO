@@ -49,7 +49,7 @@ export default function GroupChatScreen() {
   };
 
   return (
-    <View className="flex-1">
+    <View className="flex-1 bg-[#F0F4FF]">
       <View
         style={{
           flexDirection: 'row',

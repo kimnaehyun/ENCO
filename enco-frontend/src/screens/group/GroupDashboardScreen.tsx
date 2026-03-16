@@ -42,7 +42,7 @@ export default function GroupDashboardScreen() {
   };
 
   return (
-    <View style={{ flex: 1, paddingHorizontal: 16, paddingTop: 12 }}>
+    <View style={{ flex: 1, backgroundColor: '#F0F4FF', paddingHorizontal: 16, paddingTop: 12 }}>
       {/* Header */}
       <View
         style={{

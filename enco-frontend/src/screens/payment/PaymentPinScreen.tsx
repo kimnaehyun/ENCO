@@ -19,7 +19,7 @@ export default function PaymentPinScreen({ navigation, route }: any) {
     setResetKey(prev => prev + 1);
   };
   return (
-    <View className="flex-1 p-5 gap-3">
+    <View className="flex-1 p-5 gap-3 bg-[#F0F4FF]">
       <PinEntry
         title="6자리 비밀번호를 입력하세요"
         resetKey={resetKey}
