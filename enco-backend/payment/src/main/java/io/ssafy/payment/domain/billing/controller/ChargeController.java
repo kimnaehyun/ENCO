@@ -3,6 +3,7 @@ package io.ssafy.payment.domain.billing.controller;
 import io.ssafy.payment.domain.billing.dto.request.CreateChargeRequestDto;
 import io.ssafy.payment.domain.billing.dto.request.CreateRegularChargeRequestDto;
 import io.ssafy.payment.domain.billing.dto.response.ChargeResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.UnpaidChargeResponseDto;
 import io.ssafy.payment.domain.billing.service.ChargeService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -41,5 +42,17 @@ public class ChargeController {
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(chargeService.createRegularCharge(groupId, createdByUserId, request));
+    }
+
+    /*
+    미납 금액 조회 API
+    Todo: user 완료되면 userId 없애기
+     */
+    @GetMapping("/{groupId}/charges/unpaid/{userId}")
+    public ResponseEntity<UnpaidChargeResponseDto> getUnpaidCharges(
+            @PathVariable Long groupId,
+            @PathVariable Long userId
+    ) {
+        return ResponseEntity.ok(chargeService.getUnpaidCharges(groupId, userId));
     }
 }

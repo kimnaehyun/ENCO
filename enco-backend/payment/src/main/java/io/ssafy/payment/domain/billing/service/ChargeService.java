@@ -3,8 +3,10 @@ package io.ssafy.payment.domain.billing.service;
 import io.ssafy.payment.domain.billing.dto.request.CreateChargeRequestDto;
 import io.ssafy.payment.domain.billing.dto.request.CreateRegularChargeRequestDto;
 import io.ssafy.payment.domain.billing.dto.response.ChargeResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.UnpaidChargeResponseDto;
 import io.ssafy.payment.domain.billing.entity.Charge;
 import io.ssafy.payment.domain.billing.entity.ChargeTarget;
+import io.ssafy.payment.domain.billing.entity.ChargeTargetStatus;
 import io.ssafy.payment.domain.billing.entity.ChargeType;
 import io.ssafy.payment.domain.billing.repository.ChargeRepository;
 import io.ssafy.payment.domain.billing.repository.ChargeTargetRepository;
@@ -87,5 +89,14 @@ public class ChargeService {
         chargeTargetRepository.saveAll(targets);
 
         return ChargeResponseDto.of(charge, targets);
+    }
+
+    @Transactional(readOnly = true)
+    public UnpaidChargeResponseDto getUnpaidCharges(Long groupId, Long userId) {
+        List<ChargeTarget> targets = chargeTargetRepository
+                .findByUserIdAndCharge_GroupIdAndStatusInAndIsDeletedFalse(
+                        userId, groupId, List.of(ChargeTargetStatus.UNPAID, ChargeTargetStatus.PARTIAL));
+
+        return UnpaidChargeResponseDto.of(groupId, userId, targets);
     }
 }
