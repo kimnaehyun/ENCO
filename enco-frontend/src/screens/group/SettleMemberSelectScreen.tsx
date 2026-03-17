@@ -78,11 +78,15 @@ export default function SettleMemberSelectScreen() {
         {
           text: '등록',
           onPress: () => {
-            // 등록 후 장부로 돌아감
+            // 등록 후 정산 플로우 스택을 정리하고 장부로 돌아감
             Alert.alert('완료', '새로운 정산이 등록되었습니다.', [
               {
                 text: '확인',
-                onPress: () => navigation.navigate('GroupLedger', { groupName }),
+                onPress: () => {
+                  // OcrTest → SettleMemberSelect 스택을 모두 날리고 GroupLedger로
+                  navigation.popToTop();
+                  navigation.navigate('GroupLedger', { groupName });
+                },
               },
             ]);
           },
