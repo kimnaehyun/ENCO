@@ -12,7 +12,7 @@ mongo_data/
 redis_data/
 minio_data/
 
-
+CLAUDE.md
 
 ### Git ###
 # Created by git for backups. To disable backups in Git
@@ -123,6 +123,7 @@ fabric.properties
 
 # Log file
 .log
+*.log
 
 # BlueJ files
 .ctxt

@@ -74,6 +74,8 @@ services:
     image: mongo:7.0
     container_name: chat-db
     environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
       TZ: Asia/Seoul
     volumes:
       - ./mongo_data:/data/db

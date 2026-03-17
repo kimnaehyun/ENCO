@@ -1,7 +1,13 @@
-import React from 'react';
+// TODO: 현재 네트워크 에러 분기는 테스트용
+// TODO: API 연동 후 홈 데이터 조회 실패 상태값으로 교체
+// TODO: 다시 시도 버튼에 실제 홈 재조회 함수 연결
+
+
+import React, { useState } from 'react';
 import { Dimensions, FlatList, Pressable, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../components/ScreenLayout';
+import NetworkErrorView from '../components/network/NetworkErrorView';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -11,6 +17,10 @@ const CARD_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
+
+  // 테스트용: true면 네트워크 에러 화면을 강제로 보여줌
+  const [isNetworkErrorTest, setIsNetworkErrorTest] = useState(true);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const me = { displayName: '나기' };
   const groups: HomeGroupSummary[] = [
@@ -28,6 +38,18 @@ export default function HomeScreen() {
           { type: 'add' as const },
         ]
       : [{ type: 'add' as const }];
+
+  const handleRetry = async () => {
+    if (isRetrying) return;
+
+    setIsRetrying(true);
+
+    // 테스트용: 1초 뒤 성공한 것처럼 처리
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    setIsRetrying(false);
+    setIsNetworkErrorTest(false);
+  };
 
   // HomeStack 안에서 직접 push → 뒤로가기 시 HomeScreen으로 복귀
   const onPressGroupCard = (group: HomeGroupSummary) => {
@@ -92,6 +114,19 @@ export default function HomeScreen() {
       </Pressable>
     );
   };
+
+  // 테스트용: 에러 상태면 HomeScreen 대신 네트워크 에러 화면 표시
+  if (isNetworkErrorTest) {
+    return (
+      <NetworkErrorView
+        title="인터넷 연결이 끊어졌어요"
+        description="Wi-Fi 또는 모바일 데이터 연결을 확인한 뒤 다시 시도해주세요!"
+        buttonText={isRetrying ? '다시 시도 중...' : '다시 시도'}
+        imageSource={require('../assets/icons/error_hamco.png')}
+        onRetry={handleRetry}
+      />
+    );
+  }
 
   return (
     <ScreenLayout>
