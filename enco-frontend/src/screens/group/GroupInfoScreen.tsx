@@ -8,6 +8,20 @@ import { images } from '../../types/images';
 
 const TAGS = ['여행', '음식', '스터디', '운동', '문화', '게임', '기타'];
 
+// 발급 카드 목록 (실제로는 API에서 받아올 데이터)
+const ISSUED_CARDS = [
+  {
+    id: 'card1',
+    name: '스타벅스카드 삼성',
+    image: images.card1,
+  },
+  {
+    id: 'card2',
+    name: '삼성카드 그린',
+    image: images.card2,
+  },
+];
+
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <View className="flex-row items-center py-4 border-b border-gray-100">
@@ -19,6 +33,14 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
   );
 }
 
+// 회비 상태 타입
+type DuesState = {
+  cycle: string;       // 매월
+  day: string;         // 15
+  amount: string;      // 10000
+  rate: string;        // 80
+};
+
 export default function GroupInfoScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
@@ -29,13 +51,18 @@ export default function GroupInfoScreen() {
   const [isEdit, setIsEdit] = useState(false);
   const [intro, setIntro] = useState('회식좋아하는사람들');
   const [selectedTags, setSelectedTags] = useState<string[]>(['여행', '음식']);
-  const [dues, setDues] = useState('매월 / 15일 / 10,000원 / 80%');
+  const [dues, setDues] = useState<DuesState>({
+    cycle: '매월',
+    day: '15',
+    amount: '10,000',
+    rate: '80',
+  });
   const [groundRules, setGroundRules] = useState(
     '1. 아프면 사형\n2. 일정공유 잘하기\n3. MM 확인 체크하기\n4. 부드러운 말투로 대화해용'
   );
+  const [representativeCardId, setRepresentativeCardId] = useState<string>(ISSUED_CARDS[0].id);
 
-  // 임시 발급 카드 목록
-  const issuedCards = [images.card1, images.card2];
+  const representativeCard = ISSUED_CARDS.find(c => c.id === representativeCardId) ?? ISSUED_CARDS[0];
 
   const toggleTag = (tag: string) => {
     if (!isEdit) return;
@@ -55,17 +82,6 @@ export default function GroupInfoScreen() {
     }
   };
 
-  const onPressClose = () => {
-    if (isEdit) {
-      Alert.alert('확인', '수정 중인 내용이 있습니다. 나갈까요?', [
-        { text: '취소', style: 'cancel' },
-        { text: '나가기', style: 'destructive', onPress: () => navigation.goBack() },
-      ]);
-      return;
-    }
-    navigation.goBack();
-  };
-
   return (
     <ScreenLayout>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
@@ -75,18 +91,30 @@ export default function GroupInfoScreen() {
           <Text style={{ fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
             모임 정보
           </Text>
-          <View className="flex-row items-center gap-4">
-            {isAdmin && (
+          {isAdmin && (
+            <View className="flex-row items-center gap-4">
+              {isEdit && (
+                <Pressable
+                  onPress={() => {
+                    Alert.alert('확인', '수정 중인 내용이 있습니다. 취소할까요?', [
+                      { text: '아니오', style: 'cancel' },
+                      { text: '취소', style: 'destructive', onPress: () => setIsEdit(false) },
+                    ]);
+                  }}
+                  hitSlop={12}
+                >
+                  <Text style={{ fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
+                    취소
+                  </Text>
+                </Pressable>
+              )}
               <Pressable onPress={onToggleEdit} hitSlop={12}>
                 <Text style={{ fontSize: 14, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium' }}>
                   {isEdit ? '저장' : '수정'}
                 </Text>
               </Pressable>
-            )}
-            <Pressable onPress={onPressClose} hitSlop={12}>
-              <Text style={{ fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>닫기</Text>
-            </Pressable>
-          </View>
+            </View>
+          )}
         </View>
 
         {/* 기본 정보 카드 */}
@@ -154,23 +182,121 @@ export default function GroupInfoScreen() {
             </Text>
           </InfoRow>
 
-          {/* 회비 */}
-          <View className="flex-row items-center py-4">
-            <Text style={{ width: 80, fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
-              회비
-            </Text>
-            {isEdit ? (
-              <TextInput
-                value={dues}
-                onChangeText={setDues}
-                style={{ flex: 1, fontSize: 13, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' }}
-              />
-            ) : (
-              <Text style={{ flex: 1, fontSize: 13, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' }}>
-                {dues}
+          {/* 회비 - 수정 모드 */}
+          <View className="py-4">
+            <View className="flex-row items-center mb-3">
+              <Text style={{ width: 80, fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
+                회비
               </Text>
+              <Text style={{ flex: 1, fontSize: 13, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' }}>
+                {isEdit
+                  ? `매월 / ${dues.day}일 / ${dues.amount}원`
+                  : `매월 / ${dues.day}일 / ${dues.amount}원 / ${dues.rate}%`
+                }
+              </Text>
+            </View>
+
+            {isEdit && (
+              <View style={{ gap: 8, paddingLeft: 80 }}>
+
+                {/* 매월 + 일 */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginBottom: 10 }}>
+                  <Text style={{ fontSize: 13, color: '#000', fontFamily: 'GmarketSansTTFMedium' }}>
+                    매월
+                  </Text>
+                  <View style={{
+                    backgroundColor: '#E5E7EB', // 이미지와 유사한 연한 회색
+                    borderRadius: 50,           // 완전히 둥글게
+                    paddingHorizontal: 20,      // 가로 여유 공간
+                    height: 32,                 // 높이를 고정해서 납작하게 유지
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minWidth: 80,
+                  }}>
+                    <TextInput
+                      value={dues.day}
+                      onChangeText={v => setDues(prev => ({ ...prev, day: v.replace(/[^0-9]/g, '') }))}
+                      keyboardType="numeric"
+                      style={{
+                        fontSize: 16,
+                        color: '#1428A0',         // 진한 파란색 글자
+                        fontFamily: 'GmarketSansTTFMedium',
+                        textAlign: 'center',
+                        paddingVertical: 0,
+                        height: '100%',
+                        includeFontPadding: false,               // 안쪽 기본 패딩 제거
+                      }}
+                    />
+                  </View>
+                  <Text style={{ fontSize: 13, color: '#000', fontFamily: 'GmarketSansTTFMedium' }}>
+                    일
+                  </Text>
+                </View>
+
+                {/* 금액 + 원 */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginBottom: 10 }}>
+                  <View style={{
+                    backgroundColor: '#E5E7EB',
+                    borderRadius: 50,
+                    paddingHorizontal: 20,
+                    height: 32,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minWidth: 120,               // 금액창은 조금 더 길게
+                  }}>
+                    <TextInput
+                      value={dues.amount}
+                      onChangeText={v => setDues(prev => ({ ...prev, amount: v.replace(/[^0-9,]/g, '') }))}
+                      keyboardType="numeric"
+                      style={{
+                        fontSize: 16,
+                        color: '#1428A0',
+                        fontFamily: 'GmarketSansTTFMedium',
+                        textAlign: 'center',
+                        padding: 0,
+                      }}
+                    />
+                  </View>
+                  <Text style={{ fontSize: 13, color: '#000', fontFamily: 'GmarketSansTTFMedium' }}>
+                    원
+                  </Text>
+                </View>
+
+                {/* 투표 기준 + % */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+                  <Text style={{ fontSize: 13, color: '#000', fontFamily: 'GmarketSansTTFMedium' }}>
+                    투표 기준
+                  </Text>
+                  <View style={{
+                    backgroundColor: '#E5E7EB',
+                    borderRadius: 50,
+                    paddingHorizontal: 20,
+                    height: 32,
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    minWidth: 80,
+                  }}>
+                    <TextInput
+                      value={dues.rate}
+                      onChangeText={v => setDues(prev => ({ ...prev, rate: v.replace(/[^0-9]/g, '') }))}
+                      keyboardType="numeric"
+                      style={{
+                        fontSize: 16,
+                        color: '#1428A0',
+                        fontFamily: 'GmarketSansTTFMedium',
+                        textAlign: 'center',
+                        padding: 0,
+                      }}
+                    />
+                  </View>
+                  <Text style={{ fontSize: 13, color: '#000', fontFamily: 'GmarketSansTTFMedium' }}>
+                    %
+                  </Text>
+                </View>
+
+              </View>
             )}
-          </View>
+          </View> 
         </View>
 
         {/* 그라운드룰 카드 */}
@@ -206,21 +332,73 @@ export default function GroupInfoScreen() {
         </View>
 
         {/* 발급 카드 */}
-
         <View
           className="bg-white rounded-3xl px-6 py-5"
           style={{ shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}
         >
-          <Text style={{ fontSize: 15, fontFamily: 'GmarketSansTTFBold', color: '#111827', marginBottom: 16 }}>
-            발급 카드
-          </Text>
-          <Image
-            source={{ uri: 'https://static11.samsungcard.com/wcms/svc/__icsFiles/artimage/2025/09/02/ccom02_1/dm_AAP1870_02.png' }}
-            style={{ width: '100%', height: 240, borderRadius: 16 }}
-            resizeMode="cover"
-          />
-        </View>
+          <View className="flex-row items-center justify-between mb-4">
+            <Text style={{ fontSize: 15, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
+              {isEdit ? '발급 카드 목록' : '대표 카드'}
+            </Text>
+            {isEdit && (
+              <Text style={{ fontSize: 12, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium' }}>
+                대표 카드를 선택하세요
+              </Text>
+            )}
+          </View>
 
+          {isEdit ? (
+            /* 수정 모드: 카드 목록 전체 표시 + 대표 카드 선택 */
+            <View style={{ gap: 12 }}>
+              {ISSUED_CARDS.map(card => {
+                const isRep = card.id === representativeCardId;
+                return (
+                  <Pressable
+                    key={card.id}
+                    onPress={() => setRepresentativeCardId(card.id)}
+                    style={{
+                      borderRadius: 16,
+                      borderWidth: 2,
+                      borderColor: isRep ? '#1428A0' : 'transparent',
+                      overflow: 'hidden',
+                      position: 'relative',
+                    }}
+                  >
+                    <Image
+                      source={card.image}
+                      style={{ width: '100%', height: 180 }}
+                      resizeMode="cover"
+                    />
+                    {/* 대표 배지 */}
+                    {isRep && (
+                      <View style={{
+                        position: 'absolute',
+                        top: 10,
+                        right: 10,
+                        backgroundColor: '#1428A0',
+                        borderRadius: 20,
+                        paddingHorizontal: 10,
+                        paddingVertical: 4,
+                      }}>
+                        <Text style={{ fontSize: 11, color: '#fff', fontFamily: 'GmarketSansTTFMedium' }}>
+                          대표 카드 ✓
+                        </Text>
+                      </View>
+                    )}
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : (
+            /* 일반 모드: 대표 카드만 표시 */
+            <Image
+              source={representativeCard.image}
+              style={{ width: '100%', height: 200, borderRadius: 16 }}
+              resizeMode="cover"
+            />
+          )}
+        </View>
+        
       </ScrollView>
     </ScreenLayout>
   );

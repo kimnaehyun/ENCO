@@ -10,10 +10,20 @@ import {
   Alert,
 } from 'react-native';
 import {launchImageLibrary} from 'react-native-image-picker';
+import {useNavigation, useRoute} from '@react-navigation/native';
 
 const {OcrModule} = NativeModules;
 
+type RouteParams = {
+  groupName?: string;
+  groupId?: string;
+};
+
 export default function OcrTestScreen() {
+  const navigation = useNavigation<any>();
+  const route = useRoute();
+  const params = (route.params ?? {}) as RouteParams;
+
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [ocrResult, setOcrResult] = useState('');
   const [loading, setLoading] = useState(false);
@@ -60,6 +70,23 @@ export default function OcrTestScreen() {
     }
   };
 
+  // 정산 인원 선택으로 이동하는 공통 함수
+  const goToSettleMemberSelect = () => {
+    const today = new Date();
+    const dateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
+    navigation.navigate('SettleMemberSelect', {
+      amount: 10000,
+      storeName: '맥도날드',
+      date: dateStr,
+      memo: ocrResult,
+      receiptUri: imageUri,
+      groupName: params.groupName ?? '모임명',
+      groupId: params.groupId,
+      isNewSettle: true,
+    });
+  };
+
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <Text style={styles.title}>영수증 OCR 테스트</Text>
@@ -91,6 +118,23 @@ export default function OcrTestScreen() {
           {ocrResult || '아직 결과 없음'}
         </Text>
       </View>
+
+      {/* OCR 완료 후 정산 인원 선택으로 이동 */}
+      <Pressable
+        style={[styles.completeButton, !ocrResult && styles.buttonDisabled]}
+        disabled={!ocrResult}
+        onPress={goToSettleMemberSelect}
+      >
+        <Text style={styles.buttonText}>완료</Text>
+      </Pressable>
+
+      {/* 임시 건너뛰기 버튼 */}
+      <Pressable
+        style={styles.skipButton}
+        onPress={goToSettleMemberSelect}
+      >
+        <Text style={styles.skipButtonText}>임시) OCR 없이 넘어가기</Text>
+      </Pressable>
     </ScrollView>
   );
 }
@@ -156,5 +200,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     lineHeight: 22,
     color: '#222',
+  },
+  completeButton: {
+    backgroundColor: '#1428A0',
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  skipButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginTop: 10,
+    borderWidth: 1.5,
+    borderColor: '#D1D5DB',
+    borderStyle: 'dashed',
+  },
+  skipButtonText: {
+    color: '#9CA3AF',
+    fontSize: 14,
+    fontWeight: '600',
   },
 });

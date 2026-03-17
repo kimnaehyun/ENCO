@@ -21,6 +21,12 @@ type GroupProps<T extends keyof GroupStackParamList> = NativeStackScreenProps<
   T
 >;
 
+type SettleMember = {
+  id: string;
+  name: string;
+  isPaid: boolean;
+};
+
 type LedgerItem = {
   id: string;
   date: string; // YYYY-MM-DD
@@ -28,6 +34,9 @@ type LedgerItem = {
   title: string;
   memo?: string;
   hasReceipt?: boolean;
+  needsSettle?: boolean; // 출금 중 정산 필요 여부 (true: 정산필요O, false: 정산필요X)
+  isSettled?: boolean; // 정산완료 여부
+  settleMembers?: SettleMember[]; // 정산 대상 멤버
 };
 
 type GroupPayStep = 'summary' | 'form' | 'pin' | 'success';
@@ -44,6 +53,7 @@ export type {
   GroupCardItem,
   GroupProps,
   LedgerItem,
+  SettleMember,
   GroupPayStep,
   Message,
 };

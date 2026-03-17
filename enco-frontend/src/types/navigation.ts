@@ -37,6 +37,7 @@ export type InternetPayStackParamList = {
 };
 
 // Group
+// GroupStackParamList에 아래 항목들 추가
 export type GroupStackParamList = {
   GroupList: undefined;
   GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
@@ -56,8 +57,60 @@ export type GroupStackParamList = {
   GroupInviteEntry: undefined;
   GroupInviteDecision: undefined;
   GroupInviteSuccess: undefined;
-};
 
+  GroupCreate: {
+    selectedCardId?: string;
+    selectedCardImage?: string;
+    selectedCardName?: string;
+    groupName?: string;
+    selectedTags?: string[];
+    recommendPressed?: boolean;
+    viewAllPressed?: boolean;
+  } | undefined;
+  GroupCardRecommend: {
+    groupName: string;
+    address: string;
+    tags: string[];
+    prevGroupName?: string;
+    prevTags?: string[];
+    prevRecommendPressed?: boolean;
+    prevViewAllPressed?: boolean;
+  };
+  GroupPinSetup: {
+    groupName: string;
+    address: string;
+    tags: string[];
+    selectedCardId: string;
+  };
+  UserNotifications: CommonParams | undefined;
+  GroupLedgerDetail: {
+    item: any; // LedgerItem import 후 교체
+    balance: number;
+    isAdmin: boolean;
+    groupName: string;
+  };
+  OcrTest: { imageUri?: string; groupName?: string; groupId?: string } | undefined;
+  SettleDetail: {
+    amount: number;
+    storeName: string;
+    date: string;
+    memo: string;
+    receiptUri: string | null;
+    groupName: string;
+    groupId?: string;
+  };
+  SettleMemberSelect: {
+    amount: number;
+    storeName: string;
+    date: string;
+    memo: string;
+    receiptUri: string | null;
+    groupName: string;
+    groupId?: string;
+    settleMembers?: any[];
+    isNewSettle?: boolean;
+  };
+};
 // Home
 export type HomeStackParamList = {
   Home: undefined;
@@ -74,8 +127,33 @@ export type HomeStackParamList = {
   AdminMembers: CommonParams | undefined;
   AdminCard: CommonParams | undefined;
   AdminSettle: CommonParams | undefined;
-  OcrTest: CommonParams | undefined;
-  GroupInviteEntry: undefined;
+  OcrTest: { imageUri?: string; groupName?: string; groupId?: string } | undefined;
+  GroupLedgerDetail: {
+    item: any;
+    balance: number;
+    isAdmin: boolean;
+    groupName: string;
+  };
+  SettleDetail: {
+    amount: number;
+    storeName: string;
+    date: string;
+    memo: string;
+    receiptUri: string | null;
+    groupName: string;
+    groupId?: string;
+  };
+  SettleMemberSelect: {
+    amount: number;
+    storeName: string;
+    date: string;
+    memo: string;
+    receiptUri: string | null;
+    groupName: string;
+    groupId?: string;
+    settleMembers?: any[];
+    isNewSettle?: boolean;
+  };
 };
 
 // Bottom Tab
