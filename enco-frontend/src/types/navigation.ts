@@ -51,7 +51,36 @@ export type GroupStackParamList = {
   AdminMenu: CommonParams | undefined;
   AdminReceipt: CommonParams | undefined;
   AdminMembers: CommonParams | undefined;
-  AdminCard: CommonParams | undefined;
+  AdminCard:
+    | (CommonParams & {
+        selectedCardId?: string;
+        selectedCardImage?: string;
+        selectedCardName?: string;
+        selectedTags?: string[];
+        recommendPressed?: boolean;
+        viewAllPressed?: boolean;
+      })
+    | undefined;
+  AdminCardRecommend: {
+    groupId?: string;
+    groupName: string;
+    tags: string[];
+    prevTags?: string[];
+    prevRecommendPressed?: boolean;
+    prevViewAllPressed?: boolean;
+  };
+  AdminCardPin: {
+    groupId?: string;
+    groupName: string;
+    tags: string[];
+    selectedCardId: string;
+    selectedCardName?: string | null;
+  };
+  AdminCardDone: {
+    groupId?: string;
+    groupName?: string;
+    selectedCardId?: string;
+  };
   AdminSettle: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
   VoteCreate: CommonParams | undefined;
@@ -131,8 +160,40 @@ export type HomeStackParamList = {
   AdminMenu: CommonParams | undefined;
   AdminReceipt: CommonParams | undefined;
   AdminMembers: CommonParams | undefined;
-  AdminCard: CommonParams | undefined;
+  AdminCard:
+    | (CommonParams & {
+        selectedCardId?: string;
+        selectedCardImage?: string;
+        selectedCardName?: string;
+        selectedTags?: string[];
+        recommendPressed?: boolean;
+        viewAllPressed?: boolean;
+      })
+    | undefined;
+  AdminCardRecommend: {
+    groupId?: string;
+    groupName: string;
+    tags: string[];
+    prevTags?: string[];
+    prevRecommendPressed?: boolean;
+    prevViewAllPressed?: boolean;
+  };
+  AdminCardPin: {
+    groupId?: string;
+    groupName: string;
+    tags: string[];
+    selectedCardId: string;
+    selectedCardName?: string | null;
+  };
+  AdminCardDone: {
+    groupId?: string;
+    groupName?: string;
+    selectedCardId?: string;
+  };
   AdminSettle: CommonParams | undefined;
+  GroupInviteEntry: undefined;
+  GroupInviteDecision: undefined;
+  GroupInviteSuccess: undefined;
   OcrTest:
     | { imageUri?: string; groupName?: string; groupId?: string }
     | undefined;
@@ -162,6 +223,10 @@ export type HomeStackParamList = {
     settleMembers?: any[];
     isNewSettle?: boolean;
   };
+  UserNotifications: CommonParams | undefined;
+  GroupInviteEntry: undefined;
+  GroupInviteDecision: undefined;
+  GroupInviteSuccess: undefined;
 };
 
 // Bottom Tab

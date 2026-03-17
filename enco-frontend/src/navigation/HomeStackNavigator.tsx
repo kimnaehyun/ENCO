@@ -16,6 +16,9 @@ import AdminMenuScreen from '../screens/admin/AdminMenuScreen';
 import AdminReceiptScreen from '../screens/admin/AdminReceiptScreen';
 import AdminMembersScreen from '../screens/admin/AdminMembersScreen';
 import AdminCardScreen from '../screens/admin/AdminCardScreen';
+import AdminCardRecommendScreen from '../screens/admin/AdminCardRecommendScreen';
+import AdminCardPinScreen from '../screens/admin/AdminCardPinScreen';
+import AdminCardDoneScreen from '../screens/admin/AdminCardDoneScreen';
 import AdminSettleScreen from '../screens/admin/AdminSettleScreen';
 import OcrTestScreen from '../screens/OcrTestScreen';
 import GroupLedgerDetailScreen from '../screens/group/GroupLedgerDetailScreen';
@@ -25,6 +28,7 @@ import SettleMemberSelectScreen from '../screens/group/SettleMemberSelectScreen'
 import GroupInviteEntryScreen from '../screens/group/GroupInviteEntryScreen';
 import GroupInviteDecisionScreen from '../screens/group/GroupInviteDecisionScreen';
 import GroupInviteSuccessScreen from '../screens/group/GroupInviteSuccessScreen';
+import NotificationCenterScreen from '../screens/user/NotificationCenterScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -51,6 +55,9 @@ export default function HomeStackNavigator() {
       <Stack.Screen name="AdminReceipt" component={AdminReceiptScreen} />
       <Stack.Screen name="AdminMembers" component={AdminMembersScreen} />
       <Stack.Screen name="AdminCard" component={AdminCardScreen} />
+      <Stack.Screen name="AdminCardRecommend" component={AdminCardRecommendScreen} />
+      <Stack.Screen name="AdminCardPin" component={AdminCardPinScreen} />
+      <Stack.Screen name="AdminCardDone" component={AdminCardDoneScreen} />
       <Stack.Screen name="AdminSettle" component={AdminSettleScreen} />
 
       <Stack.Screen
@@ -66,6 +73,7 @@ export default function HomeStackNavigator() {
         component={GroupInviteSuccessScreen}
       />
 
+      <Stack.Screen name="UserNotifications" component={NotificationCenterScreen} />
       <Stack.Screen name="OcrTest" component={OcrTestScreen} />
       <Stack.Screen
         name="GroupLedgerDetail"
