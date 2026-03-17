@@ -15,8 +15,19 @@ import { GroupProps } from '../../types/group';
 const formatKRW = (n: number) => n.toLocaleString();
 
 const isOngoing = (vote: Vote) => {
-  if (!vote.endsAt) return vote.myChoice === null; // endsAt 없으면 미투표 = 진행중
+  if (!vote.endsAt) return vote.myChoice === null;
   return new Date(vote.endsAt) > new Date();
+};
+
+const getMyChoiceLabel = (choice: VoteChoice | null) => {
+  if (choice === 'agree') return '찬성';
+  if (choice === 'disagree') return '반대';
+  return '미투표';
+};
+
+const getEndTimeText = (endsAt?: string | null) => {
+  if (!endsAt) return '마감 시간 미정';
+  return `마감 시간 ${endsAt.replace('T', ' ').slice(0, 16)}`;
 };
 
 export default function GroupVotesScreen({ navigation, route }: GroupProps<'GroupVotes'>) {
@@ -36,7 +47,7 @@ export default function GroupVotesScreen({ navigation, route }: GroupProps<'Grou
     return [...votes].sort((a, b) => {
       const aOngoing = isOngoing(a);
       const bOngoing = isOngoing(b);
-      if (aOngoing !== bOngoing) return aOngoing ? -1 : 1; // 진행중이 위
+      if (aOngoing !== bOngoing) return aOngoing ? -1 : 1;
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }, [votes]);
@@ -51,6 +62,76 @@ export default function GroupVotesScreen({ navigation, route }: GroupProps<'Grou
     setExpandedId(null);
   };
 
+  const renderExpandedContent = (item: Vote, ongoing: boolean) => {
+    return (
+      <View
+        className="bg-white rounded-2xl px-5 py-4 mt-1"
+        style={{ shadowColor: '#1428A0', shadowOpacity: 0.04, shadowRadius: 8, elevation: 1 }}
+      >
+        <Text style={{ fontSize: 14, fontFamily: 'GmarketSansTTFBold', color: '#111827', marginBottom: 4 }}>
+          {item.subTitle}
+        </Text>
+
+        <View className="h-px bg-gray-100 my-2" />
+
+        <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
+          {formatKRW(item.amount)}원
+        </Text>
+
+        <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium', marginTop: 2 }}>
+          {getEndTimeText(item.endsAt)}
+        </Text>
+
+        <View className="flex-row gap-2 mt-3 mb-3">
+          <View className="flex-row items-center gap-1.5">
+            <View className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#1428A0' }} />
+            <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
+              내 선택: {getMyChoiceLabel(item.myChoice)}
+            </Text>
+          </View>
+        </View>
+
+        {ongoing && (
+          <View className="flex-row gap-3 mt-1 mb-3">
+            <Pressable
+              onPress={() => handleVote(item.id, 'agree')}
+              className="flex-1 rounded-2xl py-3 items-center justify-center"
+              style={{ backgroundColor: '#1428A0' }}
+            >
+              <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFBold', color: '#fff' }}>찬성</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={() => handleVote(item.id, 'disagree')}
+              className="flex-1 rounded-2xl py-3 items-center justify-center"
+              style={{ backgroundColor: '#EF4444' }}
+            >
+              <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFBold', color: '#fff' }}>반대</Text>
+            </Pressable>
+          </View>
+        )}
+
+        <View className={ongoing ? 'mt-1' : 'mt-2'}>
+          <Pressable
+            onPress={() =>
+              navigation.navigate(ROUTES.GROUP_VOTE_DETAIL as any, {
+                voteId: item.id,
+                groupId,
+                groupName,
+              })
+            }
+            className="self-end rounded-xl px-4 py-2"
+            style={{ backgroundColor: '#F3F4F6' }}
+          >
+            <Text style={{ fontSize: 13, fontFamily: 'GmarketSansTTFBold', color: '#374151' }}>
+              상세보기
+            </Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  };
+
   const renderItem = ({ item }: { item: Vote }) => {
     const ongoing = isOngoing(item);
     const isExpanded = expandedId === item.id;
@@ -62,13 +143,11 @@ export default function GroupVotesScreen({ navigation, route }: GroupProps<'Grou
           className="bg-white rounded-2xl px-5 py-4 flex-row items-center justify-between"
           style={{ shadowColor: '#1428A0', shadowOpacity: 0.04, shadowRadius: 8, elevation: 1 }}
         >
-          {/* 상태 점 */}
           <View
             className="w-2.5 h-2.5 rounded-full mr-3"
             style={{ backgroundColor: ongoing ? '#EF4444' : '#818CF8' }}
           />
 
-          {/* 제목 */}
           <Text
             numberOfLines={1}
             style={{ flex: 1, fontSize: 15, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}
@@ -76,84 +155,12 @@ export default function GroupVotesScreen({ navigation, route }: GroupProps<'Grou
             {item.title}
           </Text>
 
-          {/* 참여 인원 */}
           <Text style={{ fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium', marginLeft: 8 }}>
             {item.currentParticipants} / {item.totalParticipants}
           </Text>
         </Pressable>
 
-        {/* 확장 영역 */}
-        {isExpanded && (
-          <View
-            className="bg-white rounded-2xl px-5 py-4 mt-1"
-            style={{ shadowColor: '#1428A0', shadowOpacity: 0.04, shadowRadius: 8, elevation: 1 }}
-          >
-            {/* 부제목 */}
-            <Text style={{ fontSize: 14, fontFamily: 'GmarketSansTTFBold', color: '#111827', marginBottom: 4 }}>
-              {item.subTitle}
-            </Text>
-
-            {/* 구분선 */}
-            <View className="h-px bg-gray-100 my-2" />
-
-            {/* 금액 / 마감 */}
-            <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
-              {formatKRW(item.amount)}원
-            </Text>
-            {item.endsAt && (
-              <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium', marginTop: 2 }}>
-                마감 기간 {item.endsAt.replace('T', ' ').slice(0, 16)}
-              </Text>
-            )}
-
-            {/* 진행 중 → 찬성/반대 버튼 */}
-            {ongoing ? (
-              <View className="flex-row gap-3 mt-4">
-                <Pressable
-                  onPress={() => handleVote(item.id, 'agree')}
-                  className="flex-1 rounded-2xl py-3 items-center justify-center"
-                  style={{ backgroundColor: '#1428A0' }}
-                >
-                  <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFBold', color: '#fff' }}>찬성</Text>
-                </Pressable>
-                <Pressable
-                  onPress={() => handleVote(item.id, 'disagree')}
-                  className="flex-1 rounded-2xl py-3 items-center justify-center"
-                  style={{ backgroundColor: '#EF4444' }}
-                >
-                  <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFBold', color: '#fff' }}>반대</Text>
-                </Pressable>
-              </View>
-            ) : (
-              /* 종료된 투표 → 상세보기 */
-              <View className="mt-4">
-                <View className="flex-row gap-2 mb-3">
-                  <View className="flex-row items-center gap-1.5">
-                    <View className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: '#1428A0' }} />
-                    <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
-                      내 선택: {item.myChoice === 'agree' ? '찬성' : item.myChoice === 'disagree' ? '반대' : '미투표'}
-                    </Text>
-                  </View>
-                </View>
-                <Pressable
-                  onPress={() =>
-                    navigation.navigate(ROUTES.GROUP_VOTE_DETAIL as any, {
-                      voteId: item.id,
-                      groupId,
-                      groupName,
-                    })
-                  }
-                  className="self-end rounded-xl px-4 py-2"
-                  style={{ backgroundColor: '#F3F4F6' }}
-                >
-                  <Text style={{ fontSize: 13, fontFamily: 'GmarketSansTTFBold', color: '#374151' }}>
-                    상세보기
-                  </Text>
-                </Pressable>
-              </View>
-            )}
-          </View>
-        )}
+        {isExpanded && renderExpandedContent(item, ongoing)}
       </View>
     );
   };
