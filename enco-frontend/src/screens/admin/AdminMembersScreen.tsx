@@ -8,6 +8,7 @@ import {
   StyleSheet,
   Text,
   View,
+  Image
 } from 'react-native';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useRoute } from '@react-navigation/native';
@@ -19,6 +20,8 @@ export default function AdminMembersScreen() {
   const route = useRoute();
   const params = (route.params ?? {}) as CommonParams;
 
+  const groupName = params.groupName ?? '모임명';
+
   const members: AdminMember[] = useMemo(
     () => [
       { id: 'm1', name: '고싸피', joinedAt: '2026-02-17', memo: '총무(임시)' },
@@ -29,14 +32,9 @@ export default function AdminMembersScreen() {
     []
   );
 
-  const [expandedId, setExpandedId] = useState<string | null>(null);
   const [kickMode, setKickMode] = useState(false);
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
-
-  const toggleExpand = (id: string) => {
-    setExpandedId(prev => (prev === id ? null : id));
-  };
 
   const onPressInvite = () => {
     const inviteUrl = `https://en.co/i?code=TEMP-${params.groupId ?? 'G1'}`;
@@ -51,18 +49,13 @@ export default function AdminMembersScreen() {
   const onPressKickMode = () => {
     setKickMode(prev => {
       const next = !prev;
-      if (!next) {
-        setSelectedMemberId(null);
-      }
+      if (!next) setSelectedMemberId(null);
       return next;
     });
   };
 
   const onSelectMemberForKick = (id: string) => {
-    if (!kickMode) {
-      toggleExpand(id);
-      return;
-    }
+    if (!kickMode) return;
     setSelectedMemberId(prev => (prev === id ? null : id));
   };
 
@@ -91,84 +84,156 @@ export default function AdminMembersScreen() {
 
   return (
     <ScreenLayout>
-      <View style={styles.container}>
-        <View style={styles.headerPill}>
-          <Text style={styles.headerText}>멤버 관리</Text>
-        </View>
-
-        <View style={styles.actionRow}>
-          <Pressable
-            onPress={onPressInvite}
-            style={[styles.topButton, styles.inviteButton]}
-          >
-            <Text style={styles.topButtonText}>초대</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={onPressKickMode}
-            style={[styles.topButton, styles.kickModeButton]}
-          >
-            <Text style={styles.topButtonText}>{kickMode ? '취소' : '방출'}</Text>
-          </Pressable>
-        </View>
-
-        <View style={styles.listWrapper}>
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.scrollContent}
-          >
-            {members.map(member => {
-              const expanded = expandedId === member.id;
-              const selected = selectedMemberId === member.id;
-
-              return (
-                <View key={member.id} style={styles.memberBlock}>
-                  <Pressable
-                    onPress={() => onSelectMemberForKick(member.id)}
-                    style={[
-                      styles.memberCard,
-                      expanded && styles.memberCardExpanded,
-                      kickMode && styles.memberCardKickMode,
-                      selected && styles.memberCardSelected,
-                    ]}
-                  >
-                    <View style={styles.memberTopRow}>
-                      <View style={styles.avatarWrap}>
-                        <Text style={styles.avatarEmoji}>🐹</Text>
-                      </View>
-
-                      <View style={styles.memberInfo}>
-                        <Text style={styles.memberName}>{member.name}</Text>
-
-                        {!kickMode && expanded && (
-                          <Text style={styles.joinedAtText}>
-                            가입일 {member.joinedAt.replace(/-/g, '.')}
-                          </Text>
-                        )}
-                      </View>
-                    </View>
-                  </Pressable>
-                </View>
-              );
-            })}
-          </ScrollView>
-        </View>
-
-        {kickMode && (
-          <View style={styles.bottomBar}>
-            <Pressable
-              onPress={onConfirmKick}
-              disabled={!selectedMemberId}
-              style={[
-                styles.confirmKickButton,
-                !selectedMemberId && styles.confirmKickButtonDisabled,
-              ]}
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: kickMode ? 110 : 32 }}
+      >
+        {/* 헤더 */}
+        <View className="flex-row items-center justify-between mb-5">
+          <View>
+            <Text
+              style={{
+                fontSize: 20,
+                fontFamily: 'GmarketSansTTFBold',
+                color: '#111827',
+              }}
             >
-              <Text style={styles.confirmKickButtonText}>추방하기</Text>
+              멤버 관리
+            </Text>
+            <Text
+              style={{
+                marginTop: 6,
+                fontSize: 13,
+                color: '#6B7280',
+                fontFamily: 'GmarketSansTTFMedium',
+              }}
+            >
+              {groupName} 멤버를 관리할 수 있어요
+            </Text>
+          </View>
+
+          <View className="flex-row items-center gap-2">
+            <Pressable
+              onPress={onPressInvite}
+              className="rounded-2xl px-4 py-2"
+              style={{ backgroundColor: '#1428A0' }}
+            >
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: '#FFFFFF',
+                  fontFamily: 'GmarketSansTTFBold',
+                }}
+              >
+                초대
+              </Text>
             </Pressable>
+
+            <Pressable
+              onPress={onPressKickMode}
+              className="rounded-2xl px-4 py-2"
+              style={{ backgroundColor: kickMode ? '#9CA3AF' : '#FF3B30' }}
+            >
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: '#FFFFFF',
+                  fontFamily: 'GmarketSansTTFBold',
+                }}
+              >
+                {kickMode ? '취소' : '방출'}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+
+        {/* 멤버 리스트 카드 */}
+        <View
+          className="bg-white rounded-3xl px-5 py-5"
+          style={{
+            shadowColor: '#1428A0',
+            shadowOpacity: 0.06,
+            shadowRadius: 12,
+            elevation: 2,
+          }}
+        >
+          <Text
+            style={{
+              fontSize: 15,
+              fontFamily: 'GmarketSansTTFBold',
+              color: '#111827',
+              marginBottom: 16,
+            }}
+          >
+            전체 멤버
+          </Text>
+
+          {members.map((member, index) => {
+            const selected = selectedMemberId === member.id;
+
+            return (
+              <Pressable
+                key={member.id}
+                onPress={() => onSelectMemberForKick(member.id)}
+                style={[
+                  styles.memberCard,
+                  index !== members.length - 1 && styles.memberCardSpacing,
+                  kickMode && styles.memberCardKickMode,
+                  selected && styles.memberCardSelected,
+                ]}
+              >
+                <View style={styles.avatarWrap}>
+                  <Image
+                    source={require('../../assets/icons/nomal_hamco.png')}
+                    style={styles.avatarImage}
+                    resizeMode="contain"
+                  />
+                </View>
+
+                <View style={styles.memberInfo}>
+                  <Text style={styles.memberName}>{member.name}</Text>
+                  <Text style={styles.memberJoinedAt}>
+                    가입일 {member.joinedAt.replace(/-/g, '.')}
+                  </Text>
+                </View>
+
+                {kickMode && (
+                  <View style={styles.selectionBadge}>
+                    <Text style={styles.selectionBadgeText}>
+                      {selected ? '선택됨' : '선택'}
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* 방출 모드 안내 */}
+        {kickMode && (
+          <View
+            className="bg-white rounded-3xl px-5 py-4 mt-4"
+            style={{
+              shadowColor: '#1428A0',
+              shadowOpacity: 0.06,
+              shadowRadius: 12,
+              elevation: 2,
+            }}
+          >
+            <Text
+              style={{
+                fontSize: 14,
+                color: '#6B7280',
+                fontFamily: 'GmarketSansTTFMedium',
+                lineHeight: 22,
+              }}
+            >
+              방출할 멤버를 선택한 뒤 아래 버튼을 눌러주세요.
+            </Text>
           </View>
         )}
 
+        {/* 초대 링크 복사 모달 */}
         <Modal
           visible={inviteModalVisible}
           transparent
@@ -176,185 +241,158 @@ export default function AdminMembersScreen() {
           onRequestClose={closeInviteModal}
         >
           <Pressable style={styles.modalOverlay} onPress={closeInviteModal}>
-            <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
-              <Pressable style={styles.modalCloseButton} onPress={closeInviteModal}>
+            <Pressable
+              style={styles.modalCard}
+              onPress={e => e.stopPropagation()}
+            >
+              <Pressable
+                onPress={closeInviteModal}
+                style={styles.modalCloseButton}
+              >
                 <Text style={styles.modalCloseText}>✕</Text>
               </Pressable>
 
-              <Text style={styles.modalText}>초대링크가 복사되었습니다!</Text>
+              <Text style={styles.modalTitle}>초대링크가 복사되었습니다!</Text>
+              <Text style={styles.modalDescription}>
+                원하는 곳에 붙여넣어 멤버를 초대해보세요.
+              </Text>
             </Pressable>
           </Pressable>
         </Modal>
-      </View>
+      </ScrollView>
+
+      {/* 하단 방출 버튼 */}
+      {kickMode && (
+        <View style={styles.bottomBar}>
+          <Pressable
+            onPress={onConfirmKick}
+            disabled={!selectedMemberId}
+            style={[
+              styles.kickButton,
+              !selectedMemberId && styles.kickButtonDisabled,
+            ]}
+          >
+            <Text style={styles.kickButtonText}>방출하기</Text>
+          </Pressable>
+        </View>
+      )}
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f2f4fe',
-  },
-
-  headerPill: {
-    backgroundColor: '#F3F3F3',
-    borderRadius: 20,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    justifyContent: 'center',
-    marginTop: 6,
-  },
-  headerText: {
-    fontSize: 20,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111111',
-  },
-
-  actionRow: {
-    marginTop: 10,
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    gap: 8,
-    paddingHorizontal: 4,
-  },
-  topButton: {
-    minWidth: 94,
-    height: 38,
-    borderRadius: 19,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 18,
-  },
-  inviteButton: {
-    backgroundColor: '#1428A0',
-  },
-  kickModeButton: {
-    backgroundColor: '#FF1A0F',
-  },
-  topButtonText: {
-    color: '#FFFFFF',
-    fontSize: 18,
-    fontFamily: 'GmarketSansTTFBold',
-  },
-
-  listWrapper: {
-    flex: 1,
-    marginTop: 16,
-    borderRadius: 24,
-  },
-  scrollContent: {
-    paddingBottom: 120,
-  },
-
-  memberBlock: {
-    marginBottom: 16,
-  },
   memberCard: {
-    minHeight: 82,
-    backgroundColor: '#F3F3F3',
-    borderRadius: 22,
+    minHeight: 84,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 20,
     paddingHorizontal: 14,
-    paddingVertical: 12,
-    justifyContent: 'center',
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  memberCardExpanded: {
-    minHeight: 154,
-    justifyContent: 'flex-start',
-    paddingTop: 14,
+  memberCardSpacing: {
+    marginBottom: 12,
   },
   memberCardKickMode: {
     borderWidth: 1.5,
-    borderColor: '#D0D0D0',
+    borderColor: '#E5E7EB',
   },
   memberCardSelected: {
-    borderWidth: 2,
-    borderColor: '#FF1A0F',
-    backgroundColor: '#FFF4F3',
-  },
-
-  memberTopRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
+    borderWidth: 1.5,
+    borderColor: '#FF3B30',
+    backgroundColor: '#FFF5F5',
   },
 
   avatarWrap: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    borderColor: '#C8782A',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarEmoji: {
-    fontSize: 31,
+  avatarImage: {
+    width: 38,
+    height: 38,
   },
-
   memberInfo: {
+    flex: 1,
     marginLeft: 14,
-    paddingTop: 4,
-    justifyContent: 'center',
   },
   memberName: {
-    fontSize: 22,
+    fontSize: 17,
+    color: '#111827',
     fontFamily: 'GmarketSansTTFBold',
-    color: '#111111',
   },
-  joinedAtText: {
-    marginTop: 12,
-    fontSize: 16,
+  memberJoinedAt: {
+    marginTop: 6,
+    fontSize: 13,
+    color: '#6B7280',
     fontFamily: 'GmarketSansTTFMedium',
-    color: '#111111',
+  },
+
+  selectionBadge: {
+    marginLeft: 12,
+    backgroundColor: '#EEF2FF',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  selectionBadgeText: {
+    fontSize: 12,
+    color: '#1428A0',
+    fontFamily: 'GmarketSansTTFBold',
   },
 
   bottomBar: {
     position: 'absolute',
     left: 0,
     right: 0,
-    bottom: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
+    bottom: 0,
+    paddingHorizontal: 24,
+    paddingTop: 10,
+    paddingBottom: 16,
     backgroundColor: '#ECECEF',
   },
-  confirmKickButton: {
+  kickButton: {
     height: 54,
     borderRadius: 18,
-    backgroundColor: '#FF1A0F',
+    backgroundColor: '#FF3B30',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  confirmKickButtonDisabled: {
+  kickButtonDisabled: {
     opacity: 0.45,
   },
-  confirmKickButtonText: {
-    fontSize: 18,
-    fontFamily: 'GmarketSansTTFBold',
+  kickButtonText: {
+    fontSize: 16,
     color: '#FFFFFF',
+    fontFamily: 'GmarketSansTTFBold',
   },
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.12)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 18,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 328,
-    minHeight: 292,
-    borderRadius: 22,
-    backgroundColor: '#F3F3F3',
+    backgroundColor: 'rgba(17, 24, 39, 0.18)',
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    alignItems: 'center',
     position: 'relative',
-    shadowColor: '#000000',
-    shadowOpacity: 0.18,
-    shadowRadius: 8,
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
     shadowOffset: { width: 0, height: 4 },
-    elevation: 6,
+    elevation: 4,
   },
   modalCloseButton: {
     position: 'absolute',
@@ -367,14 +405,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalCloseText: {
-    fontSize: 18,
-    color: '#666666',
+    fontSize: 16,
+    color: '#6B7280',
     fontFamily: 'GmarketSansTTFBold',
   },
-  modalText: {
-    fontSize: 20,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111111',
+  modalTitle: {
+    marginTop: 6,
+    fontSize: 19,
+    color: '#111827',
     textAlign: 'center',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  modalDescription: {
+    marginTop: 10,
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#6B7280',
+    textAlign: 'center',
+    fontFamily: 'GmarketSansTTFMedium',
   },
 });
