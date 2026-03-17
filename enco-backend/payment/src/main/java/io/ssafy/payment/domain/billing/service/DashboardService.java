@@ -16,16 +16,18 @@ public class DashboardService {
 
         String groupName = "여행모임";
 
-        Object[] result = duePaymentRepository.countPaymentStatus(groupId);
+//        Object[] result = duePaymentRepository.countPaymentStatus(groupId);
+        Object[] result = new Object[]{3, 2};
 
-        int paidCount = ((Number) result[0]).intValue();
-        int unpaidCount = ((Number) result[1]).intValue();
+        int paidCount = result[0] == null ? 0 : ((Number) result[0]).intValue();
+        int unpaidCount = result[1] == null ? 0 : ((Number) result[1]).intValue();
 
         int total = paidCount + unpaidCount;
 
         double paidRatio = total == 0 ? 0 : (paidCount * 100.0) / total;
         double unpaidRatio = total == 0 ? 0 : (unpaidCount * 100.0) / total;
 
+        // 추후 수정
 //        Long balance = transactionRepository.findGroupBalance(groupId);
         Long balance = 0L;
 
