@@ -9,10 +9,22 @@ public interface DuePaymentRepository extends JpaRepository<DuePayment, Long> {
 
     @Query("""
         SELECT 
-            SUM(CASE WHEN p.status = 'PAID' THEN 1 ELSE 0 END),
-            SUM(CASE WHEN p.status = 'UNPAID' THEN 1 ELSE 0 END)
+            SUM(CASE WHEN p.status = 'SUCCESS' THEN 1 ELSE 0 END)
         FROM DuePayment p
         WHERE p.groupId = :groupId
     """)
     Object[] countPaymentStatus(@Param("groupId") Long groupId);
+
+//    @Query("""
+//    SELECT COALESCE(SUM(
+//        CASE
+//            WHEN t.direction = 'IN' THEN t.amount
+//            WHEN t.direction = 'OUT' THEN -t.amount
+//            ELSE 0
+//        END
+//    ), 0)
+//    FROM TransactionHistory t
+//    WHERE t.groupId = :groupId
+//""")
+//    Long findGroupBalance(@Param("groupId") Long groupId);
 }
