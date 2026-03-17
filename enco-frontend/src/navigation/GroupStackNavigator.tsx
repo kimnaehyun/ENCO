@@ -22,6 +22,8 @@ import GroupCardRecommendScreen from '../screens/group/GroupCardRecommendScreen'
 import GroupPinSetupScreen from '../screens/group/GroupPinSetupScreen.tsx';
 
 import GroupInviteEntryScreen from '../screens/group/GroupInviteEntryScreen.tsx';
+import GroupInviteDecisionScreen from '../screens/group/GroupInviteDecisionScreen';
+import GroupInviteSuccessScreen from '../screens/group/GroupInviteSuccessScreen';
 
 import NotificationCenterScreen from '../screens/user/NotificationCenterScreen.tsx';
 
@@ -49,7 +51,12 @@ export default function GroupStackNavigator() {
       <Stack.Screen name="GroupChat" component={GroupChatScreen} />
       <Stack.Screen name="GroupVoteDetail" component={GroupVoteDetailScreen} />
       <Stack.Screen name="GroupVoteCreate" component={GroupVoteCreateScreen} />
+
+      {/* 초대 페이지 */}
       <Stack.Screen name="GroupInviteEntry" component={GroupInviteEntryScreen} />
+      <Stack.Screen name="GroupInviteDecision" component={GroupInviteDecisionScreen} />
+      <Stack.Screen name="GroupInviteSuccess" component={GroupInviteSuccessScreen} />
+      
 
       {/* 관리자 */}
       <Stack.Screen name="AdminMenu" component={AdminMenuScreen} />

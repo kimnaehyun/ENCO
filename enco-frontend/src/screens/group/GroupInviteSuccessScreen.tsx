@@ -1,14 +1,27 @@
 import React from 'react';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 
-export default function GroupInviteEntryScreen() {
-  const navigation = useNavigation();
+export default function GroupInviteSuccessScreen() {
+  const navigation = useNavigation<any>();
   const groupName = '모임명';
 
-  const onPressJoin = () => {
-    navigation.navigate('GroupInviteDecision');
+  const onPressConfirm = () => {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'GroupDashboard',
+            params: {
+              groupId: 'G1',
+              groupName,
+            },
+          },
+        ],
+      })
+    );
   };
 
   return (
@@ -16,16 +29,17 @@ export default function GroupInviteEntryScreen() {
       <View style={styles.container}>
         <View style={styles.card}>
           <Image
-            source={require('../../assets/icons/invite_hamco.png')}
+            source={require('../../assets/icons/complete_hamco.png')}
             style={styles.image}
             resizeMode="contain"
           />
 
           <Text style={styles.groupName}>[{groupName}]</Text>
-          <Text style={styles.title}>초대받았어요</Text>
+          <Text style={styles.title}>가입완료!</Text>
 
-          <Pressable onPress={onPressJoin} style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>가입하기</Text>
+
+          <Pressable onPress={onPressConfirm} style={styles.primaryButton}>
+            <Text style={styles.primaryButtonText}>모임홈으로</Text>
           </Pressable>
         </View>
       </View>
@@ -50,19 +64,22 @@ const styles = StyleSheet.create({
   image: {
     width: 220,
     height: 220,
-    marginBottom: 22,
-  },
-  groupName: {
-    fontSize: 24,
-    color: '#1428A0',
-    fontFamily: 'GmarketSansTTFBold',
-    marginBottom: 4,
+    marginBottom: 18,
   },
   title: {
     fontSize: 24,
     color: '#111111',
     fontFamily: 'GmarketSansTTFBold',
+    lineHeight: 34,
     marginBottom: 26,
+  },
+  groupName: {
+    marginTop: 12,
+    marginBottom: 2,
+    fontSize: 24,
+    color: '#1428A0',
+    fontFamily: 'GmarketSansTTFBold',
+    lineHeight: 30,
   },
   primaryButton: {
     minWidth: 246,

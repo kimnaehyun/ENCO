@@ -18,7 +18,10 @@ import AdminMembersScreen from "../screens/admin/AdminMembersScreen";
 import AdminCardScreen from "../screens/admin/AdminCardScreen";
 import AdminSettleScreen from "../screens/admin/AdminSettleScreen";
 import OcrTestScreen from "../screens/OcrTestScreen";
+
 import GroupInviteEntryScreen from "../screens/group/GroupInviteEntryScreen";
+import GroupInviteDecisionScreen from "../screens/group/GroupInviteDecisionScreen";
+import GroupInviteSuccessScreen from "../screens/group/GroupInviteSuccessScreen";
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -48,6 +51,9 @@ export default function HomeStackNavigator() {
       <Stack.Screen name="AdminSettle" component={AdminSettleScreen} />
 
       <Stack.Screen name="GroupInviteEntry" component={GroupInviteEntryScreen} />
+      <Stack.Screen name="GroupInviteDecision" component={GroupInviteDecisionScreen} />
+      <Stack.Screen name="GroupInviteSuccess" component={GroupInviteSuccessScreen} />
+      
       <Stack.Screen name="OcrTest" component={OcrTestScreen} />
     </Stack.Navigator>
   );
