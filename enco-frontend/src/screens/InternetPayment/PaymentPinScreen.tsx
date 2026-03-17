@@ -2,7 +2,7 @@ import { View, Alert } from 'react-native';
 import React, { useState } from 'react';
 import PinEntry from '../../components/pin/PinEntry';
 
-const TEST_PIN = '258000';
+const TEST_PIN = '2580';
 
 export default function PaymentPinScreen() {
   const [resetKey, setResetKey] = useState(0);
@@ -19,9 +19,9 @@ export default function PaymentPinScreen() {
   return (
     <View className="flex-1 p-5 gap-3 bg-[#F0F4FF]">
       <PinEntry
-        title="6자리 비밀번호를 입력하세요"
+        title="4자리 비밀번호를 입력하세요"
         resetKey={resetKey}
-        length={6}
+        length={4}
         onComplete={handlePinComplete}
       />
     </View>
