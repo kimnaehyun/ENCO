@@ -1,23 +1,23 @@
-import React from "react";
-import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import HomeScreen from "../screens/HomeScreen";
-import { HomeStackParamList } from "../types/navigation";
+import React from 'react';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import HomeScreen from '../screens/HomeScreen';
+import { HomeStackParamList } from '../types/navigation';
 
 // group screens (HomeStack에서도 접근 가능하도록)
-import GroupDashboardScreen from "../screens/group/GroupDashboardScreen";
-import GroupInfoScreen from "../screens/group/GroupInfoScreen";
-import GroupVotesScreen from "../screens/group/GroupVotesScreen";
-import GroupPayScreen from "../screens/group/GroupPayScreen";
-import GroupChatScreen from "../screens/group/GroupChatScreen";
-import GroupLedgerScreen from "../screens/group/GroupLedgerScreen";
-import GroupVoteDetailScreen from "../screens/group/GroupVoteDetailScreen";
-import GroupVoteCreateScreen from "../screens/group/GroupVoteCreateScreen";
-import AdminMenuScreen from "../screens/admin/AdminMenuScreen";
-import AdminReceiptScreen from "../screens/admin/AdminReceiptScreen";
-import AdminMembersScreen from "../screens/admin/AdminMembersScreen";
-import AdminCardScreen from "../screens/admin/AdminCardScreen";
-import AdminSettleScreen from "../screens/admin/AdminSettleScreen";
-import OcrTestScreen from "../screens/OcrTestScreen";
+import GroupDashboardScreen from '../screens/group/GroupDashboardScreen';
+import GroupInfoScreen from '../screens/group/GroupInfoScreen';
+import GroupVotesScreen from '../screens/group/GroupVotesScreen';
+import GroupPayScreen from '../screens/group/GroupPayScreen';
+import GroupChatScreen from '../screens/group/GroupChatScreen';
+import GroupLedgerScreen from '../screens/group/GroupLedgerScreen';
+import GroupVoteDetailScreen from '../screens/group/GroupVoteDetailScreen';
+import VoteCreateScreen from '../screens/InternetPayment/VoteCreateScreen';
+import AdminMenuScreen from '../screens/admin/AdminMenuScreen';
+import AdminReceiptScreen from '../screens/admin/AdminReceiptScreen';
+import AdminMembersScreen from '../screens/admin/AdminMembersScreen';
+import AdminCardScreen from '../screens/admin/AdminCardScreen';
+import AdminSettleScreen from '../screens/admin/AdminSettleScreen';
+import OcrTestScreen from '../screens/OcrTestScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -39,7 +39,7 @@ export default function HomeStackNavigator() {
       <Stack.Screen name="GroupChat" component={GroupChatScreen} />
       <Stack.Screen name="GroupLedger" component={GroupLedgerScreen} />
       <Stack.Screen name="GroupVoteDetail" component={GroupVoteDetailScreen} />
-      <Stack.Screen name="GroupVoteCreate" component={GroupVoteCreateScreen} />
+      <Stack.Screen name="VoteCreate" component={VoteCreateScreen} />
       <Stack.Screen name="AdminMenu" component={AdminMenuScreen} />
       <Stack.Screen name="AdminReceipt" component={AdminReceiptScreen} />
       <Stack.Screen name="AdminMembers" component={AdminMembersScreen} />

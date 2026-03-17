@@ -10,7 +10,7 @@ import GroupPayScreen from '../screens/group/GroupPayScreen';
 import GroupChatScreen from '../screens/group/GroupChatScreen';
 import GroupLedgerScreen from '../screens/group/GroupLedgerScreen';
 import GroupVoteDetailScreen from '../screens/group/GroupVoteDetailScreen';
-import GroupVoteCreateScreen from '../screens/group/GroupVoteCreateScreen';
+import VoteCreateScreen from '../screens/InternetPayment/VoteCreateScreen.tsx';
 
 import AdminMenuScreen from '../screens/admin/AdminMenuScreen';
 import AdminReceiptScreen from '../screens/admin/AdminReceiptScreen';
@@ -46,7 +46,7 @@ export default function GroupStackNavigator() {
       <Stack.Screen name="GroupPay" component={GroupPayScreen} />
       <Stack.Screen name="GroupChat" component={GroupChatScreen} />
       <Stack.Screen name="GroupVoteDetail" component={GroupVoteDetailScreen} />
-      <Stack.Screen name="GroupVoteCreate" component={GroupVoteCreateScreen} />
+      <Stack.Screen name="VoteCreate" component={VoteCreateScreen} />
 
       {/* 관리자 */}
       <Stack.Screen name="AdminMenu" component={AdminMenuScreen} />
