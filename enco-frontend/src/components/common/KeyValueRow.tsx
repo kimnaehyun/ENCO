@@ -10,7 +10,7 @@ export default function KeyValueRow({
 }) {
   return (
     <View className="flex-row justify-between">
-      <Text>{title}</Text>
+      <Text className="text-[20px]">{title}</Text>
       {children}
     </View>
   );
