@@ -49,6 +49,7 @@ export default function GroupVoteDetailScreen({ route, navigation }: Props) {
 
   const isAgree = data.myChoice === 'agree';
   const isDisagree = data.myChoice === 'disagree';
+  const isOngoing = !data.endsAt || new Date(data.endsAt) > new Date();
 
   return (
     <View style={styles.container}>
@@ -94,29 +95,31 @@ export default function GroupVoteDetailScreen({ route, navigation }: Props) {
           </Text>
         </View>
 
-        <View style={styles.buttonRow}>
-          <Pressable
-            onPress={() => onVote('agree')}
-            style={[
-              styles.voteButton,
-              styles.agreeButton,
-              isAgree && styles.selectedButton,
-            ]}
-          >
-            <Text style={styles.voteButtonText}>찬성</Text>
-          </Pressable>
+        {isOngoing && (
+          <View style={styles.buttonRow}>
+            <Pressable
+              onPress={() => onVote('agree')}
+              style={[
+                styles.voteButton,
+                styles.agreeButton,
+                isAgree && styles.selectedButton,
+              ]}
+            >
+              <Text style={styles.voteButtonText}>찬성</Text>
+            </Pressable>
 
-          <Pressable
-            onPress={() => onVote('disagree')}
-            style={[
-              styles.voteButton,
-              styles.disagreeButton,
-              isDisagree && styles.selectedButton,
-            ]}
-          >
-            <Text style={styles.voteButtonText}>반대</Text>
-          </Pressable>
-        </View>
+            <Pressable
+              onPress={() => onVote('disagree')}
+              style={[
+                styles.voteButton,
+                styles.disagreeButton,
+                isDisagree && styles.selectedButton,
+              ]}
+            >
+              <Text style={styles.voteButtonText}>반대</Text>
+            </Pressable>
+          </View>
+        )}
       </View>
     </View>
   );
