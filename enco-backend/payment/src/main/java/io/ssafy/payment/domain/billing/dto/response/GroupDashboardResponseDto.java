@@ -3,6 +3,7 @@ package io.ssafy.payment.domain.billing.dto.response;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import org.springframework.http.HttpStatusCode;
 
 @Getter
 @Builder
