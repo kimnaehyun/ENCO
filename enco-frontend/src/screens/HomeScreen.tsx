@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dimensions, FlatList, Pressable, Text, View } from 'react-native';
+import { Dimensions, FlatList, Pressable, Text, View, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';

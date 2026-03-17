@@ -193,7 +193,7 @@ export default function AdminMembersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ECECEF',
+    backgroundColor: '#f2f4fe',
   },
 
   headerPill: {
