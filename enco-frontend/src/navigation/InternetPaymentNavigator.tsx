@@ -22,6 +22,7 @@ export default function InternetPayNavigator() {
       />
       <Stack.Screen name="SelectGroupScreen" component={SelectGroupScreen} />
       <Stack.Screen name="CardChoiceScreen" component={CardChoiceScreen} />
+      <Stack.Screen name="PaymentPinScreen" component={PaymentPinScreen} />
       <Stack.Screen
         name="CreateInternetPaymentRequest"
         component={CreateInternetPaymentRequestScreen}
@@ -30,12 +31,7 @@ export default function InternetPayNavigator() {
         name="PaymentApprovalPending"
         component={PaymentApprovalPendingScreen}
       />
-      <Stack.Screen
-        name="InternetPaymentPin"
-        component={PaymentPinScreen}
-        initialParams={{ screen: 'PaymentSuccess' }}
-        options={{ headerShown: false }}
-      />
+
       <Stack.Screen name="PaymentSuccess" component={PaymentSuccessScreen} />
     </Stack.Navigator>
   );
