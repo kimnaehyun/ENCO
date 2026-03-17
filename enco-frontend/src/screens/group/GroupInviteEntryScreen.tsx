@@ -14,7 +14,7 @@ export default function GroupInviteEntryScreen() {
       <View style={styles.container}>
         <View style={styles.card}>
           <Image
-            source={require('../../assets/icons/error_hamco.png')}
+            source={require('../../assets/icons/invite_hamco.png')}
             style={styles.image}
             resizeMode="contain"
           />
