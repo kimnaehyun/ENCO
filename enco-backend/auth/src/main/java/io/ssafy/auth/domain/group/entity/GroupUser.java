@@ -47,4 +47,8 @@ public class GroupUser {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User user;
+
+    public void updateRole(Role role) {
+        this.role = role;
+    }
 }
