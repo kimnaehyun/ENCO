@@ -20,7 +20,7 @@ export default function AdminMenuScreen() {
     {
       key: 'ledger',
       title: '모임 장부',
-      onPress: () => navigation.navigate('AdminReceipt', { groupId: params.groupId, groupName: params.groupName }),
+      onPress: () => navigation.navigate('GroupLedger', { groupId: params.groupId, groupName: params.groupName, isAdmin: true }),
     },
     {
       key: 'member',

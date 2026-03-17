@@ -1,5 +1,5 @@
-import { Dimensions, FlatList, Image, Pressable, Text, View } from 'react-native';
-import React, { useState } from 'react';
+import React from 'react';
+import { Dimensions, FlatList, Pressable, Text, View, Image } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
@@ -11,10 +11,6 @@ const CARD_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
-
-  // 테스트용: true면 네트워크 에러 화면을 강제로 보여줌
-  const [isNetworkErrorTest, setIsNetworkErrorTest] = useState(true);
-  const [isRetrying, setIsRetrying] = useState(false);
 
   const me = { displayName: '나기' };
   const groups: HomeGroupSummary[] = [
@@ -33,6 +29,7 @@ export default function HomeScreen() {
         ]
       : [{ type: 'add' as const }];
 
+  // HomeStack 안에서 직접 push → 뒤로가기 시 HomeScreen으로 복귀
   const onPressGroupCard = (group: HomeGroupSummary) => {
     navigation.navigate('GroupDashboard', {
       groupId: group.id,

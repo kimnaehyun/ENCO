@@ -5,6 +5,7 @@ import HomeStackNavigator from './HomeStackNavigator';
 import OnsitePaymentNavigator from './OnsitePaymentNavigator';
 import UserStackNavigator from './UserStackNavigator';
 import { images } from '../types/images';
+import InternetPayNavigator from './InternetPaymentNavigator';
 
 const Tab = createBottomTabNavigator();
 
@@ -26,7 +27,7 @@ export default function BottomNavigator() {
     >
       <Tab.Screen
         name={ROUTES.TAB_PAYMENT}
-        component={OnsitePaymentNavigator}
+        component={InternetPayNavigator}
         options={{
           popToTopOnBlur: true,
           tabBarIcon: ({ focused, size }) => (
