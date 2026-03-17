@@ -58,4 +58,10 @@ public class Group {
     @OneToMany(mappedBy = "group")
     private List<GroupUser> groupUserList = new ArrayList<>();
 
+    public void updateSettings(String name, String introduction, String groundRule, Integer voteCriteria) {
+        if (name != null) this.name = name;
+        if (introduction != null) this.introduction = introduction;
+        if (groundRule != null) this.groundRule = groundRule;
+        if (voteCriteria != null) this.voteCriteria = voteCriteria;
+    }
 }

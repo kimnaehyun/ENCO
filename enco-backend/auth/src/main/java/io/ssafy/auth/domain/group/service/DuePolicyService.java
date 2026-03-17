@@ -23,9 +23,9 @@ public class DuePolicyService {
 
     @Transactional
     public DuePolicyResponseDto createPolicy(Long groupId, CreateDuePolicyRequestDto request) {
-        if (!groupRepository.existsByIdAndIsDeletedFalse(groupId)) {
-            throw new CustomException(ErrorCode.GROUP_NOT_FOUND);
-        }
+        groupRepository.findById(groupId)
+                .filter(g -> !g.getIsDeleted())
+                .orElseThrow(() -> new CustomException(ErrorCode.GROUP_NOT_FOUND));
 
         duePolicyRepository.findByGroupIdAndIsDeletedFalseAndStatus(groupId, DuePolicyStatus.ACTIVE).ifPresent(DuePolicy::pause);
 
@@ -43,6 +43,13 @@ public class DuePolicyService {
      * dayOfMonth가 null이면 오늘을 시작일로 설정.
      * dayOfMonth가 있으면 이번 달 해당 일이 아직 지나지 않았으면 이번 달, 지났으면 다음 달로 설정.
      */
+    @Transactional
+    public void deactivatePolicy(Long groupId) {
+        duePolicyRepository.findByGroupIdAndIsDeletedFalseAndStatus(groupId, DuePolicyStatus.ACTIVE)
+                .orElseThrow(() -> new CustomException(ErrorCode.POLICY_NOT_FOUND))
+                .pause();
+    }
+
     private LocalDate resolveStartDate(Integer dayOfMonth) {
         if (dayOfMonth == null) {
             return LocalDate.now();
