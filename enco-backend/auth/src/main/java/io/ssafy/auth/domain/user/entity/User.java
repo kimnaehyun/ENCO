@@ -21,6 +21,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Table(name="users")
 public class User {
 
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -49,18 +50,20 @@ public class User {
     @Column(nullable = false)
     private String pinCode;
 
+    @Column(nullable = false)
+    private String deviceToken;
+
     private String profileUrl;
 
     private String address;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
+    @Builder.Default
     private Role role = Role.USER;
 
     @Column(nullable = false)
-    private String deviceToken;
-
-    @Column(nullable = false)
+    @Builder.Default
     private Boolean isDeleted = false;
 
     @CreatedDate
