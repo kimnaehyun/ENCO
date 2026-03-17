@@ -39,6 +39,8 @@ type LedgerItem = {
   settleMembers?: SettleMember[]; // 정산 대상 멤버
 };
 
+// type GroupPayStep = 'summary' | 'form' | 'pin' | 'success';
+
 type GroupPayStep = 'summary' | 'form' | 'pin' | 'success';
 
 type Message = {

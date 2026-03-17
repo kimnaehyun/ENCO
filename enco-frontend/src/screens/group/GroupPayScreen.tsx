@@ -1,5 +1,5 @@
 // src/screens/group/GroupPayScreen.tsx
-import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, useEffect } from 'react';
 import {
   Alert,
   Pressable,
@@ -10,114 +10,191 @@ import {
   KeyboardAvoidingView,
   Platform,
   BackHandler,
+  ScrollView,
 } from 'react-native';
 import ScreenLayout from '../../components/ScreenLayout';
+import PinEntry from '../../components/pin/PinEntry';
 import { GroupPayStep, GroupProps } from '../../types/group';
 
-const PIN_LEN = 6;
-
 const formatKRW = (n: number) =>
-  `₩ ${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+  `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원`;
 
-export default function GroupPayScreen({ navigation, route }: GroupProps<'GroupPay'>) {
-  const groupName = route.params?.groupName ?? '모임명';
+const formatInputNumber = (value: string) => value.replace(/[^0-9]/g, '');
 
-  const monthlyDue = 10000;
+type UnpaidItem = {
+  id: string;
+  label: string;
+  amount: number;
+};
 
-  const accounts = useMemo(
+function InfoInputBox({
+  label,
+  value,
+  onChangeText,
+  keyboardType,
+  valueStyle,
+}: {
+  label: string;
+  value: string;
+  onChangeText?: (text: string) => void;
+  keyboardType?: 'default' | 'number-pad';
+  valueStyle?: object;
+}) {
+  return (
+    <View style={styles.infoBox}>
+      <Text style={styles.infoLabel}>{label}</Text>
+
+      {onChangeText ? (
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          keyboardType={keyboardType}
+          placeholder=""
+          placeholderTextColor="#9CA3AF"
+          style={[styles.infoInput, valueStyle]}
+        />
+      ) : (
+        <Text style={[styles.infoValue, valueStyle]}>{value}</Text>
+      )}
+    </View>
+  );
+}
+
+function InfoDisplayBox({
+  label,
+  value,
+  valueStyle,
+}: {
+  label: string;
+  value: string;
+  valueStyle?: object;
+}) {
+  return (
+    <View style={styles.infoBox}>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={[styles.infoValue, valueStyle]}>{value}</Text>
+    </View>
+  );
+}
+
+
+export default function GroupPayScreen({
+  navigation,
+  route,
+}: GroupProps<'GroupPay'>) {
+  const [step, setStep] = useState<GroupPayStep>('summary');
+  const [pinResetKey, setPinResetKey] = useState(0);
+
+  const unpaidItems = useMemo<UnpaidItem[]>(
     () => [
-      { id: 'a1', name: '우리은행 110-****-1234' },
-      { id: 'a2', name: '국민은행 012-****-5678' },
+      { id: 'u1', label: '26.3.1 3월 회비', amount: 10000 },
+      { id: 'u2', label: '26.2.1 2월 회비', amount: 10000 },
+      { id: 'u3', label: '26.1.1 1월 회비', amount: 10000 },
     ],
     []
   );
 
-  const [step, setStep] = useState<GroupPayStep>('summary');
+  const [selectedUnpaidIds, setSelectedUnpaidIds] = useState<string[]>([]);
+  const [amountText, setAmountText] = useState<string>('');
+  const [selectedAccount, setSelectedAccount] = useState('부산은행 112');
+  const [myAccountLabel, setMyAccountLabel] = useState('');
+  const [groupAccountLabel, setGroupAccountLabel] = useState('');
+  const [memo, setMemo] = useState('');
 
-  const [amountText, setAmountText] = useState<string>(String(monthlyDue));
-  const [accountIndex, setAccountIndex] = useState<number>(0);
-  const [memo, setMemo] = useState<string>('회비 납부');
+  const resetConfirmInputs = useCallback(() => {
+    setSelectedAccount('부산은행 112');
+    setMyAccountLabel('');
+    setGroupAccountLabel('');
+    setMemo('');
+  }, []);
 
-  const [pin, setPin] = useState<string>('');
+  const parsedAmount = useMemo(() => {
+    const parsed = parseInt(formatInputNumber(amountText), 10);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }, [amountText]);
 
-  useEffect(() => {
-    if (step !== 'pin') return;
-    if (pin.length === PIN_LEN) {
-      const t = setTimeout(() => setStep('success'), 250);
-      return () => clearTimeout(t);
-    }
-  }, [pin, step]);
-
-  const selectedAccount = accounts[accountIndex]?.name ?? '계좌 선택';
-
-  // ✅ step 기반 뒤로가기 로직(헤더 버튼 + 하드웨어 백에서 같이 사용)
   const goBackLike = useCallback(() => {
     if (step === 'summary') {
-      navigation.goBack(); // summary에서는 스크린 pop이 정상
+      navigation.goBack();
       return;
     }
     if (step === 'form') {
+      resetConfirmInputs();
       setStep('summary');
       return;
     }
     if (step === 'pin') {
-      setPin('');
       setStep('form');
       return;
     }
     if (step === 'success') {
-      setPin('');
       setStep('summary');
       return;
     }
-  }, [navigation, step]);
+  }, [navigation, resetConfirmInputs, step]);
 
-  // ✅ 안드로이드 하드웨어 뒤로가기 가로채기
   useEffect(() => {
     if (Platform.OS !== 'android') return;
 
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
-      // summary가 아니면 스크린 pop을 막고 내부 step만 뒤로 이동
       if (step !== 'summary') {
         goBackLike();
-        return true; // 이벤트 처리 완료(=pop 막음)
+        return true;
       }
-      return false; // summary에서는 기본 동작(=pop 허용)
+      return false;
     });
 
     return () => sub.remove();
   }, [goBackLike, step]);
 
-  const onPressPayStart = () => setStep('form');
+  const onPressUnpaidItem = (item: UnpaidItem) => {
+    setSelectedUnpaidIds(prev => {
+      const isSelected = prev.includes(item.id);
 
-  const onPressSubmitTransfer = () => {
-    const parsed = parseInt(amountText.replace(/[^0-9]/g, ''), 10);
+      const nextIds = isSelected
+        ? prev.filter(id => id !== item.id)
+        : [...prev, item.id];
 
-    if (!parsed || parsed <= 0) {
+      const nextAmount = unpaidItems
+        .filter(unpaid => nextIds.includes(unpaid.id))
+        .reduce((sum, unpaid) => sum + unpaid.amount, 0);
+
+      setAmountText(nextAmount > 0 ? String(nextAmount) : '');
+
+      return nextIds;
+    });
+  };
+
+  const onChangeAmount = (text: string) => {
+    setSelectedUnpaidIds([]);
+    setAmountText(formatInputNumber(text));
+  };
+
+  const onPressGoConfirm = () => {
+    if (!parsedAmount || parsedAmount <= 0) {
       Alert.alert('확인', '금액을 입력해주세요.');
       return;
     }
-    if (!selectedAccount || selectedAccount === '계좌 선택') {
-      Alert.alert('확인', '계좌를 선택해주세요.');
+    resetConfirmInputs();
+    setStep('form');
+  };
+
+  const onPressGoPin = () => {
+    if (!parsedAmount || parsedAmount <= 0) {
+      Alert.alert('확인', '금액을 입력해주세요.');
       return;
     }
-
-    setPin('');
+    setPinResetKey(prev => prev + 1);
     setStep('pin');
   };
 
   const onPressNotify = () => {
     Alert.alert('알림', 'TODO: 송금 완료 알림 보내기');
-    setPin('');
     setStep('summary');
+    setSelectedUnpaidIds([]);
+    setAmountText('');
+    resetConfirmInputs();
   };
-
-  const appendPin = (digit: string) => {
-    if (pin.length >= PIN_LEN) return;
-    setPin(prev => prev + digit);
-  };
-
-  const backspacePin = () => setPin(prev => prev.slice(0, -1));
 
   return (
     <KeyboardAvoidingView
@@ -125,110 +202,158 @@ export default function GroupPayScreen({ navigation, route }: GroupProps<'GroupP
       behavior={Platform.select({ ios: 'padding', android: undefined })}
     >
       <ScreenLayout>
-        <View style={styles.header}>
-          <Text style={styles.headerTitle}>납부 {groupName ? `- ${groupName}` : ''}</Text>
-
-          {/* ✅ 헤더 뒤로/닫기도 동일 로직 */}
+        <View style={styles.headerSimple}>
           <Pressable onPress={goBackLike} hitSlop={12}>
-            <Text style={styles.closeText}>{step === 'summary' ? '닫기' : '뒤로'}</Text>
+            <Text style={styles.closeText}>
+              {step === 'summary' ? '닫기' : '뒤로'}
+            </Text>
           </Pressable>
         </View>
 
         {step === 'summary' && (
-          <View style={{ marginTop: 16 }}>
-            <View style={styles.bigCard}>
-              <Text style={styles.bigCardText}>
-                이번달에 납부할 회비는 {formatKRW(monthlyDue)} 입니다
-              </Text>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingTop: 16, paddingBottom: 24 }}
+          >
+            <View style={styles.heroCard}>
+              <Text style={styles.heroLine}>모임통장으로</Text>
+              <View style={styles.heroAmountRow}>
+                <View style={styles.heroUnderlineWrap}>
+                  <Text style={styles.heroAmount}>
+                    {parsedAmount > 0 ? formatKRW(parsedAmount) : ''}
+                  </Text>
+                  {parsedAmount > 0 && <View style={styles.heroUnderline} />}
+                </View>
+                <Text style={styles.heroLine}>원 입금합니다</Text>
+              </View>
             </View>
 
-            <Pressable onPress={onPressPayStart} style={styles.primaryBtn}>
+            <View style={styles.payCard}>
+              <Text style={styles.sectionLabel}>금액 직접 입력</Text>
+
+              <View style={styles.amountInputRow}>
+                <TextInput
+                  value={amountText}
+                  onChangeText={onChangeAmount}
+                  keyboardType="number-pad"
+                  placeholder=""
+                  placeholderTextColor="#9CA3AF"
+                  style={styles.amountInput}
+                />
+                <Text style={styles.amountUnit}>원</Text>
+              </View>
+
+              <Text style={[styles.sectionLabel, { marginTop: 28 }]}>
+                미납 금액
+              </Text>
+
+              <View style={styles.unpaidList}>
+                {unpaidItems.map(item => {
+                  const selected = selectedUnpaidIds.includes(item.id);
+
+                  return (
+                    <Pressable
+                      key={item.id}
+                      onPress={() => onPressUnpaidItem(item)}
+                      style={[
+                        styles.unpaidItem,
+                        selected && styles.unpaidItemSelected,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.unpaidItemLabel,
+                          selected && styles.unpaidItemTextSelected,
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.unpaidItemAmount,
+                          selected && styles.unpaidItemTextSelected,
+                        ]}
+                      >
+                        {formatKRW(item.amount)}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+
+              <Pressable
+                onPress={onPressGoConfirm}
+                style={[
+                  styles.primaryBtn,
+                  parsedAmount <= 0 && styles.primaryBtnDisabled,
+                ]}
+                disabled={parsedAmount <= 0}
+              >
+                <Text style={styles.primaryBtnText}>납부하기</Text>
+              </Pressable>
+            </View>
+          </ScrollView>
+        )}
+
+        {step === 'form' && (
+          <View style={styles.confirmContainer}>
+            <InfoInputBox
+              label="금액"
+              value={
+                parsedAmount > 0
+                  ? amountText.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
+                  : ''
+              }
+              valueStyle={styles.amountConfirmValue}
+            />
+
+            <InfoDisplayBox
+              label="계좌 선택"
+              value={selectedAccount}
+            />
+
+            <InfoInputBox
+              label="내통장 표시"
+              value={myAccountLabel}
+              onChangeText={setMyAccountLabel}
+            />
+
+            <InfoInputBox
+              label="모임통장 표시"
+              value={groupAccountLabel}
+              onChangeText={setGroupAccountLabel}
+            />
+
+            <InfoInputBox
+              label="메모"
+              value={memo}
+              onChangeText={setMemo}
+            />
+
+            <Pressable onPress={onPressGoPin} style={styles.primaryBtn}>
               <Text style={styles.primaryBtnText}>납부하기</Text>
             </Pressable>
           </View>
         )}
 
-        {step === 'form' && (
-          <View style={{ marginTop: 16, gap: 14 }}>
-            <View style={styles.formBox}>
-              <Text style={styles.formLabel}>금액</Text>
-              <TextInput
-                value={amountText}
-                onChangeText={setAmountText}
-                keyboardType="number-pad"
-                placeholder="금액 입력"
-                style={styles.formInput}
-              />
-            </View>
-
-            <Pressable
-              onPress={() => setAccountIndex(i => (i + 1) % accounts.length)}
-              style={styles.formBox}
-            >
-              <Text style={styles.formLabel}>계좌 선택</Text>
-              <Text style={styles.formValue}>{selectedAccount}</Text>
-              <Text style={styles.formHint}>눌러서 계좌 변경(임시)</Text>
-            </Pressable>
-
-            <View style={styles.formBox}>
-              <Text style={styles.formLabel}>메모</Text>
-              <TextInput
-                value={memo}
-                onChangeText={setMemo}
-                placeholder="메모"
-                style={styles.formInput}
-              />
-            </View>
-
-            <Pressable onPress={onPressSubmitTransfer} style={styles.primaryBtn}>
-              <Text style={styles.primaryBtnText}>송금하기</Text>
-            </Pressable>
-          </View>
-        )}
-
         {step === 'pin' && (
-          <View style={{ flex: 1, marginTop: 22 }}>
-            <Text style={styles.pinTitle}>비밀번호를 입력해주세요</Text>
-
-            <View style={styles.pinDotsRow}>
-              {Array.from({ length: PIN_LEN }).map((_, idx) => {
-                const filled = idx < pin.length;
-                return (
-                  <View key={idx} style={[styles.pinDot, filled && styles.pinDotFilled]} />
-                );
-              })}
-            </View>
-
-            <View style={styles.keypad}>
-              {['1','2','3','4','5','6','7','8','9','.','0','⌫'].map(k => {
-                const isBack = k === '⌫';
-                const isDot = k === '.';
-
-                return (
-                  <Pressable
-                    key={k}
-                    onPress={() => {
-                      if (isBack) backspacePin();
-                      else if (isDot) return;
-                      else appendPin(k);
-                    }}
-                    style={styles.keyBtn}
-                  >
-                    <Text style={styles.keyText}>{k}</Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
+          <PinEntry
+            title="비밀번호를 입력해주세요"
+            length={4}
+            resetKey={pinResetKey}
+            onComplete={() => {
+              setStep('success');
+            }}
+          />
         )}
 
         {step === 'success' && (
-          <View style={{ flex: 1, marginTop: 60, alignItems: 'center' }}>
+          <View style={styles.successContainer}>
             <Text style={styles.successTitle}>송금 완료되었습니다</Text>
 
             <Pressable
               onPress={onPressNotify}
-              style={[styles.primaryBtn, { marginTop: 20, width: 220 }]}
+              style={[styles.primaryBtn, styles.successButton]}
             >
               <Text style={styles.primaryBtnText}>송금완료 알림보내기</Text>
             </Pressable>
@@ -240,30 +365,197 @@ export default function GroupPayScreen({ navigation, route }: GroupProps<'GroupP
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  headerTitle: { fontSize: 20, fontWeight: '900' },
-  closeText: { fontSize: 16, fontWeight: '700' },
+  headerSimple: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  closeText: {
+    fontSize: 15,
+    color: '#374151',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
 
-  bigCard: { borderRadius: 24, backgroundColor: '#E5E7EB', padding: 18, minHeight: 120, justifyContent: 'center' },
-  bigCardText: { fontSize: 16, fontWeight: '700', textAlign: 'center' },
+  heroCard: {
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    minHeight: 150,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  heroLine: {
+    fontSize: 20,
+    color: '#111111',
+    fontFamily: 'GmarketSansTTFBold',
+    textAlign: 'center',
+  },
+  heroAmountRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginTop: 2,
+  },
+  heroUnderlineWrap: {
+    alignItems: 'center',
+    marginRight: 6,
+    minWidth: 88,
+  },
+  heroAmount: {
+    fontSize: 20,
+    color: '#1428A0',
+    fontFamily: 'GmarketSansTTFBold',
+    textAlign: 'center',
+  },
+  heroUnderline: {
+    width: 84,
+    height: 2,
+    backgroundColor: '#1428A0',
+    marginTop: 4,
+  },
 
-  primaryBtn: { marginTop: 16, height: 56, borderRadius: 18, backgroundColor: '#D1D5DB', alignItems: 'center', justifyContent: 'center' },
-  primaryBtnText: { fontSize: 16, fontWeight: '900' },
+  payCard: {
+    marginTop: 18,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 24,
+  },
+  sectionLabel: {
+    fontSize: 15,
+    color: '#444444',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  amountInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  amountInput: {
+    flex: 1,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#111111',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    fontSize: 16,
+    color: '#111111',
+    fontFamily: 'GmarketSansTTFMedium',
+    textAlign: 'right',
+  },
+  amountUnit: {
+    marginLeft: 10,
+    fontSize: 18,
+    color: '#444444',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
 
-  formBox: { borderRadius: 22, backgroundColor: '#E5E7EB', paddingHorizontal: 16, paddingVertical: 14 },
-  formLabel: { fontSize: 14, fontWeight: '900', marginBottom: 10 },
-  formInput: { height: 44, borderRadius: 12, backgroundColor: '#F3F4F6', paddingHorizontal: 12 },
-  formValue: { fontSize: 15, fontWeight: '700' },
-  formHint: { marginTop: 6, fontSize: 12 },
+  unpaidList: {
+    marginTop: 14,
+    gap: 14,
+  },
+  unpaidItem: {
+    minHeight: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FF5A5A',
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+  },
+  unpaidItemSelected: {
+    backgroundColor: '#FFF0F0',
+  },
+  unpaidItemLabel: {
+    fontSize: 12,
+    color: '#FF5A5A',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  unpaidItemAmount: {
+    fontSize: 18,
+    color: '#FF5A5A',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  unpaidItemTextSelected: {
+    color: '#FF3B30',
+  },
 
-  pinTitle: { fontSize: 22, fontWeight: '900', textAlign: 'center', marginTop: 20 },
-  pinDotsRow: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginTop: 26 },
-  pinDot: { width: 14, height: 14, borderRadius: 7, backgroundColor: '#D1D5DB' },
-  pinDotFilled: { backgroundColor: '#6B7280' },
+  confirmContainer: {
+    flex: 1,
+    marginTop: 16,
+    gap: 12,
+  },
+  infoBox: {
+    minHeight: 86,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  infoLabel: {
+    fontSize: 16,
+    color: '#111111',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  infoValue: {
+    fontSize: 18,
+    color: '#666666',
+    fontFamily: 'GmarketSansTTFMedium',
+    maxWidth: '62%',
+    textAlign: 'right',
+  },
+  infoInput: {
+    flex: 1,
+    marginLeft: 16,
+    fontSize: 18,
+    color: '#666666',
+    fontFamily: 'GmarketSansTTFMedium',
+    textAlign: 'right',
+    paddingVertical: 0,
+  },
+  amountConfirmValue: {
+    fontSize: 24,
+    color: '#111111',
+    fontFamily: 'GmarketSansTTFBold',
+    textAlign: 'right',
+  },
 
-  keypad: { marginTop: 26, flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center' },
-  keyBtn: { width: '30%', height: 54, borderRadius: 12, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center' },
-  keyText: { fontSize: 18, fontWeight: '800' },
+  primaryBtn: {
+    marginTop: 22,
+    height: 50,
+    borderRadius: 18,
+    backgroundColor: '#1428A0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  primaryBtnDisabled: {
+    opacity: 0.6,
+  },
+  primaryBtnText: {
+    fontSize: 18,
+    color: '#ffffff',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
 
-  successTitle: { fontSize: 22, fontWeight: '900' },
+  successContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: 40,
+  },
+  successTitle: {
+    fontSize: 22,
+    color: '#111111',
+    fontFamily: 'GmarketSansTTFBold',
+    textAlign: 'center',
+  },
+  successButton: {
+    width: 220,
+  },
 });
