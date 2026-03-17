@@ -16,7 +16,7 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 }
 
 export default function GroupInviteDecisionScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   const groupName = '모임명';
   const intro = '회식좋아하는사람들';
