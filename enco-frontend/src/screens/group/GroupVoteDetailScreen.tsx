@@ -6,7 +6,7 @@ import { GroupStackParamList } from '../../types/navigation';
 
 type Props = NativeStackScreenProps<GroupStackParamList, 'GroupVoteDetail'>;
 
-const formatKRW = (n: number) => n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+const formatKRW = (n: number) => n.toLocaleString();
 
 export default function GroupVoteDetailScreen({ route, navigation }: Props) {
   const { voteId } = route.params;
@@ -27,17 +27,24 @@ export default function GroupVoteDetailScreen({ route, navigation }: Props) {
   if (!data) {
     return (
       <View style={styles.container}>
-        <Text style={{ fontSize: 16, fontWeight: '700' }}>투표 정보를 찾을 수 없습니다.</Text>
-        <Pressable onPress={() => navigation.goBack()} style={[styles.smallBtn, { marginTop: 12 }]}>
-          <Text style={styles.smallBtnText}>뒤로가기</Text>
-        </Pressable>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>투표 상세</Text>
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.emptyText}>투표 정보를 찾을 수 없습니다.</Text>
+
+          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Text style={styles.backButtonText}>뒤로가기</Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
 
   const onVote = (choice: VoteChoice) => {
     vote(voteId, choice);
-    navigation.goBack(); // ✅ 투표 후 목록으로 복귀(목록 자동 반영)
+    navigation.goBack();
   };
 
   const isAgree = data.myChoice === 'agree';
@@ -45,59 +52,219 @@ export default function GroupVoteDetailScreen({ route, navigation }: Props) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.pill}><Text style={styles.pillText}>{data.title}</Text></View>
-      <View style={styles.pill}><Text style={styles.pillText}>{data.subTitle}</Text></View>
-      <View style={styles.pill}><Text style={styles.pillText}>금액 {formatKRW(data.amount)}</Text></View>
+      <View style={styles.headerRow}>
+        <Text style={styles.headerTitle}>투표 상세</Text>
 
-      <View style={[styles.pill, styles.descBox]}>
-        <Text style={styles.descText}>{data.description}</Text>
+        <Pressable onPress={() => navigation.goBack()}>
+          <Text style={styles.closeText}>닫기</Text>
+        </Pressable>
       </View>
 
-      <View style={styles.pill}><Text style={styles.pillText}>남은 마감 시간</Text></View>
-      <View style={styles.pill}><Text style={styles.pillText}>{remainText}</Text></View>
+      <View style={styles.card}>
+        <Text style={styles.title}>{data.title}</Text>
+        <Text style={styles.subTitle}>{data.subTitle}</Text>
 
-      <View style={styles.pill}>
-        <Text style={styles.pillText}>
-          투표 인원 {data.currentParticipants}/{data.totalParticipants}
-        </Text>
-      </View>
+        <View style={styles.divider} />
 
-      <View style={styles.btnRow}>
-        <Pressable
-          onPress={() => onVote('agree')}
-          style={[styles.voteBtn, styles.agreeBtn, isAgree && styles.selected]}
-        >
-          <Text style={styles.voteBtnText}>찬성</Text>
-        </Pressable>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>금액</Text>
+          <Text style={styles.infoValue}>{formatKRW(data.amount)}원</Text>
+        </View>
 
-        <Pressable
-          onPress={() => onVote('disagree')}
-          style={[styles.voteBtn, styles.disagreeBtn, isDisagree && styles.selected]}
-        >
-          <Text style={styles.voteBtnText}>반대</Text>
-        </Pressable>
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>남은 시간</Text>
+          <Text style={styles.infoValue}>{remainText}</Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>참여 인원</Text>
+          <Text style={styles.infoValue}>
+            {data.currentParticipants} / {data.totalParticipants}
+          </Text>
+        </View>
+
+        <View style={styles.divider} />
+
+        <Text style={styles.sectionTitle}>설명</Text>
+        <Text style={styles.description}>{data.description}</Text>
+
+        <View style={styles.myChoiceBox}>
+          <Text style={styles.myChoiceText}>
+            내 선택: {isAgree ? '찬성' : isDisagree ? '반대' : '미투표'}
+          </Text>
+        </View>
+
+        <View style={styles.buttonRow}>
+          <Pressable
+            onPress={() => onVote('agree')}
+            style={[
+              styles.voteButton,
+              styles.agreeButton,
+              isAgree && styles.selectedButton,
+            ]}
+          >
+            <Text style={styles.voteButtonText}>찬성</Text>
+          </Pressable>
+
+          <Pressable
+            onPress={() => onVote('disagree')}
+            style={[
+              styles.voteButton,
+              styles.disagreeButton,
+              isDisagree && styles.selectedButton,
+            ]}
+          >
+            <Text style={styles.voteButtonText}>반대</Text>
+          </Pressable>
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F0F4FF', paddingHorizontal: 18, paddingTop: 18, gap: 12 },
+  container: {
+    flex: 1,
+    backgroundColor: '#F0F4FF',
+    paddingHorizontal: 20,
+    paddingTop: 56,
+  },
 
-  pill: { backgroundColor: '#D9D9D9', borderRadius: 26, paddingVertical: 12, paddingHorizontal: 16 },
-  pillText: { fontSize: 16, fontWeight: '700' },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  headerTitle: {
+    fontSize: 20,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  closeText: {
+    fontSize: 14,
+    color: '#1428A0',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
 
-  descBox: { borderRadius: 18, paddingVertical: 14 },
-  descText: { fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1,
+  },
 
-  btnRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 14, marginTop: 8 },
-  voteBtn: { flex: 1, borderRadius: 22, paddingVertical: 14, alignItems: 'center' },
-  agreeBtn: { backgroundColor: '#B9C4FF' },
-  disagreeBtn: { backgroundColor: '#FFB3B3' },
-  selected: { transform: [{ scale: 1.02 }] },
+  title: {
+    fontSize: 18,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  subTitle: {
+    marginTop: 6,
+    fontSize: 14,
+    color: '#374151',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
 
-  voteBtnText: { fontSize: 16, fontWeight: '900' },
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginVertical: 14,
+  },
 
-  smallBtn: { backgroundColor: '#EFEFEF', paddingHorizontal: 12, paddingVertical: 10, borderRadius: 16 },
-  smallBtnText: { fontWeight: '800' },
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: 28,
+    marginBottom: 8,
+  },
+  infoLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  infoValue: {
+    fontSize: 14,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+
+  sectionTitle: {
+    fontSize: 15,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+    marginBottom: 8,
+  },
+  description: {
+    fontSize: 14,
+    lineHeight: 22,
+    color: '#374151',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+
+  myChoiceBox: {
+    marginTop: 18,
+    alignSelf: 'flex-start',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  myChoiceText: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 20,
+  },
+  voteButton: {
+    flex: 1,
+    borderRadius: 18,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  agreeButton: {
+    backgroundColor: '#1428A0',
+  },
+  disagreeButton: {
+    backgroundColor: '#EF4444',
+  },
+  selectedButton: {
+    opacity: 0.88,
+    transform: [{ scale: 1.02 }],
+  },
+  voteButtonText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+
+  emptyText: {
+    fontSize: 15,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  backButton: {
+    marginTop: 16,
+    alignSelf: 'flex-start',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+  backButtonText: {
+    fontSize: 13,
+    color: '#374151',
+    fontFamily: 'GmarketSansTTFBold',
+  },
 });
