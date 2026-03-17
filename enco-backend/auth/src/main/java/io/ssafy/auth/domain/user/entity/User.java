@@ -1,5 +1,6 @@
-package io.ssafy.auth.domain.group.entity;
+package io.ssafy.auth.domain.user.entity;
 
+import io.ssafy.auth.domain.group.entity.GroupUser;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,53 +10,70 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 @Entity
-@Table(name = "groups")
+@Getter
 @EntityListeners(AuditingEntityListener.class)
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Getter
-public class Group {
+public class User {
+
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(nullable = false)
     private Long id;
 
     @Column(nullable = false)
     private String name;
 
     @Column(nullable = false)
-    private Long ownerUserId;
-
-    @Column(nullable = false, length = 1000)
-    private String introduction;
+    private String email;
 
     @Column(nullable = false)
-    private Integer voteCriteria = 0;
+    private Date birthDay;
 
-    @Column(nullable = false, length = 1000)
-    private String groundRule;
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Gender gender;
 
     @Column(nullable = false)
-    private BigDecimal point = BigDecimal.ZERO;
+    private String phoneNumber;
+
+    @Column(nullable = false)
+    private String password;
+
+    @Column(nullable = false)
+    private String pinCode;
+
+    private String profileUrl;
+
+    private String address;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Role role = Role.USER;
+
+    @Column(nullable = false)
+    private String deviceToken;
 
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
     @CreatedDate
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
+    @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "group")
-    private List<GroupType> groupTypeList = new ArrayList<>();
+    private LocalDateTime deletedAt;
 
-    @OneToMany(mappedBy = "group")
-    private List<GroupUser> groupUserList = new ArrayList<>();
+    @OneToMany(mappedBy = "user")
+    private List<GroupUser> groupList = new ArrayList<>();
 
 }
