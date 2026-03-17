@@ -10,7 +10,9 @@ import {
   View,
   ScrollView,
 } from 'react-native';
-import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { useVotes } from '../../contexts/VotesContext';
@@ -27,7 +29,7 @@ const formatDate = (date: Date) => {
   return `${y}-${m}-${d} ${hh}:${mm}`;
 };
 
-export default function GroupVoteCreateScreen() {
+export default function VoteCreateScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
   const params = (route.params ?? {}) as CommonParams;
@@ -74,7 +76,8 @@ export default function GroupVoteCreateScreen() {
   const onPressDone = () => {
     const amount = parseInt(digitsOnly(amountText), 10);
     if (!title.trim()) return Alert.alert('확인', '투표 제목을 입력해주세요.');
-    if (!amount || amount <= 0) return Alert.alert('확인', '금액을 입력해주세요.');
+    if (!amount || amount <= 0)
+      return Alert.alert('확인', '금액을 입력해주세요.');
     if (!description.trim()) return Alert.alert('확인', '설명을 입력해주세요.');
 
     createVote({
@@ -97,39 +100,60 @@ export default function GroupVoteCreateScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScreenLayout>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
-
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 32 }}
+        >
           {/* 헤더 */}
           <View className="flex-row items-center gap-3 mb-6">
             <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
               <Text style={{ fontSize: 22, color: '#111827' }}>←</Text>
             </Pressable>
-            <Text style={{ fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
+            <Text
+              style={{
+                fontSize: 20,
+                fontFamily: 'GmarketSansTTFBold',
+                color: '#111827',
+              }}
+            >
               투표 생성
             </Text>
           </View>
 
           {/* 입력 폼 */}
           <View className="gap-3">
-
             {/* 투표 제목 */}
             <View
               className="bg-white rounded-3xl px-5 py-4"
-              style={{ shadowColor: '#1428A0', shadowOpacity: 0.05, shadowRadius: 8, elevation: 1 }}
+              style={{
+                shadowColor: '#1428A0',
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                elevation: 1,
+              }}
             >
               <TextInput
                 value={title}
                 onChangeText={setTitle}
                 placeholder="투표 제목"
                 placeholderTextColor="#9CA3AF"
-                style={{ fontSize: 15, color: '#111827', fontFamily: 'GmarketSansTTFMedium' }}
+                style={{
+                  fontSize: 15,
+                  color: '#111827',
+                  fontFamily: 'GmarketSansTTFMedium',
+                }}
               />
             </View>
 
             {/* 금액 */}
             <View
               className="bg-white rounded-3xl px-5 py-4"
-              style={{ shadowColor: '#1428A0', shadowOpacity: 0.05, shadowRadius: 8, elevation: 1 }}
+              style={{
+                shadowColor: '#1428A0',
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                elevation: 1,
+              }}
             >
               <TextInput
                 value={amountText}
@@ -137,14 +161,24 @@ export default function GroupVoteCreateScreen() {
                 keyboardType="number-pad"
                 placeholder="금액"
                 placeholderTextColor="#9CA3AF"
-                style={{ fontSize: 15, color: '#111827', fontFamily: 'GmarketSansTTFMedium' }}
+                style={{
+                  fontSize: 15,
+                  color: '#111827',
+                  fontFamily: 'GmarketSansTTFMedium',
+                }}
               />
             </View>
 
             {/* 설명 */}
             <View
               className="bg-white rounded-3xl px-5 py-4"
-              style={{ minHeight: 160, shadowColor: '#1428A0', shadowOpacity: 0.05, shadowRadius: 8, elevation: 1 }}
+              style={{
+                minHeight: 160,
+                shadowColor: '#1428A0',
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                elevation: 1,
+              }}
             >
               <TextInput
                 value={description}
@@ -166,13 +200,20 @@ export default function GroupVoteCreateScreen() {
             <Pressable
               onPress={onPressDateInput}
               className="bg-white rounded-3xl px-5 py-4 flex-row items-center justify-between"
-              style={{ shadowColor: '#1428A0', shadowOpacity: 0.05, shadowRadius: 8, elevation: 1 }}
+              style={{
+                shadowColor: '#1428A0',
+                shadowOpacity: 0.05,
+                shadowRadius: 8,
+                elevation: 1,
+              }}
             >
-              <Text style={{
-                fontSize: 15,
-                fontFamily: 'GmarketSansTTFMedium',
-                color: endsAt ? '#111827' : '#9CA3AF',
-              }}>
+              <Text
+                style={{
+                  fontSize: 15,
+                  fontFamily: 'GmarketSansTTFMedium',
+                  color: endsAt ? '#111827' : '#9CA3AF',
+                }}
+              >
                 {endsAt ? formatDate(endsAt) : '마감 날짜 선택'}
               </Text>
               <Text style={{ fontSize: 18 }}>📅</Text>
@@ -182,7 +223,12 @@ export default function GroupVoteCreateScreen() {
             {Platform.OS === 'ios' && showDatePicker && (
               <View
                 className="bg-white rounded-3xl overflow-hidden"
-                style={{ shadowColor: '#1428A0', shadowOpacity: 0.05, shadowRadius: 8, elevation: 1 }}
+                style={{
+                  shadowColor: '#1428A0',
+                  shadowOpacity: 0.05,
+                  shadowRadius: 8,
+                  elevation: 1,
+                }}
               >
                 <DateTimePicker
                   value={endsAt ?? new Date()}
@@ -196,7 +242,13 @@ export default function GroupVoteCreateScreen() {
                   onPress={() => setShowDatePicker(false)}
                   className="items-center py-3 border-t border-gray-100"
                 >
-                  <Text style={{ fontSize: 15, color: '#1428A0', fontFamily: 'GmarketSansTTFBold' }}>
+                  <Text
+                    style={{
+                      fontSize: 15,
+                      color: '#1428A0',
+                      fontFamily: 'GmarketSansTTFBold',
+                    }}
+                  >
                     확인
                   </Text>
                 </Pressable>
@@ -231,7 +283,13 @@ export default function GroupVoteCreateScreen() {
             className="rounded-3xl items-center justify-center mt-6"
             style={{ height: 56, backgroundColor: '#1428A0' }}
           >
-            <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFBold', color: '#fff' }}>
+            <Text
+              style={{
+                fontSize: 16,
+                fontFamily: 'GmarketSansTTFBold',
+                color: '#fff',
+              }}
+            >
               투표 시작
             </Text>
           </Pressable>
@@ -249,7 +307,6 @@ export default function GroupVoteCreateScreen() {
           >
             한번 생성한 투표는{'\n'}삭제가 불가능합니다
           </Text>
-
         </ScrollView>
       </ScreenLayout>
     </KeyboardAvoidingView>
