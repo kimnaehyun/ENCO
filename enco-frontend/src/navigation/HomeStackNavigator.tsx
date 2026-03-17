@@ -18,6 +18,9 @@ import AdminMembersScreen from "../screens/admin/AdminMembersScreen";
 import AdminCardScreen from "../screens/admin/AdminCardScreen";
 import AdminSettleScreen from "../screens/admin/AdminSettleScreen";
 import OcrTestScreen from "../screens/OcrTestScreen";
+import GroupLedgerDetailScreen from "../screens/group/GroupLedgerDetailScreen";
+import SettleDetailScreen from "../screens/group/SettleDetailScreen";
+import SettleMemberSelectScreen from "../screens/group/SettleMemberSelectScreen";
 
 import GroupInviteEntryScreen from "../screens/group/GroupInviteEntryScreen";
 import GroupInviteDecisionScreen from "../screens/group/GroupInviteDecisionScreen";
@@ -55,6 +58,9 @@ export default function HomeStackNavigator() {
       <Stack.Screen name="GroupInviteSuccess" component={GroupInviteSuccessScreen} />
       
       <Stack.Screen name="OcrTest" component={OcrTestScreen} />
+      <Stack.Screen name="GroupLedgerDetail" component={GroupLedgerDetailScreen} />
+      <Stack.Screen name="SettleDetail" component={SettleDetailScreen} />
+      <Stack.Screen name="SettleMemberSelect" component={SettleMemberSelectScreen} />
     </Stack.Navigator>
   );
 }
