@@ -37,6 +37,7 @@ export type InternetPayStackParamList = {
 };
 
 // Group
+// GroupStackParamList에 아래 항목들 추가
 export type GroupStackParamList = {
   GroupList: undefined;
   GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
@@ -52,8 +53,40 @@ export type GroupStackParamList = {
   AdminSettle: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
   GroupVoteCreate: CommonParams | undefined;
-};
 
+  GroupCreate: {
+    selectedCardId?: string;
+    selectedCardImage?: string;
+    selectedCardName?: string;
+    groupName?: string;
+    selectedTags?: string[];
+    recommendPressed?: boolean;
+    viewAllPressed?: boolean;
+  } | undefined;
+  GroupCardRecommend: {
+    groupName: string;
+    address: string;
+    tags: string[];
+    prevGroupName?: string;
+    prevTags?: string[];
+    prevRecommendPressed?: boolean;
+    prevViewAllPressed?: boolean;
+  };
+  GroupPinSetup: {
+    groupName: string;
+    address: string;
+    tags: string[];
+    selectedCardId: string;
+  };
+  UserNotifications: CommonParams | undefined;
+  GroupLedgerDetail: {
+    item: any; // LedgerItem import 후 교체
+    balance: number;
+    isAdmin: boolean;
+    groupName: string;
+  };
+  OcrTest: { imageUri?: string } | undefined;
+};
 // Home
 export type HomeStackParamList = {
   Home: undefined;

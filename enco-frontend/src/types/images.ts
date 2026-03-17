@@ -2,7 +2,7 @@ export const images = {
   logo: require('../assets/icons/ENCOLOGO_hamco.png'),
   phone: require('../assets/icons/phone_hamco.png'),
   welcome: require('../assets/icons/welcom_hamco.png'),
-  homeIcon: require('../assets/icons/Home.png'),
+  homeIcon: require('../assets/icons/home.png'),
   profileIcon:require('../assets/icons/Profile.png'),
   walletIcon: require('../assets/icons/Wallet.png'),
   settingIcon:require('../assets/icons/setting.png'),
