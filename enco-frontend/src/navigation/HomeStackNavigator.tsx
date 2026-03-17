@@ -28,6 +28,7 @@ import SettleMemberSelectScreen from '../screens/group/SettleMemberSelectScreen'
 import GroupInviteEntryScreen from '../screens/group/GroupInviteEntryScreen';
 import GroupInviteDecisionScreen from '../screens/group/GroupInviteDecisionScreen';
 import GroupInviteSuccessScreen from '../screens/group/GroupInviteSuccessScreen';
+import NotificationCenterScreen from '../screens/user/NotificationCenterScreen';
 
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
@@ -72,6 +73,7 @@ export default function HomeStackNavigator() {
         component={GroupInviteSuccessScreen}
       />
 
+      <Stack.Screen name="UserNotifications" component={NotificationCenterScreen} />
       <Stack.Screen name="OcrTest" component={OcrTestScreen} />
       <Stack.Screen
         name="GroupLedgerDetail"

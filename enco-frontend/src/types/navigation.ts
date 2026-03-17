@@ -223,6 +223,10 @@ export type HomeStackParamList = {
     settleMembers?: any[];
     isNewSettle?: boolean;
   };
+  UserNotifications: CommonParams | undefined;
+  GroupInviteEntry: undefined;
+  GroupInviteDecision: undefined;
+  GroupInviteSuccess: undefined;
 };
 
 // Bottom Tab
