@@ -52,6 +52,10 @@ export type GroupStackParamList = {
   AdminSettle: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
   GroupVoteCreate: CommonParams | undefined;
+  //나중에 딥링크 연걸 후 객체 타입으로 변경 예정
+  GroupInviteEntry: undefined;
+  GroupInviteDecision: undefined;
+  GroupInviteSuccess: undefined;
 };
 
 // Home
@@ -71,6 +75,7 @@ export type HomeStackParamList = {
   AdminCard: CommonParams | undefined;
   AdminSettle: CommonParams | undefined;
   OcrTest: CommonParams | undefined;
+  GroupInviteEntry: undefined;
 };
 
 // Bottom Tab

@@ -4,7 +4,7 @@ import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CommonParams } from '../../types/common';
 import { useNotifications } from '../../contexts/NotificationsContext';
-import PieChart, { PieSlice } from '../../components/charts/PieChart'
+import PieChart, { PieSlice } from '../../components/charts/PieChart';
 import { images } from '../../types/images';
 
 export default function GroupDashboardScreen() {
@@ -27,6 +27,8 @@ export default function GroupDashboardScreen() {
     navigation.navigate('GroupChat', { groupId: params.groupId, groupName });
   const onPressAdmin = () =>
     navigation.navigate('AdminMenu', { groupId: params.groupId, groupName });
+  const onPressInviteEntryTest = () =>
+    navigation.navigate('GroupInviteEntry');
 
   // 임시 데이터
   const paidCount = 6;
@@ -34,8 +36,8 @@ export default function GroupDashboardScreen() {
   const balance = 854443;
 
   const pieSlices: PieSlice[] = [
-    { value: paidCount,   color: '#818CF8' }, // 납부 - 인디고
-    { value: unpaidCount, color: '#86EFAC' }, // 미납 - 초록
+    { value: paidCount, color: '#818CF8' },
+    { value: unpaidCount, color: '#86EFAC' },
   ];
 
   return (
@@ -50,7 +52,6 @@ export default function GroupDashboardScreen() {
             <Text style={{ fontSize: 22, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
               {groupName}
             </Text>
-            {/* react-native의 Image 사용 */}
             <Image
               source={images.alertCircleIcon}
               style={{ width: 20, height: 20, tintColor: '#9CA3AF' }}
@@ -84,7 +85,6 @@ export default function GroupDashboardScreen() {
           </Text>
 
           <View className="flex-row items-center justify-between my-4">
-            {/* 범례: 미납 */}
             <View className="items-start gap-1">
               <Text style={{ fontSize: 12, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
                 미납 인원
@@ -94,10 +94,8 @@ export default function GroupDashboardScreen() {
               </Text>
             </View>
 
-            {/* 차트 컴포넌트 - SVG는 여기 내부에서만 */}
             <PieChart slices={pieSlices} size={160} />
 
-            {/* 범례: 납부 */}
             <View className="items-end gap-1">
               <Text style={{ fontSize: 12, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
                 납부 인원
@@ -149,7 +147,7 @@ export default function GroupDashboardScreen() {
             className="flex-1 bg-white rounded-3xl flex-row items-center justify-center gap-3"
             style={{ height: 72, shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}
           >
-            <Text style={{fontSize:22}}>📨</Text>
+            <Text style={{ fontSize: 22 }}>📨</Text>
             <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>채팅</Text>
           </Pressable>
         </View>
@@ -157,11 +155,22 @@ export default function GroupDashboardScreen() {
         {/* 모임 관리 버튼 */}
         <Pressable
           onPress={onPressAdmin}
-          className="rounded-3xl py-5 items-center justify-center"
+          className="rounded-3xl py-5 items-center justify-center mb-3"
           style={{ backgroundColor: '#1428A0' }}
         >
           <Text style={{ fontSize: 18, fontFamily: 'GmarketSansTTFBold', color: '#FFFFFF' }}>
             모임 관리
+          </Text>
+        </Pressable>
+
+        {/* 초대 진입 테스트 버튼 */}
+        <Pressable
+          onPress={onPressInviteEntryTest}
+          className="rounded-3xl py-4 items-center justify-center"
+          style={{ backgroundColor: '#E5E7EB' }}
+        >
+          <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFBold', color: '#374151' }}>
+            초대 진입 테스트
           </Text>
         </Pressable>
       </ScrollView>
