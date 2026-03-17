@@ -7,7 +7,6 @@ import PayButton from '../../components/internet/PayButton';
 
 export default function InternetPaymentStartScreen() {
   const navigation = useNavigation<any>();
-  const goToSelectGroup = () => navigation.navigate('SelectGroupScreen');
   return (
     <View className="flex-1 pt-48 px-4">
       <View className="flex gap-2 items-center">
@@ -17,7 +16,7 @@ export default function InternetPaymentStartScreen() {
             source={images.internetPaymentHamco}
           />
         </View>
-        <PayButton onPress={goToSelectGroup} />
+        <PayButton onPress={() => navigation.navigate('SelectGroupScreen')} />
       </View>
     </View>
   );
