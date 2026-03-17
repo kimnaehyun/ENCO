@@ -26,6 +26,8 @@ import NotificationCenterScreen from '../screens/user/NotificationCenterScreen.t
 import { GroupStackParamList } from '../types/navigation';
 import GroupLedgerDetailScreen from '../screens/group/GroupLedgerDetailScreen.tsx';
 import OcrTestScreen from '../screens/OcrTestScreen';
+import SettleDetailScreen from '../screens/group/SettleDetailScreen';
+import SettleMemberSelectScreen from '../screens/group/SettleMemberSelectScreen';
 
 const Stack = createNativeStackNavigator<GroupStackParamList>();
 
@@ -68,6 +70,8 @@ export default function GroupStackNavigator() {
       />
       <Stack.Screen name="GroupLedgerDetail" component={GroupLedgerDetailScreen} />
       <Stack.Screen name="OcrTest" component={OcrTestScreen} />
+      <Stack.Screen name="SettleDetail" component={SettleDetailScreen} />
+      <Stack.Screen name="SettleMemberSelect" component={SettleMemberSelectScreen} />
     </Stack.Navigator>
   );
 }

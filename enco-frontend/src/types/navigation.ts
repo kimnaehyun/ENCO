@@ -85,7 +85,27 @@ export type GroupStackParamList = {
     isAdmin: boolean;
     groupName: string;
   };
-  OcrTest: { imageUri?: string } | undefined;
+  OcrTest: { imageUri?: string; groupName?: string; groupId?: string } | undefined;
+  SettleDetail: {
+    amount: number;
+    storeName: string;
+    date: string;
+    memo: string;
+    receiptUri: string | null;
+    groupName: string;
+    groupId?: string;
+  };
+  SettleMemberSelect: {
+    amount: number;
+    storeName: string;
+    date: string;
+    memo: string;
+    receiptUri: string | null;
+    groupName: string;
+    groupId?: string;
+    settleMembers?: any[];
+    isNewSettle?: boolean;
+  };
 };
 // Home
 export type HomeStackParamList = {
@@ -103,7 +123,33 @@ export type HomeStackParamList = {
   AdminMembers: CommonParams | undefined;
   AdminCard: CommonParams | undefined;
   AdminSettle: CommonParams | undefined;
-  OcrTest: CommonParams | undefined;
+  OcrTest: { imageUri?: string; groupName?: string; groupId?: string } | undefined;
+  GroupLedgerDetail: {
+    item: any;
+    balance: number;
+    isAdmin: boolean;
+    groupName: string;
+  };
+  SettleDetail: {
+    amount: number;
+    storeName: string;
+    date: string;
+    memo: string;
+    receiptUri: string | null;
+    groupName: string;
+    groupId?: string;
+  };
+  SettleMemberSelect: {
+    amount: number;
+    storeName: string;
+    date: string;
+    memo: string;
+    receiptUri: string | null;
+    groupName: string;
+    groupId?: string;
+    settleMembers?: any[];
+    isNewSettle?: boolean;
+  };
 };
 
 // Bottom Tab

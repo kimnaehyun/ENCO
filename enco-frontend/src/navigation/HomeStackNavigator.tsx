@@ -18,7 +18,10 @@ import AdminMembersScreen from "../screens/admin/AdminMembersScreen";
 import AdminCardScreen from "../screens/admin/AdminCardScreen";
 import AdminSettleScreen from "../screens/admin/AdminSettleScreen";
 import OcrTestScreen from "../screens/OcrTestScreen";
-import GroupLedgerDetailScreen from '../screens/group/GroupLedgerDetailScreen';
+import GroupLedgerDetailScreen from "../screens/group/GroupLedgerDetailScreen";
+import SettleDetailScreen from "../screens/group/SettleDetailScreen";
+import SettleMemberSelectScreen from "../screens/group/SettleMemberSelectScreen";
+
 const Stack = createNativeStackNavigator<HomeStackParamList>();
 
 export default function HomeStackNavigator() {
@@ -38,7 +41,6 @@ export default function HomeStackNavigator() {
       <Stack.Screen name="GroupPay" component={GroupPayScreen} />
       <Stack.Screen name="GroupChat" component={GroupChatScreen} />
       <Stack.Screen name="GroupLedger" component={GroupLedgerScreen} />
-      <Stack.Screen name="GroupLedgerDetail" component={GroupLedgerDetailScreen} /> 
       <Stack.Screen name="GroupVoteDetail" component={GroupVoteDetailScreen} />
       <Stack.Screen name="GroupVoteCreate" component={GroupVoteCreateScreen} />
       <Stack.Screen name="AdminMenu" component={AdminMenuScreen} />
@@ -48,6 +50,9 @@ export default function HomeStackNavigator() {
       <Stack.Screen name="AdminSettle" component={AdminSettleScreen} />
 
       <Stack.Screen name="OcrTest" component={OcrTestScreen} />
+      <Stack.Screen name="GroupLedgerDetail" component={GroupLedgerDetailScreen} />
+      <Stack.Screen name="SettleDetail" component={SettleDetailScreen} />
+      <Stack.Screen name="SettleMemberSelect" component={SettleMemberSelectScreen} />
     </Stack.Navigator>
   );
 }
