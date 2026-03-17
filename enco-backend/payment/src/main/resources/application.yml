@@ -24,3 +24,7 @@ spring:
 
 server:
   port: ${PAYMENT_SERVICE_PORT}
+
+service:
+  auth:
+    url: http://${AUTH_SERVICE_HOST}:${AUTH_SERVICE_PORT}
