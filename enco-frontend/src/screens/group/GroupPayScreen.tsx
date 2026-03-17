@@ -16,6 +16,8 @@ import ScreenLayout from '../../components/ScreenLayout';
 import PinEntry from '../../components/pin/PinEntry';
 import { GroupPayStep, GroupProps } from '../../types/group';
 
+const PIN_LEN = 4;
+
 const formatKRW = (n: number) =>
   `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원`;
 
@@ -60,30 +62,19 @@ function InfoInputBox({
   );
 }
 
-function InfoDisplayBox({
-  label,
-  value,
-  valueStyle,
-}: {
-  label: string;
-  value: string;
-  valueStyle?: object;
-}) {
-  return (
-    <View style={styles.infoBox}>
-      <Text style={styles.infoLabel}>{label}</Text>
-      <Text style={[styles.infoValue, valueStyle]}>{value}</Text>
-    </View>
-  );
-}
-
-
 export default function GroupPayScreen({
   navigation,
   route,
 }: GroupProps<'GroupPay'>) {
+  const presetAmount = route.params?.presetAmount;
+  const presetMemo = route.params?.presetMemo ?? '';
+  const paySource = route.params?.paySource ?? 'default';
+
   const [step, setStep] = useState<GroupPayStep>('summary');
   const [pinResetKey, setPinResetKey] = useState(0);
+  const [isSettlementLocked, setIsSettlementLocked] = useState(
+    paySource === 'settlement'
+  );
 
   const unpaidItems = useMemo<UnpaidItem[]>(
     () => [
@@ -95,17 +86,30 @@ export default function GroupPayScreen({
   );
 
   const [selectedUnpaidIds, setSelectedUnpaidIds] = useState<string[]>([]);
-  const [amountText, setAmountText] = useState<string>('');
+  const [amountText, setAmountText] = useState<string>(
+    presetAmount ? String(presetAmount) : ''
+  );
   const [selectedAccount, setSelectedAccount] = useState('부산은행 112');
   const [myAccountLabel, setMyAccountLabel] = useState('');
   const [groupAccountLabel, setGroupAccountLabel] = useState('');
-  const [memo, setMemo] = useState('');
+  const [memo, setMemo] = useState(presetMemo);
 
   const resetConfirmInputs = useCallback(() => {
     setSelectedAccount('부산은행 112');
     setMyAccountLabel('');
     setGroupAccountLabel('');
+    setMemo(presetMemo);
+  }, [presetMemo]);
+
+  const resetAllPayState = useCallback(() => {
+    setSelectedUnpaidIds([]);
+    setAmountText('');
+    setSelectedAccount('부산은행 112');
+    setMyAccountLabel('');
+    setGroupAccountLabel('');
     setMemo('');
+    setPinResetKey(prev => prev + 1);
+    setIsSettlementLocked(false);
   }, []);
 
   const parsedAmount = useMemo(() => {
@@ -128,10 +132,11 @@ export default function GroupPayScreen({
       return;
     }
     if (step === 'success') {
+      resetAllPayState();
       setStep('summary');
       return;
     }
-  }, [navigation, resetConfirmInputs, step]);
+  }, [navigation, resetConfirmInputs, resetAllPayState, step]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -148,6 +153,8 @@ export default function GroupPayScreen({
   }, [goBackLike, step]);
 
   const onPressUnpaidItem = (item: UnpaidItem) => {
+    if (isSettlementLocked) return;
+
     setSelectedUnpaidIds(prev => {
       const isSelected = prev.includes(item.id);
 
@@ -166,6 +173,8 @@ export default function GroupPayScreen({
   };
 
   const onChangeAmount = (text: string) => {
+    if (isSettlementLocked) return;
+
     setSelectedUnpaidIds([]);
     setAmountText(formatInputNumber(text));
   };
@@ -190,10 +199,8 @@ export default function GroupPayScreen({
 
   const onPressNotify = () => {
     Alert.alert('알림', 'TODO: 송금 완료 알림 보내기');
+    resetAllPayState();
     setStep('summary');
-    setSelectedUnpaidIds([]);
-    setAmountText('');
-    resetConfirmInputs();
   };
 
   return (
@@ -239,6 +246,7 @@ export default function GroupPayScreen({
                   placeholder=""
                   placeholderTextColor="#9CA3AF"
                   style={styles.amountInput}
+                  editable={!isSettlementLocked}
                 />
                 <Text style={styles.amountUnit}>원</Text>
               </View>
@@ -258,7 +266,9 @@ export default function GroupPayScreen({
                       style={[
                         styles.unpaidItem,
                         selected && styles.unpaidItemSelected,
+                        isSettlementLocked && { opacity: 0.45 },
                       ]}
+                      disabled={isSettlementLocked}
                     >
                       <Text
                         style={[
@@ -307,9 +317,10 @@ export default function GroupPayScreen({
               valueStyle={styles.amountConfirmValue}
             />
 
-            <InfoDisplayBox
+            <InfoInputBox
               label="계좌 선택"
               value={selectedAccount}
+              onChangeText={setSelectedAccount}
             />
 
             <InfoInputBox
@@ -339,7 +350,7 @@ export default function GroupPayScreen({
         {step === 'pin' && (
           <PinEntry
             title="비밀번호를 입력해주세요"
-            length={4}
+            length={PIN_LEN}
             resetKey={pinResetKey}
             onComplete={() => {
               setStep('success');
@@ -349,7 +360,11 @@ export default function GroupPayScreen({
 
         {step === 'success' && (
           <View style={styles.successContainer}>
-            <Text style={styles.successTitle}>송금 완료되었습니다</Text>
+            <Text style={styles.successTitle}>
+              {parsedAmount > 0
+                ? `${formatKRW(parsedAmount)} 입금 완료 !`
+                : '입금 완료 !'}
+            </Text>
 
             <Pressable
               onPress={onPressNotify}
@@ -539,8 +554,8 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     fontSize: 18,
-    color: '#ffffff',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: '#FFFFFF',
+    fontFamily: 'GmarketSansTTFBold',
   },
 
   successContainer: {
