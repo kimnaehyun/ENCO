@@ -13,6 +13,11 @@ export default function AdminMenuScreen() {
 
   const menus: AdminMenuItem[] = [
     {
+      key: 'alertMember',
+      title: '미납자 알림 보내기',
+      onPress: () => navigation.navigate('AdminSendAlert', { groupId: params.groupId, groupName: params.groupName }),
+    },
+    {
       key: 'groupInfo',
       title: '모임 정보',
       onPress: () => navigation.navigate('GroupInfo', { groupId: params.groupId, groupName: params.groupName, isAdmin: true }),
@@ -72,7 +77,7 @@ export default function AdminMenuScreen() {
           ))}
         </View>
 
-        {/* 모임 폐쇄하기 */}
+        {/* 모임 해산하기 */}
         <Pressable
           onPress={onPressDissolve}
          className="rounded-3xl items-center justify-center mt-6 mb-8"

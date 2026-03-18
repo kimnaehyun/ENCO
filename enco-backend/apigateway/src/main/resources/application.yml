@@ -55,6 +55,6 @@ spring:
                 - StripPrefix=1
                 - AuthorizationHeaderFilter
 jwt:
-  secret: ${JWT_SECRET:default_secret_key_which_must_be_long_enough}
+  secret: ${JWT_SECRET}
 server:
   port: 8081

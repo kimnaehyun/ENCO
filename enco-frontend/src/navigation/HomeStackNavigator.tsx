@@ -15,6 +15,7 @@ import VoteCreateScreen from '../screens/InternetPayment/VoteCreateScreen';
 import AdminMenuScreen from '../screens/admin/AdminMenuScreen';
 import AdminReceiptScreen from '../screens/admin/AdminReceiptScreen';
 import AdminMembersScreen from '../screens/admin/AdminMembersScreen';
+import AdminSendAlertScreen from '../screens/admin/AdminSendAlertScreen';
 import AdminCardScreen from '../screens/admin/AdminCardScreen';
 import AdminCardRecommendScreen from '../screens/admin/AdminCardRecommendScreen';
 import AdminCardPinScreen from '../screens/admin/AdminCardPinScreen';
@@ -54,6 +55,7 @@ export default function HomeStackNavigator() {
       <Stack.Screen name="AdminMenu" component={AdminMenuScreen} />
       <Stack.Screen name="AdminReceipt" component={AdminReceiptScreen} />
       <Stack.Screen name="AdminMembers" component={AdminMembersScreen} />
+      <Stack.Screen name="AdminSendAlert" component={AdminSendAlertScreen} />
       <Stack.Screen name="AdminCard" component={AdminCardScreen} />
       <Stack.Screen name="AdminCardRecommend" component={AdminCardRecommendScreen} />
       <Stack.Screen name="AdminCardPin" component={AdminCardPinScreen} />

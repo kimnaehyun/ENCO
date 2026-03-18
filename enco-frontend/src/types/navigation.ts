@@ -51,6 +51,7 @@ export type GroupStackParamList = {
   AdminMenu: CommonParams | undefined;
   AdminReceipt: CommonParams | undefined;
   AdminMembers: CommonParams | undefined;
+  AdminSendAlert: CommonParams | undefined;
   AdminCard:
     | (CommonParams & {
         selectedCardId?: string;
@@ -160,6 +161,7 @@ export type HomeStackParamList = {
   AdminMenu: CommonParams | undefined;
   AdminReceipt: CommonParams | undefined;
   AdminMembers: CommonParams | undefined;
+  AdminSendAlert: CommonParams | undefined;
   AdminCard:
     | (CommonParams & {
         selectedCardId?: string;
@@ -224,9 +226,6 @@ export type HomeStackParamList = {
     isNewSettle?: boolean;
   };
   UserNotifications: CommonParams | undefined;
-  GroupInviteEntry: undefined;
-  GroupInviteDecision: undefined;
-  GroupInviteSuccess: undefined;
 };
 
 // Bottom Tab
