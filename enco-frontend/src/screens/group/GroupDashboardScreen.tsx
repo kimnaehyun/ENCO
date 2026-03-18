@@ -29,6 +29,8 @@ export default function GroupDashboardScreen() {
     navigation.navigate('AdminMenu', { groupId: params.groupId, groupName });
   const onPressInviteEntryTest = () =>
     navigation.navigate('GroupInviteEntry');
+  const onPressAnalytics = () =>
+    navigation.navigate('GroupAnalytics', { groupId: params.groupId, groupName });
 
   // 임시 데이터
   const paidCount = 6;
@@ -74,7 +76,13 @@ export default function GroupDashboardScreen() {
         </View>
 
         {/* 파이차트 카드 */}
-        <View
+        <Pressable
+          onPress={() =>
+            navigation.navigate('GroupAnalytics', {
+              groupId: params.groupId,
+              groupName,
+            })
+          }
           className="bg-white rounded-3xl p-5 mb-4"
           style={{ shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}
         >
@@ -105,7 +113,7 @@ export default function GroupDashboardScreen() {
               </Text>
             </View>
           </View>
-        </View>
+        </Pressable>
 
         {/* 잔액 카드 */}
         <Pressable
