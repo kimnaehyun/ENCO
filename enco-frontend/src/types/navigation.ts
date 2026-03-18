@@ -116,6 +116,7 @@ export type GroupStackParamList = {
     tags: string[];
     selectedCardId: string;
   };
+  GroupAnalytics: CommonParams | undefined;
   UserNotifications: CommonParams | undefined;
   GroupLedgerDetail: {
     item: any; // LedgerItem import 후 교체
@@ -226,6 +227,7 @@ export type HomeStackParamList = {
     isNewSettle?: boolean;
   };
   UserNotifications: CommonParams | undefined;
+  GroupAnalytics: CommonParams | undefined;
 };
 
 // Bottom Tab
