@@ -21,10 +21,10 @@ public class ChargeController {
     /*
     Todo: user 완료되면 createdByUserId 바꾸기, 정산 로직에 이용할 예정
      */
-    @PostMapping("/{groupId}/charges/{createdByUserId}")
+    @PostMapping("/{groupId}/charges")
     public ResponseEntity<ChargeResponseDto> createCharge(
             @PathVariable Long groupId,
-            @PathVariable Long createdByUserId,
+            @RequestHeader("X-User-Id") Long createdByUserId,
             @Valid @RequestBody CreateChargeRequestDto request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -34,10 +34,10 @@ public class ChargeController {
     /*
     Todo: user 완료되면 createdByUserId 바꾸기, 이게 정기 회비 로직, 추후 스케쥴링과 배치 처리 예정
      */
-    @PostMapping("/{groupId}/charges/{createdByUserId}/regular")
+    @PostMapping("/{groupId}/charges/regular")
     public ResponseEntity<ChargeResponseDto> createRegularCharge(
             @PathVariable Long groupId,
-            @PathVariable Long createdByUserId,
+            @RequestHeader("X-User-Id") Long createdByUserId,
             @Valid @RequestBody CreateRegularChargeRequestDto request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -46,12 +46,11 @@ public class ChargeController {
 
     /*
     미납 금액 조회 API
-    Todo: user 완료되면 userId 없애기
      */
-    @GetMapping("/{groupId}/charges/unpaid/{userId}")
+    @GetMapping("/{groupId}/dues/unpaid")
     public ResponseEntity<UnpaidChargeResponseDto> getUnpaidCharges(
             @PathVariable Long groupId,
-            @PathVariable Long userId
+            @RequestHeader("X-User-Id")  Long userId
     ) {
         return ResponseEntity.ok(chargeService.getUnpaidCharges(groupId, userId));
     }

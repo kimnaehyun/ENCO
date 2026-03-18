@@ -21,7 +21,7 @@ public record UserJoinRequestDto(
         String phoneNumber,
         Gender gender,
         String pinCode,
-        String profileUrl
+        Integer profileUrl
 ) {
     public User toEntity(PasswordEncoder passwordEncoder, String deviceToken) {
         return User.builder()
@@ -32,7 +32,7 @@ public record UserJoinRequestDto(
                 .phoneNumber(this.phoneNumber)
                 .gender(this.gender)
                 .pinCode(passwordEncoder.encode(this.pinCode))
-                .profileUrl(this.profileUrl == null ? "기본이미지" : this.profileUrl)
+                .profileUrl(this.profileUrl)
                 .deviceToken(deviceToken)
                 .build();
     }

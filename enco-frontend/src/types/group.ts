@@ -288,3 +288,14 @@ export type GroupScreenProps<T extends keyof GroupStackParamList> =
   >;
 
 export type SignupStep = 'name' | 'birth' | 'phone' | 'email' | 'done';
+
+export type Message = {
+  id: string;
+  messageType: string;
+  roomId: string;
+  senderId: number;
+  content: string;
+  metadata: null;
+  createdAt: string;
+  status?: 'sending' | 'sent' | 'failed';
+};
