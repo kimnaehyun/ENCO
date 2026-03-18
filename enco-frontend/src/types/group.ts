@@ -42,10 +42,14 @@ type LedgerItem = {
 type GroupPayStep = 'summary' | 'form' | 'pin' | 'success';
 
 type Message = {
-  id: number;
+  id: string;
+  messageType: string;
+  roomId: string;
+  senderId: number;
   content: string;
-  host: string;
-  created_at: string;
+  metadata: null;
+  createdAt: string;
+  status?: 'sending' | 'sent' | 'failed';
 };
 
 export type {
