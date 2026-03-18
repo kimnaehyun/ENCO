@@ -13,7 +13,7 @@
 - **플랫폼** : Fintech
 - **개발 인원** : 6명 <br><br>
 
-<img src="./readme-assets/ARNNECT_introduction.png" />
+<img src="./readme-assets/ENCOLOGO_hamco.png" />
 
 </div> <br>
 
