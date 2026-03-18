@@ -5,6 +5,7 @@ import io.ssafy.payment.domain.billing.dto.request.CreateRegularChargeRequestDto
 import io.ssafy.payment.domain.billing.dto.response.ChargeResponseDto;
 import io.ssafy.payment.domain.billing.dto.response.UnpaidChargeResponseDto;
 import io.ssafy.payment.domain.billing.service.ChargeService;
+import io.ssafy.payment.global.common.response.CommonResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -22,36 +23,36 @@ public class ChargeController {
     Todo: user 완료되면 createdByUserId 바꾸기, 정산 로직에 이용할 예정
      */
     @PostMapping("/{groupId}/charges")
-    public ResponseEntity<ChargeResponseDto> createCharge(
+    public ResponseEntity<CommonResponse<ChargeResponseDto>> createCharge(
             @PathVariable Long groupId,
             @RequestHeader("X-User-Id") Long createdByUserId,
             @Valid @RequestBody CreateChargeRequestDto request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(chargeService.createCharge(groupId, createdByUserId, request));
+                .body(CommonResponse.success(chargeService.createCharge(groupId, createdByUserId, request)));
     }
 
     /*
     Todo: user 완료되면 createdByUserId 바꾸기, 이게 정기 회비 로직, 추후 스케쥴링과 배치 처리 예정
      */
     @PostMapping("/{groupId}/charges/regular")
-    public ResponseEntity<ChargeResponseDto> createRegularCharge(
+    public ResponseEntity<CommonResponse<ChargeResponseDto>> createRegularCharge(
             @PathVariable Long groupId,
             @RequestHeader("X-User-Id") Long createdByUserId,
             @Valid @RequestBody CreateRegularChargeRequestDto request
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(chargeService.createRegularCharge(groupId, createdByUserId, request));
+                .body(CommonResponse.success(chargeService.createRegularCharge(groupId, createdByUserId, request)));
     }
 
     /*
     미납 금액 조회 API
      */
     @GetMapping("/{groupId}/dues/unpaid")
-    public ResponseEntity<UnpaidChargeResponseDto> getUnpaidCharges(
+    public ResponseEntity<CommonResponse<UnpaidChargeResponseDto>> getUnpaidCharges(
             @PathVariable Long groupId,
             @RequestHeader("X-User-Id")  Long userId
     ) {
-        return ResponseEntity.ok(chargeService.getUnpaidCharges(groupId, userId));
+        return ResponseEntity.ok(CommonResponse.success(chargeService.getUnpaidCharges(groupId, userId)));
     }
 }

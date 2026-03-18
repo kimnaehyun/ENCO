@@ -15,7 +15,7 @@ export default function CardChoiceScreen() {
   const insets = useSafeAreaInsets();
   const [cardNumber, setCardNumber] = useState<number>(0);
   return (
-    <View className="flex-1" style={{ marginTop: insets.top }}>
+    <View className="flex-1 bg-[#F0F4FF]" style={{ marginTop: insets.top }}>
       <View className="flex-row items-center gap-4 m-4 bg-white rounded-[20px] p-4">
         <Pressable onPress={() => navigation.goBack()}>
           <Image source={images.left_arrow} />
