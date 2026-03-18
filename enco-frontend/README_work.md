@@ -13,7 +13,7 @@
 - **플랫폼** : Fintech
 - **개발 인원** : 6명 <br><br>
 
-<img src="./readme-assets/ARNNECT_introduction.png" />
+<img src="./readme-assets/ENCOLOGO_hamco.png" />
 
 </div> <br>
 
@@ -75,7 +75,7 @@
         </td>
         <td width="33%" align="center" valign="top">
             <hr> <a href="https://github.com/ssafy14cici">
-                <b>김내현</b><br>(Frontend)
+                <b>김내현</b><br>(Frontend Leader)
             </a>
         </td>
     </tr>
