@@ -22,14 +22,11 @@ public class GroupMemberController {
         return ResponseEntity.ok(groupMemberService.getActiveMembers(groupId));
     }
 
-    /*
-    Todo: user 완료되면 requesterId 없애기
-     */
-    @PatchMapping("/{groupId}/members/{targetUserId}/role/{requesterId}")
+    @PatchMapping("/{groupId}/members/{targetUserId}/role")
     public ResponseEntity<Void> updateMemberRole(
             @PathVariable Long groupId,
             @PathVariable Long targetUserId,
-            @PathVariable Long requesterId,
+            @RequestHeader("X-User-Id")  Long requesterId,
             @Valid @RequestBody UpdateMemberRoleRequestDto request
     ) {
         groupMemberService.updateMemberRole(groupId, requesterId, targetUserId, request);
