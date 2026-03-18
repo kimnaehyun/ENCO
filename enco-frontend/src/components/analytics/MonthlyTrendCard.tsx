@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 
 export type MonthlyExpense = {
@@ -11,11 +11,13 @@ type MonthlyTrendCardProps = {
   title?: string;
   description?: string;
   data: MonthlyExpense[];
+  onPress?: () => void;
+  height?: number;
 };
 
 function AreaTrendChart({ data }: { data: MonthlyExpense[] }) {
   const width = 300;
-  const height = 150;
+  const height = 145;
   const padding = 16;
 
   const values = data.map(d => d.amount);
@@ -41,7 +43,7 @@ function AreaTrendChart({ data }: { data: MonthlyExpense[] }) {
   } L ${points[0].x} ${height - padding} Z`;
 
   return (
-    <View style={{ marginTop: 8 }}>
+    <View style={{ marginTop: 6 }}>
       <Svg width={width} height={height}>
         <Line
           x1={padding}
@@ -79,13 +81,17 @@ export default function MonthlyTrendCard({
   title = '월별 지출 추이',
   description = '최근 6개월 기준 지출 흐름을 보여줍니다.',
   data,
+  onPress,
+  height = 320,
 }: MonthlyTrendCardProps) {
   return (
-    <View style={styles.sectionCard}>
+    <Pressable onPress={onPress} style={[styles.sectionCard, { height }]}>
       <Text style={styles.sectionTitle}>{title}</Text>
-      <Text style={styles.cardDesc}>{description}</Text>
+      <Text style={styles.cardDesc} numberOfLines={2}>
+        {description}
+      </Text>
       <AreaTrendChart data={data} />
-    </View>
+    </Pressable>
   );
 }
 
@@ -94,27 +100,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 18,
     shadowColor: '#1428A0',
     shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 2,
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    overflow: 'hidden',
   },
   sectionTitle: {
     fontSize: 16,
     color: '#111827',
     fontFamily: 'GmarketSansTTFBold',
-    marginBottom: 10,
   },
   cardDesc: {
     fontSize: 13,
     color: '#6B7280',
     fontFamily: 'GmarketSansTTFMedium',
-    lineHeight: 20,
+    lineHeight: 18,
+    marginTop: 6,
   },
   axisLabelRow: {
-    marginTop: 4,
+    marginTop: 2,
     flexDirection: 'row',
     justifyContent: 'space-between',
     paddingHorizontal: 8,

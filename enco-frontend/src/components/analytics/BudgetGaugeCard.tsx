@@ -1,11 +1,13 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
 type BudgetGaugeCardProps = {
   title?: string;
   budget: number;
   spent: number;
+  onPress?: () => void;
+  height?: number;
 };
 
 const formatKRW = (n: number) => `${n.toLocaleString()}원`;
@@ -41,6 +43,8 @@ export default function BudgetGaugeCard({
   title = '예산 대비 소진율',
   budget,
   spent,
+  onPress,
+  height = 320,
 }: BudgetGaugeCardProps) {
   const percent = budget > 0 ? Math.min(spent / budget, 1.2) : 0;
   const displayPercent = budget > 0 ? Math.round((spent / budget) * 100) : 0;
@@ -50,10 +54,10 @@ export default function BudgetGaugeCard({
   const overBudget = spent > budget;
 
   const width = 300;
-  const height = 190;
+  const chartHeight = 170;
   const cx = width / 2;
-  const cy = 138;
-  const radius = 88;
+  const cy = 130;
+  const radius = 82;
 
   const startAngle = 180;
   const endAngle = 180 + 180 * clampedPercent;
@@ -76,11 +80,11 @@ export default function BudgetGaugeCard({
       : styles.safeText;
 
   return (
-    <View style={styles.card}>
+    <Pressable onPress={onPress} style={[styles.card, { height }]}>
       <Text style={styles.title}>{title}</Text>
 
       <View style={styles.chartWrap}>
-        <Svg width={width} height={height}>
+        <Svg width={width} height={chartHeight}>
           <Defs>
             <LinearGradient id="budgetSafe" x1="0%" y1="0%" x2="100%" y2="0%">
               <Stop offset="0%" stopColor="#1428A0" />
@@ -143,14 +147,14 @@ export default function BudgetGaugeCard({
         </View>
       </View>
 
-      <Text style={styles.helperText}>
+      <Text style={styles.helperText} numberOfLines={2}>
         {displayPercent >= 100
           ? '이번 달 예산을 초과했어요.'
           : displayPercent >= 80
           ? '예산 소진율이 높아요. 지출을 점검해보세요.'
           : '예산 범위 안에서 안정적으로 사용 중이에요.'}
       </Text>
-    </View>
+    </Pressable>
   );
 }
 
@@ -159,27 +163,27 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingVertical: 18,
     shadowColor: '#1428A0',
     shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 2,
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    overflow: 'hidden',
   },
   title: {
     fontSize: 16,
     color: '#111827',
     fontFamily: 'GmarketSansTTFBold',
-    marginBottom: 8,
   },
   chartWrap: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 6,
+    marginTop: 2,
   },
   centerTextWrap: {
     position: 'absolute',
-    top: 62,
+    top: 52,
     alignItems: 'center',
   },
   centerLabel: {
@@ -201,14 +205,13 @@ const styles = StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     gap: 10,
-    marginTop: -6,
   },
   infoBox: {
     flex: 1,
     backgroundColor: '#F9FAFB',
     borderRadius: 18,
     paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingVertical: 12,
   },
   infoLabel: {
     fontSize: 12,
@@ -222,9 +225,8 @@ const styles = StyleSheet.create({
     fontFamily: 'GmarketSansTTFBold',
   },
   helperText: {
-    marginTop: 12,
     fontSize: 13,
-    lineHeight: 20,
+    lineHeight: 18,
     color: '#6B7280',
     fontFamily: 'GmarketSansTTFMedium',
   },
