@@ -26,6 +26,7 @@ import GroupLedgerDetailScreen from '../screens/group/GroupLedgerDetailScreen';
 import SettleDetailScreen from '../screens/group/SettleDetailScreen';
 import SettleMemberSelectScreen from '../screens/group/SettleMemberSelectScreen';
 
+import GroupAnalyticsScreen from '../screens/group/GroupAnalyticsScreen';
 import GroupInviteEntryScreen from '../screens/group/GroupInviteEntryScreen';
 import GroupInviteDecisionScreen from '../screens/group/GroupInviteDecisionScreen';
 import GroupInviteSuccessScreen from '../screens/group/GroupInviteSuccessScreen';
@@ -75,6 +76,7 @@ export default function HomeStackNavigator() {
         component={GroupInviteSuccessScreen}
       />
 
+      <Stack.Screen name="GroupAnalytics" component={GroupAnalyticsScreen} />
       <Stack.Screen name="UserNotifications" component={NotificationCenterScreen} />
       <Stack.Screen name="OcrTest" component={OcrTestScreen} />
       <Stack.Screen
