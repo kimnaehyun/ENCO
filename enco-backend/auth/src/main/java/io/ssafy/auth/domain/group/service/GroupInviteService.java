@@ -1,6 +1,7 @@
 package io.ssafy.auth.domain.group.service;
 
 import io.ssafy.auth.domain.group.dto.response.InviteLinkResponseDto;
+import io.ssafy.auth.domain.group.dto.response.JoinGroupResponseDto;
 import io.ssafy.auth.domain.group.entity.Group;
 import io.ssafy.auth.domain.group.entity.GroupInvite;
 import io.ssafy.auth.domain.group.entity.GroupUser;
@@ -62,7 +63,7 @@ public class GroupInviteService {
     }
 
     @Transactional
-    public Long joinGroup(String token, Long userId) {
+    public JoinGroupResponseDto joinGroup(String token, Long userId) {
         String groupIdStr = redisTemplate.opsForValue().get(REDIS_KEY_PREFIX + token);
         if (groupIdStr == null) {
             throw new CustomException(ErrorCode.INVITE_NOT_FOUND);
@@ -92,6 +93,6 @@ public class GroupInviteService {
                 .isDeleted(false)
                 .build());
 
-        return groupId;
+        return JoinGroupResponseDto.from(group);
     }
 }

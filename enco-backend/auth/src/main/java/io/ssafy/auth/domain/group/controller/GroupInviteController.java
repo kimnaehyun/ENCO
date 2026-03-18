@@ -1,6 +1,7 @@
 package io.ssafy.auth.domain.group.controller;
 
 import io.ssafy.auth.domain.group.dto.response.InviteLinkResponseDto;
+import io.ssafy.auth.domain.group.dto.response.JoinGroupResponseDto;
 import io.ssafy.auth.domain.group.service.GroupInviteService;
 import io.ssafy.auth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
@@ -25,11 +26,10 @@ public class GroupInviteController {
     }
 
     @PostMapping("/invite/{token}/join")
-    public ResponseEntity<CommonResponse<Void>> joinGroup(
+    public ResponseEntity<CommonResponse<JoinGroupResponseDto>> joinGroup(
             @PathVariable String token,
             @RequestHeader("X-User-Id") Long userId
     ) {
-        groupInviteService.joinGroup(token, userId);
-        return ResponseEntity.ok(CommonResponse.success());
+        return ResponseEntity.ok(CommonResponse.success(groupInviteService.joinGroup(token, userId)));
     }
 }
