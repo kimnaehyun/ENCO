@@ -2,6 +2,7 @@ import { View, Alert } from 'react-native';
 import React, { useState } from 'react';
 import PinEntry from '../../components/pin/PinEntry';
 import { useNavigation } from '@react-navigation/native';
+import ScreenLayout from '../../components/ScreenLayout';
 
 const TEST_PIN = '2580';
 
@@ -20,13 +21,13 @@ export default function PaymentPinScreen() {
     setResetKey(prev => prev + 1);
   };
   return (
-    <View className="flex-1 p-5 gap-3 bg-[#F0F4FF]">
+    <ScreenLayout className="p-4">
       <PinEntry
         title="4자리 비밀번호를 입력하세요"
         resetKey={resetKey}
         length={4}
         onComplete={handlePinComplete}
       />
-    </View>
+    </ScreenLayout>
   );
 }

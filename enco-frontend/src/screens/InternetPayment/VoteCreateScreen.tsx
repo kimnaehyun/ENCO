@@ -21,7 +21,7 @@ export default function VoteCreateScreen() {
   };
 
   return (
-    <ScreenLayout style={{ gap: 20 }}>
+    <ScreenLayout className="gap-4">
       {/* 헤더 */}
       <Header title="투표 생성" />
 
