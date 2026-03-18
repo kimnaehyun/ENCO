@@ -9,7 +9,7 @@ export default function SelectGroupScreen() {
   const insets = useSafeAreaInsets();
   return (
     <View
-      className="bg-[#F3F4F6] p-4 flex gap-4"
+      className="p-4 flex-1 gap-4 bg-[#F0F4FF]"
       style={{ marginTop: insets.top }}
     >
       <Header title="모임 목록" />
