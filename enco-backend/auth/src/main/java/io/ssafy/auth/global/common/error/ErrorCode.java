@@ -14,7 +14,10 @@ public enum ErrorCode {
     GROUP_NOT_FOUND(HttpStatus.NOT_FOUND, "그룹을 찾을 수 없습니다.", "GROUP_NOT_FOUND"),
     POLICY_NOT_FOUND(HttpStatus.NOT_FOUND, "활성화된 회비 정책이 없습니다.", "POLICY_NOT_FOUND"),
     GROUP_MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "모임원을 찾을 수 없습니다.", "GROUP_MEMBER_NOT_FOUND"),
-    FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다.", "FORBIDDEN");
+    FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다.", "FORBIDDEN"),
+    INVITE_NOT_FOUND(HttpStatus.NOT_FOUND, "유효하지 않은 초대 링크입니다.", "INVITE_NOT_FOUND"),
+    INVITE_EXPIRED(HttpStatus.GONE, "만료된 초대 링크입니다.", "INVITE_EXPIRED"),
+    ALREADY_GROUP_MEMBER(HttpStatus.CONFLICT, "이미 모임에 참여 중입니다.", "ALREADY_GROUP_MEMBER");
 
     private final HttpStatus httpStatusCode;
     private final String errorMessage;

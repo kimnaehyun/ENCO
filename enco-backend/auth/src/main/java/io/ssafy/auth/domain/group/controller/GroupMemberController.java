@@ -3,6 +3,7 @@ package io.ssafy.auth.domain.group.controller;
 import io.ssafy.auth.domain.group.dto.request.UpdateMemberRoleRequestDto;
 import io.ssafy.auth.domain.group.dto.response.GroupMemberResponseDto;
 import io.ssafy.auth.domain.group.service.GroupMemberService;
+import io.ssafy.auth.global.common.response.CommonResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -18,18 +19,18 @@ public class GroupMemberController {
     private final GroupMemberService groupMemberService;
 
     @GetMapping("/{groupId}/members")
-    public ResponseEntity<List<GroupMemberResponseDto>> getActiveMembers(@PathVariable Long groupId) {
-        return ResponseEntity.ok(groupMemberService.getActiveMembers(groupId));
+    public ResponseEntity<CommonResponse<List<GroupMemberResponseDto>>> getActiveMembers(@PathVariable Long groupId) {
+        return ResponseEntity.ok(CommonResponse.success(groupMemberService.getActiveMembers(groupId)));
     }
 
     @PatchMapping("/{groupId}/members/{targetUserId}/role")
-    public ResponseEntity<Void> updateMemberRole(
+    public ResponseEntity<CommonResponse<Void>> updateMemberRole(
             @PathVariable Long groupId,
             @PathVariable Long targetUserId,
             @RequestHeader("X-User-Id")  Long requesterId,
             @Valid @RequestBody UpdateMemberRoleRequestDto request
     ) {
         groupMemberService.updateMemberRole(groupId, requesterId, targetUserId, request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(CommonResponse.success());
     }
 }

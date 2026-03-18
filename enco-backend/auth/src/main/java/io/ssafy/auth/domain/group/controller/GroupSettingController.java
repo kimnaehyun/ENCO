@@ -3,6 +3,7 @@ package io.ssafy.auth.domain.group.controller;
 import io.ssafy.auth.domain.group.dto.request.UpdateGroupSettingRequestDto;
 import io.ssafy.auth.domain.group.dto.response.GroupSettingResponseDto;
 import io.ssafy.auth.domain.group.service.GroupSettingService;
+import io.ssafy.auth.global.common.response.CommonResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,16 +21,16 @@ public class GroupSettingController {
     Todo: 추후 카드도 조회에 추가
      */
     @GetMapping("/{groupId}/settings")
-    public ResponseEntity<GroupSettingResponseDto> getGroupSetting(@PathVariable Long groupId) {
-        return ResponseEntity.ok(groupSettingService.getGroupSetting(groupId));
+    public ResponseEntity<CommonResponse<GroupSettingResponseDto>> getGroupSetting(@PathVariable Long groupId) {
+        return ResponseEntity.ok(CommonResponse.success(groupSettingService.getGroupSetting(groupId)));
     }
 
     @PatchMapping("/{groupId}/settings")
-    public ResponseEntity<Void> updateGroupSetting(
+    public ResponseEntity<CommonResponse<Void>> updateGroupSetting(
             @PathVariable Long groupId,
             @Valid @RequestBody UpdateGroupSettingRequestDto request
     ) {
         groupSettingService.updateGroupSetting(groupId, request);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.ok(CommonResponse.success());
     }
 }
