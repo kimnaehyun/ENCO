@@ -16,6 +16,7 @@ import GroupInviteSuccessScreen from '../screens/group/GroupInviteSuccessScreen'
 import AdminMenuScreen from '../screens/admin/AdminMenuScreen';
 import AdminReceiptScreen from '../screens/admin/AdminReceiptScreen';
 import AdminMembersScreen from '../screens/admin/AdminMembersScreen';
+import AdminSendAlertScreen from '../screens/admin/AdminSendAlertScreen';
 import AdminSettleScreen from '../screens/admin/AdminSettleScreen';
 import AdminCardScreen from '../screens/admin/AdminCardScreen';
 import AdminCardRecommendScreen from '../screens/admin/AdminCardRecommendScreen';
@@ -73,6 +74,7 @@ export default function GroupStackNavigator() {
       <Stack.Screen name="AdminMenu" component={AdminMenuScreen} />
       <Stack.Screen name="AdminReceipt" component={AdminReceiptScreen} />
       <Stack.Screen name="AdminMembers" component={AdminMembersScreen} />
+      <Stack.Screen name="AdminSendAlert" component={AdminSendAlertScreen} />
       <Stack.Screen name="AdminCard" component={AdminCardScreen} />
       <Stack.Screen name="AdminCardRecommend" component={AdminCardRecommendScreen} />
       <Stack.Screen name="AdminCardPin" component={AdminCardPinScreen} />
