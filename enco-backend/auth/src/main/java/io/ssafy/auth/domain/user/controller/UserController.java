@@ -21,9 +21,8 @@ public class UserController {
      * @return
      */
     @PostMapping("/regist")
-    public ResponseEntity<LoginResponseDto> signUp(@RequestBody UserJoinRequestDto dto) {
-        UserJoinResponseDto joinDto = userService.signup(dto);
-        return ResponseEntity.ok(userService.login(joinDto.deviceToken(), dto.pinCode()));
+    public ResponseEntity<UserJoinResponseDto> signUp(@RequestBody UserJoinRequestDto dto) {
+        return ResponseEntity.ok(userService.signup(dto));
     }
 
     /**
