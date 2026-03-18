@@ -5,6 +5,7 @@ import io.ssafy.auth.domain.user.dto.request.UserJoinRequestDto;
 import io.ssafy.auth.domain.user.dto.response.LoginResponseDto;
 import io.ssafy.auth.domain.user.dto.response.UserJoinResponseDto;
 import io.ssafy.auth.domain.user.service.UserService;
+import io.ssafy.auth.global.common.response.CommonResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,9 +22,9 @@ public class UserController {
      * @return
      */
     @PostMapping("/regist")
-    public ResponseEntity<LoginResponseDto> signUp(@RequestBody UserJoinRequestDto dto) {
+    public ResponseEntity<CommonResponse<LoginResponseDto>> signUp(@RequestBody UserJoinRequestDto dto) {
         UserJoinResponseDto joinDto = userService.signup(dto);
-        return ResponseEntity.ok(userService.login(joinDto.deviceToken(), dto.pinCode()));
+        return ResponseEntity.ok(CommonResponse.success(userService.login(joinDto.deviceToken(), dto.pinCode())));
     }
 
     /**
@@ -32,11 +33,11 @@ public class UserController {
      * @return
      */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginRequestDto) {
+    public ResponseEntity<CommonResponse<LoginResponseDto>> login(@RequestBody LoginRequestDto loginRequestDto) {
         LoginResponseDto responseDto = userService.login(
                 loginRequestDto.deviceToken(),
                 loginRequestDto.pinCode()
         );
-        return ResponseEntity.ok(responseDto);
+        return ResponseEntity.ok(CommonResponse.success(responseDto));
     }
 }
