@@ -22,7 +22,8 @@ type ChatAction =
   | 'pick'
   | 'settlement'
   | 'admin'
-  | 'ledger-unproof';
+  | 'ledger-unproof'
+  | 'ledger-go';
 
 type ChatItem =
   | {
@@ -37,9 +38,31 @@ type ChatItem =
       text: string;
       createdAt: string;
       actions: Array<{ label: string; action: ChatAction }>;
+    }
+  | {
+      id: string;
+      type: 'bot-unpaid-card';
+      text: string;
+      createdAt: string;
+      unpaidCount: number;
+      memberName: string;
+      lastPaidAt: string;
+    }
+  | {
+      id: string;
+      type: 'bot-ledger-card';
+      text: string;
+      createdAt: string;
+      missingCount: number;
+      transactionDate: string;
+      transactionType: string;
+      amount: number;
     };
 
 const TEMP_IS_ADMIN = false;
+
+const formatKRW = (n: number) =>
+  `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원`;
 
 export default function GroupChatScreen() {
   const route = useRoute();
@@ -75,7 +98,6 @@ export default function GroupChatScreen() {
             ]
           : [
               { label: '회비 납부', action: 'pay' },
-              { label: '공지 확인', action: 'notice' },
               { label: '투표 확인', action: 'votes' },
               { label: '햄코 PICK', action: 'pick' },
             ],
@@ -118,7 +140,6 @@ export default function GroupChatScreen() {
           ]
         : [
             { label: '회비 납부', action: 'pay' },
-            { label: '공지 확인', action: 'notice' },
             { label: '투표 확인', action: 'votes' },
             { label: '햄코 PICK', action: 'pick' },
           ],
@@ -139,9 +160,33 @@ export default function GroupChatScreen() {
     };
   };
 
+  const buildUnpaidNoticeCard = (): ChatItem => {
+    return {
+      id: `bot-unpaid-${Date.now()}`,
+      type: 'bot-unpaid-card',
+      text: '현재 미납 회원은 1명이에요!',
+      createdAt: getNowLabel(),
+      unpaidCount: 1,
+      memberName: '김싸피',
+      lastPaidAt: '2026-02-03',
+    };
+  };
+
+  const buildLedgerCard = (): ChatItem => {
+    return {
+      id: `bot-ledger-${Date.now()}`,
+      type: 'bot-ledger-card',
+      text: '현재 누락된 증빙을 1건 발견했어요!',
+      createdAt: getNowLabel(),
+      missingCount: 1,
+      transactionDate: '2026-03-05',
+      transactionType: '출금',
+      amount: 50000,
+    };
+  };
+
   const handleSend = () => {
-    const raw = msg;
-    const trimmed = raw.trim();
+    const trimmed = msg.trim();
     if (!trimmed) return;
 
     appendMessage({
@@ -185,11 +230,16 @@ export default function GroupChatScreen() {
       return;
     }
 
-    if (action === 'ledger-unproof') {
+    if (action === 'ledger-go') {
       navigation.navigate('GroupLedger', {
         groupId: params.groupId,
         groupName,
       });
+      return;
+    }
+
+    if (action === 'ledger-unproof') {
+      appendMessage(buildLedgerCard());
       return;
     }
 
@@ -207,7 +257,7 @@ export default function GroupChatScreen() {
     }
 
     if (action === 'notice') {
-      Alert.alert('알림', '미납자 알림을 보냈습니다. (임시)');
+      appendMessage(buildUnpaidNoticeCard());
       return;
     }
 
@@ -228,6 +278,10 @@ export default function GroupChatScreen() {
             ],
       });
     }
+  };
+
+  const handleSendReminder = (memberName: string) => {
+    Alert.alert('알림', `${memberName}님에게 미납 알림을 보냈습니다. (임시)`);
   };
 
   const renderUserMessage = (item: Extract<ChatItem, { type: 'user' }>) => {
@@ -270,9 +324,101 @@ export default function GroupChatScreen() {
     );
   };
 
+  const renderUnpaidCard = (
+    item: Extract<ChatItem, { type: 'bot-unpaid-card' }>
+  ) => {
+    const countText = `${item.unpaidCount}명`;
+
+    return (
+      <View style={styles.botRow}>
+        <Image
+          source={require('../../assets/icons/nomal_hamco.png')}
+          style={styles.botAvatar}
+          resizeMode="contain"
+        />
+
+        <View style={styles.botCard}>
+          <View style={styles.unpaidTitleRow}>
+            <Text style={styles.unpaidTitlePrefix}>현재 미납 회원은 </Text>
+            <Text style={styles.unpaidTitleCount}>{countText}</Text>
+            <Text style={styles.unpaidTitlePrefix}>이에요!</Text>
+          </View>
+
+          <View style={styles.unpaidMemberCard}>
+            <Image
+              source={require('../../assets/icons/nomal_hamco.png')}
+              style={styles.unpaidMemberAvatar}
+              resizeMode="contain"
+            />
+
+            <View style={styles.unpaidMemberInfo}>
+              <Text style={styles.unpaidMemberName}>{item.memberName}</Text>
+              <Text style={styles.unpaidMemberDate}>
+                마지막 납입일 {item.lastPaidAt}
+              </Text>
+            </View>
+          </View>
+
+          <Pressable
+            onPress={() => handleSendReminder(item.memberName)}
+            style={styles.remindButton}
+          >
+            <Text style={styles.remindButtonText}>알림 보내기</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  };
+
+  const renderLedgerCard = (
+    item: Extract<ChatItem, { type: 'bot-ledger-card' }>
+  ) => {
+    return (
+      <View style={styles.botRow}>
+        <Image
+          source={require('../../assets/icons/nomal_hamco.png')}
+          style={styles.botAvatar}
+          resizeMode="contain"
+        />
+
+        <View style={styles.botCard}>
+          <View style={styles.unpaidTitleRow}>
+            <Text style={styles.unpaidTitlePrefix}>현재 누락된 증빙을 </Text>
+            <Text style={styles.unpaidTitleCount}>{item.missingCount}건</Text>
+            <Text style={styles.unpaidTitlePrefix}> 발견했어요!</Text>
+          </View>
+
+          <View style={styles.ledgerInfoCard}>
+            <Text style={styles.ledgerDate}>{item.transactionDate}</Text>
+
+            <View style={styles.ledgerRow}>
+              <Text style={styles.ledgerType}>{item.transactionType}</Text>
+              <Text style={styles.ledgerAmount}>{formatKRW(item.amount)}</Text>
+            </View>
+          </View>
+
+          <Pressable
+            onPress={() => handleActionPress('ledger-go')}
+            style={styles.remindButton}
+          >
+            <Text style={styles.remindButtonText}>증빙 바로가기</Text>
+          </Pressable>
+        </View>
+      </View>
+    );
+  };
+
   const renderItem: ListRenderItem<ChatItem> = ({ item }) => {
     if (item.type === 'user') {
       return renderUserMessage(item);
+    }
+
+    if (item.type === 'bot-unpaid-card') {
+      return renderUnpaidCard(item);
+    }
+
+    if (item.type === 'bot-ledger-card') {
+      return renderLedgerCard(item);
     }
 
     return renderBotActions(item);
@@ -413,6 +559,99 @@ const styles = StyleSheet.create({
   actionButtonText: {
     color: '#111111',
     fontSize: 15,
+    fontFamily: 'GmarketSansTTFBold',
+  },
+
+  unpaidTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: 10,
+  },
+  unpaidTitlePrefix: {
+    fontSize: 15,
+    color: '#444444',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  unpaidTitleCount: {
+    fontSize: 15,
+    color: '#FF1A0F',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+
+  unpaidMemberCard: {
+    borderWidth: 1.5,
+    borderColor: '#7A7A7A',
+    borderRadius: 18,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  unpaidMemberAvatar: {
+    width: 48,
+    height: 48,
+    marginRight: 10,
+  },
+  unpaidMemberInfo: {
+    flex: 1,
+  },
+  unpaidMemberName: {
+    fontSize: 16,
+    color: '#111111',
+    fontFamily: 'GmarketSansTTFBold',
+    marginBottom: 2,
+  },
+  unpaidMemberDate: {
+    fontSize: 12,
+    color: '#111111',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+
+  ledgerInfoCard: {
+    borderWidth: 1.5,
+    borderColor: '#7A7A7A',
+    borderRadius: 18,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    backgroundColor: '#FFFFFF',
+  },
+  ledgerDate: {
+    fontSize: 16,
+    color: '#111111',
+    fontFamily: 'GmarketSansTTFBold',
+    marginBottom: 10,
+  },
+  ledgerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  ledgerType: {
+    fontSize: 16,
+    color: '#111111',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  ledgerAmount: {
+    fontSize: 22,
+    color: '#FF1A0F',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+
+  remindButton: {
+    marginTop: 12,
+    height: 40,
+    borderWidth: 1.5,
+    borderColor: '#1F3FBF',
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  remindButtonText: {
+    fontSize: 15,
+    color: '#111111',
     fontFamily: 'GmarketSansTTFBold',
   },
 

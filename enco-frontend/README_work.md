@@ -75,7 +75,7 @@
         </td>
         <td width="33%" align="center" valign="top">
             <hr> <a href="https://github.com/ssafy14cici">
-                <b>김내현</b><br>(Frontend)
+                <b>김내현</b><br>(Frontend Leader)
             </a>
         </td>
     </tr>
