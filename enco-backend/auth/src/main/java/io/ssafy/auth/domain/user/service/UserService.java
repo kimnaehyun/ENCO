@@ -7,6 +7,6 @@ import io.ssafy.auth.domain.user.dto.response.UserJoinResponseDto;
 
 
 public interface UserService {
-    UserJoinResponseDto signup(UserJoinRequestDto userRequest) throws Exception;
-    LoginResponseDto login(String deviceToken, String pinCode) throws Exception;
+    UserJoinResponseDto signup(UserJoinRequestDto userRequest);
+    LoginResponseDto login(String deviceToken, String pinCode);
 }

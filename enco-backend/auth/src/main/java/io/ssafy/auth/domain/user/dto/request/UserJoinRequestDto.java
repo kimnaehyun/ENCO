@@ -21,10 +21,8 @@ public record UserJoinRequestDto(
         String phoneNumber,
         Gender gender,
         String pinCode,
-        String profileUrl,
-        String deviceToken
+        String profileUrl
 ) {
-
     public User toEntity(PasswordEncoder passwordEncoder, String deviceToken) {
         return User.builder()
                 .name(this.name)

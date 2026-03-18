@@ -15,13 +15,24 @@ import org.springframework.web.bind.annotation.*;
 public class UserController {
     private UserService userService;
 
+    /**
+     * 회원가입 ( 회원가입 후 자동 로그인)
+     * @param dto
+     * @return
+     */
     @PostMapping("/regist")
-    public ResponseEntity<LoginResponseDto> signUp(@RequestBody UserJoinRequestDto dto) throws Exception {
+    public ResponseEntity<LoginResponseDto> signUp(@RequestBody UserJoinRequestDto dto) {
         UserJoinResponseDto joinDto = userService.signup(dto);
         return ResponseEntity.ok(userService.login(joinDto.deviceToken(), dto.pinCode()));
     }
+
+    /**
+     * 로그인
+     * @param loginRequestDto
+     * @return
+     */
     @PostMapping("/login")
-    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginRequestDto) throws Exception {
+    public ResponseEntity<LoginResponseDto> login(@RequestBody LoginRequestDto loginRequestDto) {
         LoginResponseDto responseDto = userService.login(
                 loginRequestDto.deviceToken(),
                 loginRequestDto.pinCode()
