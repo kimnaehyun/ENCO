@@ -29,11 +29,13 @@ export type InternetPayStackParamList = {
   CreateInternetPaymentRequest: undefined;
   PaymentApprovalPending: undefined;
   InternetPaymentPin: { screen?: string } | undefined;
-  PaymentSuccess: {
-    amount?: number;
-    callbackUrl?: string;
-    orderId?: string;
-  } | undefined;
+  PaymentSuccess:
+    | {
+        amount?: number;
+        callbackUrl?: string;
+        orderId?: string;
+      }
+    | undefined;
 };
 
 // Group
@@ -49,24 +51,55 @@ export type GroupStackParamList = {
   AdminMenu: CommonParams | undefined;
   AdminReceipt: CommonParams | undefined;
   AdminMembers: CommonParams | undefined;
-  AdminCard: CommonParams | undefined;
+  AdminCard:
+    | (CommonParams & {
+        selectedCardId?: string;
+        selectedCardImage?: string;
+        selectedCardName?: string;
+        selectedTags?: string[];
+        recommendPressed?: boolean;
+        viewAllPressed?: boolean;
+      })
+    | undefined;
+  AdminCardRecommend: {
+    groupId?: string;
+    groupName: string;
+    tags: string[];
+    prevTags?: string[];
+    prevRecommendPressed?: boolean;
+    prevViewAllPressed?: boolean;
+  };
+  AdminCardPin: {
+    groupId?: string;
+    groupName: string;
+    tags: string[];
+    selectedCardId: string;
+    selectedCardName?: string | null;
+  };
+  AdminCardDone: {
+    groupId?: string;
+    groupName?: string;
+    selectedCardId?: string;
+  };
   AdminSettle: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
-  GroupVoteCreate: CommonParams | undefined;
+  VoteCreate: CommonParams | undefined;
   //나중에 딥링크 연걸 후 객체 타입으로 변경 예정
   GroupInviteEntry: undefined;
   GroupInviteDecision: undefined;
   GroupInviteSuccess: undefined;
 
-  GroupCreate: {
-    selectedCardId?: string;
-    selectedCardImage?: string;
-    selectedCardName?: string;
-    groupName?: string;
-    selectedTags?: string[];
-    recommendPressed?: boolean;
-    viewAllPressed?: boolean;
-  } | undefined;
+  GroupCreate:
+    | {
+        selectedCardId?: string;
+        selectedCardImage?: string;
+        selectedCardName?: string;
+        groupName?: string;
+        selectedTags?: string[];
+        recommendPressed?: boolean;
+        viewAllPressed?: boolean;
+      }
+    | undefined;
   GroupCardRecommend: {
     groupName: string;
     address: string;
@@ -89,7 +122,9 @@ export type GroupStackParamList = {
     isAdmin: boolean;
     groupName: string;
   };
-  OcrTest: { imageUri?: string; groupName?: string; groupId?: string } | undefined;
+  OcrTest:
+    | { imageUri?: string; groupName?: string; groupId?: string }
+    | undefined;
   SettleDetail: {
     amount: number;
     storeName: string;
@@ -121,13 +156,47 @@ export type HomeStackParamList = {
   GroupChat: CommonParams | undefined;
   GroupLedger: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
-  GroupVoteCreate: CommonParams | undefined;
+  VoteCreate: CommonParams | undefined;
   AdminMenu: CommonParams | undefined;
   AdminReceipt: CommonParams | undefined;
   AdminMembers: CommonParams | undefined;
-  AdminCard: CommonParams | undefined;
+  AdminCard:
+    | (CommonParams & {
+        selectedCardId?: string;
+        selectedCardImage?: string;
+        selectedCardName?: string;
+        selectedTags?: string[];
+        recommendPressed?: boolean;
+        viewAllPressed?: boolean;
+      })
+    | undefined;
+  AdminCardRecommend: {
+    groupId?: string;
+    groupName: string;
+    tags: string[];
+    prevTags?: string[];
+    prevRecommendPressed?: boolean;
+    prevViewAllPressed?: boolean;
+  };
+  AdminCardPin: {
+    groupId?: string;
+    groupName: string;
+    tags: string[];
+    selectedCardId: string;
+    selectedCardName?: string | null;
+  };
+  AdminCardDone: {
+    groupId?: string;
+    groupName?: string;
+    selectedCardId?: string;
+  };
   AdminSettle: CommonParams | undefined;
-  OcrTest: { imageUri?: string; groupName?: string; groupId?: string } | undefined;
+  GroupInviteEntry: undefined;
+  GroupInviteDecision: undefined;
+  GroupInviteSuccess: undefined;
+  OcrTest:
+    | { imageUri?: string; groupName?: string; groupId?: string }
+    | undefined;
   GroupLedgerDetail: {
     item: any;
     balance: number;
@@ -154,6 +223,10 @@ export type HomeStackParamList = {
     settleMembers?: any[];
     isNewSettle?: boolean;
   };
+  UserNotifications: CommonParams | undefined;
+  GroupInviteEntry: undefined;
+  GroupInviteDecision: undefined;
+  GroupInviteSuccess: undefined;
 };
 
 // Bottom Tab
@@ -169,27 +242,29 @@ export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
   App: undefined;
 
-// GroupCardRecommend 타입
-GroupCardRecommend: {
-  groupName: string;
-  address: string;
-  tags: string[];
-  prevGroupName?: string;
-  prevTags?: string[];
-  prevRecommendPressed?: boolean; 
-  prevViewAllPressed?: boolean;
-};
+  // GroupCardRecommend 타입
+  GroupCardRecommend: {
+    groupName: string;
+    address: string;
+    tags: string[];
+    prevGroupName?: string;
+    prevTags?: string[];
+    prevRecommendPressed?: boolean;
+    prevViewAllPressed?: boolean;
+  };
 
-// GroupCreate 타입
-GroupCreate: {
-  selectedCardId?: string;
-  selectedCardImage?: string;
-  selectedCardName?: string;
-  groupName?: string;
-  selectedTags?: string[];
-  recommendPressed?: boolean;  
-  viewAllPressed?: boolean;
-} | undefined;
+  // GroupCreate 타입
+  GroupCreate:
+    | {
+        selectedCardId?: string;
+        selectedCardImage?: string;
+        selectedCardName?: string;
+        groupName?: string;
+        selectedTags?: string[];
+        recommendPressed?: boolean;
+        viewAllPressed?: boolean;
+      }
+    | undefined;
   GroupPinSetup: {
     groupName: string;
     address: string;

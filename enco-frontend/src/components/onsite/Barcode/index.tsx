@@ -9,7 +9,7 @@ import { useEffect, useState } from 'react';
 import QR from './components/QR';
 import { Text } from 'react-native-gesture-handler';
 import CardRecommendation from './components/CardRecommendation';
-import PointToggleButton from './components/PointToggleButton';
+import PointToggleButton from '../../payment/PointToggleButton';
 import Geolocation from 'react-native-geolocation-service';
 
 export default function index() {

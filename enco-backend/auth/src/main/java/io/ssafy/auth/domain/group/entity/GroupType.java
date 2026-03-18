@@ -1,11 +1,14 @@
 package io.ssafy.auth.domain.group.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.*;
 
 @Entity
 @Table(name = "group_types")
 @Getter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class GroupType {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;

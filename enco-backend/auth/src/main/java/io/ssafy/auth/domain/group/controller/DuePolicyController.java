@@ -24,4 +24,10 @@ public class DuePolicyController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(duePolicyService.createPolicy(groupId, request));
     }
+
+    @DeleteMapping("/{groupId}/due-policies")
+    public ResponseEntity<Void> deactivatePolicy(@PathVariable Long groupId) {
+        duePolicyService.deactivatePolicy(groupId);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -1,7 +1,7 @@
 import { View, Text } from 'react-native';
 import React from 'react';
 
-export default function PaymentHistory({
+export default function KeyValueRow({
   title,
   children,
 }: {
@@ -10,7 +10,7 @@ export default function PaymentHistory({
 }) {
   return (
     <View className="flex-row justify-between">
-      <Text>{title}</Text>
+      <Text className="text-[20px]">{title}</Text>
       {children}
     </View>
   );

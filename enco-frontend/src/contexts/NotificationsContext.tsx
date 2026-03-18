@@ -1,7 +1,7 @@
 // src/contexts/NotificationsContext.tsx
 import React, { createContext, useContext, useMemo, useState } from 'react';
 
-export type NotiType = 'DUE' | 'VOTE' | 'LEDGER';
+export type NotiType = 'DUE' | 'VOTE' | 'LEDGER' | 'SETTLEMENT'; // 알림 유형 추가(예시: 정산 알림)
 
 export type NotificationItem = {
   id: string;
@@ -68,6 +68,16 @@ const seed: NotificationItem[] = [
     groupId: 'g1',
     groupName: '회식주의자',
   },
+  {
+    id: 'mock-settlement-1',
+    type: 'SETTLEMENT',
+    title: '[ 감튀정모 ] 18,000원',
+    body: '납부 요청이 왔습니다',
+    createdAt: '방금 전',
+    isRead: false,
+    groupId: 'g1',
+    groupName: '회식주의자',
+  }
 ];
 
 export const NotificationsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
@@ -109,4 +119,4 @@ export const NotificationsProvider: React.FC<React.PropsWithChildren> = ({ child
   );
 
   return <NotificationsContext.Provider value={value}>{children}</NotificationsContext.Provider>;
-};
+};  
