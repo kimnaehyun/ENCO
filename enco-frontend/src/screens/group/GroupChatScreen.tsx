@@ -59,7 +59,7 @@ type ChatItem =
       amount: number;
     };
 
-const TEMP_IS_ADMIN = false;
+const TEMP_IS_ADMIN = true;
 
 const formatKRW = (n: number) =>
   `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원`;
