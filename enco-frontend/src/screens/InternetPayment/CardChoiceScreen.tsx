@@ -7,6 +7,7 @@ import CardRecommendation from '../../components/onsite/Barcode/components/CardR
 import KeyValueRow from '../../components/common/KeyValueRow';
 import PointToggleButton from '../../components/payment/PointToggleButton';
 import PayButton from '../../components/internet/PayButton';
+import ScreenLayout from '../../components/ScreenLayout';
 
 export default function CardChoiceScreen() {
   const navigation = useNavigation<any>();
@@ -15,14 +16,14 @@ export default function CardChoiceScreen() {
   const insets = useSafeAreaInsets();
   const [cardNumber, setCardNumber] = useState<number>(0);
   return (
-    <View className="flex-1 bg-[#F0F4FF]" style={{ marginTop: insets.top }}>
-      <View className="flex-row items-center gap-4 m-4 bg-white rounded-[20px] p-4">
+    <ScreenLayout className="gap-4">
+      <View className="flex-row items-center gap-4 bg-white rounded-[20px] p-4">
         <Pressable onPress={() => navigation.goBack()}>
           <Image source={images.left_arrow} />
         </Pressable>
         <Text className="font-bold text-xl">{params.title}</Text>
       </View>
-      <View className="bg-white flex-1 mx-4 rounded-[20px] mb-4 p-4">
+      <View className="bg-white flex-1 rounded-[20px] mb-4 p-4">
         <View>
           <Text className="text-xl">결제 카드 선택</Text>
         </View>
@@ -52,6 +53,6 @@ export default function CardChoiceScreen() {
           </View>
         </View>
       </View>
-    </View>
+    </ScreenLayout>
   );
 }
