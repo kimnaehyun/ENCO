@@ -4,6 +4,7 @@ import {
   Image,
   TouchableOpacity,
   ActivityIndicator,
+  StyleSheet,
 } from 'react-native';
 import React from 'react';
 import { images } from '../../types/images';
@@ -28,8 +29,8 @@ export default function ChatMessage({
 
   if (isMe) {
     return (
-      <View className="flex items-end px-2 my-1">
-        <View className="flex flex-row items-end">
+      <View style={styles.userMessageRow}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
           {/* 상태 표시 */}
           {status === 'sending' && (
             <ActivityIndicator
@@ -39,28 +40,27 @@ export default function ChatMessage({
             />
           )}
           {status === 'failed' && (
-            <View className="flex flex-row mr-1">
-              <TouchableOpacity onPress={onRetry} className="mr-1">
-                <Text className="text-xs text-blue-500">재전송</Text>
+            <View style={{ flexDirection: 'row', marginRight: 6 }}>
+              <TouchableOpacity onPress={onRetry} style={{ marginRight: 4 }}>
+                <Text style={styles.retryText}>재전송</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={onCancel}>
-                <Text className="text-xs text-red-500">취소</Text>
+                <Text style={styles.cancelText}>취소</Text>
               </TouchableOpacity>
             </View>
           )}
           {status === 'sent' && (
-            <Text className="text-xs text-gray-400 mr-1">
-              {formatTime(created_at)}
-            </Text>
+            <Text style={styles.timeText}>{formatTime(created_at)}</Text>
           )}
 
-          {/* 메시지 */}
-          <View className="max-w-[75%]">
-            <Text
-              className={`rounded-lg p-3 ${status === 'failed' ? 'bg-[#ffcccc]' : 'bg-[#fef01b]'}`}
-            >
-              {content}
-            </Text>
+          {/* 메시지 버블 */}
+          <View
+            style={[
+              styles.userBubble,
+              status === 'failed' && { backgroundColor: '#ffcccc' },
+            ]}
+          >
+            <Text style={styles.userBubbleText}>{content}</Text>
           </View>
         </View>
       </View>
@@ -68,20 +68,89 @@ export default function ChatMessage({
   }
 
   return (
-    <View className="flex items-start px-2 my-1">
-      <View className="flex flex-row items-end">
-        <Image
-          className="w-12 h-12 rounded-full flex-shrink-0 self-start"
-          source={images.user}
-        />
-        <View className="max-w-[75%]">
-          <Text>{senderId}</Text>
-          <Text className="rounded-lg p-3 bg-[#ffffff]">{content}</Text>
+    <View style={styles.otherMessageRow}>
+      <Image style={styles.avatar} source={images.user} resizeMode="contain" />
+      <View>
+        <Text style={styles.senderText}>{senderId}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+          <View style={styles.otherBubble}>
+            <Text style={styles.otherBubbleText}>{content}</Text>
+          </View>
+          <Text style={styles.timeText}>{formatTime(created_at)}</Text>
         </View>
-        <Text className="text-xs text-gray-400 ml-1">
-          {formatTime(created_at)}
-        </Text>
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  // 내 메시지
+  userMessageRow: {
+    alignItems: 'flex-end',
+    marginBottom: 14,
+    paddingHorizontal: 14,
+  },
+  userBubble: {
+    maxWidth: '72%',
+    backgroundColor: '#3B6EF6',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 22,
+    borderTopRightRadius: 6,
+  },
+  userBubbleText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'GmarketSansTTFBold',
+  },
+
+  // 상대 메시지
+  otherMessageRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    marginBottom: 14,
+    paddingHorizontal: 14,
+  },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    marginRight: 8,
+    alignSelf: 'flex-start',
+  },
+  senderText: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginBottom: 4,
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  otherBubble: {
+    maxWidth: '72%',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderRadius: 22,
+    borderTopLeftRadius: 6,
+  },
+  otherBubbleText: {
+    color: '#111111',
+    fontSize: 16,
+    fontFamily: 'GmarketSansTTFBold',
+  },
+
+  // 공통
+  timeText: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginLeft: 6,
+    marginBottom: 4,
+  },
+  retryText: {
+    fontSize: 12,
+    color: '#3B82F6',
+  },
+  cancelText: {
+    fontSize: 12,
+    color: '#EF4444',
+  },
+});
