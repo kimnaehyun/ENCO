@@ -53,7 +53,7 @@ public class User {
     @Column(nullable = false)
     private String deviceToken;
 
-    private String profileUrl;
+    private Integer profileUrl;
 
     private String address;
 
