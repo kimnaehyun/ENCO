@@ -16,15 +16,20 @@ spring:
                 allowedHeaders: '*'
 #                allowedCredentials: true
           routes:
-            - id: auth-service
+            - id: auth-service-public
+              uri: http://${AUTH_SERVICE_HOST}:${AUTH_SERVICE_PORT}
+              predicates:
+                - Path=/auth-service/api/v1/auth/signup, /auth-service/api/v1/auth/login, /auth-service/api/v1/auth/regist
+              filters:
+                - StripPrefix=1
+
+            - id: auth-service-private
               uri: http://${AUTH_SERVICE_HOST}:${AUTH_SERVICE_PORT}
               predicates:
                 - Path=/auth-service/api/**
               filters:
                 - StripPrefix=1
-#                - name: AuthFilter
-#                  args:
-#                    exclude: /api/auth-service/login, /api/auth-service/signup
+                - AuthorizationHeaderFilter
 
             - id: payment-service
               uri: http://${PAYMENT_SERVICE_HOST}:${PAYMENT_SERVICE_PORT}
@@ -32,7 +37,7 @@ spring:
                 - Path=/payment-service/api/**
               filters:
                 - StripPrefix=1
-#                - AuthFilter
+                - name : AuthorizationHeaderFilter
 
             - id: chat-service
               uri: http://${CHAT_SERVICE_HOST}:${CHAT_SERVICE_PORT}
@@ -40,7 +45,7 @@ spring:
                 - Path=/chat-service/api/**
               filters:
                 - StripPrefix=1
-#                - AuthFilter
+                - AuthorizationHeaderFilter
 
             - id: travel-service
               uri: http://${TRAVEL_SERVICE_HOST}:${TRAVEL_SERVICE_PORT}
@@ -48,7 +53,8 @@ spring:
                 - Path=/travel-service/api/**
               filters:
                 - StripPrefix=1
-#                - AuthFilter
-
+                - AuthorizationHeaderFilter
+jwt:
+  secret: ${JWT_SECRET:default_secret_key_which_must_be_long_enough}
 server:
   port: 8081
