@@ -1,5 +1,5 @@
 // src/screens/group/GroupChatScreen.tsx
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
   Alert,
   FlatList,
@@ -14,6 +14,12 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CommonParams } from '../../types/common';
+
+import ChatInput from '../../components/groupChat/ChatInput';
+import SubmitButton from '../../components/groupChat/SubmitButton';
+import ChatMessage from '../../components/groupChat/ChatMessage';
+import { Message } from '../../types/group';
+import { Client } from '@stomp/stompjs';
 
 type ChatAction =
   | 'pay'
@@ -73,7 +79,6 @@ export default function GroupChatScreen() {
   const isAdmin = TEMP_IS_ADMIN;
 
   const listRef = useRef<FlatList<ChatItem>>(null);
-  const [msg, setMsg] = useState('');
 
   const initialMessages = useMemo<ChatItem[]>(
     () => [
@@ -103,10 +108,10 @@ export default function GroupChatScreen() {
             ],
       },
     ],
-    [isAdmin]
+    [isAdmin],
   );
 
-  const [messages, setMessages] = useState<ChatItem[]>(initialMessages);
+  // const [messages, setMessages] = useState<ChatItem[]>(initialMessages);
 
   const getNowLabel = () => {
     const now = new Date();
@@ -118,7 +123,7 @@ export default function GroupChatScreen() {
   };
 
   const appendMessage = (message: ChatItem) => {
-    setMessages(prev => [...prev, message]);
+    // setMessages(prev => [...prev, message]);
     requestAnimationFrame(() => {
       listRef.current?.scrollToEnd({ animated: true });
     });
@@ -246,10 +251,10 @@ export default function GroupChatScreen() {
     if (action === 'settlement') {
       if (messages.length > 0) {
         const latest = messages[messages.length - 1];
-        if (latest.type === 'bot-actions' && latest.text === '정산을 도와드릴게요!') {
-          navigation.navigate('OcrTest');
-          return;
-        }
+        // if (latest.type === 'bot-actions' && latest.text === '정산을 도와드릴게요!') {
+        //   navigation.navigate('OcrTest');
+        //   return;
+        // }
       }
 
       appendMessage(buildSettlementActions());
@@ -295,7 +300,7 @@ export default function GroupChatScreen() {
   };
 
   const renderBotActions = (
-    item: Extract<ChatItem, { type: 'bot-actions' }>
+    item: Extract<ChatItem, { type: 'bot-actions' }>,
   ) => {
     return (
       <View style={styles.botRow}>
@@ -325,7 +330,7 @@ export default function GroupChatScreen() {
   };
 
   const renderUnpaidCard = (
-    item: Extract<ChatItem, { type: 'bot-unpaid-card' }>
+    item: Extract<ChatItem, { type: 'bot-unpaid-card' }>,
   ) => {
     const countText = `${item.unpaidCount}명`;
 
@@ -371,7 +376,7 @@ export default function GroupChatScreen() {
   };
 
   const renderLedgerCard = (
-    item: Extract<ChatItem, { type: 'bot-ledger-card' }>
+    item: Extract<ChatItem, { type: 'bot-ledger-card' }>,
   ) => {
     return (
       <View style={styles.botRow}>
@@ -423,7 +428,157 @@ export default function GroupChatScreen() {
 
     return renderBotActions(item);
   };
+  const [msg, setMsg] = useState<string>('');
+  const [userId] = useState(1);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const clientRef = useRef<Client | null>(null);
+  const flatListRef = useRef<FlatList>(null);
+  const ROOM_ID = '1001';
 
+  useEffect(() => {
+    // 이전 메시지 불러오기
+    fetch(
+      `http://10.0.2.2:8084/api/v1/chat-rooms/${ROOM_ID}/messages?page=0&size=50`,
+    )
+      .then(res => res.json())
+      .then(data => {
+        // 오래된 순으로 정렬
+        setMessages(
+          data.reverse().map((m: Message) => ({ ...m, status: 'sent' })),
+        );
+      })
+      .catch(e => console.error('❌ 메시지 조회 실패:', e));
+    const client = new Client({
+      brokerURL: 'ws://10.0.2.2:8084/ws-stomp',
+      reconnectDelay: 5000,
+      debug: str => console.log(str),
+      webSocketFactory: () => new WebSocket('ws://10.0.2.2:8084/ws-stomp'),
+      forceBinaryWSFrames: true,
+      appendMissingNULLonIncoming: true,
+    });
+
+    client.onConnect = () => {
+      console.log('STOMP 연결됨');
+
+      client.subscribe(`/sub/chat/room/${ROOM_ID}`, message => {
+        const data = JSON.parse(message.body);
+
+        setMessages(prev => {
+          // 내가 보낸 메시지면 tempId → 실제 id로 교체
+          const tempIndex = prev.findIndex(
+            m =>
+              m.status === 'sending' &&
+              m.senderId === data.senderId &&
+              m.content === data.content,
+          );
+
+          if (tempIndex !== -1) {
+            const updated = [...prev];
+            updated[tempIndex] = { ...data, status: 'sent' };
+            return updated;
+          }
+
+          // 남이 보낸 메시지면 그냥 추가
+          return [...prev, { ...data, status: 'sent' }];
+        });
+      });
+    };
+
+    client.onStompError = frame => console.error('STOMP error', frame);
+
+    client.activate();
+    clientRef.current = client;
+
+    return () => {
+      client.deactivate();
+    };
+  }, []);
+
+  function sendMessage(content: string, senderId: number) {
+    if (!content.trim()) return;
+
+    // 1. 임시 메시지 즉시 추가 (status: 'sending'), 연결 여부 관계없이 일단 메시지 추가
+    const tempId = `temp-${Date.now()}`;
+    const tempMessage: Message = {
+      id: tempId,
+      messageType: 'CHAT',
+      roomId: ROOM_ID,
+      senderId,
+      content: content.trim(),
+      metadata: null,
+      createdAt: new Date().toISOString(),
+      status: 'sending',
+    };
+    setMessages(prev => [...prev, tempMessage]);
+    setMsg('');
+
+    // 2. 실제 전송, 연결 안 됐으면 바로 failed 처리
+    if (!clientRef.current?.connected) {
+      setMessages(prev =>
+        prev.map(m => (m.id === tempId ? { ...m, status: 'failed' } : m)),
+      );
+      return;
+    }
+
+    // 3. 일정 시간 후에도 서버 응답 없으면 failed 처리, 연결됐으면 전송 후 타임아웃
+    clientRef.current.publish({
+      destination: '/pub/chat/message',
+      body: JSON.stringify({
+        messageType: 'CHAT',
+        roomId: ROOM_ID,
+        senderId,
+        content: content.trim(),
+        metadata: null,
+      }),
+    });
+
+    setTimeout(() => {
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === tempId && m.status === 'sending'
+            ? { ...m, status: 'failed' }
+            : m,
+        ),
+      );
+    }, 5000);
+  }
+  // 재전송 전용 함수
+  function retryMessage(tempId: string, content: string, senderId: number) {
+    // ✅ 상태만 sending으로 변경 (새 메시지 추가 없음)
+    setMessages(prev =>
+      prev.map(m => (m.id === tempId ? { ...m, status: 'sending' } : m)),
+    );
+
+    // ✅ 연결 안 됐으면 바로 failed
+    if (!clientRef.current?.connected) {
+      setMessages(prev =>
+        prev.map(m => (m.id === tempId ? { ...m, status: 'failed' } : m)),
+      );
+      return;
+    }
+
+    // ✅ 전송 시도
+    clientRef.current.publish({
+      destination: '/pub/chat/message',
+      body: JSON.stringify({
+        messageType: 'CHAT',
+        roomId: ROOM_ID,
+        senderId,
+        content,
+        metadata: null,
+      }),
+    });
+
+    setTimeout(() => {
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === tempId && m.status === 'sending'
+            ? { ...m, status: 'failed' }
+            : m,
+        ),
+      );
+    }, 5000);
+  }
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
@@ -435,13 +590,28 @@ export default function GroupChatScreen() {
       </View>
 
       <FlatList
-        ref={listRef}
+        ref={flatListRef}
+        className="flex-1"
         data={messages}
-        keyExtractor={item => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
+        keyExtractor={item => item.id.toString()}
+        renderItem={({ item }) => (
+          <ChatMessage
+            content={item.content}
+            senderId={item.senderId}
+            isMe={item.senderId === userId}
+            created_at={item.createdAt}
+            status={item.status}
+            onRetry={() => retryMessage(item.id, item.content, item.senderId)}
+            onCancel={() =>
+              setMessages(prev => prev.filter(m => m.id !== item.id))
+            }
+          />
+        )}
+        onContentSizeChange={() => {
+          if (messages[messages.length - 1]?.senderId === userId) {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          }
+        }}
       />
 
       <View style={styles.inputWrap}>
@@ -456,10 +626,13 @@ export default function GroupChatScreen() {
           returnKeyType="send"
           autoCorrect={false}
           autoCapitalize="none"
-          onSubmitEditing={handleSend}
+          onSubmitEditing={() => sendMessage(msg, userId)}
         />
 
-        <Pressable onPress={handleSend} style={styles.sendButton}>
+        <Pressable
+          onPress={() => sendMessage(msg, userId)}
+          style={styles.sendButton}
+        >
           <Text style={styles.sendButtonText}>➤</Text>
         </Pressable>
       </View>
