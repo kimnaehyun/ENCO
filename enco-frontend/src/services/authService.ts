@@ -33,6 +33,34 @@ export async function loginService(payload: LoginRequest): Promise<LoginResponse
   return response.data;
 }
 
+// ── 재로그인 (디바이스 토큰 없을 때 폴백) ──
+export type ReLoginRequest = {
+  email: string;
+  password: string;
+};
+
+export type ReLoginResponse = {
+  message: string;
+  result: {
+    id: number;
+    name: string;
+    deviceToken: string;
+    accessToken: string;
+    expiresIn: number;
+    tokenType: string;
+  };
+};
+
+export async function ReLoginService(
+  payload: ReLoginRequest,
+): Promise<ReLoginResponse> {
+  const response = await authApi.post<ReLoginResponse>(
+    "/auth/re-login",
+    payload,
+  );
+  return response.data;
+}
+
 // ── 회원가입 ──
 export type SignupRequest = {
   name: string;
