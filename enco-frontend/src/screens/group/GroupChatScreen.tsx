@@ -1,11 +1,9 @@
 import React, { useRef, useState, useEffect } from 'react';
 import {
-  Alert,
   FlatList,
   Image,
   ListRenderItem,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
@@ -17,6 +15,11 @@ import ChatMessage from '../../components/groupChat/ChatMessage';
 import { Client } from '@stomp/stompjs';
 import { chatService } from '@/services/chatService';
 import { ApiMessage, ChatAction, ChatItem } from '@/types/chat';
+import { images } from '@/types/images';
+import Chatbot from '@/components/groupChat/Chatbot';
+import BotUnpaidCard from '@/components/groupChat/BotUnpaidCard';
+import BotActions from '@/components/groupChat/BotActions';
+import BotLedgerCard from '@/components/groupChat/BotLedGerCard';
 
 // API 응답을 ChatItem으로 변환
 function apiMessageToChatItem(m: ApiMessage): ChatItem {
@@ -47,8 +50,6 @@ function apiMessageToChatItem(m: ApiMessage): ChatItem {
 }
 
 const TEMP_IS_ADMIN = true;
-const formatKRW = (n: number) =>
-  `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원`;
 
 export default function GroupChatScreen() {
   const route = useRoute();
@@ -389,10 +390,6 @@ export default function GroupChatScreen() {
     }
   };
 
-  const handleSendReminder = (memberName: string) => {
-    Alert.alert('알림', `${memberName}님에게 미납 알림을 보냈습니다. (임시)`);
-  };
-
   // ===== 렌더링 =====
   const renderItem: ListRenderItem<ChatItem> = ({ item }) => {
     if (item.type === 'chat') {
@@ -413,22 +410,7 @@ export default function GroupChatScreen() {
 
     //  서버에서 내려오는 챗봇 응답 (CHATBOT_RESPONSE)
     if (item.type === 'chatbot') {
-      return (
-        <View style={styles.botRow}>
-          <Image
-            source={
-              item.senderImageUrl
-                ? { uri: item.senderImageUrl }
-                : require('../../assets/icons/nomal_hamco.png')
-            }
-            style={styles.botAvatar}
-            resizeMode="contain"
-          />
-          <View style={styles.botCard}>
-            <Text style={styles.botText}>{item.content}</Text>
-          </View>
-        </View>
-      );
+      return <Chatbot item={item} />;
     }
 
     // 챗봇 트리거 (@햄코 로컬)
@@ -445,119 +427,44 @@ export default function GroupChatScreen() {
     }
 
     if (item.type === 'bot-unpaid-card') {
-      return (
-        <View style={styles.botRow}>
-          <Image
-            source={require('../../assets/icons/nomal_hamco.png')}
-            style={styles.botAvatar}
-            resizeMode="contain"
-          />
-          <View style={styles.botCard}>
-            <View style={styles.unpaidTitleRow}>
-              <Text style={styles.unpaidTitlePrefix}>현재 미납 회원은 </Text>
-              <Text style={styles.unpaidTitleCount}>{item.unpaidCount}명</Text>
-              <Text style={styles.unpaidTitlePrefix}>이에요!</Text>
-            </View>
-            <View style={styles.unpaidMemberCard}>
-              <Image
-                source={require('../../assets/icons/nomal_hamco.png')}
-                style={styles.unpaidMemberAvatar}
-                resizeMode="contain"
-              />
-              <View style={styles.unpaidMemberInfo}>
-                <Text style={styles.unpaidMemberName}>{item.memberName}</Text>
-                <Text style={styles.unpaidMemberDate}>
-                  마지막 납입일 {item.lastPaidAt}
-                </Text>
-              </View>
-            </View>
-            <Pressable
-              onPress={() => handleSendReminder(item.memberName)}
-              style={styles.remindButton}
-            >
-              <Text style={styles.remindButtonText}>알림 보내기</Text>
-            </Pressable>
-          </View>
-        </View>
-      );
+      return <BotUnpaidCard item={item} />;
     }
 
     if (item.type === 'bot-ledger-card') {
       return (
-        <View style={styles.botRow}>
-          <Image
-            source={require('../../assets/icons/nomal_hamco.png')}
-            style={styles.botAvatar}
-            resizeMode="contain"
-          />
-          <View style={styles.botCard}>
-            <View style={styles.unpaidTitleRow}>
-              <Text style={styles.unpaidTitlePrefix}>현재 누락된 증빙을 </Text>
-              <Text style={styles.unpaidTitleCount}>{item.missingCount}건</Text>
-              <Text style={styles.unpaidTitlePrefix}> 발견했어요!</Text>
-            </View>
-            <View style={styles.ledgerInfoCard}>
-              <Text style={styles.ledgerDate}>{item.transactionDate}</Text>
-              <View style={styles.ledgerRow}>
-                <Text style={styles.ledgerType}>{item.transactionType}</Text>
-                <Text style={styles.ledgerAmount}>
-                  {formatKRW(item.amount)}
-                </Text>
-              </View>
-            </View>
-            <Pressable
-              onPress={() => handleActionPress('ledger-go')}
-              style={styles.remindButton}
-            >
-              <Text style={styles.remindButtonText}>증빙 바로가기</Text>
-            </Pressable>
-          </View>
-        </View>
+        <BotLedgerCard
+          item={item}
+          onPress={() => handleActionPress('ledger-go')}
+        />
       );
     }
 
     // bot-actions
     return (
-      <View style={styles.botRow}>
-        <Image
-          source={require('../../assets/icons/nomal_hamco.png')}
-          style={styles.botAvatar}
-          resizeMode="contain"
-        />
-        <View style={styles.botCard}>
-          <Text style={styles.botText}>{item.text}</Text>
-          <View style={styles.actionList}>
-            {item.actions.map(action => (
-              <Pressable
-                key={`${item.id}-${action.label}`}
-                onPress={() => handleActionPress(action.action)}
-                style={styles.actionButton}
-              >
-                <Text style={styles.actionButtonText}>{action.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </View>
-      </View>
+      <BotActions item={item} onpress={action => handleActionPress(action)} />
     );
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
-      <View style={styles.header}>
+    <SafeAreaView className="flex-1 bg-[#F0F4FF]" edges={['top']}>
+      <View className="flex-row h-14 px-4 border-b border-b-[#D1D5DB] items-center">
         <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-          <Text style={styles.headerBack}>←</Text>
+          <Image source={images.left_arrow} className="mr-3" />
         </Pressable>
-        <Text style={styles.headerTitle}>{groupName}</Text>
+        <Text
+          className="flex-1 text-lg text-[#1428A0]"
+          style={{ fontFamily: 'GmarketSansTTFBold' }}
+        >
+          {groupName}
+        </Text>
       </View>
 
       <FlatList
+        className="flex-1 p-4"
         ref={flatListRef}
-        style={{ flex: 1 }}
         data={messages}
         keyExtractor={item => item.id}
         renderItem={renderItem}
-        contentContainerStyle={styles.listContent}
         // 상단 스크롤 시 이전 메시지 로드
         onEndReachedThreshold={0.1}
         onScrollToIndexFailed={() => {}}
@@ -571,13 +478,14 @@ export default function GroupChatScreen() {
         }}
       />
 
-      <View style={styles.inputWrap}>
+      <View className="mx-3.5 mb-3.5 bg-white rounded-[26px] min-h-[62px] pl-[18px] pr-2.5 flex-row items-center shadow-sm">
         <TextInput
           value={msg}
           onChangeText={setMsg}
           placeholder="메시지를 입력하세요"
           placeholderTextColor="#9CA3AF"
-          style={styles.input}
+          className="flex-1 h-11 text-base text-[#111111]"
+          style={{ paddingVertical: 0 }}
           multiline={false}
           blurOnSubmit={false}
           returnKeyType="send"
@@ -585,188 +493,18 @@ export default function GroupChatScreen() {
           autoCapitalize="none"
           onSubmitEditing={handleSend}
         />
-        <Pressable onPress={handleSend} style={styles.sendButton}>
-          <Text style={styles.sendButtonText}>➤</Text>
+        <Pressable
+          onPress={handleSend}
+          className="w-[42px] h-[42px] rounded-full items-center justify-center"
+        >
+          <Text
+            className="text-[#3B6EF6] text-2xl"
+            style={{ fontFamily: 'GmarketSansTTFBold' }}
+          >
+            ➤
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F0F4FF' },
-  header: {
-    height: 56,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: '#D1D5DB',
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  headerBack: {
-    fontSize: 28,
-    color: '#111111',
-    marginRight: 10,
-    fontFamily: 'GmarketSansTTFMedium',
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    color: '#1428A0',
-    fontFamily: 'GmarketSansTTFBold',
-  },
-  listContent: { paddingHorizontal: 14, paddingTop: 18, paddingBottom: 16 },
-
-  botRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 18 },
-  botAvatar: { width: 42, height: 42, marginRight: 8, marginBottom: 6 },
-  botCard: {
-    maxWidth: '82%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-  },
-  botText: {
-    color: '#444444',
-    fontSize: 15,
-    fontFamily: 'GmarketSansTTFBold',
-    marginBottom: 12,
-  },
-  actionList: { gap: 10 },
-  actionButton: {
-    height: 40,
-    borderWidth: 1.5,
-    borderColor: '#8F8F8F',
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 18,
-  },
-  actionButtonText: {
-    color: '#111111',
-    fontSize: 15,
-    fontFamily: 'GmarketSansTTFBold',
-  },
-
-  unpaidTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    marginBottom: 10,
-  },
-  unpaidTitlePrefix: {
-    fontSize: 15,
-    color: '#444444',
-    fontFamily: 'GmarketSansTTFBold',
-  },
-  unpaidTitleCount: {
-    fontSize: 15,
-    color: '#FF1A0F',
-    fontFamily: 'GmarketSansTTFBold',
-  },
-  unpaidMemberCard: {
-    borderWidth: 1.5,
-    borderColor: '#7A7A7A',
-    borderRadius: 18,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  unpaidMemberAvatar: { width: 48, height: 48, marginRight: 10 },
-  unpaidMemberInfo: { flex: 1 },
-  unpaidMemberName: {
-    fontSize: 16,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFBold',
-    marginBottom: 2,
-  },
-  unpaidMemberDate: {
-    fontSize: 12,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFMedium',
-  },
-
-  ledgerInfoCard: {
-    borderWidth: 1.5,
-    borderColor: '#7A7A7A',
-    borderRadius: 18,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-  },
-  ledgerDate: {
-    fontSize: 16,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFBold',
-    marginBottom: 10,
-  },
-  ledgerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  ledgerType: {
-    fontSize: 16,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFBold',
-  },
-  ledgerAmount: {
-    fontSize: 22,
-    color: '#FF1A0F',
-    fontFamily: 'GmarketSansTTFBold',
-  },
-
-  remindButton: {
-    marginTop: 12,
-    height: 40,
-    borderWidth: 1.5,
-    borderColor: '#1F3FBF',
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  remindButtonText: {
-    fontSize: 15,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFBold',
-  },
-
-  inputWrap: {
-    marginHorizontal: 14,
-    marginBottom: 14,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 26,
-    minHeight: 62,
-    paddingLeft: 18,
-    paddingRight: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    shadowColor: '#1428A0',
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2,
-  },
-  input: {
-    flex: 1,
-    height: 44,
-    fontSize: 16,
-    color: '#111111',
-    paddingVertical: 0,
-  },
-  sendButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendButtonText: {
-    color: '#3B6EF6',
-    fontSize: 24,
-    fontFamily: 'GmarketSansTTFBold',
-  },
-});
