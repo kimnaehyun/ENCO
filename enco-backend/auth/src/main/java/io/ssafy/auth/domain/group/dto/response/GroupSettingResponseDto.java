@@ -15,7 +15,8 @@ public record GroupSettingResponseDto(
         List<TypeDto> types,
         LocalDateTime createdAt,
         PolicyDto policy,
-        String groundRule
+        String groundRule,
+        CardDto card
 ) {
     public record TypeDto(Long typeId, String typeName) {
         public static TypeDto from(GroupType groupType) {
@@ -32,10 +33,14 @@ public record GroupSettingResponseDto(
         }
     }
 
+    public record CardDto(Long cardId, String cardName, String frontCardImageUrl, String backCardImageUrl, Boolean isBasic) {}
+
     public static GroupSettingResponseDto of(Group group, DuePolicy policy) {
         List<TypeDto> types = group.getGroupTypeList().stream()
                 .map(TypeDto::from)
                 .toList();
+
+        CardDto dummyCard = new CardDto(1L, "엔코 체크카드", "https://dummy.url/front.png", "https://dummy.url/back.png", true);
 
         return new GroupSettingResponseDto(
                 group.getId(),
@@ -44,7 +49,8 @@ public record GroupSettingResponseDto(
                 types,
                 group.getCreatedAt(),
                 policy != null ? PolicyDto.from(policy) : null,
-                group.getGroundRule()
+                group.getGroundRule(),
+                dummyCard
         );
     }
 }
