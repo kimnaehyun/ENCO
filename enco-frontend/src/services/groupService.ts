@@ -52,3 +52,21 @@ export async function getGroupSettings(groupId: number | string) {
 
   return response.data;
 }
+
+export async function updateGroupSettings(groupId: number | string, requestBody: any) {
+  const token = getCachedAccessToken();
+
+  const response = await axios.put(
+    `https://api.ssafywte.site/auth-service/api/v1/groups/${groupId}/settings`,
+    requestBody,
+    {
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+    },
+  );
+
+  return response.data;
+}
