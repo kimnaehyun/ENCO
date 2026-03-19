@@ -7,7 +7,9 @@ import { loginService } from "../../services/authService";
 import { getDeviceToken } from "../../utils/tokenStorage";
 import { saveTokens } from "../../utils/tokenStorage";
 
-export default function LoginScreen({}: AuthScreenProps<"Login">) {
+export default function LoginScreen({
+  navigation,
+}: AuthScreenProps<"Login">) {
   const [resetKey, setResetKey] = useState(0);
   const [loading, setLoading] = useState(false);
 
@@ -19,9 +21,8 @@ export default function LoginScreen({}: AuthScreenProps<"Login">) {
       const deviceToken = await getDeviceToken();
 
       if (!deviceToken) {
-        Alert.alert("로그인 실패", "기기 정보를 찾을 수 없습니다. 회원가입을 먼저 진행해주세요.");
-        setResetKey((prev) => prev + 1);
-        setLoading(false);
+        // 디바이스 토큰이 없으면 이메일/비밀번호 로그인으로 이동
+        navigation.replace("ReLogin");
         return;
       }
 
@@ -32,6 +33,7 @@ export default function LoginScreen({}: AuthScreenProps<"Login">) {
 
       // accessToken 저장
       if (response.result?.accessToken) {
+        console.log('[Login] accessToken:', response.result.accessToken);
         await saveTokens(response.result.accessToken, "");
       }
 

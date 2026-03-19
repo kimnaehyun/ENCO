@@ -28,3 +28,8 @@ server:
 service:
   auth:
     url: http://${AUTH_SERVICE_HOST}:${AUTH_SERVICE_PORT}
+
+gms:
+  url: ${GMS_URL}
+  key: ${GMS_KEY}
+  model: ${GMS_MODEL}

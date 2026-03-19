@@ -10,6 +10,7 @@ import { CommonParams } from './common';
 export type AuthStackParamList = {
   AuthLanding: undefined;
   Login: undefined;
+  ReLogin: undefined;
 
   SignupVerify: undefined;
   InputInfo: undefined;
