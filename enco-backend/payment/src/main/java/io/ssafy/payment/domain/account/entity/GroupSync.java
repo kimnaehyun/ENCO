@@ -1,4 +1,4 @@
-package io.ssafy.payment.domain.group.entity;
+package io.ssafy.payment.domain.account.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;

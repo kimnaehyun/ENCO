@@ -52,10 +52,13 @@ public class Group {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "group")
+    @Column(nullable = false)
+    private Long accountId;
+
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupType> groupTypeList = new ArrayList<>();
 
-    @OneToMany(mappedBy = "group")
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true )
     private List<GroupUser> groupUserList = new ArrayList<>();
 
     public void updateSettings(String name, String introduction, String groundRule, Integer voteCriteria) {
