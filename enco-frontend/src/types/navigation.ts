@@ -19,9 +19,13 @@ export type AuthStackParamList = {
     birth: string;
     phone: string;
     email: string;
+    gender: 'M' | 'W';
+    profileUrl: number;
   };
 
-  SignupComplete: undefined;
+  SignupComplete: {
+    userName: string;
+  };
 };
 
 // Internet Payment
@@ -39,7 +43,6 @@ export type InternetPayStackParamList = {
 };
 
 // Group
-// GroupStackParamList에 아래 항목들 추가
 export type GroupStackParamList = {
   GroupList: undefined;
   GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
@@ -85,7 +88,6 @@ export type GroupStackParamList = {
   AdminSettle: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
   VoteCreate: CommonParams | undefined;
-  //나중에 딥링크 연걸 후 객체 타입으로 변경 예정
   GroupInviteEntry: undefined;
   GroupInviteDecision: undefined;
   GroupInviteSuccess: undefined;
@@ -116,10 +118,9 @@ export type GroupStackParamList = {
     tags: string[];
     selectedCardId: string;
   };
-  GroupAnalytics: CommonParams | undefined;
   UserNotifications: CommonParams | undefined;
   GroupLedgerDetail: {
-    item: any; // LedgerItem import 후 교체
+    item: any;
     balance: number;
     isAdmin: boolean;
     groupName: string;
@@ -148,6 +149,7 @@ export type GroupStackParamList = {
     isNewSettle?: boolean;
   };
 };
+
 // Home
 export type HomeStackParamList = {
   Home: undefined;
@@ -227,7 +229,6 @@ export type HomeStackParamList = {
     isNewSettle?: boolean;
   };
   UserNotifications: CommonParams | undefined;
-  GroupAnalytics: CommonParams | undefined;
 };
 
 // Bottom Tab
@@ -243,7 +244,6 @@ export type RootStackParamList = {
   Auth: NavigatorScreenParams<AuthStackParamList>;
   App: undefined;
 
-  // GroupCardRecommend 타입
   GroupCardRecommend: {
     groupName: string;
     address: string;
@@ -254,7 +254,6 @@ export type RootStackParamList = {
     prevViewAllPressed?: boolean;
   };
 
-  // GroupCreate 타입
   GroupCreate:
     | {
         selectedCardId?: string;
@@ -289,4 +288,4 @@ export type GroupScreenProps<T extends keyof GroupStackParamList> =
     BottomTabScreenProps<BottomTabParamList>
   >;
 
-export type SignupStep = 'name' | 'birth' | 'phone' | 'email' | 'done';
+export type SignupStep = 'name' | 'birth' | 'phone' | 'email' | 'gender' | 'profile' | 'done';

@@ -1,9 +1,12 @@
-import React from 'react';
-import { Dimensions, FlatList, Pressable, Text, View, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Dimensions, FlatList, Pressable, Text, View, Image, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
-import {images} from "../types/images"
+import { images } from '../types/images';
+import { useAuthStore } from '../store/useAuthStore';
+import { fetchMyPage } from '../services/userService';
+
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 24;
 const CARD_GAP = 12;
@@ -12,7 +15,26 @@ const CARD_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
 
-  const me = { displayName: '나기' };
+  const user = useAuthStore(s => s.user);
+  const profile = useAuthStore(s => s.profile);
+  const setProfile = useAuthStore(s => s.setProfile);
+
+  const [loading, setLoading] = useState(false);
+
+  // 프로필이 없으면 API에서 가져오기
+  useEffect(() => {
+    if (!profile) {
+      setLoading(true);
+      fetchMyPage()
+        .then(data => setProfile(data))
+        .catch(err => console.warn('프로필 조회 실패:', err))
+        .finally(() => setLoading(false));
+    }
+  }, []);
+
+  const displayName = profile?.name ?? user ?? '';
+
+  // TODO: 모임 목록 API 연동 시 여기를 교체
   const groups: HomeGroupSummary[] = [
     {
       id: 'g1',
@@ -222,7 +244,7 @@ export default function HomeScreen() {
               안녕하세요 👋
             </Text>
             <Text style={{ fontSize: 22, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
-              {me.displayName ? `${me.displayName}님` : '환영합니다'}
+              {displayName ? `${displayName}님` : '환영합니다'}
             </Text>
           </View>
         </View>
