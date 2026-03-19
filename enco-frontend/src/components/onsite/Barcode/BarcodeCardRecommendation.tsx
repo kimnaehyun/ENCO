@@ -1,8 +1,8 @@
-import { images } from '../../../../types/images';
-import { Alert, Animated, Dimensions } from 'react-native';
+import { Animated, Dimensions } from 'react-native';
 import { useRef } from 'react';
-import Card from './Card';
-import { CARD_WIDTH, ITEM_SIZE } from '../../../../constants/carousel';
+import Card from './BarcodeCard';
+import { CARD_WIDTH, ITEM_SIZE } from '@/constants/carousel';
+import { images } from '@/types/images';
 
 const { width } = Dimensions.get('window');
 
@@ -13,7 +13,7 @@ const data = [
   { image: images.card4 },
 ];
 
-export default function CardRecommendation({
+export default function BarcodeCardRecommendation({
   onSelectCard,
 }: {
   onSelectCard: React.Dispatch<React.SetStateAction<number>>;

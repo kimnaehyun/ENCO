@@ -1,8 +1,8 @@
-import { View, Image } from 'react-native';
+import { Image } from 'react-native';
 import React from 'react';
-import { images } from '../../../../types/images';
+import { images } from '@/types/images';
 
-export default function QR({
+export default function BarcodeQR({
   cardNumber,
   className,
 }: {

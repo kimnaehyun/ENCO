@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { images } from '../../types/images';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import CardRecommendation from '../../components/onsite/Barcode/components/CardRecommendation';
+import CardRecommendation from '../../components/onsite/Barcode/components/BarcodeCardRecommendation';
 import KeyValueRow from '../../components/common/KeyValueRow';
 import PointToggleButton from '../../components/payment/PointToggleButton';
 import PayButton from '../../components/internet/PayButton';
