@@ -42,6 +42,10 @@ management:
   endpoint:
     health:
       show-details: always
+  # Health check에서 redis 자동으로 검사함. 추후 redis 추가하면 아래 3줄 없애도 무방
+  health:
+    redis:
+      enabled: false
 info:
   app:
     name: payment-service
