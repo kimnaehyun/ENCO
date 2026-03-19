@@ -1,19 +1,53 @@
-import React from 'react';
-import { Image, Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { images } from '../../types/images';
+import { useAuthStore } from '../../store/useAuthStore';
+import { fetchMyPage } from '../../services/userService';
+import { clearTokens, clearDeviceToken } from '../../utils/tokenStorage';
 
 export default function MyPageScreen({ navigation }: any) {
-  const user = {
-    name: '나기',
-    nameEn: 'Nagi',
-    phone: '010-1234-5678',
-    email: 'nagi@example.com',
-    address: '',
-  };
+  const profile = useAuthStore(s => s.profile);
+  const setProfile = useAuthStore(s => s.setProfile);
+  const logout = useAuthStore(s => s.logout);
+
+  const [loading, setLoading] = useState(false);
+
+  // 프로필이 store에 없으면 API 호출
+  useEffect(() => {
+    if (!profile) {
+      setLoading(true);
+      fetchMyPage()
+        .then(data => setProfile(data))
+        .catch(err => console.warn('마이페이지 조회 실패:', err))
+        .finally(() => setLoading(false));
+    }
+  }, []);
 
   const handleLogout = () => {
-    // TODO: 로그아웃 처리
+    Alert.alert('로그아웃', '정말 로그아웃 하시겠어요?', [
+      { text: '취소', style: 'cancel' },
+      {
+        text: '로그아웃',
+        style: 'destructive',
+        onPress: async () => {
+          await clearTokens();
+          await clearDeviceToken();
+          logout();
+        },
+      },
+    ]);
   };
+
+  if (loading && !profile) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#F0F4FF', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#1428A0" />
+        <Text style={{ marginTop: 12, fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
+          프로필 불러오는 중...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
@@ -61,24 +95,47 @@ export default function MyPageScreen({ navigation }: any) {
               resizeMode="cover"
             />
           </View>
+          {/* 이름 표시 */}
+          <Text
+            style={{
+              marginTop: 16,
+              fontSize: 20,
+              fontFamily: 'GmarketSansTTFBold',
+              color: '#111827',
+            }}
+          >
+            {profile?.name ?? '사용자'}
+          </Text>
+          {profile?.gender && (
+            <Text
+              style={{
+                marginTop: 4,
+                fontSize: 13,
+                fontFamily: 'GmarketSansTTFMedium',
+                color: '#9CA3AF',
+              }}
+            >
+              {profile.gender === 'M' ? '남성' : '여성'} · {profile.birthDay ?? ''}
+            </Text>
+          )}
         </View>
 
         {/* 기본 정보 섹션 */}
         <View style={{ paddingHorizontal: 20, gap: 12 }}>
           <InfoCard title="기본정보">
-            <InfoRow label="이름" value={user.name} />
+            <InfoRow label="이름" value={profile?.name ?? '-'} />
             <Divider />
-            <InfoRow label="영문이름" value={user.nameEn} />
+            <InfoRow label="이메일" value={profile?.email ?? '-'} />
             <Divider />
-            <InfoRow label="휴대폰번호" value={user.phone} />
+            <InfoRow label="휴대폰번호" value={profile?.phoneNumber ?? '-'} />
             <Divider />
-            <InfoRow label="이메일" value={user.email} />
+            <InfoRow label="생년월일" value={profile?.birthDay ?? '-'} />
           </InfoCard>
 
           {/* 집 주소 섹션 */}
           <InfoCard title="집 주소">
-            {user.address ? (
-              <InfoRow label="주소" value={user.address} />
+            {profile?.address ? (
+              <InfoRow label="주소" value={profile.address} />
             ) : (
               <Text
                 style={{
