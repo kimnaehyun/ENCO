@@ -1,3 +1,4 @@
+```
 # 프로젝트 생성
 
 npx @react-native-community/cli init 프로젝트명
@@ -50,4 +51,6 @@ prettier-plugin-tailwindcss는 prettier 3 필요
 
 ```
 npm install --save-dev prettier@^3
+```
+
 ```
