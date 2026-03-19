@@ -76,7 +76,7 @@ public class User {
 
     private LocalDateTime deletedAt;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupUser> groupList = new ArrayList<>();
 
 }
