@@ -33,6 +33,7 @@ export default function LoginScreen({
 
       // accessToken 저장
       if (response.result?.accessToken) {
+        console.log('[Login] accessToken:', response.result.accessToken);
         await saveTokens(response.result.accessToken, "");
       }
 
