@@ -23,9 +23,9 @@ public class ChatRoomService {
     /**
      * 채팅방 생성
      */
-    public ChatRoomResponse createRoom(ChatRoomCreateRequest request) {
+    public ChatRoomResponse createRoom(Long userId, ChatRoomCreateRequest request) {
         Participant owner = Participant.builder()
-                .userId(request.getOwnerId())
+                .userId(userId)
                 .role(ParticipantRole.OWNER)
                 .joinedAt(LocalDateTime.now())
                 .build();
@@ -36,7 +36,7 @@ public class ChatRoomService {
         // 추가 참여자가 있으면 MEMBER로 추가
         if (request.getParticipantIds() != null) {
             request.getParticipantIds().stream()
-                    .filter(id -> !id.equals(request.getOwnerId()))
+                    .filter(id -> !id.equals(userId))
                     .map(id -> Participant.builder()
                             .userId(id)
                             .role(ParticipantRole.MEMBER)
