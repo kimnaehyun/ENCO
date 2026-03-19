@@ -1,51 +1,54 @@
-import { apiClient } from "./apiClient";
+import axios from 'axios';
+import { getCachedAccessToken } from '../utils/tokenStorage';
 
-export type GroupType = {
+export interface GroupTypeItem {
   typeId: number;
   typeName: string;
-};
+}
 
-export type GroupPolicy = {
+export interface GroupPolicy {
   policyId: number;
   dayOfMonth: number;
   monthlyFee: number;
-};
+}
 
-export type GroupCard = {
+export interface GroupCard {
   cardId: number;
   cardName: string;
   frontCardImageUrl: string;
   backCardImageUrl: string;
   isBasic: boolean;
-};
+}
 
-export type GroupSettings = {
+export interface GroupSettingsResult {
   groupId: number;
   groupName: string;
   instruction: string;
-  types: GroupType[];
+  types: GroupTypeItem[];
   createdAt: string;
   policy: GroupPolicy;
   groundRules: string;
   card: GroupCard;
-};
+}
 
-export type GetGroupSettingsResponse = {
+export interface GroupSettingsResponse {
   message: string;
-  result: GroupSettings;
-};
+  result: GroupSettingsResult;
+}
 
-export async function getGroupSettingsService(groupId: number) {
-  console.log("[groupService] 요청 시작");
-  console.log("[groupService] groupId:", groupId);
-  console.log("[groupService] url:", `/groups/${groupId}/settings`);
+export async function getGroupSettings(groupId: number | string) {
+  const token = getCachedAccessToken();
 
-  const response = await apiClient.get<GetGroupSettingsResponse>(
-    `/groups/${groupId}/settings`
+  const response = await axios.get<GroupSettingsResponse>(
+    `https://api.ssafywte.site/auth-service/api/v1/groups/${groupId}/settings`,
+    {
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+    },
   );
-
-  console.log("[groupService] status:", response.status);
-  console.log("[groupService] data:", response.data);
 
   return response.data;
 }
