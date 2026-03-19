@@ -1,5 +1,6 @@
 package io.ssafy.auth.domain.user.service;
 
+import io.ssafy.auth.domain.user.dto.request.ReLoginRequestDto;
 import io.ssafy.auth.domain.user.dto.request.UserJoinRequestDto;
 import io.ssafy.auth.domain.user.dto.response.LoginResponseDto;
 import io.ssafy.auth.domain.user.dto.response.UserJoinResponseDto;
@@ -19,12 +20,11 @@ import java.util.UUID;
 @Service
 @AllArgsConstructor
 @Slf4j
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl{
     private final UserRepository userRepository;
     private final PasswordEncoder encoder;
     private final JwtProvider jwtProvider;
 
-    @Override
     public UserJoinResponseDto signup(UserJoinRequestDto userRequest) {
         if(validateDuplicateEmail(userRequest.email())) {
             throw new CustomException(ErrorCode.EMAIL_ALREADY_EXISTS);
@@ -34,7 +34,6 @@ public class UserServiceImpl implements UserService {
         return UserJoinResponseDto.of(user);
     }
 
-    @Override
     public LoginResponseDto login(String deviceToken, String pinCode) {
         User user = userRepository.findByDeviceToken(deviceToken)
                 .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
@@ -43,6 +42,16 @@ public class UserServiceImpl implements UserService {
             throw new CustomException(ErrorCode.NOT_CORRECT_PINCODE);
         }
 
+        String accessToken = jwtProvider.createAccessToken(user.getId());
+        return LoginResponseDto.of(user, accessToken, jwtProvider.getAccessExpiration());
+    }
+
+    public LoginResponseDto reLogin(ReLoginRequestDto dto) {
+        User user = userRepository.findByEmail(dto.email())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+        if(!encoder.matches(dto.password(), user.getPassword())) {
+            throw  new CustomException(ErrorCode.NOT_CORRECT_PASSWORD);
+        }
         String accessToken = jwtProvider.createAccessToken(user.getId());
         return LoginResponseDto.of(user, accessToken, jwtProvider.getAccessExpiration());
     }
