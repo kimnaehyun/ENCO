@@ -1,5 +1,12 @@
-import React, { useEffect, useState } from 'react';
-import { Dimensions, FlatList, Pressable, Text, View, Image, ActivityIndicator } from 'react-native';
+import React , {useState, useEffect} from 'react';
+import {
+  Dimensions,
+  FlatList,
+  Pressable,
+  Text,
+  View,
+  Image,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
@@ -39,14 +46,16 @@ export default function HomeScreen() {
     {
       id: 'g1',
       name: '회식주의자',
-      coverImage: { uri: 'https://cdn-lostark.game.onstove.com/2022/event/220126_event_M3YUrtR2/images/pc/card5_f.png' },
+      coverImage: {
+        uri: 'https://cdn-lostark.game.onstove.com/2022/event/220126_event_M3YUrtR2/images/pc/card5_f.png',
+      },
     },
   ];
 
   const cards: HomeCardItem[] =
     groups.length > 0
       ? [
-          ...groups.map((group) => ({ type: 'group' as const, group })),
+          ...groups.map(group => ({ type: 'group' as const, group })),
           { type: 'add' as const },
         ]
       : [{ type: 'add' as const }];
@@ -106,7 +115,13 @@ export default function HomeScreen() {
             }}
           >
             {/* 상단 뱃지 */}
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
               <View
                 style={{
                   backgroundColor: 'rgba(255,255,255,0.25)',
@@ -115,11 +130,25 @@ export default function HomeScreen() {
                   paddingVertical: 5,
                 }}
               >
-                <Text style={{ color: '#FFFFFF', fontSize: 12, fontFamily: 'GmarketSansTTFMedium' }}>
+                <Text
+                  style={{
+                    color: '#FFFFFF',
+                    fontSize: 12,
+                    fontFamily: 'GmarketSansTTFMedium',
+                  }}
+                >
                   모임통장
                 </Text>
               </View>
-              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 18, letterSpacing: 2 }}>···</Text>
+              <Text
+                style={{
+                  color: 'rgba(255,255,255,0.7)',
+                  fontSize: 18,
+                  letterSpacing: 2,
+                }}
+              >
+                ···
+              </Text>
             </View>
 
             {/* 하단 정보 */}
@@ -134,7 +163,13 @@ export default function HomeScreen() {
               >
                 {item.group.name}
               </Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                }}
+              >
                 <Text
                   style={{
                     color: '#FFFFFF',
@@ -154,7 +189,7 @@ export default function HomeScreen() {
                     alignItems: 'center',
                   }}
                 >
-                  <Text style={{ color: '#FFFFFF', fontSize: 18 }}>→</Text>
+                  <Image source={images.right_arrow} />
                 </View>
               </View>
             </View>
@@ -196,10 +231,23 @@ export default function HomeScreen() {
         >
           <Text style={{ fontSize: 28, color: '#1428A0' }}>+</Text>
         </View>
-        <Text style={{ fontSize: 16, color: '#111827', fontFamily: 'GmarketSansTTFBold' }}>
+        <Text
+          style={{
+            fontSize: 16,
+            color: '#111827',
+            fontFamily: 'GmarketSansTTFBold',
+          }}
+        >
           모임 추가하기
         </Text>
-        <Text style={{ marginTop: 6, fontSize: 13, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium' }}>
+        <Text
+          style={{
+            marginTop: 6,
+            fontSize: 13,
+            color: '#9CA3AF',
+            fontFamily: 'GmarketSansTTFMedium',
+          }}
+        >
           새 모임을 만들어보세요
         </Text>
       </Pressable>
@@ -260,9 +308,9 @@ export default function HomeScreen() {
             alignItems: 'center',
           }}
         >
-          <Image 
-          source={images.settingIcon}
-          style={{width:25, height: 25}}
+          <Image
+            source={images.settingIcon}
+            style={{ width: 25, height: 25 }}
           />
         </Pressable>
       </View>
@@ -280,22 +328,22 @@ export default function HomeScreen() {
       </Text>
 
       {/* 카드 슬라이더 */}
-<FlatList
-  data={cards}
-  keyExtractor={(item, index) =>
-    item.type === 'group' ? item.group.id : `add-${index}`
-  }
-  renderItem={renderCard}
-  horizontal
-  pagingEnabled
-  showsHorizontalScrollIndicator={false}
-  overScrollMode="never"        
-  bounces={false}              
-  snapToInterval={CARD_WIDTH + CARD_GAP}
-  decelerationRate="fast"
-  contentContainerStyle={{ paddingRight: HORIZONTAL_PADDING }}
-  ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
-/>
+      <FlatList
+        data={cards}
+        keyExtractor={(item, index) =>
+          item.type === 'group' ? item.group.id : `add-${index}`
+        }
+        renderItem={renderCard}
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        overScrollMode="never"
+        bounces={false}
+        snapToInterval={CARD_WIDTH + CARD_GAP}
+        decelerationRate="fast"
+        contentContainerStyle={{ paddingRight: HORIZONTAL_PADDING }}
+        ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
+      />
     </ScreenLayout>
   );
 }
