@@ -7,6 +7,7 @@ import io.ssafy.payment.domain.ai.dto.response.ReceiptParseResponseDto;
 import io.ssafy.payment.global.common.error.CustomException;
 import io.ssafy.payment.global.common.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AiService {
@@ -81,6 +83,7 @@ public class AiService {
             ResponseEntity<String> response = restTemplate.exchange(gmsUrl, HttpMethod.POST, entity, String.class);
             return parseResponse(response.getBody());
         } catch (RestClientException e) {
+            log.error("에러 메시지: {}", e.getMessage(), e);
             throw new CustomException(ErrorCode.AI_SERVICE_ERROR);
         }
     }
@@ -99,6 +102,7 @@ public class AiService {
             String content = root.path("choices").get(0).path("message").path("content").asText();
             return objectMapper.readValue(content, ReceiptParseResponseDto.class);
         } catch (Exception e) {
+            log.error("에러 메시지: {}", e.getMessage(), e);
             throw new CustomException(ErrorCode.AI_PARSE_FAILED);
         }
     }
