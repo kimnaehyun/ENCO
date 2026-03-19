@@ -6,9 +6,9 @@ import {
   Button,
 } from 'react-native';
 import { useEffect, useState } from 'react';
-import QR from './components/QR';
+import QR from './components/BarcodeQR';
 import { Text } from 'react-native-gesture-handler';
-import CardRecommendation from './components/CardRecommendation';
+import CardRecommendation from './components/BarcodeCardRecommendation';
 import PointToggleButton from '../../payment/PointToggleButton';
 import Geolocation from 'react-native-geolocation-service';
 
