@@ -79,7 +79,7 @@ public class AuthorizationHeaderFilter extends AbstractGatewayFilterFactory<Auth
 
     private String getSubject(String jwt) {
         byte[] secretKeyBytes = env.getProperty("jwt.secret").getBytes(StandardCharsets.UTF_8);
-        SecretKey signingKey = new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS512.getJcaName());
+        SecretKey signingKey = new SecretKeySpec(secretKeyBytes, SignatureAlgorithm.HS256.getJcaName());
 
         try {
             JwtParser jwtParser = Jwts.parserBuilder()

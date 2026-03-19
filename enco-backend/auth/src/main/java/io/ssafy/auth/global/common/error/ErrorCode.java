@@ -17,7 +17,9 @@ public enum ErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN, "권한이 없습니다.", "FORBIDDEN"),
     INVITE_NOT_FOUND(HttpStatus.NOT_FOUND, "유효하지 않은 초대 링크입니다.", "INVITE_NOT_FOUND"),
     INVITE_EXPIRED(HttpStatus.GONE, "만료된 초대 링크입니다.", "INVITE_EXPIRED"),
-    ALREADY_GROUP_MEMBER(HttpStatus.CONFLICT, "이미 모임에 참여 중입니다.", "ALREADY_GROUP_MEMBER");
+    ALREADY_GROUP_MEMBER(HttpStatus.CONFLICT, "이미 모임에 참여 중입니다.", "ALREADY_GROUP_MEMBER"),
+    NOT_FOUND_USER(HttpStatus.NOT_FOUND, "사용자가 존재하지 않습니다.", "NOT_FOUND_USER"),
+    NOT_CORRECT_PASSWORD(HttpStatus.NOT_FOUND, "비밀번호가 일치하지 않습니다.", "NOT_CORRECT_PASSWORD");
 
     private final HttpStatus httpStatusCode;
     private final String errorMessage;
