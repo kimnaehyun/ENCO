@@ -4,13 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.math.BigDecimal;
+
 @Getter
 @Builder
 @AllArgsConstructor
 public class DashboardReportResponseDto {
 
     private Long groupId;
-    private Long balance;
-    private Long paidAmount;
-    private Long pointAmount;
+    private BigDecimal balance;
+    private BigDecimal paidAmount;
+    private BigDecimal pointAmount;
 }
