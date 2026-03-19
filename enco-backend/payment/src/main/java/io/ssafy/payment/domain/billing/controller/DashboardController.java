@@ -27,14 +27,6 @@ public class DashboardController {
 
     @GetMapping("/{groupId}/dashboard/report")
     public ResponseEntity<CommonResponse<DashboardReportResponseDto>> getDashboardReport(@PathVariable Long groupId) {
-
-        DashboardReportResponseDto response = DashboardReportResponseDto.builder()
-                .groupId(groupId)
-                .balance(854440L)
-                .paidAmount(854000L)
-                .pointAmount(443L)
-                .build();
-
-        return ResponseEntity.ok(CommonResponse.success(response));
+        return ResponseEntity.ok(CommonResponse.success(dashboardService.getDashboardReport(groupId)));
     }
 }
