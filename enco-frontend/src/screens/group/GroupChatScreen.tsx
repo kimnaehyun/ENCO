@@ -15,61 +15,36 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { CommonParams } from '../../types/common';
 import ChatMessage from '../../components/groupChat/ChatMessage';
 import { Client } from '@stomp/stompjs';
+import { chatService } from '@/services/chatService';
+import { ApiMessage, ChatAction, ChatItem } from '@/types/chat';
 
-type ChatAction =
-  | 'pay'
-  | 'notice'
-  | 'votes'
-  | 'pick'
-  | 'settlement'
-  | 'admin'
-  | 'ledger-unproof'
-  | 'ledger-go';
-
-type ChatItem =
-  | {
-      id: string;
-      type: 'chat'; // ✅ 실제 채팅 메시지
-      senderId: number;
-      content: string;
-      createdAt: string;
-      status: 'sending' | 'sent' | 'failed';
-      metadata: null;
-      roomId: string;
-      messageType: string;
-    }
-  | {
-      id: string;
-      type: 'user'; // ✅ 챗봇 트리거 메시지
-      text: string;
-      createdAt: string;
-    }
-  | {
-      id: string;
-      type: 'bot-actions';
-      text: string;
-      createdAt: string;
-      actions: Array<{ label: string; action: ChatAction }>;
-    }
-  | {
-      id: string;
-      type: 'bot-unpaid-card';
-      text: string;
-      createdAt: string;
-      unpaidCount: number;
-      memberName: string;
-      lastPaidAt: string;
-    }
-  | {
-      id: string;
-      type: 'bot-ledger-card';
-      text: string;
-      createdAt: string;
-      missingCount: number;
-      transactionDate: string;
-      transactionType: string;
-      amount: number;
+// API 응답을 ChatItem으로 변환
+function apiMessageToChatItem(m: ApiMessage): ChatItem {
+  if (m.type === 'CHATBOT_RESPONSE') {
+    return {
+      id: m.messageId,
+      type: 'chatbot',
+      senderName: m.senderName,
+      senderImageUrl: m.senderImageUrl,
+      content: m.content,
+      createdAt: m.createdAt,
     };
+  }
+  // CHAT 또는 기타
+  return {
+    id: m.messageId,
+    type: 'chat',
+    messageType: m.type,
+    roomId: String(m.roomId),
+    senderId: m.senderId ?? 0,
+    senderName: m.senderName,
+    senderImageUrl: m.senderImageUrl,
+    content: m.content,
+    metadata: null,
+    createdAt: m.createdAt,
+    status: 'sent',
+  };
+}
 
 const TEMP_IS_ADMIN = true;
 const formatKRW = (n: number) =>
@@ -89,6 +64,10 @@ export default function GroupChatScreen() {
   const flatListRef = useRef<FlatList<ChatItem>>(null);
   const ROOM_ID = '1001';
 
+  // cursor 기반 페이지네이션 상태
+  const nextCursorRef = useRef<number | null>(null);
+  const isLoadingMoreRef = useRef(false);
+
   const getNowLabel = () => {
     const now = new Date();
     const hours = now.getHours();
@@ -98,21 +77,53 @@ export default function GroupChatScreen() {
     return `${meridiem} ${displayHour}:${minutes}`;
   };
 
+  // 최초 메시지 로드 (cursor 없이)
   useEffect(() => {
-    // 이전 메시지 불러오기
-    fetch(
-      `http://10.0.2.2:8084/api/v1/chat-rooms/${ROOM_ID}/messages?page=0&size=50`,
-    )
-      .then(res => res.json())
-      .then(data => {
-        setMessages(
-          data
-            .reverse()
-            .map((m: any) => ({ ...m, type: 'chat', status: 'sent' })),
+    const fetchMessages = async () => {
+      try {
+        const res = await chatService.get(
+          `api/v1/chat-rooms/${ROOM_ID}/messages`,
+          { params: { size: 50 } },
         );
-      })
-      .catch(e => console.error('❌ 메시지 조회 실패:', e));
 
+        const data = res.data?.result ?? res.data;
+        const rawMessages: ApiMessage[] = data.messages ?? [];
+        nextCursorRef.current = data.nextCursor ?? null;
+
+        setMessages(rawMessages.reverse().map(apiMessageToChatItem));
+      } catch (e) {
+        console.error('❌ 메시지 조회 실패:', e);
+      }
+    };
+
+    fetchMessages();
+  }, []);
+
+  // 이전 메시지 추가 로드 (스크롤 상단 도달 시)
+  const loadMoreMessages = async () => {
+    if (isLoadingMoreRef.current || nextCursorRef.current === null) return;
+    isLoadingMoreRef.current = true;
+
+    try {
+      const res = await chatService.get(
+        `/api/v1/chat-rooms/${ROOM_ID}/messages`,
+        { params: { cursor: nextCursorRef.current, size: 50 } },
+      );
+
+      const data = res.data?.result ?? res.data;
+      const rawMessages: ApiMessage[] = data.messages ?? [];
+      nextCursorRef.current = data.nextCursor ?? null;
+
+      const older = rawMessages.reverse().map(apiMessageToChatItem);
+      setMessages(prev => [...older, ...prev]);
+    } catch (e) {
+      console.error('❌ 이전 메시지 조회 실패:', e);
+    } finally {
+      isLoadingMoreRef.current = false;
+    }
+  };
+
+  useEffect(() => {
     const client = new Client({
       brokerURL: 'ws://10.0.2.2:8084/ws-stomp',
       reconnectDelay: 5000,
@@ -124,7 +135,15 @@ export default function GroupChatScreen() {
 
     client.onConnect = () => {
       client.subscribe(`/sub/chat/room/${ROOM_ID}`, message => {
-        const data = JSON.parse(message.body);
+        const data: ApiMessage = JSON.parse(message.body);
+
+        // CHATBOT_RESPONSE는 바로 chatbot 타입으로 추가
+        if (data.type === 'CHATBOT_RESPONSE') {
+          setMessages(prev => [...prev, apiMessageToChatItem(data)]);
+          return;
+        }
+
+        // 일반 CHAT: optimistic update 매칭 후 교체
         setMessages(prev => {
           const tempIndex = prev.findIndex(
             m =>
@@ -135,10 +154,10 @@ export default function GroupChatScreen() {
           );
           if (tempIndex !== -1) {
             const updated = [...prev];
-            updated[tempIndex] = { ...data, type: 'chat', status: 'sent' };
+            updated[tempIndex] = apiMessageToChatItem(data);
             return updated;
           }
-          return [...prev, { ...data, type: 'chat', status: 'sent' }];
+          return [...prev, apiMessageToChatItem(data)];
         });
       });
     };
@@ -305,7 +324,6 @@ export default function GroupChatScreen() {
     if (!trimmed) return;
 
     if (trimmed === '@햄코') {
-      // 챗봇 트리거는 ChatItem 'user' 타입으로 추가
       appendChatItem({
         id: `user-${Date.now()}`,
         type: 'user',
@@ -317,7 +335,6 @@ export default function GroupChatScreen() {
       return;
     }
 
-    // 일반 메시지는 STOMP로 전송
     sendMessage(trimmed, userId);
   };
 
@@ -378,7 +395,6 @@ export default function GroupChatScreen() {
 
   // ===== 렌더링 =====
   const renderItem: ListRenderItem<ChatItem> = ({ item }) => {
-    // 실제 채팅 메시지
     if (item.type === 'chat') {
       return (
         <ChatMessage
@@ -395,7 +411,27 @@ export default function GroupChatScreen() {
       );
     }
 
-    // 챗봇 트리거 (@햄코)
+    //  서버에서 내려오는 챗봇 응답 (CHATBOT_RESPONSE)
+    if (item.type === 'chatbot') {
+      return (
+        <View style={styles.botRow}>
+          <Image
+            source={
+              item.senderImageUrl
+                ? { uri: item.senderImageUrl }
+                : require('../../assets/icons/nomal_hamco.png')
+            }
+            style={styles.botAvatar}
+            resizeMode="contain"
+          />
+          <View style={styles.botCard}>
+            <Text style={styles.botText}>{item.content}</Text>
+          </View>
+        </View>
+      );
+    }
+
+    // 챗봇 트리거 (@햄코 로컬)
     if (item.type === 'user') {
       return (
         <ChatMessage
@@ -522,6 +558,11 @@ export default function GroupChatScreen() {
         keyExtractor={item => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.listContent}
+        // 상단 스크롤 시 이전 메시지 로드
+        onEndReachedThreshold={0.1}
+        onScrollToIndexFailed={() => {}}
+        onRefresh={loadMoreMessages}
+        refreshing={false}
         onContentSizeChange={() => {
           const last = messages[messages.length - 1];
           if (last?.type === 'chat' && last.senderId === userId) {
@@ -575,8 +616,6 @@ const styles = StyleSheet.create({
     fontFamily: 'GmarketSansTTFBold',
   },
   listContent: { paddingHorizontal: 14, paddingTop: 18, paddingBottom: 16 },
-
-  // ✅ userMessageRow, userBubble, userBubbleText 제거 (ChatMessage로 이동)
 
   botRow: { flexDirection: 'row', alignItems: 'flex-end', marginBottom: 18 },
   botAvatar: { width: 42, height: 42, marginRight: 8, marginBottom: 6 },
