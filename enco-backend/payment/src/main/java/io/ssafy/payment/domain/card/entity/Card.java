@@ -1,5 +1,6 @@
 package io.ssafy.payment.domain.card.entity;
 
+import io.ssafy.payment.domain.account.entity.Account;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -56,6 +57,14 @@ public class Card {
 
     @Column(nullable = false)
     private Boolean isBasic;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "account_id")
+    private Account account;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "card_product_id")
+    private CardProduct cardProduct;
 
     public void softDelete() {
         this.isDeleted = true;

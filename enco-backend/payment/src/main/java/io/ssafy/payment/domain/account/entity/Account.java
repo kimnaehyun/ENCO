@@ -1,5 +1,6 @@
 package io.ssafy.payment.domain.account.entity;
 
+import io.ssafy.payment.domain.card.entity.Card;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -10,6 +11,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity(name = "accounts")
 @Builder
@@ -61,5 +64,9 @@ public class Account {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "product_id")
     private Product product;
+
+    @OneToMany(mappedBy = "account")
+    @Builder.Default
+    private List<Card> cardList = new ArrayList<>();
 
 }
