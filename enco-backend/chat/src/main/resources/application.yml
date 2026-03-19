@@ -25,3 +25,17 @@ spring:
 
 server:
   port: ${CHAT_SERVICE_PORT}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+info:
+  app:
+    name: chat-service
+    description: authentication service
+    version: 0.0.1

@@ -26,3 +26,17 @@ spring:
 
 server:
   port: ${TRAVEL_SERVICE_PORT}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+info:
+  app:
+    name: travel-service
+    description: authentication service
+    version: 0.0.1

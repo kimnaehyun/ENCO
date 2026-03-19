@@ -33,3 +33,17 @@ gms:
   url: ${GMS_URL}
   key: ${GMS_KEY}
   model: ${GMS_MODEL}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+info:
+  app:
+    name: payment-service
+    description: authentication service
+    version: 0.0.1
