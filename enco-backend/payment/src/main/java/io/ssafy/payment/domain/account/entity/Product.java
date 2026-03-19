@@ -49,6 +49,6 @@ public class Product {
 
     private LocalDateTime deletedAt;
 
-    @OneToMany(mappedBy = "account")
+    @OneToMany(mappedBy = "product")
     private List<Account> account = new ArrayList<>();
 }
