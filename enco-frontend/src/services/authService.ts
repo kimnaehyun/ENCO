@@ -85,3 +85,71 @@ export async function signupService(payload: SignupRequest): Promise<SignupRespo
   const response = await authApi.post<SignupResponse>("/auth/regist", payload);
   return response.data;
 }
+
+
+// 통장 개설
+
+export type CreateGroupRequest = {
+    name: string,
+    groupName: string,
+    groupCategory: string[],
+    cardProductId: number,
+    password: string,
+};
+
+export type CreateGroupResponse = {
+    message: string;
+    result: {
+        groupId: number,
+        groupName: string,
+        accountId : number,
+        accountNumber : string,
+        cardId : number,
+        chatRoomId : number,
+    };
+}
+
+export async function createGroup(payload: CreateGroupRequest): Promise<CreateGroupResponse> {
+    const response = await authApi.post<CreateGroupResponse>("/groups/account", payload);
+    return response.data;
+}
+
+
+export type GetGroupTypeResponse = {
+  message : string;
+  result: {
+  typeId: number;
+  typeName: string;
+}[]
+}
+
+export async function getGroupType(): Promise<GetGroupTypeResponse> {
+    const response = await authApi.get<GetGroupTypeResponse>("/groups/types");
+    return response.data;
+}
+
+export type GetRecommendCardListResponse = {
+  message : string;
+  result :{
+    groupCategoryName : string,
+    name : string,
+    years : string,
+    gender : string,
+    recommendedCards : {
+      cardProductId : number,
+      cardName : string,
+      frontImageUrl : string,
+      backImageUrl : string,
+      description : string,
+      cardBenefit:{
+        categoryName : string,
+        discountRate : number,
+      }[]
+    }[]
+  }
+}
+
+export async function getGroupRecommendCardList(): Promise<GetRecommendCardListResponse> {
+    const response = await authApi.get<GetRecommendCardListResponse>("/groups/types");
+    return response.data;
+}
