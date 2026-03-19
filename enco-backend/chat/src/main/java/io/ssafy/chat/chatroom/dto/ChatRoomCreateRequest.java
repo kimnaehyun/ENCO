@@ -10,6 +10,5 @@ import java.util.List;
 public class ChatRoomCreateRequest {
 
     private Long groupId;
-    private Long ownerId;
     private List<Long> participantIds;
 }

@@ -22,17 +22,20 @@ public class ChatRoomController {
      * POST /api/v1/chat-rooms
      */
     @PostMapping
-    public ResponseEntity<ChatRoomResponse> createRoom(@RequestBody ChatRoomCreateRequest request) {
+    public ResponseEntity<ChatRoomResponse> createRoom(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestBody ChatRoomCreateRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(chatRoomService.createRoom(request));
+                .body(chatRoomService.createRoom(userId, request));
     }
 
     /**
      * 내 채팅방 목록 조회
-     * GET /api/v1/chat-rooms?userId=1
+     * GET /api/v1/chat-rooms
      */
     @GetMapping
-    public ResponseEntity<List<ChatRoomResponse>> getMyRooms(@RequestParam Long userId) {
+    public ResponseEntity<List<ChatRoomResponse>> getMyRooms(
+            @RequestHeader("X-User-Id") Long userId) {
         return ResponseEntity.ok(chatRoomService.getMyRooms(userId));
     }
 
@@ -47,23 +50,23 @@ public class ChatRoomController {
 
     /**
      * 채팅방 참여
-     * POST /api/v1/chat-rooms/{chatRoomId}/join?userId=1
+     * POST /api/v1/chat-rooms/{chatRoomId}/join
      */
     @PostMapping("/{chatRoomId}/join")
     public ResponseEntity<ChatRoomResponse> joinRoom(
             @PathVariable String chatRoomId,
-            @RequestParam Long userId) {
+            @RequestHeader("X-User-Id") Long userId) {
         return ResponseEntity.ok(chatRoomService.addParticipant(chatRoomId, userId));
     }
 
     /**
      * 채팅방 나가기
-     * DELETE /api/v1/chat-rooms/{chatRoomId}/leave?userId=1
+     * DELETE /api/v1/chat-rooms/{chatRoomId}/leave
      */
     @DeleteMapping("/{chatRoomId}/leave")
     public ResponseEntity<Void> leaveRoom(
             @PathVariable String chatRoomId,
-            @RequestParam Long userId) {
+            @RequestHeader("X-User-Id") Long userId) {
         chatRoomService.leaveRoom(chatRoomId, userId);
         return ResponseEntity.noContent().build();
     }
