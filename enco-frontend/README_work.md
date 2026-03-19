@@ -45,17 +45,17 @@
 <table width="100%">
     <tr>
         <td width="33%" align="center" valign="bottom">
-            <a href="https://github.com/LOIS-N">
+            <a href="https://github.com/ssafy14cici">
                 <img src="./readme-assets/kys.png" width="160px" />
             </a>
         </td>
         <td width="33%" align="center" valign="bottom">
-            <a href="https://github.com/sujin31">
+            <a href="https://github.com/ssafy14cici">
                 <img src="./readme-assets/khy1.png" width="160px" />
             </a>
         </td>
         <td width="33%" align="center" valign="bottom">
-            <a href="https://github.com/mathmatice180521">
+            <a href="https://github.com/ssafy14cici">
                 <img src="./readme-assets/knh.png" width="160px" />
             </a>
         </td>
@@ -80,29 +80,17 @@
     <tr>
         <td width="33%" valign="top">
             <sub>
-                - 프로젝트 총괄 및 전체 서비스 아키텍처 설계 <br>
-                - Jenkins 기반의 빌드/배포 파이프라인구축 <br>
-                - Docker compose 멀티 컨테이너 서비스 구조 설계 및 배포 <br>
-                - Spring: 회원 관리, 댓글, 좋아요 API 구현, 파일 저장 로직 구현 <br>
-                - 작품 추천 시스템 파이프라인 설계
+                - 작성해주세요 <br>
             </sub>
         </td>
         <td width="33%" valign="top">
             <sub>
-                - 사용자 로그 기반 추천용 데이터 전처리 및 AI 서버·OpenAI REST 연동 구조 설계 <br>
-                - AOP + 비동기·독립 트랜잭션으로 로그 자동 수집 처리 <br>
-                - 로그 집계 취향 분석 구현, Redis로 동시성 및 정합성 확보 <br>
-                - 회원관리, 작품, 감상평, 팬레터, 콜렉트북 등 API 전반 구현 <br>
-                - API 명세서 & 요구사항 정의서 설계
+                - 작성해주세요 <br>
             </sub>
         </td>
         <td width="33%" valign="top">
             <sub>
-                - 작품 추천 시스템 파이프 라인 설계 <br>
-                - 사진 더미 데이터 생산 및 추천 알고리즘 학습을 위한 유저 로그 로직 설정 <br>
-                - CLIP, SASRec을 사용한 데이터 임베딩 <br>
-                - TwoTower을 사용하여 사용자 로그 기반 추천 모델 설계/학습 <br>
-                - Runpod, BentoML을 이용한 외부 AI 추론 서버 구축
+                - 작성해주세요 <br>
             </sub>
         </td>
     </tr>
@@ -119,7 +107,7 @@
         </td>
         <td width="33%" align="center" valign="bottom">
             <a href="https://github.com/ssafy14cici">
-                <img src="./readme-assets/jhs.png" width="160px" />
+                <img src="./readme-assets/jhs1.png" width="160px" />
             </a>
         </td>
         <td width="33%" align="center" valign="bottom">
@@ -151,30 +139,17 @@
     <tr>
         <td width="33%" valign="top">
             <sub>
-                - React 기반 작품상세 페이지 API 연동 및 상태 기반 UI 설계·구현 <br>
-                - 서비스 운영 필수 이용자 지침·약관 페이지 구조 설계 및 UI 일관성 정비 <br>
-                - 중간·최종 발표 발표자 및 PR 리딩 <br>
-                - Premiere, Movavi 기반 영상 포트폴리오 제작 및 PowerPoint·Canva 활용 발표 자료 기획·디자인 총괄 <br>
-                - Grok 및 Veo, Sora 활용 AI 영상 및 이미지 콘텐츠 제작
+                - 작성해주세요 <br>
             </sub>
         </td>
         <td width="33%" valign="top">
             <sub>
-                - React + TypeScript + Vite 기반 FE 아키텍처 설계, 라우팅/전역 상태(Zustand) 구축 <br>
-                - 로그인/회원가입(이메일 인증 포함) 및 role 기반 Guard로 인증·권한 플로우 구현 <br>
-                - AppLayout·Navbar 전역 UI 구현(라우트 기반 navVariant 분기, 반응형, 모달/전환 UX 정리) <br>
-                - 작품 피드/상세/검색 + 정렬/토글/무한 스크롤로 탐색 UX 완성 <br>
-                - 리뷰·댓글 CRUD, 팔로우·팬레터(답변 포함) 등 커뮤니티/상호작용 기능 연동 <br>
-                - QR 티켓 발급·스캔 수집 → 콜렉트북 + ‘너의 취향은’(MBTI)·리마인드 퀴즈 기능 구현
+                - 작성해주세요 <br>
             </sub>
         </td>
         <td width="33%" valign="top">
             <sub>
-                - Three.js + React Three Fiber(@react-three/drei) 기반 3D 전시장 FE 구현, 씬 구조/카메라·조명/환경(HDRI) 세팅 <br>
-                - Blender로 에셋 커스텀, 간판/패널 등 오브젝트 제작 후 GLB 통합 <br>
-                - 웨이포인트 동선 설계로 관람 흐름 최적화, 조작법 오버레이로 초기 진입 UX 보완 <br>
-                - 대용량 GLB/텍스처 로딩 병목을 에셋/텍스처 최적화 + 브라우저 캐싱으로 개선 <br>
-                - AppLayout·Navbar/메뉴 IA 정리로 전역 탐색 흐름·화면 일관성 개선, 팬레터·티켓(디자인 추가)·프로필·회원가입 등 주요 페이지 UI(CSS) 구현 및 전역 스크롤/BGM/폰트/푸터 설정 반영
+                - 작성해주세요 <br>
             </sub>
         </td>
     </tr>
@@ -197,23 +172,18 @@
 <img src="https://img.shields.io/badge/html5-%23E34F26.svg?style=for-the-badge&logo=html5&logoColor=white">
 <img src="https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white">
 <br>
-<img src="https://img.shields.io/badge/react-61DAFB?style=for-the-badge&logo=react&logoColor=white">
-<img src="https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white">
-<img src="https://img.shields.io/badge/React_Router-CA4245?style=for-the-badge&logo=react-router&logoColor=white">
+<img src="https://img.shields.io/badge/React_Native-61DAFB?style=for-the-badge&logo=react&logoColor=white">
+<img src="https://img.shields.io/badge/Expo-000020?style=for-the-badge&logo=expo&logoColor=white">
+<img src="https://img.shields.io/badge/NativeWind-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white">
 <img src="https://img.shields.io/badge/Zustand-orange?style=for-the-badge&logo=Rss&logoColor=white">
-<br>
-<img src="https://img.shields.io/badge/Three.js-000000?style=for-the-badge&logo=Three.js&logoColor=white">
-<img src="https://img.shields.io/badge/React%20Three%20Fiber-000000?style=for-the-badge&logo=react&logoColor=white">
-<img src="https://img.shields.io/badge/Blender-E87D0D?style=for-the-badge&logo=Blender&logoColor=white">
-
 <br>
 
 | **Category** | **Stack** |
 |:---:|:---|
 | **Language** | TypeScript 5.8.3 |
-| **Framework** | React 19.1.0, React Router 7.7.0 |
-| **Library** | Zustand 5.0.6, Axios 1.10.0, React Three Fiber, Drei, Emotion 11.14.0 |
-| **Build Tool** | Vite 6.3.1 |
+| **Framework** | React Native 0.78.0 (Expo SDK 52) |
+| **Library** | Zustand 5.0.6, Axios 1.10.0, NativeWind, React Navigation |
+| **Tool** | Metro Bundler, Prettier, ESLint |
 | **IDE** | Visual Studio Code 1.103.1 |
 
 </div>
@@ -222,35 +192,29 @@
 
 <div align="center">
 
-<img src="https://img.shields.io/badge/IntelliJ_IDEA-black?style=for-the-badge&logo=intellijidea">
-<img src="https://img.shields.io/badge/Java-orange?style=for-the-badge&logo=openjdk">
-<img src="https://img.shields.io/badge/Gradle-02303A?style=for-the-badge&logo=gradle">
+<img src="https://img.shields.io/badge/Java-orange?style=for-the-badge&logo=openjdk&logoColor=white">
+<img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white">
+<img src="https://img.shields.io/badge/Spring_Data_JPA-6DB33F?style=for-the-badge&logo=spring&logoColor=white">
+<img src="https://img.shields.io/badge/Querydsl-0769AD?style=for-the-badge&logo=jquery&logoColor=white">
 <br>
-<img src="https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot">
-<img src="https://img.shields.io/badge/Spring_Security-6DB33F?style=for-the-badge&logo=springsecurity">
-<img src="https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=jsonwebtokens">
-<br>
-<img src="https://img.shields.io/badge/Hibernate-59666C?style=for-the-badge&logo=hibernate">
-<img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql">
-<img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis">
-<br>
-<img src="https://img.shields.io/badge/Swagger-85EA2D?style=for-the-badge&logo=swagger">
-<img src="https://img.shields.io/badge/OpenAI-black?style=for-the-badge&logo=openai">
-
+<img src="https://img.shields.io/badge/Apache_Kafka-231F20?style=for-the-badge&logo=apachekafka&logoColor=white">
+<img src="https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white">
+<img src="https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white">
+<img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white">
 <br>
 
 | **Category** | **Stack** |
 |:---:|:---|
 | **Language** | Java 17 |
 | **Framework** | Spring Boot 3.5.9 |
-| **Library** | Spring Security, Spring Data JPA, Spring Data Redis, <br> Spring Batch, Spring Validation, Springdoc OpenAPI, <br> JWT (jjwt), Lombok |
+| **BE Stack** | Spring Data JPA, Querydsl, Apache Kafka, Spring Security, JWT |
+| **Database** | MySQL 8.0, MongoDB, Redis 7.4 |
 | **Build Tool** | Gradle 8.14.3 |
-| **Database** | MySQL 8.0, Redis 7.4 |
 | **IDE** | IntelliJ IDEA 2023.3.8 (Ultimate Edition) |
 
 </div>
 
-### 🤖 AI
+### 🤖 AI -> 수정 필요 
 
 <div align="center">
 
@@ -278,43 +242,43 @@
 
 </div>
 
-### ⚙️ DevOps
+### ⚙️ Infra & DevOps
 
 <div align="center">
 
-<img src="https://img.shields.io/badge/GitLab-FC6D26?style=for-the-badge&logo=gitlab&logoColor=white">
-<img src="https://img.shields.io/badge/Git-F05032?style=for-the-badge&logo=git&logoColor=white">
+<img src="https://img.shields.io/badge/AWS_EC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white">
+<img src="https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white">
+<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white">
 <img src="https://img.shields.io/badge/Jenkins-D24939?style=for-the-badge&logo=jenkins&logoColor=white">
 <br>
-<img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white">
-<img src="https://img.shields.io/badge/Docker_Compose-2496ED?style=for-the-badge&logo=docker&logoColor=white">
+<img src="https://img.shields.io/badge/n8n-FF6D5B?style=for-the-badge&logo=n8n&logoColor=white">
 <img src="https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white">
+<img src="https://img.shields.io/badge/GitLab-FC6D26?style=for-the-badge&logo=gitlab&logoColor=white">
 <br>
-<img src="https://img.shields.io/badge/SSH-4D4D4D?style=for-the-badge&logo=openssh&logoColor=white">
-<img src="https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white">
+<img src="https://img.shields.io/badge/Jira-0052CC?style=for-the-badge&logo=jira&logoColor=white">
 <img src="https://img.shields.io/badge/Mattermost-0058CC?style=for-the-badge&logo=mattermost&logoColor=white">
+<img src="https://img.shields.io/badge/Ubuntu-E95420?style=for-the-badge&logo=ubuntu&logoColor=white">
 
 <br>
 
-#### 서버 스펙
+#### 서버 스펙 -> 확인 후 수정
 | **요소** | **스펙** |
 |:---:|:---:|
-| **CPU** | 4vCPUs |
-| **RAM** | 16 GB |
-| **Storage (Disk)** | SSD: 320 GB |
+| **Provider** | AWS (Amazon Web Services) |
+| **Instance** | EC2 (4vCPUs, 16 GB RAM) |
+| **Storage** | SSD 320 GB |
 
 <br>
 
-#### 사용 기술
-| **기술** | **버전** |
-|:---:|:---:|
-| **Jenkins** | 2.528.3 |
-| **Docker** | 29.1.5 |
-| **Docker Compose** | 5.0.1 |
-| **Nginx** | 1.29.4-alpine |
-| **SSH** | 9.6 |
-| **Ubuntu** | 24.04.3 LTS |
-| **Mattermost** | 10.11.9 |
+#### 사용 기술 및 도구 -> 확인 후 수정
+| **Category** | **Stack** |
+|:---:|:---|
+| **Orchestration** | Kubernetes, Docker, Docker Compose |
+| **CI/CD** | Jenkins, GitLab Runner |
+| **Automation** | n8n (Workflow Automation) |
+| **Web Server** | Nginx |
+| **Collaboration** | Jira, Mattermost, GitLab |
+| **OS** | Ubuntu 24.04.3 LTS |
 
 </div>
 
@@ -352,46 +316,36 @@
 
 <a name="skills"></a>
 
-### 🎨 주요 기능
+### 💰 주요 기능 (Key Features)
 
-#### 1️⃣ 사용자 인증 및 권한 관리
-- **회원가입/로그인**: 이메일 인증 기반 회원가입, JWT 토큰 기반 인증
-- **역할 구분**: 일반 사용자(General) / 아티스트(Artist) 권한 분리
-- **OAuth2 연동**: 소셜 로그인 지원
+#### 1️⃣ 투명한 모임 자산 관리
+- **🧾 증빙 기반 지출 기록**: 영수증 등 증빙 자료를 기반으로 모든 지출을 투명하게 기록
+- **📄 내역 간편 문서화**: 복잡한 거래 내역을 클릭 한 번으로 간편하게 문서화(PDF/CSV)
+- **📊 통계 시각화**: 모임 자금의 흐름과 카테고리별 지출 현황을 한눈에 파악하는 대시보드
 
-#### 2️⃣ 작품 탐색 및 검색
-- **작품 피드**: 무한 스크롤 기반 작품 목록
-- **상세 보기**: 작품 정보, 작가 정보, 관련 리뷰
-- **검색 및 필터링**: 카테고리, 정렬 옵션 제공
-- **작품 업로드**: 아티스트 전용 작품 등록/수정/삭제
+#### 2️⃣ 스마트한 회비 및 정산 프로세스
+- **🔍 납부 상태 시각화**: 구성원별 회비 납부 현황을 실시간 그래프와 리스트로 공유
+- **🔔 미납자 자동 알림**: 정해진 납부일에 맞춰 미납자에게 푸시 알림 및 자동 리마인더 발송
+- **🔄 All-in-One 관리**: 계획 수립부터 실제 결제, 정산, 결과 공유까지 앱 내에서 전 과정 관리
 
-#### 3️⃣ 커뮤니티
-- **리뷰 시스템**: 작품에 대한 리뷰 작성/조회/수정/삭제
-- **댓글**: 리뷰에 대한 댓글 작성 및 관리
-- **팔로우**: 아티스트/사용자 팔로우 기능
-- **팬레터**: 일반 사용자 → 아티스트 팬레터 전송 및 답변
+#### 3️⃣ 커뮤니케이션 & 지능형 서비스
+- **💬 모임 전용 채팅**: 모임원 간의 원활한 소통과 의사결정을 위한 실시간 채팅 환경
+- **🤖 스마트 챗봇**: 자산 내역 조회, 일정 관리, 자주 묻는 질문을 해결해 주는 전용 챗봇
+- **⚙️ 자동화 워크플로우**: n8n을 활용한 지출 승인 및 알림 자동화 파이프라인 구축
 
-#### 4️⃣ 콜렉트북 (QR 티켓)
-- **QR 티켓 발급**: 아티스트가 전시/작품용 QR 티켓 생성
-- **QR 스캔 수집**: 일반 사용자가 QR 스캔으로 작품 수집
-- **콜렉트북**: 수집한 작품 목록 및 상세 보기
+#### 4️⃣ 데이터 기반 금융 솔루션
+- **🛍️ 맞춤형 상품 추천**: 모임의 거래 규모와 소비 패턴을 분석하여 최적의 금융 상품 추천
+- **📈 지출 패턴 분석**: 과거 데이터를 기반으로 다음 모임의 예상 비용 및 최적 예산 제안
 
-#### 5️⃣ 개인화 추천
-- **AI 추천 시스템**: SASRec + Two-Tower 모델 기반 작품 추천
-- **취향 분석**: 사용자 행동 로그 기반 취향 분석
-- **MBTI 매칭**: 예술 취향 MBTI 결과 제공
-- **리마인드 퀴즈**: 과거 감상 작품 기반 퀴즈
-
-#### 6️⃣ 3D 전시관
-- **Hall**: 메인 전시 홀(React Three Fiber)
-- **Exhibit**: 아티스트별 개별 전시 공간
-- **3D 인터랙션**: Blender GLB 에셋 기반 몰입형 전시 경험
+#### 5️⃣ 보안 및 인증
+- **🔐 안전한 권한 관리**: JWT 기반 인증과 모임별 접근 권한 분리로 데이터 보안 강화
+- **🛡️ 거래 이력 추적**: 모든 지출 내역의 수정/삭제 이력을 투명하게 관리하여 신뢰도 확보
 
 ## 🏛️ 기능 시연
 
 <a name="feature"></a>
 
-### 🖥️ 화면 구성 및 기능
+### 🖥️ 화면 구성 및 기능 -> 수정 예정
 
 <div align="center">
 
@@ -543,7 +497,7 @@
 
 </div>
 
-### 🖥️ 실제 기능 시연
+### 🖥️ 실제 기능 시연 -> 수정 예정
 
 <div>
 
@@ -593,7 +547,7 @@
 
 <details align="left">
   <summary>
-    <strong>Frontend 프로젝트 구조</strong>
+    <strong>Frontend 프로젝트 구조 -> 수정 예정</strong>
   </summary>
 
 ```
@@ -652,7 +606,7 @@
 
 <details align="left">
   <summary>
-    <strong>Backend 프로젝트 구조</strong>
+    <strong>Backend 프로젝트 구조 -> 수정 예정</strong>
   </summary>
 
 ```
@@ -734,7 +688,7 @@
 
 <details align="left">
   <summary>
-    <strong>AI 프로젝트 구조</strong>
+    <strong>AI 프로젝트 구조 -> 수정 예정</strong>
   </summary>
 
 ```
@@ -870,32 +824,19 @@ DEVICE=cuda:0
 ## 📝 주요 기술적 특징
 
 ### 🔐 보안
-- JWT 기반 인증/권한 시스템
-- Spring Security를 통한 API 보안
-- CORS 정책 적용
+- 작성 예정
 
 ### 🚀 성능 최적화
-- Redis 캐싱 전략
-- 이미지 CDN 활용 (AWS S3)
-- React 코드 스플리팅 및 Lazy Loading
-- 무한 스크롤 최적화
+- 작성 예정
 
 ### 🤖 AI/ML
-- SASRec (Self-Attentive Sequential Recommendation)
-- Two-Tower 모델 기반 협업 필터링
-- CLIP 기반 작품 임베딩
-- ChromaDB를 통한 벡터 검색
+- 작성 예정
 
 ### 🎨 3D 경험
-- React Three Fiber 기반 3D 전시관
-- Blender GLB 에셋 최적화
-- 부드러운 카메라 이동 및 인터랙션
+- 작성 예정
 
 ### 📦 CI/CD
-- Jenkins 기반 자동 배포
-- Docker 컨테이너화
-- Nginx 리버스 프록시
-- Blue-Green 배포 전략
+- 작성 예정
 
 ---
 
@@ -903,10 +844,10 @@ DEVICE=cuda:0
 
 ## 🎉 Thank You!
 
-**ARNNECT** | 예술로 연결되는 세상
+**ENCO** | 모임을 더 안전하고 똑똑하게 관리하는 방법
 
 ---
 
-**© 2026 ARNNECT Team. All rights reserved.**
+**© 2026 ENCO Team. All rights reserved.**
 
 </div>
