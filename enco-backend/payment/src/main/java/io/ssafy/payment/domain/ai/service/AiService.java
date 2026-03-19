@@ -4,10 +4,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ssafy.payment.domain.ai.dto.request.ReceiptParseRequestDto;
 import io.ssafy.payment.domain.ai.dto.response.ReceiptParseResponseDto;
+import io.ssafy.payment.global.common.error.CustomException;
+import io.ssafy.payment.global.common.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
@@ -73,9 +76,13 @@ public class AiService {
         );
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
-        ResponseEntity<String> response = restTemplate.exchange(gmsUrl, HttpMethod.POST, entity, String.class);
 
-        return parseResponse(response.getBody());
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(gmsUrl, HttpMethod.POST, entity, String.class);
+            return parseResponse(response.getBody());
+        } catch (RestClientException e) {
+            throw new CustomException(ErrorCode.AI_SERVICE_ERROR);
+        }
     }
 
     private List<Map<String, String>> buildMessages(String ocrRawText, String normalizedText) {
@@ -92,7 +99,7 @@ public class AiService {
             String content = root.path("choices").get(0).path("message").path("content").asText();
             return objectMapper.readValue(content, ReceiptParseResponseDto.class);
         } catch (Exception e) {
-            throw new RuntimeException("AI 응답 파싱 실패", e);
+            throw new CustomException(ErrorCode.AI_PARSE_FAILED);
         }
     }
 }
