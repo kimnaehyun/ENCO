@@ -33,3 +33,12 @@ gms:
   url: ${GMS_URL}
   key: ${GMS_KEY}
   model: ${GMS_MODEL}
+
+minio:
+  endpoint: ${MINIO_ROOT_USER}
+  access-key: ${MINIO_ROOT_USER}
+  secret-key: ${MINIO_ROOT_USER}
+  bucket: ${MINIO_ROOT_USER}
+
+app:
+  file-base-url: ${FILE_BASE_URL}
