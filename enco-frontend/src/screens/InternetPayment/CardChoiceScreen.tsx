@@ -3,11 +3,11 @@ import React, { useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { images } from '../../types/images';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import CardRecommendation from '../../components/onsite/Barcode/components/BarcodeCardRecommendation';
 import KeyValueRow from '../../components/common/KeyValueRow';
 import PointToggleButton from '../../components/payment/PointToggleButton';
 import PayButton from '../../components/internet/PayButton';
 import ScreenLayout from '../../components/ScreenLayout';
+import BarcodeCardRecommendation from '@/components/onsite/Barcode/BarcodeCardRecommendation';
 
 export default function CardChoiceScreen() {
   const navigation = useNavigation<any>();
@@ -29,7 +29,7 @@ export default function CardChoiceScreen() {
         </View>
         <View className="flex-1">
           <View className="h-96">
-            <CardRecommendation onSelectCard={setCardNumber} />
+            <BarcodeCardRecommendation onSelectCard={setCardNumber} />
           </View>
           <View className="flex-1 gap-5">
             <KeyValueRow title="금액">

@@ -1,6 +1,6 @@
 import { Animated, Dimensions } from 'react-native';
 import { useRef } from 'react';
-import Card from './BarcodeCard';
+import BarcodeCard from './BarcodeCard';
 import { CARD_WIDTH, ITEM_SIZE } from '@/constants/carousel';
 import { images } from '@/types/images';
 
@@ -39,7 +39,7 @@ export default function BarcodeCardRecommendation({
       )}
       scrollEventThrottle={16}
       renderItem={({ item, index }) => (
-        <Card item={item} index={index} scrollX={scrollX} />
+        <BarcodeCard item={item} index={index} scrollX={scrollX} />
       )}
       onMomentumScrollEnd={event => {
         const offsetX = event.nativeEvent.contentOffset.x;
