@@ -5,7 +5,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
 import { images } from '../../types/images';
-import { getGroupSettings, updateGroupSettings } from '../../services/groupService';
+import { getGroupSettings, updateGroupSettings, getGroupMembers, updateGroupMemberRole } from '../../services/groupService';
 
 const TAGS = ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'];
 const TAG_TYPE_ID_MAP = {여행: 1, 스포츠: 2, 문화생활: 3, 경조사: 4, 공과금: 5, 음식: 6};
@@ -70,9 +70,14 @@ export default function GroupInfoScreen() {
   const fetchGroupSettings = async () => {
     try {
       console.log('groupId 확인:', groupId);
+
       const data = await getGroupSettings(groupId);
       console.log('모임 설정 조회 성공:', data);
       console.log('result만 확인:', data.result);
+
+      const membersData = await getGroupMembers(groupId);
+      console.log('모임원 목록 조회 성공:', membersData);
+      console.log('멤버 배열:', membersData.result.members);
     } catch (error: any) {
       console.error('error.response.data:', error?.response?.data);
     }
@@ -102,6 +107,35 @@ export default function GroupInfoScreen() {
     if (!isEdit) return;
     setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
   };
+
+  // 모임 권한 수정 임시 테스트 코드 
+    const handleTestUpdateRole = async () => {
+  try {
+    const targetUserId = 2;
+
+    const response = await updateGroupMemberRole(groupId, targetUserId, {
+      role: 'TREASURER',
+    });
+
+    console.log('모임원 권한 변경 성공:', response);
+    console.log('권한 변경 result:', response.result);
+
+    Alert.alert('성공', '권한 변경 요청이 성공했습니다.');
+  } catch (error: any) {
+    console.error('모임원 권한 변경 실패:', error);
+    console.error('error.response?.status:', error?.response?.status);
+    console.error('error.response?.data:', error?.response?.data);
+
+    const errorData = error?.response?.data;
+    const errorMessage =
+      typeof errorData === 'object' && errorData?.message
+        ? errorData.message
+        : '권한 변경 중 오류가 발생했습니다.';
+
+    Alert.alert('오류', errorMessage);
+  }
+};
+
 
   const onToggleEdit = async () => {
     if (!isAdmin) return;
@@ -138,6 +172,22 @@ export default function GroupInfoScreen() {
   return (
     <ScreenLayout>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+        <Pressable
+          onPress={handleTestUpdateRole}
+          style={{
+            backgroundColor: '#1428A0',
+            borderRadius: 12,
+            paddingVertical: 12,
+            alignItems: 'center',
+            marginBottom: 16,
+          }}
+        >
+          <Text style={{ color: '#fff', fontSize: 14, fontFamily: 'GmarketSansTTFMedium' }}>
+            권한 변경 API 테스트
+          </Text>
+        </Pressable>
+
+
         {/* 헤더 */}
         <View className="flex-row items-center justify-between mb-5">
           <Text style={styles.headerTitle}>모임 정보</Text>

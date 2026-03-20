@@ -83,15 +83,19 @@ export default function GroupAnalyticsScreen() {
           <StatCard label="현재 잔액" value={`${currentBalance.toLocaleString()}원`} />
         </View>
 
-        <BudgetGaugeCard
-          budget={monthlyBudget}
-          spent={totalExpense}
-        />
+        <View style={{ marginBottom: 16 }}>
+          <BudgetGaugeCard
+            budget={monthlyBudget}
+            spent={totalExpense}
+          />
+        </View>
 
-        <ExpenseCategoryCard
-          totalExpense={totalExpense}
-          categories={categoryData}
-        />
+        <View style={{ marginBottom: 16 }}>
+          <ExpenseCategoryCard
+            totalExpense={totalExpense}
+            categories={categoryData}
+          />
+        </View>
 
         <MonthlyTrendCard data={monthlyData} />
       </ScrollView>

@@ -52,6 +52,8 @@ export type GroupStackParamList = {
   GroupPay: CommonParams | undefined;
   GroupChat: CommonParams | undefined;
   GroupLedger: CommonParams | undefined;
+  GroupAttendance: CommonParams | undefined;
+
   AdminMenu: CommonParams | undefined;
   AdminReceipt: CommonParams | undefined;
   AdminMembers: CommonParams | undefined;
@@ -160,6 +162,8 @@ export type HomeStackParamList = {
   GroupPay: CommonParams | undefined;
   GroupChat: CommonParams | undefined;
   GroupLedger: CommonParams | undefined;
+  GroupAttendance: CommonParams | undefined;
+  GroupAnalytics: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
   VoteCreate: CommonParams | undefined;
   AdminMenu: CommonParams | undefined;

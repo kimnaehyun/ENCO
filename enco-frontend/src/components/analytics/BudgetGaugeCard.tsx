@@ -59,11 +59,11 @@ export default function BudgetGaugeCard({
   const cy = 130;
   const radius = 82;
 
-  const startAngle = 180;
-  const endAngle = 180 + 180 * clampedPercent;
+  const startAngle = 270;
+  const endAngle = 270 + 180 * clampedPercent;
 
   const backgroundArc = useMemo(
-    () => describeArc(cx, cy, radius, 180, 360),
+    () => describeArc(cx, cy, radius, 270, 450),
     [cx, cy, radius]
   );
 
@@ -87,20 +87,19 @@ export default function BudgetGaugeCard({
         <Svg width={width} height={chartHeight}>
           <Defs>
             <LinearGradient id="budgetSafe" x1="0%" y1="0%" x2="100%" y2="0%">
-              <Stop offset="0%" stopColor="#1428A0" />
-              <Stop offset="100%" stopColor="#60A5FA" />
+              <Stop offset="0%" stopColor="#6366F1" />
+              <Stop offset="100%" stopColor="#38BDF8" />
             </LinearGradient>
 
             <LinearGradient id="budgetWarn" x1="0%" y1="0%" x2="100%" y2="0%">
-              <Stop offset="0%" stopColor="#1428A0" />
-              <Stop offset="70%" stopColor="#F59E0B" />
-              <Stop offset="100%" stopColor="#EF4444" />
+              <Stop offset="0%" stopColor="#FB923C" />
+              <Stop offset="100%" stopColor="#F43F5E" />
             </LinearGradient>
           </Defs>
 
           <Path
             d={backgroundArc}
-            stroke="#E5E7EB"
+            stroke="#EEF2FF"
             strokeWidth={18}
             fill="none"
             strokeLinecap="round"
@@ -183,7 +182,7 @@ const styles = StyleSheet.create({
   },
   centerTextWrap: {
     position: 'absolute',
-    top: 52,
+    top: 72,
     alignItems: 'center',
   },
   centerLabel: {
