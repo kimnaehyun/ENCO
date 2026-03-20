@@ -1,4 +1,5 @@
 import axios from "axios";
+import { getCachedAccessToken } from "../utils/tokenStorage";
 
 const AUTH_BASE_URL = "https://api.ssafywte.site/auth-service/api/v1";
 
@@ -8,6 +9,15 @@ const authApi = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+});
+
+// 요청마다 토큰 자동 주입 (토큰이 있을 때만)
+authApi.interceptors.request.use(config => {
+  const token = getCachedAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 // ── 로그인 ──
@@ -87,7 +97,7 @@ export async function signupService(payload: SignupRequest): Promise<SignupRespo
 }
 
 
-// 통장 개설
+// ── 통장 개설 (POST /groups/account) ──
 
 export type CreateGroupRequest = {
     name: string,
@@ -102,10 +112,10 @@ export type CreateGroupResponse = {
     result: {
         groupId: number,
         groupName: string,
-        accountId : number,
-        accountNumber : string,
-        cardId : number,
-        chatRoomId : number,
+        accountId: number,
+        accountNumber: string,
+        cardId: number,
+        chatRoomId: number,
     };
 }
 
@@ -115,41 +125,20 @@ export async function createGroup(payload: CreateGroupRequest): Promise<CreateGr
 }
 
 
-export type GetGroupTypeResponse = {
-  message : string;
-  result: {
+// ── 모임 타입(카테고리) 조회 (GET /groups/types) ──
+// 응답: { message: "...", result: [{typeId, typeName}, ...] }
+
+export type GroupTypeItem = {
   typeId: number;
   typeName: string;
-}[]
+};
+
+export type GetGroupTypeResponse = {
+  message: string;
+  result: GroupTypeItem[];
 }
 
 export async function getGroupType(): Promise<GetGroupTypeResponse> {
     const response = await authApi.get<GetGroupTypeResponse>("/groups/types");
-    return response.data;
-}
-
-export type GetRecommendCardListResponse = {
-  message : string;
-  result :{
-    groupCategoryName : string,
-    name : string,
-    years : string,
-    gender : string,
-    recommendedCards : {
-      cardProductId : number,
-      cardName : string,
-      frontImageUrl : string,
-      backImageUrl : string,
-      description : string,
-      cardBenefit:{
-        categoryName : string,
-        discountRate : number,
-      }[]
-    }[]
-  }
-}
-
-export async function getGroupRecommendCardList(): Promise<GetRecommendCardListResponse> {
-    const response = await authApi.get<GetRecommendCardListResponse>("/groups/types");
     return response.data;
 }

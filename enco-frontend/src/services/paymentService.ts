@@ -1,6 +1,6 @@
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
-
+import { getCachedAccessToken } from "../utils/tokenStorage";
 
 const PAYMENT_BASE_URL = "https://api.ssafywte.site/payment-service/api/v1";
 
@@ -12,20 +12,34 @@ const paymentApi = axios.create({
     },
 });
 
+// 요청마다 토큰 자동 주입
+paymentApi.interceptors.request.use(config => {
+    const token = getCachedAccessToken();
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+});
 
+
+// ── 카드 상세 조회 (GET /cards/{cardProductId}) ──
+// 응답: { message: "...", result: { id, name, baseSpending, ... } }
+
+export type CardDetailResult = {
+    id: number;
+    name: string;
+    baseSpending: number;
+    maxBenefitLimit: number;
+    description: string;
+    maxLimit: number;
+    frontImageUrl: string;
+    backImageUrl: string;
+};
 
 export type GetCardDetailResponse = {
     message: string;
-    result: {
-        name: string,
-        baseSpending: number,
-        maxBenefitLimit: number,
-        description: string,
-        maxLimit: number,
-        frontImageUrl: string,
-        backImageUrl: string
-    }
-}
+    result: CardDetailResult;
+};
 
 export async function getCardDetail(cardProductId: number): Promise<GetCardDetailResponse> {
     const response = await paymentApi.get<GetCardDetailResponse>(
@@ -34,21 +48,28 @@ export async function getCardDetail(cardProductId: number): Promise<GetCardDetai
     return response.data;
 }
 
+// ── 전체 카드 목록 조회 (GET /cards) ──
+// 응답: { message: "...", result: [{ id, name, frontImageUrl, ... }] }
+
+export type CardBenefitItem = {
+    categoryName: string;
+    discountRate: number;
+};
+
+export type CardListItem = {
+    id: number;
+    name: string;
+    frontImageUrl: string;
+    backImageUrl: string;
+    baseSpending: number;
+    maxBenefitLimit: number;
+    benefits: CardBenefitItem[];
+};
+
 export type GetCardListResponse = {
     message: string;
-    result: {
-        cardId: number,
-        cardName: string,
-        frontImageUrl: string,
-        backImageUrl: string,
-        basespending: number,
-        maxbenefitLimit: number,
-        benefits: {
-            categoryName: string,
-            discountRate: number;
-        }[]
-    }[]
-}
+    result: CardListItem[];
+};
 
 export async function getCardList(): Promise<GetCardListResponse> {
     const response = await paymentApi.get<GetCardListResponse>("/cards");
@@ -97,6 +118,7 @@ export async function duesPayment(
     );
     return response.data;
 }
+
 export type SelectedDuesPaymentRequest = {
     amount: number;
     targetChargeTargetIds: number[];
@@ -104,7 +126,6 @@ export type SelectedDuesPaymentRequest = {
     depositDisplayName: string;
     memo: string;
 };
-
 
 export async function selectedDuesPayment(
     groupId: number,
@@ -123,24 +144,24 @@ export async function selectedDuesPayment(
 }
 
 export type GetUnpaidDuesResponse = {
-    message : string;
-    result : {
-        groupId : number,
-        userId : number,
-        totalUnpaidAmount : number,
-        totalUnpaidCount : number,
-        charges : {
-            chargeTargetId : number,
-            chargeId : number,
-            title : string,
-            amout : number,
-            paidAmount : number,
-            remainingAmount : number,
+    message: string;
+    result: {
+        groupId: number,
+        userId: number,
+        totalUnpaidAmount: number,
+        totalUnpaidCount: number,
+        charges: {
+            chargeTargetId: number,
+            chargeId: number,
+            title: string,
+            amout: number,
+            paidAmount: number,
+            remainingAmount: number,
         }[]
     }
 }
 
-export async function getUnpaidDues(groupId : number) : Promise<GetUnpaidDuesResponse>{
+export async function getUnpaidDues(groupId: number): Promise<GetUnpaidDuesResponse> {
     const response = await paymentApi.get<GetUnpaidDuesResponse>(
         `/groups/${groupId}/dues/unpaid`);
     return response.data;
