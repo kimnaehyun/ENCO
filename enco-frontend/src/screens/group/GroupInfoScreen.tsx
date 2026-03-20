@@ -58,7 +58,7 @@ export default function GroupInfoScreen() {
     amount: '10,000',
     rate: '80',
   });
-  const [groundRules, setGroundRules] = useState(
+  const [groundRules, setgroundRules] = useState(
     '1. 아프면 사형\n2. 일정공유 잘하기\n3. MM 확인 체크하기\n4. 부드러운 말투로 대화해용',
   );
   const [representativeCardId, setRepresentativeCardId] = useState<string>(ISSUED_CARDS[0].id);
@@ -75,9 +75,14 @@ export default function GroupInfoScreen() {
       console.log('모임 설정 조회 성공:', data);
       console.log('result만 확인:', data.result);
 
+      const result = data.result;
+      setIntro(result.introduction ?? '');
+      setSelectedTags((result.types ?? []).map(type => type.typeName));
+      setGroundRules(result.groundRule ?? '');
+
       const membersData = await getGroupMembers(groupId);
       console.log('모임원 목록 조회 성공:', membersData);
-      console.log('멤버 배열:', membersData.result.members);
+      console.log('멤버 배열:', membersData.result);
     } catch (error: any) {
       console.error('error.response.data:', error?.response?.data);
     }
@@ -111,7 +116,7 @@ export default function GroupInfoScreen() {
   // 모임 권한 수정 임시 테스트 코드 
     const handleTestUpdateRole = async () => {
   try {
-    const targetUserId = 2;
+    const targetUserId = 23;
 
     const response = await updateGroupMemberRole(groupId, targetUserId, {
       role: 'TREASURER',
@@ -332,7 +337,7 @@ export default function GroupInfoScreen() {
           {isEdit ? (
             <TextInput
               value={groundRules}
-              onChangeText={setGroundRules}
+              onChangeText={setgroundRules}
               multiline
               style={styles.groundRulesInput}
             />

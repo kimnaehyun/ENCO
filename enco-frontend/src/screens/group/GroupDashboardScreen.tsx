@@ -1,5 +1,4 @@
-// src/screens/group/GroupDashboardScreen.tsx
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -21,6 +20,7 @@ import ExpenseCategoryCard, {
 import MonthlyTrendCard, {
   MonthlyExpense,
 } from '../../components/analytics/MonthlyTrendCard';
+import { getGroupDashboard } from '../../services/paymentService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 20;
@@ -40,6 +40,7 @@ export default function GroupDashboardScreen() {
 
   const params = (route.params ?? {}) as CommonParams;
   const groupName = params.groupName ?? '모임명';
+  const groupId = 1;
   const { unreadCount } = useNotifications();
 
   const onPressGroupInfo = () =>
@@ -160,6 +161,24 @@ export default function GroupDashboardScreen() {
       imageSource: require('../../assets/icons/welcom_hamco.png'),
     };
   }, [attendanceRatio, attendanceRewardThreshold, attendedCount, requiredCount]);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        console.log('dashboard groupId 확인:', groupId);
+
+        const dashboardData = await getGroupDashboard(groupId);
+        console.log('모임 대시보드 조회 성공:', dashboardData);
+        console.log('대시보드 result:', dashboardData.result);
+      } catch (error: any) {
+        console.error('모임 대시보드 조회 실패:', error);
+        console.error('error.response?.status:', error?.response?.status);
+        console.error('error.response?.data:', error?.response?.data);
+      }
+    };
+
+    fetchDashboard();
+  }, [groupId]);
 
   const renderAnalyticsCard = ({ item }: { item: AnalyticsCardItem }) => {
     return (
