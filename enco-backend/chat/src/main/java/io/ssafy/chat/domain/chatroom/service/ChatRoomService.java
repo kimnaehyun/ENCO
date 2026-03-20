@@ -4,6 +4,7 @@ import io.ssafy.chat.domain.chatroom.document.ChatRoom;
 import io.ssafy.chat.domain.chatroom.document.Participant;
 import io.ssafy.chat.domain.chatroom.dto.ChatRoomCreateRequest;
 import io.ssafy.chat.domain.chatroom.dto.ChatRoomResponse;
+import io.ssafy.chat.domain.chatroom.dto.response.ChatRoomCreateResponseDto;
 import io.ssafy.chat.domain.chatroom.repository.ChatRoomRepository;
 import io.ssafy.chat.common.enums.ParticipantRole;
 import lombok.RequiredArgsConstructor;
@@ -117,5 +118,13 @@ public class ChatRoomService {
 
         chatRoomRepository.save(room);
         log.info("채팅방 나가기 - roomId: {}, userId: {}", roomId, userId);
+    }
+    public ChatRoomCreateResponseDto createRoom(String groupName) {
+        ChatRoom room = ChatRoom.builder()
+                .groupName(groupName)
+                .build();
+        ChatRoom savedRoom = chatRoomRepository.save(room);
+        log.info("[ChatService] Chat room created: roomId={}, groupName={}", savedRoom.getId(), groupName);
+        return new ChatRoomCreateResponseDto(savedRoom.getId());
     }
 }
