@@ -16,10 +16,10 @@ spring:
                 allowedHeaders: '*'
 #                allowedCredentials: true
           routes:
-            - id: chat-websocket
-                uri: "ws://${CHAT_SERVICE_HOST}:${CHAT_SERVICE_PORT}"
-                predicates:
-                  - Path=/ws-stomp
+            # - id: chat-websocket
+            #     uri: "ws://${CHAT_SERVICE_HOST}:${CHAT_SERVICE_PORT}"
+            #     predicates:
+            #       - Path=/ws-stomp
 
             - id: auth-service-public
               uri: http://${AUTH_SERVICE_HOST}:${AUTH_SERVICE_PORT}
