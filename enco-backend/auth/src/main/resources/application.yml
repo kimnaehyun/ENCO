@@ -30,3 +30,16 @@ service:
     url: http://${PAYMENT_SERVICE_HOST}:${PAYMENT_SERVICE_PORT}
   chat:
     url: http://${CHAT_SERVICE_HOST}:${CHAT_SERVICE_PORT}
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+info:
+  app:
+    name: auth-service
+    description: authentication service
+    version: 0.0.1
