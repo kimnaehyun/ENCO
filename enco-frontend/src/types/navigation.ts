@@ -52,6 +52,8 @@ export type GroupStackParamList = {
   GroupPay: CommonParams | undefined;
   GroupChat: CommonParams | undefined;
   GroupLedger: CommonParams | undefined;
+  GroupAttendance: CommonParams | undefined;
+
   AdminMenu: CommonParams | undefined;
   AdminReceipt: CommonParams | undefined;
   AdminMembers: CommonParams | undefined;
