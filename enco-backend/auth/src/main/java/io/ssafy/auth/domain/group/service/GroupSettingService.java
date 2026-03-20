@@ -6,13 +6,17 @@ import io.ssafy.auth.domain.group.entity.*;
 import io.ssafy.auth.domain.group.repository.*;
 import io.ssafy.auth.global.common.error.CustomException;
 import io.ssafy.auth.global.common.error.ErrorCode;
+import io.ssafy.auth.infra.client.GroupCardResponseDto;
+import io.ssafy.auth.infra.client.PaymentServiceClient;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class GroupSettingService {
@@ -21,6 +25,7 @@ public class GroupSettingService {
     private final DuePolicyRepository duePolicyRepository;
     private final GroupTypeRepository groupTypeRepository;
     private final TypeRepository typeRepository;
+    private final PaymentServiceClient paymentServiceClient;
 
     @Transactional(readOnly = true)
     public GroupSettingResponseDto getGroupSetting(Long groupId) {
@@ -32,7 +37,23 @@ public class GroupSettingService {
                 .findByGroupIdAndIsDeletedFalseAndStatus(groupId, DuePolicyStatus.ACTIVE)
                 .orElse(null);
 
-        return GroupSettingResponseDto.of(group, policy);
+        GroupSettingResponseDto.CardDto card = null;
+        try {
+            GroupCardResponseDto cardResponse = paymentServiceClient.getGroupCard(groupId).result();
+            if (cardResponse != null) {
+                card = new GroupSettingResponseDto.CardDto(
+                        cardResponse.cardId(),
+                        cardResponse.cardName(),
+                        cardResponse.frontCardImageUrl(),
+                        cardResponse.backCardImageUrl(),
+                        cardResponse.isBasic()
+                );
+            }
+        } catch (Exception e) {
+            log.warn("Failed to fetch card info for groupId={}: {}", groupId, e.getMessage());
+        }
+
+        return GroupSettingResponseDto.of(group, policy, card);
     }
 
     @Transactional
