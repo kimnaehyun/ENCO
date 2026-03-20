@@ -1,10 +1,10 @@
-package io.ssafy.chat.chatroom.service;
+package io.ssafy.chat.domain.chatroom.service;
 
-import io.ssafy.chat.chatroom.document.ChatRoom;
-import io.ssafy.chat.chatroom.document.Participant;
-import io.ssafy.chat.chatroom.dto.ChatRoomCreateRequest;
-import io.ssafy.chat.chatroom.dto.ChatRoomResponse;
-import io.ssafy.chat.chatroom.repository.ChatRoomRepository;
+import io.ssafy.chat.domain.chatroom.document.ChatRoom;
+import io.ssafy.chat.domain.chatroom.document.Participant;
+import io.ssafy.chat.domain.chatroom.dto.ChatRoomCreateRequest;
+import io.ssafy.chat.domain.chatroom.dto.ChatRoomResponse;
+import io.ssafy.chat.domain.chatroom.repository.ChatRoomRepository;
 import io.ssafy.chat.common.enums.ParticipantRole;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

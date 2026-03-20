@@ -1,8 +1,8 @@
-package io.ssafy.chat.chatroom.dto;
+package io.ssafy.chat.domain.chatroom.dto;
 
-import io.ssafy.chat.chatroom.document.ChatRoom;
-import io.ssafy.chat.chatroom.document.LastMessage;
-import io.ssafy.chat.chatroom.document.Participant;
+import io.ssafy.chat.domain.chatroom.document.ChatRoom;
+import io.ssafy.chat.domain.chatroom.document.LastMessage;
+import io.ssafy.chat.domain.chatroom.document.Participant;
 import lombok.Builder;
 import lombok.Getter;
 

@@ -23,12 +23,15 @@ public class GroupUser {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private Status status = Status.ACTIVE;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean isDeleted = false;
 

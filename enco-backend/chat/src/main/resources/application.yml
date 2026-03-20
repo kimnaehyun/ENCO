@@ -4,7 +4,9 @@ spring:
   data:
     mongodb:
       uri: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${CHAT_DB_HOST}:27017/${CHAT_DB_NAME}?authSource=admin
-
+  cloud:
+    compatibility-verifier:
+      enabled: false
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration

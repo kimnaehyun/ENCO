@@ -4,6 +4,7 @@ import io.ssafy.payment.domain.card.entity.Card;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -18,6 +19,7 @@ import java.util.List;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
+@Getter
 @EntityListeners(AuditingEntityListener.class)
 public class Account {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -28,7 +30,7 @@ public class Account {
     @Column(nullable = false, length = 100)
     private String accountNumber;
 
-    @Column(nullable = false, length = 20)
+    @Column(nullable = false)
     private String password;
 
     @Column(nullable = false, precision = 12, scale = 2)
