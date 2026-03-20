@@ -33,6 +33,7 @@ public class Account {
     @Column(nullable = false)
     private String password;
 
+    @Builder.Default
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount = BigDecimal.ZERO;
 
