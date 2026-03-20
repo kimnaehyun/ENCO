@@ -1,7 +1,7 @@
 package io.ssafy.chat.infra.client;
 
 import io.ssafy.chat.domain.chatroom.dto.response.ChatRoomCreateResponseDto;
-import io.ssafy.chat.domain.chatroom.service.ChatService;
+import io.ssafy.chat.domain.chatroom.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/internal/chat")
 @RequiredArgsConstructor
 public class ChatController {
-    private final ChatService chatService;
+    private final ChatRoomService chatService;
 
     @PostMapping("/room")
     public ResponseEntity<ChatRoomCreateResponseDto> createChatRoom(@RequestParam String groupName) {
