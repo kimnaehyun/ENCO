@@ -36,6 +36,21 @@ export interface GroupSettingsResponse {
   result: GroupSettingsResult;
 }
 
+export interface GroupMember {
+  userId: number;
+  name: string;
+  role: string;
+  joined_at: string;
+}
+
+export interface GroupMembersResponse {
+  message: string;
+  result: {
+    members: GroupMember[];
+  };
+}
+
+// 모임정보조회
 export async function getGroupSettings(groupId: number | string) {
   const token = getCachedAccessToken();
 
@@ -53,12 +68,31 @@ export async function getGroupSettings(groupId: number | string) {
   return response.data;
 }
 
+// 모임정보수정
 export async function updateGroupSettings(groupId: number | string, requestBody: any) {
   const token = getCachedAccessToken();
 
   const response = await axios.put(
     `https://api.ssafywte.site/auth-service/api/v1/groups/${groupId}/settings`,
     requestBody,
+    {
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+    },
+  );
+
+  return response.data;
+}
+
+//모임원 목록 조회
+export async function getGroupMembers(groupId: number | string) {
+  const token = getCachedAccessToken();
+
+  const response = await axios.get<GroupMembersResponse>(
+    `https://api.ssafywte.site/auth-service/api/v1/groups/${groupId}/members`,
     {
       timeout: 10000,
       headers: {
