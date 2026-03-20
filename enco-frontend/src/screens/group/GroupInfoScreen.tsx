@@ -5,7 +5,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
 import { images } from '../../types/images';
-import { getGroupSettings, updateGroupSettings } from '../../services/groupService';
+import { getGroupSettings, updateGroupSettings, getGroupMembers } from '../../services/groupService';
 
 const TAGS = ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'];
 const TAG_TYPE_ID_MAP = {여행: 1, 스포츠: 2, 문화생활: 3, 경조사: 4, 공과금: 5, 음식: 6};
@@ -70,9 +70,14 @@ export default function GroupInfoScreen() {
   const fetchGroupSettings = async () => {
     try {
       console.log('groupId 확인:', groupId);
+
       const data = await getGroupSettings(groupId);
       console.log('모임 설정 조회 성공:', data);
       console.log('result만 확인:', data.result);
+
+      const membersData = await getGroupMembers(groupId);
+      console.log('모임원 목록 조회 성공:', membersData);
+      console.log('멤버 배열:', membersData.result.members);
     } catch (error: any) {
       console.error('error.response.data:', error?.response?.data);
     }
