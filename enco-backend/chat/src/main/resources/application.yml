@@ -4,7 +4,9 @@ spring:
   data:
     mongodb:
       uri: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@${CHAT_DB_HOST}:27017/${CHAT_DB_NAME}?authSource=admin
-
+  cloud:
+    compatibility-verifier:
+      enabled: false
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
@@ -25,3 +27,21 @@ spring:
 
 server:
   port: ${CHAT_SERVICE_PORT}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+  # Health check에서 redis 자동으로 검사함. 추후 redis 추가하면 아래 3줄 없애도 무방
+  health:
+    redis:
+      enabled: false
+info:
+  app:
+    name: chat-service
+    description: authentication service
+    version: 0.0.1

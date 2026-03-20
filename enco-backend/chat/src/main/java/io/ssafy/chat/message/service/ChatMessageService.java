@@ -1,7 +1,7 @@
 package io.ssafy.chat.message.service;
 
-import io.ssafy.chat.chatroom.document.LastMessage;
-import io.ssafy.chat.chatroom.repository.ChatRoomRepository;
+import io.ssafy.chat.domain.chatroom.document.LastMessage;
+import io.ssafy.chat.domain.chatroom.repository.ChatRoomRepository;
 import io.ssafy.chat.common.enums.MessageType;
 import io.ssafy.chat.message.document.ChatMessage;
 import io.ssafy.chat.message.dto.ChatMessageRequest;

@@ -1,6 +1,6 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import QR from '../../components/onsite/Barcode/components/QR';
+import QR from '../../components/onsite/Barcode/components/BarcodeQR';
 import Barcode from '../../components/onsite/Barcode/components/Barcode';
 
 export default function ToggleNavigator() {

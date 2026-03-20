@@ -14,3 +14,4 @@ public record CommonResponse<T>(
         return new CommonResponse<>(SUCCESS_MESSAGE, null);
     }
 }
+

@@ -134,6 +134,28 @@ services:
       - msa-network
     restart: unless-stopped
 
+  minio:
+    image: minio/minio:latest
+    container_name: enco-minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      TZ: Asia/Seoul
+    command: server /data --console-address ":9001"
+    volumes:
+      - ./minio_data:/data
+    ports:
+      - "9000:9000"  # API
+      - "8087:9001"  # Console
+    networks:
+      - msa-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
 networks:
   msa-network:
     driver: bridge
