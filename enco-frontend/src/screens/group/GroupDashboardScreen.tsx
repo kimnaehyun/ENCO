@@ -6,6 +6,7 @@ import {
   Image,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   View,
 } from 'react-native';
@@ -166,138 +167,56 @@ export default function GroupDashboardScreen() {
         {item.type === 'attendance' && (
           <Pressable
             onPress={onPressAttendance}
-            className="bg-white rounded-3xl px-6 py-5"
-            style={{
-              width: ANALYTICS_CARD_WIDTH,
-              height: ANALYTICS_CARD_HEIGHT,
-              shadowColor: '#1428A0',
-              shadowOpacity: 0.06,
-              shadowRadius: 12,
-              elevation: 2,
-            }}
+            style={styles.attendanceCard}
           >
-            <View className="flex-row items-center justify-between mb-3">
-              <Text
-                style={{
-                  fontSize: 15,
-                  color: '#111827',
-                  fontFamily: 'GmarketSansTTFBold',
-                }}
-              >
-                오늘의 출석 체크
-              </Text>
-
-              <View
-                style={{
-                  backgroundColor: '#F3F4F6',
-                  borderRadius: 999,
-                  paddingHorizontal: 10,
-                  paddingVertical: 6,
-                }}
-              >
-                <Text
-                  style={{
-                    fontSize: 12,
-                    color: '#6B7280',
-                    fontFamily: 'GmarketSansTTFMedium',
-                  }}
-                >
+            <View style={styles.attendanceHeader}>
+              <Text style={styles.attendanceTitle}>오늘의 출석 체크</Text>
+              <View style={styles.attendanceBadge}>
+                <Text style={styles.attendanceBadgeText}>
                   출석률 {Math.round(attendanceRatio * 100)}%
                 </Text>
               </View>
             </View>
 
-            <View
-              style={{
-                flex: 1,
-                borderRadius: 22,
-                backgroundColor: '#F8FAFC',
-                alignItems: 'center',
-                justifyContent: 'center',
-                paddingHorizontal: 20,
-              }}
-            >
+            <View style={styles.attendanceInner}>
               <Image
                 source={attendanceMood.imageSource}
-                style={{
-                  width: 92,
-                  height: 92,
-                  marginBottom: 12,
-                }}
+                style={styles.moodImage}
                 resizeMode="contain"
               />
 
-              <Text
-                style={{
-                  fontSize: 17,
-                  color: '#111827',
-                  fontFamily: 'GmarketSansTTFBold',
-                  textAlign: 'center',
-                  marginBottom: 6,
-                }}
-              >
-                {attendanceMood.title}
-              </Text>
+              <Text style={styles.moodTitle}>{attendanceMood.title}</Text>
 
-              <Text
-                style={{
-                  fontSize: 13,
-                  color: '#6B7280',
-                  fontFamily: 'GmarketSansTTFMedium',
-                  textAlign: 'center',
-                  lineHeight: 20,
-                  marginBottom: 18,
-                }}
-              >
-                {attendanceMood.subtitle}
-              </Text>
+              <Text style={styles.moodSubtitle}>{attendanceMood.subtitle}</Text>
 
-              <View
-                style={{
-                  width: '100%',
-                  maxWidth: 220,
-                  marginBottom: 10,
-                }}
-              >
-                <View
-                  style={{
-                    height: 10,
-                    backgroundColor: '#E5E7EB',
-                    borderRadius: 999,
-                    overflow: 'hidden',
-                  }}
-                >
+              <View style={styles.progressBarWrap}>
+                <View style={styles.progressBarBg}>
                   <View
-                    style={{
-                      width: `${Math.min(attendanceRatio * 100, 100)}%`,
-                      height: '100%',
-                      backgroundColor: attendanceMood.accent,
-                    }}
+                    style={[
+                      styles.progressBarFill,
+                      {
+                        width: `${Math.min(attendanceRatio * 100, 100)}%`,
+                        backgroundColor: attendanceMood.accent,
+                      },
+                    ]}
                   />
                 </View>
               </View>
 
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: '#374151',
-                  fontFamily: 'GmarketSansTTFMedium',
-                  textAlign: 'center',
-                }}
-              >
+              <Text style={styles.membersText}>
                 {attendedCount} / {totalMembers}명 출석
               </Text>
 
               <Text
-                style={{
-                  fontSize: 12,
-                  color:
-                    attendanceRatio >= attendanceRewardThreshold
-                      ? '#22C55E'
-                      : '#6B7280',
-                  fontFamily: 'GmarketSansTTFBold',
-                  marginTop: 8,
-                }}
+                style={[
+                  styles.rewardText,
+                  {
+                    color:
+                      attendanceRatio >= attendanceRewardThreshold
+                        ? '#22C55E'
+                        : '#6B7280',
+                  },
+                ]}
               >
                 {attendanceRatio >= attendanceRewardThreshold
                   ? '오늘 보상 목표 달성!'
@@ -339,11 +258,7 @@ export default function GroupDashboardScreen() {
   return (
     <View className="flex-1 bg-[#F0F4FF]">
       <ScrollView
-        contentContainerStyle={{
-          paddingHorizontal: HORIZONTAL_PADDING,
-          paddingTop: 56,
-          paddingBottom: 32,
-        }}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {/* 헤더 */}
@@ -353,18 +268,10 @@ export default function GroupDashboardScreen() {
             hitSlop={12}
             className="flex-row items-center gap-2"
           >
-            <Text
-              style={{
-                fontSize: 22,
-                fontFamily: 'GmarketSansTTFBold',
-                color: '#111827',
-              }}
-            >
-              {groupName}
-            </Text>
+            <Text style={styles.groupNameText}>{groupName}</Text>
             <Image
               source={images.alertCircleIcon}
-              style={{ width: 20, height: 20, tintColor: '#9CA3AF' }}
+              style={styles.alertIcon}
               resizeMode="contain"
             />
           </Pressable>
@@ -379,7 +286,7 @@ export default function GroupDashboardScreen() {
             hitSlop={12}
             className="w-10 h-10 items-center justify-center"
           >
-            <Text style={{ fontSize: 24 }}>🔔</Text>
+            <Text style={styles.bellEmoji}>🔔</Text>
             {unreadCount > 0 && (
               <View className="absolute top-0.5 right-0.5 w-2.5 h-2.5 rounded-full bg-red-500" />
             )}
@@ -396,57 +303,29 @@ export default function GroupDashboardScreen() {
           snapToInterval={ANALYTICS_CARD_WIDTH + CARD_GAP}
           decelerationRate="fast"
           showsHorizontalScrollIndicator={false}
-          contentContainerStyle={{ paddingRight: 2 }}
-          ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
-          style={{ marginBottom: 16 }}
+          contentContainerStyle={styles.flatListContent}
+          ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
+          style={styles.flatList}
         />
 
         {/* 잔액 카드 */}
         <Pressable
           onPress={onPressLedger}
           className="bg-white rounded-3xl px-6 mb-4 flex-row items-center justify-between"
-          style={{
-            height: 72,
-            shadowColor: '#1428A0',
-            shadowOpacity: 0.06,
-            shadowRadius: 12,
-            elevation: 2,
-          }}
+          style={styles.shadowCard}
         >
-          <Text style={{ fontSize: 26 }}>💵</Text>
-          <Text
-            style={{
-              fontSize: 22,
-              fontFamily: 'GmarketSansTTFBold',
-              color: '#111827',
-            }}
-          >
-            {balance.toLocaleString()}원
-          </Text>
+          <Text style={styles.balanceEmoji}>💵</Text>
+          <Text style={styles.balanceValue}>{balance.toLocaleString()}원</Text>
         </Pressable>
 
         {/* 투표 현황 카드 */}
         <Pressable
           onPress={onPressVotes}
           className="bg-white rounded-3xl px-6 mb-4 flex-row items-center justify-between"
-          style={{
-            height: 72,
-            shadowColor: '#1428A0',
-            shadowOpacity: 0.06,
-            shadowRadius: 12,
-            elevation: 2,
-          }}
+          style={styles.shadowCard}
         >
-          <Text style={{ fontSize: 26 }}>🎟️</Text>
-          <Text
-            style={{
-              fontSize: 18,
-              fontFamily: 'GmarketSansTTFBold',
-              color: '#111827',
-            }}
-          >
-            투표 현황
-          </Text>
+          <Text style={styles.votesEmoji}>🎟️</Text>
+          <Text style={styles.votesText}>투표 현황</Text>
         </Pressable>
 
         {/* 납부 / 채팅 */}
@@ -454,47 +333,19 @@ export default function GroupDashboardScreen() {
           <Pressable
             onPress={onPressPay}
             className="flex-1 bg-white rounded-3xl flex-row items-center justify-center gap-3"
-            style={{
-              height: 72,
-              shadowColor: '#1428A0',
-              shadowOpacity: 0.06,
-              shadowRadius: 12,
-              elevation: 2,
-            }}
+            style={styles.shadowCard}
           >
-            <Text style={{ fontSize: 22 }}>💰</Text>
-            <Text
-              style={{
-                fontSize: 16,
-                fontFamily: 'GmarketSansTTFBold',
-                color: '#111827',
-              }}
-            >
-              납부
-            </Text>
+            <Text style={styles.actionEmoji}>💰</Text>
+            <Text style={styles.actionText}>납부</Text>
           </Pressable>
 
           <Pressable
             onPress={onPressCommunity}
             className="flex-1 bg-white rounded-3xl flex-row items-center justify-center gap-3"
-            style={{
-              height: 72,
-              shadowColor: '#1428A0',
-              shadowOpacity: 0.06,
-              shadowRadius: 12,
-              elevation: 2,
-            }}
+            style={styles.shadowCard}
           >
-            <Text style={{ fontSize: 22 }}>📨</Text>
-            <Text
-              style={{
-                fontSize: 16,
-                fontFamily: 'GmarketSansTTFBold',
-                color: '#111827',
-              }}
-            >
-              채팅
-            </Text>
+            <Text style={styles.actionEmoji}>📨</Text>
+            <Text style={styles.actionText}>채팅</Text>
           </Pressable>
         </View>
 
@@ -502,36 +353,201 @@ export default function GroupDashboardScreen() {
         <Pressable
           onPress={onPressAdmin}
           className="rounded-3xl py-5 items-center justify-center mb-3"
-          style={{ backgroundColor: '#1428A0' }}
+          style={styles.adminButton}
         >
-          <Text
-            style={{
-              fontSize: 18,
-              fontFamily: 'GmarketSansTTFBold',
-              color: '#FFFFFF',
-            }}
-          >
-            모임 관리
-          </Text>
+          <Text style={styles.adminText}>모임 관리</Text>
         </Pressable>
 
         {/* 모임초대 진입 테스트 버튼 */}
         <Pressable
           onPress={onPressInviteEntryTest}
           className="rounded-3xl py-4 items-center justify-center"
-          style={{ backgroundColor: '#E5E7EB' }}
+          style={styles.inviteTestButton}
         >
-          <Text
-            style={{
-              fontSize: 16,
-              fontFamily: 'GmarketSansTTFBold',
-              color: '#374151',
-            }}
-          >
-            모임초대 진입 테스트
-          </Text>
+          <Text style={styles.inviteTestText}>모임초대 진입 테스트</Text>
         </Pressable>
       </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  // 레이아웃
+  scrollContent: {
+    paddingHorizontal: HORIZONTAL_PADDING,
+    paddingTop: 56,
+    paddingBottom: 32,
+  },
+  flatList: {
+    marginBottom: 16,
+  },
+  flatListContent: {
+    paddingRight: 2,
+  },
+  cardSeparator: {
+    width: CARD_GAP,
+  },
+
+  // 공통 카드 그림자
+  shadowCard: {
+    height: 72,
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+
+  // 헤더
+  groupNameText: {
+    fontSize: 22,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#111827',
+  },
+  alertIcon: {
+    width: 20,
+    height: 20,
+    tintColor: '#9CA3AF',
+  },
+  bellEmoji: {
+    fontSize: 24,
+  },
+
+  // 잔액 카드
+  balanceEmoji: {
+    fontSize: 26,
+  },
+  balanceValue: {
+    fontSize: 22,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#111827',
+  },
+
+  // 투표 카드
+  votesEmoji: {
+    fontSize: 26,
+  },
+  votesText: {
+    fontSize: 18,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#111827',
+  },
+
+  // 납부 / 채팅
+  actionEmoji: {
+    fontSize: 22,
+  },
+  actionText: {
+    fontSize: 16,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#111827',
+  },
+
+  // 모임 관리 버튼
+  adminButton: {
+    backgroundColor: '#1428A0',
+  },
+  adminText: {
+    fontSize: 18,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#FFFFFF',
+  },
+
+  // 테스트 버튼
+  inviteTestButton: {
+    backgroundColor: '#E5E7EB',
+  },
+  inviteTestText: {
+    fontSize: 16,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#374151',
+  },
+
+  // 출석 카드
+  attendanceCard: {
+    width: ANALYTICS_CARD_WIDTH,
+    height: ANALYTICS_CARD_HEIGHT,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  attendanceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  attendanceTitle: {
+    fontSize: 15,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  attendanceBadge: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 999,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+  },
+  attendanceBadgeText: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  attendanceInner: {
+    flex: 1,
+    borderRadius: 22,
+    backgroundColor: '#F8FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  moodImage: {
+    width: 92,
+    height: 92,
+    marginBottom: 12,
+  },
+  moodTitle: {
+    fontSize: 17,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  moodSubtitle: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontFamily: 'GmarketSansTTFMedium',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 18,
+  },
+  progressBarWrap: {
+    width: '100%',
+    maxWidth: 220,
+    marginBottom: 10,
+  },
+  progressBarBg: {
+    height: 10,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+  },
+  membersText: {
+    fontSize: 14,
+    color: '#374151',
+    fontFamily: 'GmarketSansTTFMedium',
+    textAlign: 'center',
+  },
+  rewardText: {
+    fontSize: 12,
+    fontFamily: 'GmarketSansTTFBold',
+    marginTop: 8,
+  },
+});
