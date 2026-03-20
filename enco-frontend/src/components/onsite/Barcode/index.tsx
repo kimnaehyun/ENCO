@@ -6,11 +6,13 @@ import {
   Button,
 } from 'react-native';
 import { useEffect, useState } from 'react';
-import QR from './components/BarcodeQR';
+
 import { Text } from 'react-native-gesture-handler';
-import CardRecommendation from './components/BarcodeCardRecommendation';
+
 import PointToggleButton from '../../payment/PointToggleButton';
 import Geolocation from 'react-native-geolocation-service';
+import BarcodeQR from './BarcodeQR';
+import BarcodeCardRecommendation from './BarcodeCardRecommendation';
 
 export default function index() {
   const [cardNumber, setCardNumber] = useState<number>(0);
@@ -63,7 +65,7 @@ export default function index() {
     <View className="flex-1 gap-3">
       <View className="flex-1 rounded-[20px] py-8 bg-white justify-center">
         {isGPS ? (
-          <QR cardNumber={cardNumber} className="w-full h-full" />
+          <BarcodeQR cardNumber={cardNumber} className="w-full h-full" />
         ) : (
           <View className="items-center">
             <ActivityIndicator size="large" />
@@ -88,7 +90,7 @@ export default function index() {
         <PointToggleButton />
       </View>
       <View className="flex-1">
-        <CardRecommendation onSelectCard={setCardNumber} />
+        <BarcodeCardRecommendation onSelectCard={setCardNumber} />
       </View>
     </View>
   );
