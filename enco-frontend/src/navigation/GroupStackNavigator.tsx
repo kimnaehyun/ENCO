@@ -26,6 +26,7 @@ import GroupCreateScreen from '../screens/group/GroupCreateScreen';
 import GroupCardRecommendScreen from '../screens/group/GroupCardRecommendScreen';
 import GroupPinSetupScreen from '../screens/group/GroupPinSetupScreen.tsx';
 import GroupAnalyticsScreen from '../screens/group/GroupAnalyticsScreen.tsx';
+import GroupAttendanceScreen from '../screens/group/GroupAttendanceScreen.tsx';
 
 import NotificationCenterScreen from '../screens/user/NotificationCenterScreen.tsx';
 
@@ -57,6 +58,7 @@ export default function GroupStackNavigator() {
       <Stack.Screen name="GroupVoteDetail" component={GroupVoteDetailScreen} />
       <Stack.Screen name="VoteCreate" component={VoteCreateScreen} />
       <Stack.Screen name="GroupAnalytics" component={GroupAnalyticsScreen} />
+      <Stack.Screen name="GroupAttendance" component={GroupAttendanceScreen} />
 
       {/* 초대 페이지 */}
       <Stack.Screen

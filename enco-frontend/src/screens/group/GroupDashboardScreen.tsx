@@ -13,7 +13,6 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { CommonParams } from '../../types/common';
 import { useNotifications } from '../../contexts/NotificationsContext';
 import { images } from '../../types/images';
-import PaymentStatusCard from '../../components/analytics/PaymentStatusCard';
 import BudgetGaugeCard from '../../components/analytics/BudgetGaugeCard';
 import ExpenseCategoryCard, {
   ExpenseCategoryItem,
@@ -29,7 +28,7 @@ const ANALYTICS_CARD_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
 const ANALYTICS_CARD_HEIGHT = 320;
 
 type AnalyticsCardItem =
-  | { id: 'payment'; type: 'payment' }
+  | { id: 'attendance'; type: 'attendance' }
   | { id: 'budget'; type: 'budget' }
   | { id: 'category'; type: 'category' }
   | { id: 'monthly'; type: 'monthly' };
@@ -85,14 +84,25 @@ export default function GroupDashboardScreen() {
       groupName,
     });
 
+  const onPressAttendance = () =>
+    navigation.navigate('GroupAttendance', {
+      groupId: params.groupId,
+      groupName,
+    });
+
   const onPressInviteEntryTest = () =>
     navigation.navigate('GroupInviteEntry');
 
-  const paidCount = 6;
-  const unpaidCount = 2;
   const balance = 854443;
   const totalExpense = 428000;
   const monthlyBudget = 500000;
+
+  // TODO: 백엔드 연결 후 실제 출석 데이터로 교체
+  const attendedCount = 6;
+  const totalMembers = 10;
+  const attendanceRewardThreshold = 0.7;
+  const attendanceRatio = attendedCount / totalMembers;
+  const requiredCount = Math.ceil(totalMembers * attendanceRewardThreshold);
 
   const categoryData = useMemo<ExpenseCategoryItem[]>(
     () => [
@@ -117,22 +127,184 @@ export default function GroupDashboardScreen() {
   );
 
   const analyticsCards: AnalyticsCardItem[] = [
-    { id: 'payment', type: 'payment' },
+    { id: 'attendance', type: 'attendance' },
     { id: 'budget', type: 'budget' },
     { id: 'category', type: 'category' },
     { id: 'monthly', type: 'monthly' },
   ];
 
+  const attendanceMood = useMemo(() => {
+    if (attendanceRatio === 0) {
+      return {
+        title: '아직 아무도 출석하지 않았어요',
+        subtitle: '첫 출석을 시작해보세요',
+        accent: '#EF4444',
+        imageSource: require('../../assets/icons/sad_hamco.png'),
+      };
+    }
+
+    if (attendanceRatio < attendanceRewardThreshold) {
+      return {
+        title: '조금만 더 출석하면 목표 달성!',
+        subtitle: `${requiredCount - attendedCount}명만 더 출석하면 돼요`,
+        accent: '#1428A0',
+        imageSource: require('../../assets/icons/run_hamco.png'),
+      };
+    }
+
+    return {
+      title: '오늘 출석 목표 달성!',
+      subtitle: '모임 분위기가 아주 좋아요',
+      accent: '#22C55E',
+      imageSource: require('../../assets/icons/welcom_hamco.png'),
+    };
+  }, [attendanceRatio, attendanceRewardThreshold, attendedCount, requiredCount]);
+
   const renderAnalyticsCard = ({ item }: { item: AnalyticsCardItem }) => {
     return (
       <View style={{ width: ANALYTICS_CARD_WIDTH }}>
-        {item.type === 'payment' && (
-          <PaymentStatusCard
-            paidCount={paidCount}
-            unpaidCount={unpaidCount}
-            onPress={onPressAnalytics}
-            height={ANALYTICS_CARD_HEIGHT}
-          />
+        {item.type === 'attendance' && (
+          <Pressable
+            onPress={onPressAttendance}
+            className="bg-white rounded-3xl px-6 py-5"
+            style={{
+              width: ANALYTICS_CARD_WIDTH,
+              height: ANALYTICS_CARD_HEIGHT,
+              shadowColor: '#1428A0',
+              shadowOpacity: 0.06,
+              shadowRadius: 12,
+              elevation: 2,
+            }}
+          >
+            <View className="flex-row items-center justify-between mb-3">
+              <Text
+                style={{
+                  fontSize: 15,
+                  color: '#111827',
+                  fontFamily: 'GmarketSansTTFBold',
+                }}
+              >
+                오늘의 출석 체크
+              </Text>
+
+              <View
+                style={{
+                  backgroundColor: '#F3F4F6',
+                  borderRadius: 999,
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                }}
+              >
+                <Text
+                  style={{
+                    fontSize: 12,
+                    color: '#6B7280',
+                    fontFamily: 'GmarketSansTTFMedium',
+                  }}
+                >
+                  출석률 {Math.round(attendanceRatio * 100)}%
+                </Text>
+              </View>
+            </View>
+
+            <View
+              style={{
+                flex: 1,
+                borderRadius: 22,
+                backgroundColor: '#F8FAFC',
+                alignItems: 'center',
+                justifyContent: 'center',
+                paddingHorizontal: 20,
+              }}
+            >
+              <Image
+                source={attendanceMood.imageSource}
+                style={{
+                  width: 92,
+                  height: 92,
+                  marginBottom: 12,
+                }}
+                resizeMode="contain"
+              />
+
+              <Text
+                style={{
+                  fontSize: 17,
+                  color: '#111827',
+                  fontFamily: 'GmarketSansTTFBold',
+                  textAlign: 'center',
+                  marginBottom: 6,
+                }}
+              >
+                {attendanceMood.title}
+              </Text>
+
+              <Text
+                style={{
+                  fontSize: 13,
+                  color: '#6B7280',
+                  fontFamily: 'GmarketSansTTFMedium',
+                  textAlign: 'center',
+                  lineHeight: 20,
+                  marginBottom: 18,
+                }}
+              >
+                {attendanceMood.subtitle}
+              </Text>
+
+              <View
+                style={{
+                  width: '100%',
+                  maxWidth: 220,
+                  marginBottom: 10,
+                }}
+              >
+                <View
+                  style={{
+                    height: 10,
+                    backgroundColor: '#E5E7EB',
+                    borderRadius: 999,
+                    overflow: 'hidden',
+                  }}
+                >
+                  <View
+                    style={{
+                      width: `${Math.min(attendanceRatio * 100, 100)}%`,
+                      height: '100%',
+                      backgroundColor: attendanceMood.accent,
+                    }}
+                  />
+                </View>
+              </View>
+
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: '#374151',
+                  fontFamily: 'GmarketSansTTFMedium',
+                  textAlign: 'center',
+                }}
+              >
+                {attendedCount} / {totalMembers}명 출석
+              </Text>
+
+              <Text
+                style={{
+                  fontSize: 12,
+                  color:
+                    attendanceRatio >= attendanceRewardThreshold
+                      ? '#22C55E'
+                      : '#6B7280',
+                  fontFamily: 'GmarketSansTTFBold',
+                  marginTop: 8,
+                }}
+              >
+                {attendanceRatio >= attendanceRewardThreshold
+                  ? '오늘 보상 목표 달성!'
+                  : `${requiredCount}명 목표까지 ${requiredCount - attendedCount}명 남음`}
+              </Text>
+            </View>
+          </Pressable>
         )}
 
         {item.type === 'budget' && (
@@ -343,7 +515,7 @@ export default function GroupDashboardScreen() {
           </Text>
         </Pressable>
 
-        {/* 모임초대 진입 테스트 버튼 복구 */}
+        {/* 모임초대 진입 테스트 버튼 */}
         <Pressable
           onPress={onPressInviteEntryTest}
           className="rounded-3xl py-4 items-center justify-center"
