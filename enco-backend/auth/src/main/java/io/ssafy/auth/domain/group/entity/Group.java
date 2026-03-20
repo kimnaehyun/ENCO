@@ -31,18 +31,20 @@ public class Group {
     @Column(nullable = false)
     private Long ownerUserId;
 
-    @Column(nullable = false, length = 1000)
+    @Column(length = 1000)
     private String introduction;
 
-    @Column(nullable = false)
+    @Builder.Default
     private Integer voteCriteria = 0;
 
-    @Column(nullable = false, length = 1000)
+    @Column(length = 1000)
     private String groundRule;
 
-    @Column(nullable = false)
+    @Builder.Default
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal point = BigDecimal.ZERO;
 
+    @Builder.Default
     @Column(nullable = false)
     private Boolean isDeleted = false;
 
@@ -52,7 +54,7 @@ public class Group {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-    @Column(nullable = false)
+//    @Column(nullable = false)
     private Long accountId;
 
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -66,5 +68,9 @@ public class Group {
         if (introduction != null) this.introduction = introduction;
         if (groundRule != null) this.groundRule = groundRule;
         if (voteCriteria != null) this.voteCriteria = voteCriteria;
+    }
+
+    public void updateAccountId(Long accountId) {
+        this.accountId = accountId;
     }
 }

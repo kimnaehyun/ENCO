@@ -16,13 +16,20 @@ spring:
       port: ${REDIS_PORT}
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+  cloud:
+    compatibility-verifier:
+      enabled: false
 jwt:
   secret: ${JWT_SECRET}
   access-expiration: 3600000
   refresh-expiration: 1209600000
 server:
   port: ${AUTH_SERVICE_PORT}
-
+service:
+  payment:
+    url: http://${PAYMENT_SERVICE_HOST}:${PAYMENT_SERVICE_PORT}
+  chat:
+    url: http://${CHAT_SERVICE_HOST}:${CHAT_SERVICE_PORT}
 management:
   endpoints:
     web:

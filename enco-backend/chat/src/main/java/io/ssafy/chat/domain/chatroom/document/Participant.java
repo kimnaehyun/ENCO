@@ -1,4 +1,4 @@
-package io.ssafy.chat.chatroom.document;
+package io.ssafy.chat.domain.chatroom.document;
 
 import io.ssafy.chat.common.enums.ParticipantRole;
 import lombok.Builder;

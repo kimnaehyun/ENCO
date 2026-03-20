@@ -1,4 +1,4 @@
-package io.ssafy.chat.chatroom.document;
+package io.ssafy.chat.domain.chatroom.document;
 
 import lombok.Builder;
 import lombok.Getter;

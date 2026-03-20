@@ -6,5 +6,5 @@ public record GroupAccountCreateResponseDto(
         Long accountId,
         String accountNumber,
         Long cardId,
-        Long chatRoomId
+        String chatRoomId
 ) {}

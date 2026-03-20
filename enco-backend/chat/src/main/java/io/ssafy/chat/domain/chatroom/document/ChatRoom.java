@@ -1,4 +1,4 @@
-package io.ssafy.chat.chatroom.document;
+package io.ssafy.chat.domain.chatroom.document;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -18,6 +18,8 @@ public class ChatRoom {
     @Id
     private String id;
 
+    private String groupName;
+
     private Long groupId;
 
     private List<Participant> participants = new ArrayList<>();
@@ -33,8 +35,9 @@ public class ChatRoom {
     private LocalDateTime deletedAt;
 
     @Builder
-    public ChatRoom(Long groupId, List<Participant> participants) {
+    public ChatRoom(String groupName, Long groupId, List<Participant> participants) {
         this.groupId = groupId;
+        this.groupName = groupName;
         this.participants = participants != null ? participants : new ArrayList<>();
         this.isDeleted = false;
         this.createdAt = LocalDateTime.now();

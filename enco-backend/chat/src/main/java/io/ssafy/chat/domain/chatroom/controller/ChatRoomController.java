@@ -1,8 +1,8 @@
-package io.ssafy.chat.chatroom.controller;
+package io.ssafy.chat.domain.chatroom.controller;
 
-import io.ssafy.chat.chatroom.dto.ChatRoomCreateRequest;
-import io.ssafy.chat.chatroom.dto.ChatRoomResponse;
-import io.ssafy.chat.chatroom.service.ChatRoomService;
+import io.ssafy.chat.domain.chatroom.dto.ChatRoomCreateRequest;
+import io.ssafy.chat.domain.chatroom.dto.ChatRoomResponse;
+import io.ssafy.chat.domain.chatroom.service.ChatRoomService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

@@ -1,6 +1,6 @@
 package io.ssafy.chat.message.controller;
 
-import io.ssafy.chat.chatroom.repository.ChatRoomRepository;
+import io.ssafy.chat.domain.chatroom.repository.ChatRoomRepository;
 import io.ssafy.chat.common.enums.NotificationType;
 import io.ssafy.chat.message.dto.ChatMessageRequest;
 import io.ssafy.chat.message.dto.ChatMessageResponse;

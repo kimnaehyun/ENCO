@@ -1,6 +1,6 @@
-package io.ssafy.chat.chatroom.repository;
+package io.ssafy.chat.domain.chatroom.repository;
 
-import io.ssafy.chat.chatroom.document.ChatRoom;
+import io.ssafy.chat.domain.chatroom.document.ChatRoom;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
 
