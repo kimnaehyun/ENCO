@@ -1,22 +1,27 @@
 import { useState } from "react";
-import { Text, View } from "react-native";
+import { Alert, Text, View } from "react-native";
 import PinEntry from "../../components/pin/PinEntry";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../types/navigation";
+import { createGroup } from "../../services/authService";
+import { useAuthStore } from "../../store/useAuthStore";
 
 type Props = NativeStackScreenProps<RootStackParamList, "GroupPinSetup">;
 
 export default function GroupPinSetupScreen({ route, navigation }: Props) {
   const { groupName, address, tags, selectedCardId } = route.params;
+  const profile = useAuthStore(s => s.profile);
+  const user = useAuthStore(s => s.user);
 
   const [step, setStep] = useState<"set" | "confirm">("set");
   const [firstPin, setFirstPin] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [resetKey, setResetKey] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
 
   const resetPinEntry = () => setResetKey((k) => k + 1);
 
-  const handleComplete = (pin: string) => {
+  const handleComplete = async (pin: string) => {
     if (step === "set") {
       setFirstPin(pin);
       setError("");
@@ -26,7 +31,6 @@ export default function GroupPinSetupScreen({ route, navigation }: Props) {
     }
 
     if (pin !== firstPin) {
-      // 틀렸을 때 → 에러 표시 후 재입력(confirm)만 다시
       setError("비밀번호가 맞지 않아요");
       resetPinEntry();
       return;
@@ -34,54 +38,103 @@ export default function GroupPinSetupScreen({ route, navigation }: Props) {
 
     setError("");
 
-    const groupId = `temp-${Date.now()}`;
+    // ── createGroup API 호출 ──
+    setSubmitting(true);
+    try {
+      const payload = {
+        name: profile?.name ?? user ?? '',
+        groupName,
+        groupCategory: tags,
+        cardProductId: Number(selectedCardId),
+        password: pin,
+      };
+      console.log('[GroupPinSetup] POST /groups/account 요청:', JSON.stringify(payload, null, 2));
 
-    navigation.reset({
-      index: 0,
-      routes: [
-        {
-          name: "App",
-          state: {
-            routes: [
-              {
-                name: "HomeTab",
-                state: {
-                  routes: [
-                    { name: "Home" },
-                    {
-                      name: "GroupDashboard",
-                      params: {
-                        groupId,
-                        groupName,
-                        address,
-                        tags,
-                        selectedCard: selectedCardId,
+      const res = await createGroup(payload);
+      console.log('[GroupPinSetup] POST /groups/account 응답:', JSON.stringify(res, null, 2));
+
+      const { groupId, groupName: resGroupName } = res.result;
+
+      // 성공 → 홈 + 대시보드로 이동
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: "App",
+            state: {
+              routes: [
+                {
+                  name: "HomeTab",
+                  state: {
+                    routes: [
+                      { name: "Home" },
+                      {
+                        name: "GroupDashboard",
+                        params: {
+                          groupId: String(groupId),
+                          groupName: resGroupName,
+                        },
                       },
-                    },
-                  ],
+                    ],
+                  },
                 },
-              },
-            ],
+              ],
+            },
           },
-        },
-      ],
-    });
+        ],
+      });
+    } catch (err: any) {
+      console.warn("[GroupPinSetup] 모임통장 개설 실패:", err);
+      const message =
+        err?.response?.data?.message ?? "모임통장 개설에 실패했습니다. 다시 시도해주세요.";
+      Alert.alert("개설 실패", message);
+      // PIN 재입력할 수 있도록 리셋
+      setStep("set");
+      setFirstPin(null);
+      resetPinEntry();
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
-      <PinEntry
-        key={`${step}-${resetKey}`}
-        title={
-  error
-    ? `비밀번호가 맞지 않아요\n다시 입력해주세요`
-    : step === "set"
-    ? `결제 비밀번호를\n설정해주세요`
-    : `비밀번호를\n한 번 더 입력해주세요`
-}
-        resetKey={resetKey}
-        onComplete={handleComplete}
-      />
+      {submitting ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <Text
+            style={{
+              fontSize: 18,
+              color: '#1428A0',
+              fontFamily: 'GmarketSansTTFBold',
+              marginBottom: 12,
+            }}
+          >
+            모임통장 개설 중...
+          </Text>
+          <Text
+            style={{
+              fontSize: 14,
+              color: '#6B7280',
+              fontFamily: 'GmarketSansTTFMedium',
+            }}
+          >
+            잠시만 기다려주세요
+          </Text>
+        </View>
+      ) : (
+        <PinEntry
+          key={`${step}-${resetKey}`}
+          title={
+            error
+              ? `비밀번호가 맞지 않아요\n다시 입력해주세요`
+              : step === "set"
+              ? `결제 비밀번호를\n설정해주세요`
+              : `비밀번호를\n한 번 더 입력해주세요`
+          }
+          resetKey={resetKey}
+          onComplete={handleComplete}
+        />
+      )}
     </View>
   );
 }
