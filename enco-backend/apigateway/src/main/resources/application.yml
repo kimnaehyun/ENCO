@@ -59,6 +59,13 @@ spring:
                 - StripPrefix=1
                 - AuthorizationHeaderFilter
 
+            - id: travel-service-public
+              uri: http://${TRAVEL_SERVICE_HOST}:${TRAVEL_SERVICE_PORT}
+              predicates:
+                - Path=/travel-service/api/v1/products/**, /travel-service/images/**
+              filters:
+                - StripPrefix=1
+
             - id: travel-service
               uri: http://${TRAVEL_SERVICE_HOST}:${TRAVEL_SERVICE_PORT}
               predicates:
@@ -66,6 +73,8 @@ spring:
               filters:
                 - StripPrefix=1
                 - AuthorizationHeaderFilter
+
+
 jwt:
   secret: ${JWT_SECRET}
 server:
