@@ -69,8 +69,10 @@ public class TravelProductService {
         if (!dir.exists()) dir.mkdirs();
 
         String originalFilename = image.getOriginalFilename();
+        String storeFileName = UUID.randomUUID() + "_" + originalFilename;
 
-        File targetFile = new File(dir, originalFilename != null ? originalFilename : "product_img"+UUID.randomUUID());
+        File targetFile = new File(dir, storeFileName);
+
         image.transferTo(targetFile);
 
         return "/images/" + originalFilename;
