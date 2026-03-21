@@ -54,7 +54,6 @@ public class Group {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-//    @Column(nullable = false)
     private Long accountId;
 
     @Builder.Default
