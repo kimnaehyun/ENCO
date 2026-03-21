@@ -12,7 +12,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
-@Entity(name = "travel_product")
+@Entity(name = "travel_products")
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
