@@ -166,3 +166,28 @@ export async function getUnpaidDues(groupId: number): Promise<GetUnpaidDuesRespo
         `/groups/${groupId}/dues/unpaid`);
     return response.data;
 }
+
+
+export type GroupDashboardResponse = {
+    message: string;
+    result: {
+        groupId: number;
+        groupName: string;
+        paymentStatus: {
+            paidCount: number;
+            unpaidCount: number;
+            paidRatio: number;
+            unpaidRatio: number;
+        };
+        balance: number;
+    };
+};
+
+export async function getGroupDashboard(
+    groupId: number
+): Promise<GroupDashboardResponse> {
+    const response = await paymentApi.get<GroupDashboardResponse>(
+        `/groups/${groupId}/dashboard`
+    );
+    return response.data;
+}

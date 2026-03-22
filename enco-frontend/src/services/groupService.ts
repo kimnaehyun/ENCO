@@ -1,6 +1,27 @@
 import axios from 'axios';
 import { getCachedAccessToken } from '../utils/tokenStorage';
 
+const GROUP_BASE_URL = 'https://api.ssafywte.site/auth-service/api/v1';
+
+const groupApi = axios.create({
+  baseURL: GROUP_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+// 요청마다 토큰 자동 주입
+groupApi.interceptors.request.use(config => {
+  const token = getCachedAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// ── 모임 설정 조회 (GET /groups/{groupId}/settings) ──
+
 export interface GroupTypeItem {
   typeId: number;
   typeName: string;
@@ -23,12 +44,12 @@ export interface GroupCard {
 export interface GroupSettingsResult {
   groupId: number;
   groupName: string;
-  instruction: string;
+  introduction: string | null;
   types: GroupTypeItem[];
   createdAt: string;
-  policy: GroupPolicy;
-  groundRules: string;
-  card: GroupCard;
+  policy: GroupPolicy | null;
+  groundRule: string | null;
+  card: GroupCard | null;
 }
 
 export interface GroupSettingsResponse {
@@ -36,19 +57,70 @@ export interface GroupSettingsResponse {
   result: GroupSettingsResult;
 }
 
+export async function getGroupSettings(
+  groupId: number | string,
+): Promise<GroupSettingsResponse> {
+  const response = await groupApi.get<GroupSettingsResponse>(
+    `/groups/${groupId}/settings`,
+  );
+  return response.data;
+}
+
+// ── 모임 설정 수정 (PUT /groups/{groupId}/settings) ──
+
+export interface UpdateGroupSettingsRequest {
+  groupName: string;
+  introduction: string;
+  typeIds: number[];
+  policy: {
+    policyId: number;
+    dayOfMonth: number;
+    monthlyFee: number;
+  };
+  groundRules: string;
+}
+
+export interface UpdateGroupSettingsResponse {
+  message: string;
+  result: null;
+}
+
+export async function updateGroupSettings(
+  groupId: number | string,
+  payload: UpdateGroupSettingsRequest,
+): Promise<UpdateGroupSettingsResponse> {
+  const response = await groupApi.patch<UpdateGroupSettingsResponse>(
+    `/groups/${groupId}/settings`,
+    payload,
+  );
+  return response.data;
+}
+
+// ── 모임원 목록 조회 (GET /groups/{groupId}/members) ──
+
 export interface GroupMember {
   userId: number;
-  name: string;
+  name?: string;
   role: string;
-  joined_at: string;
+  joinedAt?: string;
+  joined_at?: string;
 }
 
 export interface GroupMembersResponse {
   message: string;
-  result: {
-    members: GroupMember[];
-  };
+  result: GroupMember[];
 }
+
+export async function getGroupMembers(
+  groupId: number | string,
+): Promise<GroupMembersResponse> {
+  const response = await groupApi.get<GroupMembersResponse>(
+    `/groups/${groupId}/members`,
+  );
+  return response.data;
+}
+
+// ── 모임원 권한 변경 (PATCH /groups/{groupId}/members/{userId}/role) ──
 
 export interface UpdateMemberRoleRequest {
   role: 'TREASURER' | 'USER';
@@ -63,80 +135,14 @@ export interface UpdateMemberRoleResponse {
   };
 }
 
-// 모임정보조회
-export async function getGroupSettings(groupId: number | string) {
-  const token = getCachedAccessToken();
-
-  const response = await axios.get<GroupSettingsResponse>(
-    `https://api.ssafywte.site/auth-service/api/v1/groups/${groupId}/settings`,
-    {
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token ? `Bearer ${token}` : '',
-      },
-    },
-  );
-
-  return response.data;
-}
-
-// 모임정보수정
-export async function updateGroupSettings(groupId: number | string, requestBody: any) {
-  const token = getCachedAccessToken();
-
-  const response = await axios.put(
-    `https://api.ssafywte.site/auth-service/api/v1/groups/${groupId}/settings`,
-    requestBody,
-    {
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token ? `Bearer ${token}` : '',
-      },
-    },
-  );
-
-  return response.data;
-}
-
-//모임원 목록 조회
-export async function getGroupMembers(groupId: number | string) {
-  const token = getCachedAccessToken();
-
-  const response = await axios.get<GroupMembersResponse>(
-    `https://api.ssafywte.site/auth-service/api/v1/groups/${groupId}/members`,
-    {
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token ? `Bearer ${token}` : '',
-      },
-    },
-  );
-
-  return response.data;
-}
-
-//모임원 권한 변경
 export async function updateGroupMemberRole(
   groupId: number | string,
   userId: number | string,
-  requestBody: UpdateMemberRoleRequest,
-) {
-  const token = getCachedAccessToken();
-
-  const response = await axios.patch<UpdateMemberRoleResponse>(
-    `https://api.ssafywte.site/auth-service/api/v1/groups/${groupId}/members/${userId}/role`,
-    requestBody,
-    {
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token ? `Bearer ${token}` : '',
-      },
-    },
+  payload: UpdateMemberRoleRequest,
+): Promise<UpdateMemberRoleResponse> {
+  const response = await groupApi.patch<UpdateMemberRoleResponse>(
+    `/groups/${groupId}/members/${userId}/role`,
+    payload,
   );
-
   return response.data;
 }
