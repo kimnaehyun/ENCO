@@ -5,12 +5,12 @@ export async function fetchAllProducts(): Promise<Accommodation[]> {
   const res = await fetch(`${API_BASE_URL}/api/v1/products`);
   if (!res.ok) throw new Error('상품 목록을 불러오는데 실패했습니다.');
   const json: CommonResponse<Accommodation[]> = await res.json();
-  return json.data;
+  return json.result;
 }
 
 export async function fetchProduct(productId: number): Promise<Accommodation> {
   const res = await fetch(`${API_BASE_URL}/api/v1/products/${productId}`);
   if (!res.ok) throw new Error('상품 정보를 불러오는데 실패했습니다.');
   const json: CommonResponse<Accommodation> = await res.json();
-  return json.data;
+  return json.result;
 }
