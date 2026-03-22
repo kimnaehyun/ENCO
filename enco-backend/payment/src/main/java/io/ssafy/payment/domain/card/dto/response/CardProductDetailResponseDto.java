@@ -2,6 +2,7 @@ package io.ssafy.payment.domain.card.dto.response;
 
 import io.ssafy.payment.domain.card.entity.CardProduct;
 import java.math.BigDecimal;
+import java.util.List;
 
 public record CardProductDetailResponseDto(
         Long id,
@@ -11,7 +12,8 @@ public record CardProductDetailResponseDto(
         String description,
         BigDecimal maxLimit,
         String frontImageUrl,
-        String backImageUrl
+        String backImageUrl,
+        List<String> categories
 ) {
     public static CardProductDetailResponseDto from(CardProduct card) {
         return new CardProductDetailResponseDto(
@@ -22,7 +24,10 @@ public record CardProductDetailResponseDto(
                 card.getDescription(),
                 card.getMaxLimit(),
                 card.getFrontImageUrl(),
-                card.getBackImageUrl()
+                card.getBackImageUrl(),
+                card.getCardBenefitList().stream()
+                        .map(benefit -> benefit.getCategory().getName())
+                        .toList()
         );
     }
 }

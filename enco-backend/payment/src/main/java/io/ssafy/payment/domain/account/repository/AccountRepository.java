@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -19,4 +20,13 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     @Modifying
     @Query("UPDATE accounts a SET a.amount = a.amount + :amount WHERE a.groupId = :groupId AND a.isDeleted = false")
     int depositByGroupId(@Param("groupId") Long groupId, @Param("amount") BigDecimal amount);
+
+    // N+1 방지 fetch join
+    @Query("""
+    SELECT DISTINCT a FROM accounts a
+    LEFT JOIN FETCH a.cardList c
+    WHERE a.id IN :accountIds
+      AND a.isDeleted = false
+    """)
+    List<Account> findByIdInWithBasicCard(@Param("accountIds") List<Long> accountIds);
 }
