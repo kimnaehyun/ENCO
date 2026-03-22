@@ -8,6 +8,7 @@ export type Accommodation = {
   quantity: number;
   description: string;
   imageUrl: string | null;
+  rating?: number;
 };
 
 // 백엔드 CommonResponse 래퍼
