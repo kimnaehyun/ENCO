@@ -20,7 +20,7 @@ import ExpenseCategoryCard, {
 import MonthlyTrendCard, {
   MonthlyExpense,
 } from '../../components/analytics/MonthlyTrendCard';
-import { getGroupDashboard } from '../../services/paymentService';
+import { getGroupDashboard, getGroupDashboardReport } from '../../services/paymentService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 20;
@@ -51,7 +51,9 @@ export default function GroupDashboardScreen() {
   const [paidRatio, setPaidRatio] = useState(0);
   const [unpaidRatio, setUnpaidRatio] = useState(0);
   const [balance, setBalance] = useState(0);
-
+  const [reportBalance, setReportBalance] = useState(0);
+  const [paidAmount, setPaidAmount] = useState(0);
+  const [pointAmount, setPointAmount] = useState(0);
   // --- 상수 ---
   const totalExpense = 428000;
   const monthlyBudget = 500000;
@@ -138,6 +140,15 @@ export default function GroupDashboardScreen() {
         setPaidRatio(result.paymentStatus?.paidRatio ?? 0);
         setUnpaidRatio(result.paymentStatus?.unpaidRatio ?? 0);
         setBalance(result.balance ?? 0);
+
+        const reportData = await getGroupDashboardReport(groupId);
+        console.log('모임비 대시보드 조회 성공:', reportData);
+        console.log('모임비 대시보드 result:', reportData.result);
+
+        const reportResult = reportData.result;
+        setReportBalance(reportResult.balance ?? 0);
+        setPaidAmount(reportResult.paidAmount ?? 0);
+        setPointAmount(reportResult.pointAmount ?? 0);
       } catch (error: any) {
         console.error('모임 대시보드 조회 실패:', error);
         console.error('error.response?.status:', error?.response?.status);
@@ -347,11 +358,23 @@ export default function GroupDashboardScreen() {
         {/* 잔액 카드 */}
         <Pressable
           onPress={onPressLedger}
-          className="bg-white rounded-3xl px-6 mb-4 flex-row items-center justify-between"
-          style={styles.shadowCard}
+          className="bg-white rounded-3xl px-6 py-5 mb-4"
+          style={styles.reportCard}
         >
-          <Text style={styles.balanceEmoji}>💵</Text>
-          <Text style={styles.balanceValue}>{balance.toLocaleString()}원</Text>
+          <View className="flex-row items-center justify-between mb-3">
+            <Text style={styles.balanceEmoji}>💵</Text>
+            <Text style={styles.balanceValue}>{reportBalance.toLocaleString()}원</Text>
+          </View>
+
+          {/* <View className="flex-row items-center justify-between">
+            <Text style={styles.statusLabel}>총 납부액</Text>
+            <Text style={styles.statusValue}>{paidAmount.toLocaleString()}원</Text>
+          </View>
+
+          <View className="flex-row items-center justify-between mt-2">
+            <Text style={styles.statusLabel}>적립 포인트</Text>
+            <Text style={styles.statusValue}>{pointAmount.toLocaleString()}P</Text>
+          </View> */}
         </Pressable>
 
         {/* 납부/미납 현황 카드 */}
@@ -471,11 +494,27 @@ const styles = StyleSheet.create({
   },
 
   // 잔액 카드
+  reportCard: {
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
   balanceEmoji: {
     fontSize: 26,
   },
   balanceValue: {
     fontSize: 22,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#111827',
+  },
+  statusLabel: {
+    fontSize: 14,
+    fontFamily: 'GmarketSansTTFMedium',
+    color: '#6B7280',
+  },
+  statusValue: {
+    fontSize: 14,
     fontFamily: 'GmarketSansTTFBold',
     color: '#111827',
   },

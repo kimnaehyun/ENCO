@@ -1,10 +1,11 @@
 // src/screens/group/GroupLedgerScreen.tsx
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
 import { LedgerItem } from '../../types/group';
+import { getGroupDashboardReport } from '../../services/paymentService';
 
 // ─── helpers ───
 function formatMoney(n: number) {
@@ -108,11 +109,39 @@ type SortOrder = 'latest' | 'oldest';
 type TxFilter = 'all' | 'deposit' | 'withdraw';
 
 export default function GroupLedgerScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation();
   const route = useRoute();
   const params = (route.params ?? {}) as CommonParams;
   const groupName = params.groupName ?? '모임명';
   const isAdmin = !!params.isAdmin;
+  const groupId = 1; // 임시 테스트용, 나중에 params.groupId로 교체
+
+  const [balance, setBalance] = useState(0);
+  const [paidAmount, setPaidAmount] = useState(0);
+  const [pointAmount, setPointAmount] = useState(0);
+
+  useEffect(() => {
+    const fetchLedgerSummary = async () => {
+      try {
+        console.log('ledger groupId 확인:', groupId);
+
+        const reportData = await getGroupDashboardReport(groupId);
+        console.log('모임비 대시보드 조회 성공:', reportData);
+        console.log('모임비 대시보드 result:', reportData.result);
+
+        const result = reportData.result;
+        setBalance(result.balance ?? 0);
+        setPaidAmount(result.paidAmount ?? 0);
+        setPointAmount(result.pointAmount ?? 0);
+      } catch (error: any) {
+        console.error('모임비 대시보드 조회 실패:', error);
+        console.error('error.response?.status:', error?.response?.status);
+        console.error('error.response?.data:', error?.response?.data);
+      }
+    };
+
+    fetchLedgerSummary();
+  }, [groupId]);
 
   // ── mock 데이터 ──
   const items: LedgerItem[] = useMemo(() => [
@@ -127,10 +156,6 @@ export default function GroupLedgerScreen() {
       ],
     },
   ], []);
-
-  const balance = 854440;
-  const paidAmount = 854000;
-  const pointAmount = 443;
 
   // ── 필터 상태 ──
   const today = useMemo(() => new Date(), []);
