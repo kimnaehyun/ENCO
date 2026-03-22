@@ -355,7 +355,7 @@ export default function GroupDashboardScreen() {
         </Pressable>
 
         {/* 납부/미납 현황 카드 */}
-        <View
+        {/* <View
           className="bg-white rounded-3xl px-6 py-5 mb-4"
           style={styles.shadowCard}
         >
@@ -373,8 +373,8 @@ export default function GroupDashboardScreen() {
             <Text style={styles.statusValue}>
               {unpaidCount}명 ({unpaidRatio}%)
             </Text>
-          </View>
-        </View>
+          </View> */}
+        
 
         {/* 투표 현황 카드 */}
         <Pressable
