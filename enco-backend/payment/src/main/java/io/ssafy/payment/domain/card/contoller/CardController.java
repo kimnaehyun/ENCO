@@ -27,4 +27,17 @@ public class CardController {
             @PathVariable("cardProductId") Long cardProductId) {
         return ResponseEntity.ok(CommonResponse.success(cardProductService.getCardProductDetail(cardProductId)));
     }
+
+    /**
+     * 카드 추천 목록
+     * @param categories
+     * @return
+     */
+    @GetMapping("/recommend")
+    public ResponseEntity<List<CardProductDetailResponseDto>> recommendCards(
+            @RequestParam("categories") List<String> categories) {
+
+        List<CardProductDetailResponseDto> recommendations = cardProductService.getRecommendedCards(categories);
+        return ResponseEntity.ok(recommendations);
+    }
 }

@@ -44,4 +44,12 @@ public class CardService {
 
         return CardProductDetailResponseDto.from(card);
     }
+
+    public List<CardProductDetailResponseDto> getRecommendedCards(List<String> categories) {
+        List<CardProduct> cards = cardProductRepository.findRecommendedCards(categories);
+
+        return cards.stream()
+                .map(CardProductDetailResponseDto::from)
+                .toList();
+    }
 }
