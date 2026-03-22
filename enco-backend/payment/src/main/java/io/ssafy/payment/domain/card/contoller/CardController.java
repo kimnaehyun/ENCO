@@ -34,10 +34,10 @@ public class CardController {
      * @return
      */
     @GetMapping("/recommend")
-    public ResponseEntity<List<CardProductDetailResponseDto>> recommendCards(
+    public ResponseEntity<CommonResponse<List<CardProductDetailResponseDto>>> recommendCards(
             @RequestParam("categories") List<String> categories) {
 
         List<CardProductDetailResponseDto> recommendations = cardProductService.getRecommendedCards(categories);
-        return ResponseEntity.ok(recommendations);
+        return ResponseEntity.ok(CommonResponse.success(recommendations));
     }
 }
