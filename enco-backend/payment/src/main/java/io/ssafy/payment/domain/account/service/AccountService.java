@@ -1,6 +1,7 @@
 package io.ssafy.payment.domain.account.service;
 
 import io.ssafy.payment.domain.account.dto.request.PaymentCreateRequestDto;
+import io.ssafy.payment.domain.account.dto.response.GroupAccountCardResponseDto;
 import io.ssafy.payment.domain.account.dto.response.PaymentCreateResponseDto;
 import io.ssafy.payment.domain.account.entity.Account;
 import io.ssafy.payment.domain.account.entity.Product;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -85,5 +87,13 @@ public class AccountService {
             log.error("[AccountService] Error creating account and card: {}", e.getMessage(), e);
             throw new RuntimeException("계좌 및 카드 생성 실패: " + e.getMessage(), e);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<GroupAccountCardResponseDto> getAccountsByIds(List<Long> accountIds) {
+        return accountRepository.findByIdInWithBasicCard(accountIds)
+                .stream()
+                .map(GroupAccountCardResponseDto::from)
+                .toList();
     }
 }
