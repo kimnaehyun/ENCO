@@ -1,6 +1,5 @@
 package io.ssafy.payment.domain.account.dto.response;
 
-import io.ssafy.payment.domain.account.dto.request.GroupAccountCardRequestDto;
 import io.ssafy.payment.domain.account.entity.Account;
 import io.ssafy.payment.domain.card.entity.Card;
 

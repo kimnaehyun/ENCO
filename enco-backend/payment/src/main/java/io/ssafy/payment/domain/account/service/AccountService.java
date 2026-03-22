@@ -1,6 +1,8 @@
 package io.ssafy.payment.domain.account.service;
 
+import io.ssafy.payment.domain.account.dto.request.CardIssueRequestDto;
 import io.ssafy.payment.domain.account.dto.request.PaymentCreateRequestDto;
+import io.ssafy.payment.domain.account.dto.response.CardIssueResponseDto;
 import io.ssafy.payment.domain.account.dto.response.GroupAccountCardResponseDto;
 import io.ssafy.payment.domain.account.dto.response.PaymentCreateResponseDto;
 import io.ssafy.payment.domain.account.entity.Account;
@@ -95,5 +97,30 @@ public class AccountService {
                 .stream()
                 .map(GroupAccountCardResponseDto::from)
                 .toList();
+    }
+
+    @Transactional
+    public CardIssueResponseDto issueAdditionalCard(CardIssueRequestDto request) {
+        Account account = accountRepository.findById(request.accountId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ACCOUNT));
+
+        var cardProduct = cardProductRepository.findById(request.cardProductId())
+                .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+
+        Card card = Card.builder()
+                .account(account)
+                .cardNumber("5332-" + UUID.randomUUID().toString().substring(0, 10))
+                .cvc("123")
+                .type(CardType.CHECK)
+                .expirationAt(LocalDateTime.now().plusYears(5))
+                .isBasic(false)
+                .cardProduct(cardProduct)
+                .build();
+
+        Card savedCard = cardRepository.save(card);
+        log.info("[AccountService] Additional card issued: cardId={}, accountId={}",
+                savedCard.getId(), account.getId());
+
+        return CardIssueResponseDto.from(savedCard);
     }
 }

@@ -1,6 +1,8 @@
 package io.ssafy.payment.domain.account.controller;
 
+import io.ssafy.payment.domain.account.dto.request.CardIssueRequestDto;
 import io.ssafy.payment.domain.account.dto.request.PaymentCreateRequestDto;
+import io.ssafy.payment.domain.account.dto.response.CardIssueResponseDto;
 import io.ssafy.payment.domain.account.dto.response.GroupAccountCardResponseDto;
 import io.ssafy.payment.domain.account.dto.response.PaymentCreateResponseDto;
 import io.ssafy.payment.domain.account.service.AccountService;
@@ -37,5 +39,11 @@ public class AccountController {
     public ResponseEntity<CommonResponse<List<GroupAccountCardResponseDto>>> getAccountsByIds(
             @RequestParam List<Long> accountIds) {
         return ResponseEntity.ok(CommonResponse.success(accountService.getAccountsByIds(accountIds)));
+    }
+
+    @PostMapping("/accounts/cards")
+    public ResponseEntity<CommonResponse<CardIssueResponseDto>> issueAdditionalCard(
+            @RequestBody CardIssueRequestDto request) {
+        return ResponseEntity.ok(CommonResponse.success(accountService.issueAdditionalCard(request)));
     }
 }
