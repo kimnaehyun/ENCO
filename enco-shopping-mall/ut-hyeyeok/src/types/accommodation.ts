@@ -8,11 +8,10 @@ export type Accommodation = {
   quantity: number;
   description: string;
   imageUrl: string | null;
-  rating?: number;
 };
 
+
 export type CommonResponse<T> = {
-  success: boolean;
-  data: T;
-  error: string | null;
+  message: string;
+  result: T;
 };
