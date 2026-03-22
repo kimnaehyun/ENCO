@@ -55,4 +55,12 @@ public class CardService {
                 .map(CardListResponseDto::from)
                 .collect(Collectors.toList());
     }
+
+    public List<CardProductDetailResponseDto> getRecommendedCards(List<String> categories) {
+        List<CardProduct> cards = cardProductRepository.findRecommendedCards(categories);
+
+        return cards.stream()
+                .map(CardProductDetailResponseDto::from)
+                .toList();
+    }
 }

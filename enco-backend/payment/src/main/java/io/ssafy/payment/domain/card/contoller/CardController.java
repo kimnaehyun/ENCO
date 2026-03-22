@@ -41,4 +41,17 @@ public class CardController {
                 CommonResponse.success(cardProductService.getGroupCardList(groupId))
         );
     }
+
+    /**
+     * 카드 추천 목록
+     * @param categories
+     * @return
+     */
+    @GetMapping("/recommend")
+    public ResponseEntity<CommonResponse<List<CardProductDetailResponseDto>>> recommendCards(
+            @RequestParam("categories") List<String> categories) {
+
+        List<CardProductDetailResponseDto> recommendations = cardProductService.getRecommendedCards(categories);
+        return ResponseEntity.ok(CommonResponse.success(recommendations));
+    }
 }
