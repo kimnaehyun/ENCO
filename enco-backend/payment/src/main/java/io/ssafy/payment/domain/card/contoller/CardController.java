@@ -1,5 +1,6 @@
 package io.ssafy.payment.domain.card.contoller;
 
+import io.ssafy.payment.domain.card.dto.response.CardListResponseDto;
 import io.ssafy.payment.domain.card.dto.response.CardProductDetailResponseDto;
 import io.ssafy.payment.domain.card.dto.response.CardProductListResponseDto;
 import io.ssafy.payment.domain.card.service.CardService;
@@ -26,6 +27,19 @@ public class CardController {
     public ResponseEntity<CommonResponse<CardProductDetailResponseDto>> getCardProductDetail(
             @PathVariable("cardProductId") Long cardProductId) {
         return ResponseEntity.ok(CommonResponse.success(cardProductService.getCardProductDetail(cardProductId)));
+    }
+
+    /**
+     * 내가 속한 모임 리스트 조회(대표 카드 반환)
+     * @param groupId
+     * @return
+     */
+    @GetMapping("/groups/{groupId}/cards")
+    public ResponseEntity<CommonResponse<List<CardListResponseDto>>> getGroupCards(
+            @PathVariable Long groupId) {
+        return ResponseEntity.ok(
+                CommonResponse.success(cardProductService.getGroupCardList(groupId))
+        );
     }
 
     /**

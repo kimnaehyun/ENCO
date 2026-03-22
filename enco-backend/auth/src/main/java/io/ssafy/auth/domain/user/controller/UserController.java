@@ -1,55 +1,31 @@
 package io.ssafy.auth.domain.user.controller;
 
-import io.ssafy.auth.domain.user.dto.request.LoginRequestDto;
-import io.ssafy.auth.domain.user.dto.request.ReLoginRequestDto;
-import io.ssafy.auth.domain.user.dto.request.UserJoinRequestDto;
-import io.ssafy.auth.domain.user.dto.response.LoginResponseDto;
-import io.ssafy.auth.domain.user.dto.response.UserJoinResponseDto;
-import io.ssafy.auth.domain.user.service.UserServiceImpl;
+import io.ssafy.auth.domain.group.dto.response.MyGroupResponseDto;
+import io.ssafy.auth.domain.group.service.GroupInfoService;
 import io.ssafy.auth.global.common.response.CommonResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
 @RestController
 @AllArgsConstructor
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/v1/users")
 public class UserController {
-    private UserServiceImpl userService;
+
+    private GroupInfoService groupInfoService;
 
     /**
-     * 회원가입 ( 회원가입 후 자동 로그인)
-     * @param dto
+     * 내 모임(대표카드) 전체 목록 조회
+     * @param userId
      * @return
      */
-    @PostMapping("/regist")
-    public ResponseEntity<CommonResponse<UserJoinResponseDto>> signUp(@RequestBody UserJoinRequestDto dto) {
-        return ResponseEntity.ok(CommonResponse.success(userService.signup(dto)));
-    }
-
-    /**
-     * 로그인
-     * @param loginRequestDto
-     * @return
-     */
-    @PostMapping("/login")
-    public ResponseEntity<CommonResponse<LoginResponseDto>> login(@RequestBody LoginRequestDto loginRequestDto) {
-        LoginResponseDto responseDto = userService.login(
-                loginRequestDto.deviceToken(),
-                loginRequestDto.pinCode()
-        );
-        return ResponseEntity.ok(CommonResponse.success(responseDto));
-    }
-
-    /**
-     * 재로그인
-     * @param reLoginRequestDto
-     * @return
-     */
-    @PostMapping("/re-login")
-    public ResponseEntity<CommonResponse<LoginResponseDto>> reLogin(@RequestBody ReLoginRequestDto reLoginRequestDto) {
-        LoginResponseDto responseDto = userService.reLogin(reLoginRequestDto);
-        return ResponseEntity.ok(CommonResponse.success(responseDto));
-
+    @GetMapping("/me/groups")
+    public ResponseEntity<CommonResponse<List<MyGroupResponseDto>>> getMyGroups(
+            @RequestHeader("X-User-Id") Long userId) {
+        return ResponseEntity.ok(CommonResponse.success(groupInfoService.getMyGroups(userId)));
     }
 }

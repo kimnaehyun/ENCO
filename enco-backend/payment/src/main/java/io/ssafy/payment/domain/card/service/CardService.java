@@ -1,5 +1,6 @@
 package io.ssafy.payment.domain.card.service;
 
+import io.ssafy.payment.domain.card.dto.response.CardListResponseDto;
 import io.ssafy.payment.domain.card.dto.response.CardProductDetailResponseDto;
 import io.ssafy.payment.domain.card.dto.response.CardProductListResponseDto;
 import io.ssafy.payment.domain.card.dto.response.GroupCardResponseDto;
@@ -13,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +45,15 @@ public class CardService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CARD));
 
         return CardProductDetailResponseDto.from(card);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CardListResponseDto> getGroupCardList(Long groupId) {
+        return cardRepository
+                .findByAccount_GroupIdAndIsDeletedFalseOrderByIsBasicDesc(groupId)
+                .stream()
+                .map(CardListResponseDto::from)
+                .collect(Collectors.toList());
     }
 
     public List<CardProductDetailResponseDto> getRecommendedCards(List<String> categories) {
