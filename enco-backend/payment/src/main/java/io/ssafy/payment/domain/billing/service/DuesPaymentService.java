@@ -16,6 +16,7 @@ import io.ssafy.payment.domain.transaction.entity.Status;
 import io.ssafy.payment.domain.transaction.entity.TransactionHistory;
 import io.ssafy.payment.domain.transaction.entity.Type;
 import io.ssafy.payment.domain.transaction.repository.TransactionHistoryRepository;
+import io.ssafy.payment.global.common.BankCode;
 import io.ssafy.payment.global.common.error.CustomException;
 import io.ssafy.payment.global.common.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -97,6 +98,8 @@ public class DuesPaymentService {
                 .memo(request.memo())
                 .displayName(request.depositDisplayName())
                 .counterpartyBankName(request.withdrawAccountBankName())
+                .counterpartyBankCode(BankCode.codeOf(request.withdrawAccountBankName()))
+                .counterpartyBankAccountNumber(request.withdrawAccountNumber())
                 .counterpartyName(request.withdrawDisplayName())
                 .status(Status.APPROVED)
                 .idempotencyKey(idempotencyKey)
@@ -164,6 +167,9 @@ public class DuesPaymentService {
                 .balance(newBalance)
                 .memo(request.memo())
                 .displayName(request.depositDisplayName())
+                .counterpartyBankName(request.withdrawAccountBankName())
+                .counterpartyBankCode(BankCode.codeOf(request.withdrawAccountBankName()))
+                .counterpartyBankAccountNumber(request.withdrawAccountNumber())
                 .counterpartyName(request.withdrawDisplayName())
                 .status(Status.APPROVED)
                 .idempotencyKey(idempotencyKey)
