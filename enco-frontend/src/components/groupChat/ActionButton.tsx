@@ -10,7 +10,7 @@ export default function ActionButton({
   return (
     <Pressable
       onPress={onPress}
-      className="h-10 border border-[#8F8F8F] rounded-[20px] items-center justify-center bg-[#FFFFFF] py-5"
+      className="h-10 border border-[#8F8F8F] rounded-[20px] items-center justify-center bg-[#FFFFFF]"
     >
       <Text
         className="text-[#111111] text-base"
