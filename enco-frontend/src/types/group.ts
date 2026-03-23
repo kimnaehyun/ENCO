@@ -289,6 +289,25 @@ export type GroupScreenProps<T extends keyof GroupStackParamList> =
 
 export type SignupStep = 'name' | 'birth' | 'phone' | 'email' | 'done';
 
+// ── 모임 장부 관련 타입 ──
+export type SettleMember = {
+  id: string;
+  name: string;
+  isPaid: boolean;
+};
+
+export type LedgerItem = {
+  id: string;
+  date: string;
+  amount: number;
+  title: string;
+  memo: string;
+  hasReceipt: boolean;
+  needsSettle: boolean;
+  isSettled: boolean;
+  settleMembers: SettleMember[];
+};
+
 export type Message = {
   id: string;
   messageType: string;
