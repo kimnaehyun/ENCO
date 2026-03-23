@@ -50,7 +50,23 @@ public class AuthServiceClient {
         return response.result();
     }
 
+    public List<ActiveDuePolicyResponse> getTodayActivePolicies() {
+        String url = authServiceUrl + "/api/v1/internal/due-policies/today";
+
+        CommonResponse<List<ActiveDuePolicyResponse>> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<CommonResponse<List<ActiveDuePolicyResponse>>>() {}
+        ).getBody();
+
+        if (response == null || response.result() == null) return List.of();
+        return response.result();
+    }
+
     public record GroupMemberResponse(Long userId, String role) {}
 
     public record GroupInfoResponse(String groupName, BigDecimal point) {}
+
+    public record ActiveDuePolicyResponse(Long policyId, Long groupId, BigDecimal amount) {}
 }

@@ -9,8 +9,10 @@ import io.ssafy.payment.domain.billing.entity.ChargeTarget;
 import io.ssafy.payment.domain.billing.entity.ChargeTargetStatus;
 import io.ssafy.payment.domain.billing.entity.DuePayment;
 import io.ssafy.payment.domain.billing.entity.DuesPaymentStatus;
+import io.ssafy.payment.domain.billing.entity.UserPrepayment;
 import io.ssafy.payment.domain.billing.repository.ChargeTargetRepository;
 import io.ssafy.payment.domain.billing.repository.DuePaymentRepository;
+import io.ssafy.payment.domain.billing.repository.UserPrepaymentRepository;
 import io.ssafy.payment.domain.transaction.entity.Direction;
 import io.ssafy.payment.domain.transaction.entity.Status;
 import io.ssafy.payment.domain.transaction.entity.TransactionHistory;
@@ -37,6 +39,7 @@ public class DuesPaymentService {
     private final ChargeTargetRepository chargeTargetRepository;
     private final AccountRepository accountRepository;
     private final TransactionHistoryRepository transactionHistoryRepository;
+    private final UserPrepaymentRepository userPrepaymentRepository;
 
     @Transactional
     public DuesPaymentResponseDto payFree(Long groupId, Long userId, String idempotencyKey, CreateFreePaymentRequestDto request) {
@@ -82,6 +85,18 @@ public class DuesPaymentService {
 
             allocations.add(new DuesPaymentResponseDto.AllocationDto(
                     target.getId(), payAmount, target.getStatus().name(), target.getRemainingAmount()));
+        }
+
+        // 초과 납부액 prepayment에 저장
+        if (remaining.compareTo(BigDecimal.ZERO) > 0) {
+            UserPrepayment prepayment = userPrepaymentRepository
+                    .findByUserIdAndGroupId(userId, groupId)
+                    .orElseGet(() -> UserPrepayment.builder()
+                            .userId(userId)
+                            .groupId(groupId)
+                            .build());
+            prepayment.add(remaining);
+            userPrepaymentRepository.save(prepayment);
         }
 
         // 계좌 입금

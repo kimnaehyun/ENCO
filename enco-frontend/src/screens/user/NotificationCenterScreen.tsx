@@ -1,6 +1,7 @@
 // src/screens/user/NotificationCenterScreen.tsx
 import React from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import {
@@ -147,8 +148,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.primary,
+    fontFamily: FONT_FAMILY.bold,
   },
   headerActions: {
     flexDirection: 'row',
@@ -157,8 +158,8 @@ const styles = StyleSheet.create({
   },
   headerActionText: {
     fontSize: 12,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   listContent: {
@@ -177,14 +178,14 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 16,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.primary,
+    fontFamily: FONT_FAMILY.bold,
     marginBottom: 8,
   },
   emptyDesc: {
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -215,19 +216,19 @@ const styles = StyleSheet.create({
   cardTitle: {
     flex: 1,
     fontSize: 16,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.primary,
+    fontFamily: FONT_FAMILY.medium,
   },
   cardTitleUnread: {
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
 
   cardBody: {
     marginTop: 10,
     marginLeft: 20,
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     lineHeight: 20,
   },
 });

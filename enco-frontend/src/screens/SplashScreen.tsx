@@ -1,5 +1,6 @@
 import React from "react";
-import {View, Image, Text} from "react-native"
+import { View, Image } from "react-native"
+import Text from '@/components/typography';
 
 import {images} from "../types/images"
 
@@ -11,8 +12,8 @@ export default function SplashScreen(){
             style={{width:550, height: 300}} //여긴 반응형으로 사이즈 조절 필요
             resizeMode="contain"
             />
-            <Text style ={{fontFamily:'GmarketSansTTFBold', fontSize :24}}>투명하게 관리하는</Text>
-            <Text style ={{fontFamily:'GmarketSansTTFBold', fontSize :24}}>우리의 모임통장</Text>
+            <Text variant="h2">투명하게 관리하는</Text>
+            <Text variant="h2">우리의 모임통장</Text>
         </View>
 
     )

@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 
 export type MonthlyExpense = {
@@ -110,13 +111,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   cardDesc: {
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     lineHeight: 18,
     marginTop: 6,
   },
@@ -128,7 +129,7 @@ const styles = StyleSheet.create({
   },
   axisLabel: {
     fontSize: 11,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 });

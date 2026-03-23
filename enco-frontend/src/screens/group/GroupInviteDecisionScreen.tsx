@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import { ROUTES } from '../../constants/routes';
 import ScreenLayout from '../../components/ScreenLayout';
@@ -111,8 +112,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   card: {
@@ -142,8 +143,8 @@ const styles = StyleSheet.create({
   infoLabel: {
     width: 86,
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
   infoValueWrap: {
     flex: 1,
@@ -151,14 +152,14 @@ const styles = StyleSheet.create({
   },
   groupName: {
     fontSize: 18,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
     textAlign: 'right',
   },
   valueText: {
     fontSize: 14,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'right',
   },
 
@@ -176,8 +177,8 @@ const styles = StyleSheet.create({
   },
   tagText: {
     fontSize: 13,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   ruleCard: {
@@ -192,15 +193,15 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 15,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
     marginBottom: 12,
   },
   ruleText: {
     fontSize: 14,
     lineHeight: 24,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   bottomBar: {
@@ -225,8 +226,8 @@ const styles = StyleSheet.create({
   },
   rejectButtonText: {
     fontSize: 16,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
   acceptButton: {
     flex: 1,
@@ -238,7 +239,7 @@ const styles = StyleSheet.create({
   },
   acceptButtonText: {
     fontSize: 16,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 });

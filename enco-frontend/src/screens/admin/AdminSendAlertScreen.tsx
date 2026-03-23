@@ -1,14 +1,7 @@
 // src/screens/admin/AdminSendAlertScreen.tsx
 import React, { useMemo, useState } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  Image,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View, Image } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
@@ -258,14 +251,14 @@ const styles = StyleSheet.create({
   /* 헤더 */
   headerTitle: {
     fontSize: 20,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   headerSub: {
     marginTop: 6,
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
   countBadge: {
     backgroundColor: '#FEE2E2',
@@ -276,7 +269,7 @@ const styles = StyleSheet.create({
   countBadgeText: {
     fontSize: 14,
     color: '#DC2626',
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
 
   /* 섹션 카드 */
@@ -297,8 +290,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 15,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   sectionCountPill: {
     marginLeft: 8,
@@ -309,7 +302,7 @@ const styles = StyleSheet.create({
   },
   sectionCountText: {
     fontSize: 12,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
     color: '#DC2626',
   },
 
@@ -361,14 +354,14 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 17,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   memberDue: {
     marginTop: 6,
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   /* 납부 배지 */
@@ -385,7 +378,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 11,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
   badgePaidText: {
     color: '#16A34A',
@@ -407,8 +400,8 @@ const styles = StyleSheet.create({
   },
   sendBadgeText: {
     fontSize: 12,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
   sendBadgeTextSent: {
     color: '#E5E7EB',
@@ -437,8 +430,8 @@ const styles = StyleSheet.create({
   },
   bulkSendButtonText: {
     fontSize: 16,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   /* 모달 */
@@ -476,31 +469,31 @@ const styles = StyleSheet.create({
   },
   modalCloseText: {
     fontSize: 16,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.bold,
   },
   modalTitle: {
     marginTop: 6,
     fontSize: 19,
-    color: '#111827',
+    color: COLORS.dark,
     textAlign: 'center',
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
   modalDescription: {
     marginTop: 10,
     fontSize: 14,
     lineHeight: 22,
-    color: '#6B7280',
+    color: COLORS.muted,
     textAlign: 'center',
-    fontFamily: 'GmarketSansTTFMedium',
+    fontFamily: FONT_FAMILY.medium,
   },
   modalInfo: {
     marginTop: 14,
     fontSize: 12,
     lineHeight: 20,
-    color: '#9CA3AF',
+    color: COLORS.placeholder,
     textAlign: 'center',
-    fontFamily: 'GmarketSansTTFMedium',
+    fontFamily: FONT_FAMILY.medium,
   },
   modalButtonRow: {
     flexDirection: 'row',
@@ -518,8 +511,8 @@ const styles = StyleSheet.create({
   },
   modalCancelText: {
     fontSize: 15,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.bold,
   },
   modalConfirmButton: {
     flex: 1,
@@ -531,8 +524,8 @@ const styles = StyleSheet.create({
   },
   modalConfirmText: {
     fontSize: 15,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
   modalDoneButton: {
     marginTop: 20,

@@ -1,11 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
@@ -296,14 +291,14 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 22,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   headerSub: {
     marginTop: 4,
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   heroCard: {
@@ -324,16 +319,16 @@ const styles = StyleSheet.create({
   },
   heroTitle: {
     fontSize: 20,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
     lineHeight: 30,
     textAlign: 'center',
   },
   heroDesc: {
     marginTop: 8,
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -352,8 +347,8 @@ const styles = StyleSheet.create({
   },
   attendButtonText: {
     fontSize: 16,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   statsRow: {
@@ -377,14 +372,14 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 18,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   statLabel: {
     marginTop: 2,
     fontSize: 11,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   rewardCard: {
@@ -406,19 +401,19 @@ const styles = StyleSheet.create({
   },
   rewardTitle: {
     fontSize: 16,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
     marginBottom: 6,
   },
   rewardDesc: {
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     lineHeight: 20,
   },
   highlight: {
-    color: '#1428A0',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.bold,
   },
   rewardBadge: {
     backgroundColor: '#EEF2FF',
@@ -432,8 +427,8 @@ const styles = StyleSheet.create({
   },
   rewardBadgeText: {
     fontSize: 13,
-    color: '#1428A0',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   progressLabelRow: {
@@ -443,16 +438,16 @@ const styles = StyleSheet.create({
   },
   progressLabel: {
     fontSize: 12,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
   },
   progressPercent: {
     fontSize: 12,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.bold,
   },
   progressPercentDone: {
-    color: '#22C55E',
+    color: COLORS.success,
   },
   progressTrack: {
     height: 10,
@@ -476,14 +471,14 @@ const styles = StyleSheet.create({
   },
   rewardSuccessText: {
     fontSize: 13,
-    color: '#22C55E',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.success,
+    fontFamily: FONT_FAMILY.bold,
     marginTop: 2,
   },
   rewardHintText: {
     fontSize: 12,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     marginTop: 2,
   },
 
@@ -505,17 +500,17 @@ const styles = StyleSheet.create({
   },
   calendarTitle: {
     fontSize: 17,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   calendarSummary: {
     fontSize: 12,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
   calendarSummaryStrong: {
-    color: '#1428A0',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   weekRow: {
@@ -528,8 +523,8 @@ const styles = StyleSheet.create({
   },
   weekText: {
     fontSize: 12,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   grid: {
@@ -550,22 +545,22 @@ const styles = StyleSheet.create({
   },
   dayText: {
     fontSize: 13,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
   },
   todayCell: {
     backgroundColor: '#1428A0',
   },
   todayText: {
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
   attendedCell: {
     backgroundColor: '#818CF8',
   },
   attendedText: {
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   legendRow: {
@@ -591,8 +586,8 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 12,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   scrollContent: {

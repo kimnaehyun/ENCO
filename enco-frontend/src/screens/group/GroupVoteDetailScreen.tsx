@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useVotes, VoteChoice } from '../../contexts/VotesContext';
 import { GroupStackParamList } from '../../types/navigation';
@@ -141,13 +142,13 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   closeText: {
     fontSize: 14,
-    color: '#1428A0',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   card: {
@@ -163,14 +164,14 @@ const styles = StyleSheet.create({
 
   title: {
     fontSize: 18,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   subTitle: {
     marginTop: 6,
     fontSize: 14,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   divider: {
@@ -188,26 +189,26 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
   infoValue: {
     fontSize: 14,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   sectionTitle: {
     fontSize: 15,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
     marginBottom: 8,
   },
   description: {
     fontSize: 14,
     lineHeight: 22,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   myChoiceBox: {
@@ -220,8 +221,8 @@ const styles = StyleSheet.create({
   },
   myChoiceText: {
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   buttonRow: {
@@ -248,14 +249,14 @@ const styles = StyleSheet.create({
   },
   voteButtonText: {
     fontSize: 16,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   emptyText: {
     fontSize: 15,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   backButton: {
     marginTop: 16,
@@ -267,7 +268,7 @@ const styles = StyleSheet.create({
   },
   backButtonText: {
     fontSize: 13,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.bold,
   },
 });

@@ -1,13 +1,10 @@
 // src/screens/group/GroupLedgerDetailScreen.tsx
 import React, { useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import { NativeModules } from 'react-native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { LedgerItem, SettleMember } from '../../types/group';
-
-const { OcrModule } = NativeModules;
 
 type RouteParams = {
   item: LedgerItem;
@@ -38,8 +35,6 @@ export default function GroupLedgerDetailScreen() {
   const isPositive = item.amount >= 0;
 
   const [receiptUri, setReceiptUri] = useState<string | null>(null);
-  const [ocrText, setOcrText] = useState<string>('');
-  const [ocrLoading, setOcrLoading] = useState(false);
 
   // 정산 멤버 데이터 — LedgerItem에서 가져옴
   const settleMembers: SettleMember[] = item.settleMembers ?? [];
@@ -47,20 +42,6 @@ export default function GroupLedgerDetailScreen() {
   const totalCount = settleMembers.length;
   const unpaidCount = totalCount - paidCount;
   const isSettled = item.isSettled ?? (totalCount === 0 || paidCount === totalCount);
-
-  // OCR 실행
-  const runOcr = async (uri: string) => {
-    if (!OcrModule) return;
-    try {
-      setOcrLoading(true);
-      const text = await OcrModule.recognizeTextFromUri(uri);
-      setOcrText(text || '');
-    } catch (e: any) {
-      Alert.alert('OCR 실패', e?.message ?? '알 수 없는 오류');
-    } finally {
-      setOcrLoading(false);
-    }
-  };
 
   // 카메라 촬영
   const handleCamera = async () => {
@@ -76,7 +57,7 @@ export default function GroupLedgerDetailScreen() {
   const handleDeleteReceipt = () => {
     Alert.alert('삭제', '영수증을 삭제할까요?', [
       { text: '취소', style: 'cancel' },
-      { text: '삭제', style: 'destructive', onPress: () => { setReceiptUri(null); setOcrText(''); } },
+      { text: '삭제', style: 'destructive', onPress: () => { setReceiptUri(null); } },
     ]);
   };
 
@@ -173,14 +154,6 @@ export default function GroupLedgerDetailScreen() {
                     style={styles.receiptImage}
                     resizeMode="cover"
                   />
-                  {ocrLoading && (
-                    <Text style={styles.ocrLoadingText}>OCR 분석 중...</Text>
-                  )}
-                  {ocrText !== '' && (
-                    <View style={styles.ocrTextBox}>
-                      <Text style={styles.ocrText}>{ocrText}</Text>
-                    </View>
-                  )}
                   {isAdmin && (
                     <Pressable onPress={handleDeleteReceipt}>
                       <Text style={styles.deleteReceiptText}>삭제</Text>
@@ -303,13 +276,13 @@ const styles = StyleSheet.create({
   // ── 헤더 ──────────────────────────────────
   headerTitle: {
     fontSize: 20,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   closeText: {
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // ── 공통 카드 그림자 ─────────────────────
@@ -323,14 +296,14 @@ const styles = StyleSheet.create({
   // ── 금액 / 잔액 ───────────────────────────
   amountText: {
     fontSize: 32,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
     textAlign: 'right',
     marginBottom: 4,
   },
   balanceText: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'right',
     marginBottom: 16,
   },
@@ -338,8 +311,8 @@ const styles = StyleSheet.create({
   // ── InfoRow ────────────────────────────────
   infoLabel: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
   },
   infoValueWrap: {
     flex: 1,
@@ -347,8 +320,8 @@ const styles = StyleSheet.create({
   },
   infoValueText: {
     fontSize: 14,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
   },
   statusBadge: {
     borderRadius: 12,
@@ -357,12 +330,12 @@ const styles = StyleSheet.create({
   },
   statusBadgeText: {
     fontSize: 12,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
   tradTypeText: {
     fontSize: 14,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 영수증 ────────────────────────────────
@@ -374,8 +347,8 @@ const styles = StyleSheet.create({
   },
   ocrLoadingText: {
     fontSize: 12,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'center',
   },
   ocrTextBox: {
@@ -387,20 +360,20 @@ const styles = StyleSheet.create({
   },
   ocrText: {
     fontSize: 11,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
     lineHeight: 18,
   },
   deleteReceiptText: {
     fontSize: 12,
-    color: '#EF4444',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.error,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'right',
   },
   noReceiptText: {
     fontSize: 13,
-    color: '#D1D5DB',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.faint,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // ── 촬영/첨부 버튼 ────────────────────────
@@ -415,8 +388,8 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     fontSize: 14,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 미납자 카드 ───────────────────────────
@@ -428,8 +401,8 @@ const styles = StyleSheet.create({
   },
   unpaidTitle: {
     fontSize: 15,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   unpaidBadge: {
     backgroundColor: '#FEF2F2',
@@ -439,8 +412,8 @@ const styles = StyleSheet.create({
   },
   unpaidBadgeText: {
     fontSize: 12,
-    color: '#EF4444',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.error,
+    fontFamily: FONT_FAMILY.bold,
   },
   memberList: {
     gap: 8,
@@ -464,22 +437,22 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 14,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
     flex: 1,
   },
   unpaidLabel: {
     fontSize: 13,
-    color: '#EF4444',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.error,
+    fontFamily: FONT_FAMILY.bold,
   },
   notifyButton: {
     backgroundColor: '#EF4444',
   },
   notifyButtonText: {
     fontSize: 14,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 정산완료 카드 ─────────────────────────
@@ -495,13 +468,13 @@ const styles = StyleSheet.create({
   },
   settledTitle: {
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#22C55E',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.success,
   },
   settledSubtitle: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     marginTop: 4,
   },
 
@@ -511,7 +484,7 @@ const styles = StyleSheet.create({
   },
   detailButtonText: {
     fontSize: 16,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 });

@@ -1,8 +1,11 @@
 // src/screens/group/SettleMemberSelectScreen.tsx
 import React, { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
+import type {ReceiptDraft} from '../../types/receipt';
+import {submitVerifiedReceipt} from '../../services/receiptService';
 
 type SettleMember = {
   id: string;
@@ -16,6 +19,7 @@ type RouteParams = {
   date: string;
   memo: string;
   receiptUri: string | null;
+  receiptDraft?: ReceiptDraft | null;
   groupName: string;
   groupId?: string;
   settleMembers?: SettleMember[];
@@ -37,6 +41,7 @@ export default function SettleMemberSelectScreen() {
   const params = (route.params ?? {}) as RouteParams;
 
   const { amount = 10000, groupName = '', isNewSettle = false } = params;
+  const [submitting, setSubmitting] = useState(false);
 
   // ── 새 정산 등록 모드 ──
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -66,6 +71,16 @@ export default function SettleMemberSelectScreen() {
       return;
     }
 
+    if (!params.receiptDraft) {
+      Alert.alert('안내', '검수된 영수증 데이터가 없습니다. OCR 검수부터 진행해 주세요.');
+      return;
+    }
+
+    if (!params.receiptUri) {
+      Alert.alert('안내', '영수증 스캔본이 없습니다. 영수증 이미지를 다시 선택해 주세요.');
+      return;
+    }
+
     const selectedMembers = ALL_GROUP_MEMBERS
       .filter(m => selectedIds.has(m.id))
       .map(m => ({ ...m, isPaid: false }));
@@ -77,18 +92,33 @@ export default function SettleMemberSelectScreen() {
         { text: '취소', style: 'cancel' },
         {
           text: '등록',
-          onPress: () => {
-            // 등록 후 정산 플로우 스택을 정리하고 장부로 돌아감
-            Alert.alert('완료', '새로운 정산이 등록되었습니다.', [
-              {
-                text: '확인',
-                onPress: () => {
-                  // OcrTest → SettleMemberSelect 스택을 모두 날리고 GroupLedger로
-                  navigation.popToTop();
-                  navigation.navigate('GroupLedger', { groupName });
+          onPress: async () => {
+            try {
+              setSubmitting(true);
+
+              await submitVerifiedReceipt({
+                receipt: params.receiptDraft as ReceiptDraft,
+                imageUri: params.receiptUri as string,
+                groupId: params.groupId,
+              });
+
+              Alert.alert('완료', '영수증 증빙과 영수증 내용이 등록되었습니다.', [
+                {
+                  text: '확인',
+                  onPress: () => {
+                    navigation.popToTop();
+                    navigation.navigate('GroupLedger', { groupName });
+                  },
                 },
-              },
-            ]);
+              ]);
+            } catch (error: any) {
+              Alert.alert(
+                '등록 실패',
+                error?.response?.data?.message || error?.message || '영수증 등록 중 오류가 발생했습니다.',
+              );
+            } finally {
+              setSubmitting(false);
+            }
           },
         },
       ]
@@ -219,11 +249,14 @@ export default function SettleMemberSelectScreen() {
           <View style={styles.bottomBar}>
             <Pressable
               onPress={handleRegister}
+              disabled={selectedIds.size === 0 || submitting}
               className="rounded-2xl py-4 items-center justify-center"
-              style={[styles.registerButton, selectedIds.size === 0 && styles.registerButtonDisabled]}
+              style={[styles.registerButton, (selectedIds.size === 0 || submitting) && styles.registerButtonDisabled]}
             >
               <Text style={styles.registerButtonText}>
-                {selectedIds.size > 0
+                {submitting
+                  ? '영수증 등록 중...'
+                  : selectedIds.size > 0
                   ? `정산 등록하기 (${selectedIds.size}명)`
                   : '인원을 선택하세요'}
               </Text>
@@ -335,13 +368,13 @@ const styles = StyleSheet.create({
   // ── 헤더 ──────────────────────────────────
   headerTitle: {
     fontSize: 20,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   closeText: {
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // ── 요약 카드 ─────────────────────────────
@@ -353,37 +386,37 @@ const styles = StyleSheet.create({
   },
   summaryDate: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     marginBottom: 4,
   },
   summaryAmount: {
     fontSize: 28,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#EF4444',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.error,
     textAlign: 'right',
   },
   summaryPerPerson: {
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'right',
     marginTop: 4,
   },
   summaryRowLabel: {
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
   summaryTotalAmount: {
     fontSize: 22,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   summaryPerPersonBlue: {
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#1428A0',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.brand,
   },
   statusDotRow: {
     gap: 16,
@@ -405,8 +438,8 @@ const styles = StyleSheet.create({
   },
   statusDotText: {
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // ── 전체 선택 ─────────────────────────────
@@ -425,14 +458,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#1428A0',
   },
   checkMark: {
-    color: '#fff',
+    color: COLORS.white,
     fontSize: 14,
     fontWeight: '700',
   },
   selectAllText: {
     fontSize: 15,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
 
   // ── 멤버 리스트 (공통) ────────────────────
@@ -467,17 +500,17 @@ const styles = StyleSheet.create({
   },
   newMemberName: {
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
     flex: 1,
   },
   newMemberNameInactive: {
-    color: '#9CA3AF',
+    color: COLORS.placeholder,
   },
   perPersonAmount: {
     fontSize: 14,
-    color: '#1428A0',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 기존 정산 멤버 행 ─────────────────────
@@ -500,13 +533,13 @@ const styles = StyleSheet.create({
   },
   existingMemberName: {
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   existingMemberAmount: {
     fontSize: 12,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     marginTop: 2,
   },
   statusBadge: {
@@ -516,8 +549,8 @@ const styles = StyleSheet.create({
   },
   statusBadgeText: {
     fontSize: 13,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 하단 버튼 ─────────────────────────────
@@ -533,8 +566,8 @@ const styles = StyleSheet.create({
   },
   registerButtonText: {
     fontSize: 16,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
   notifyButton: {
     backgroundColor: '#EF4444',
@@ -544,7 +577,7 @@ const styles = StyleSheet.create({
   },
   notifyButtonText: {
     fontSize: 16,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 });

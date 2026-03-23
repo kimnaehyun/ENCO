@@ -1,13 +1,6 @@
 import React , {useState, useEffect} from 'react';
-import {
-  Dimensions,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  Image,
-} from 'react-native';
+import { Dimensions, FlatList, Pressable, StyleSheet, View, Image } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
@@ -212,14 +205,14 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     marginBottom: 4,
   },
   username: {
     fontSize: 22,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   settingButton: {
     width: 40,
@@ -237,8 +230,8 @@ const styles = StyleSheet.create({
   // ── 섹션 타이틀 ───────────────────────────────────
   sectionTitle: {
     fontSize: 15,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#374151',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.subtle,
     marginBottom: 14,
   },
 
@@ -282,9 +275,9 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   cardBadgeText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 12,
-    fontFamily: 'GmarketSansTTFMedium',
+    fontFamily: FONT_FAMILY.medium,
   },
   cardDots: {
     color: 'rgba(255,255,255,0.7)',
@@ -294,7 +287,7 @@ const styles = StyleSheet.create({
   cardGroupName: {
     color: 'rgba(255,255,255,0.75)',
     fontSize: 13,
-    fontFamily: 'GmarketSansTTFMedium',
+    fontFamily: FONT_FAMILY.medium,
     marginBottom: 6,
   },
   cardBottomRow: {
@@ -303,9 +296,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   cardDashboardText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 22,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
   cardArrowCircle: {
     width: 36,
@@ -344,17 +337,17 @@ const styles = StyleSheet.create({
   },
   addIconText: {
     fontSize: 28,
-    color: '#1428A0',
+    color: COLORS.brand,
   },
   addTitle: {
     fontSize: 16,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   addSubtitle: {
     marginTop: 6,
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
   },
 });

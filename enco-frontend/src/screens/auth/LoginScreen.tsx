@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { View, Text, Alert, ActivityIndicator } from "react-native";
+import { View, Alert, ActivityIndicator } from "react-native"
+import Text from '@/components/typography';;
 import type { AuthScreenProps } from "../../types/navigation";
 import PinEntry from "../../components/pin/PinEntry";
 import { useAuthStore } from "../../store/useAuthStore";
@@ -54,7 +55,7 @@ export default function LoginScreen({
         <ActivityIndicator size="large" color="#1428A0" />
         <Text
           className="text-[#374151] text-lg mt-4"
-          style={{ fontFamily: "GmarketSansTTFMedium" }}
+          
         >
           로그인 중...
         </Text>

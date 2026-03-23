@@ -1,5 +1,6 @@
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 
@@ -54,14 +55,14 @@ const styles = StyleSheet.create({
   },
   groupName: {
     fontSize: 24,
-    color: '#1428A0',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.bold,
     marginBottom: 4,
   },
   title: {
     fontSize: 24,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.primary,
+    fontFamily: FONT_FAMILY.bold,
     marginBottom: 26,
   },
   primaryButton: {
@@ -74,7 +75,7 @@ const styles = StyleSheet.create({
   },
   primaryButtonText: {
     fontSize: 24,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 });

@@ -1,5 +1,6 @@
 package io.ssafy.payment.domain.transaction.controller;
 
+import io.ssafy.payment.domain.transaction.dto.response.TransactionDetailResponseDto;
 import io.ssafy.payment.domain.transaction.dto.response.TransactionListResponseDto;
 import io.ssafy.payment.domain.transaction.service.TransactionService;
 import io.ssafy.payment.global.common.response.CommonResponse;
@@ -29,6 +30,15 @@ public class TransactionController {
     ) {
         TransactionListResponseDto result = transactionService.getTransactions(
                 groupId, startDate, endDate, sort, type, cursor, size);
+        return ResponseEntity.ok(CommonResponse.success(result));
+    }
+
+    @GetMapping("/{groupId}/transactions/{transactionId}")
+    public ResponseEntity<CommonResponse<TransactionDetailResponseDto>> getTransactionDetail(
+            @PathVariable Long groupId,
+            @PathVariable Long transactionId
+    ) {
+        TransactionDetailResponseDto result = transactionService.getTransactionDetail(groupId, transactionId);
         return ResponseEntity.ok(CommonResponse.success(result));
     }
 }

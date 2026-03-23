@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, Pressable, Image } from 'react-native';
+import { View, Pressable, Image } from 'react-native'
+import Text from '@/components/typography';;
 import { AuthScreenProps } from '../../types/navigation';
 import { images } from '../../types/images';
 
@@ -17,9 +18,9 @@ export default function SignupVerifyScreen({
         onPress={() => navigation.navigate('InputInfo')}
         className="bg-[#1428A0] rounded-2xl h-14 px-12 items-center justify-center"
       >
-        <Text
+        <Text weight="bold"
           className="text-white text-2xl"
-          style={{ fontFamily: 'GmarketSansTTFBold', fontSize : 32 }}
+          
         >
           본인 인증하기
         </Text>
