@@ -38,7 +38,11 @@ public class DuesPaymentService {
     private final TransactionHistoryRepository transactionHistoryRepository;
 
     @Transactional
-    public DuesPaymentResponseDto payFree(Long groupId, Long userId, CreateFreePaymentRequestDto request) {
+    public DuesPaymentResponseDto payFree(Long groupId, Long userId, String idempotencyKey, CreateFreePaymentRequestDto request) {
+        if (transactionHistoryRepository.existsByIdempotencyKey(idempotencyKey)) {
+            throw new CustomException(ErrorCode.DUPLICATE_PAYMENT);
+        }
+
         Account account = accountRepository.findByGroupIdAndIsDeletedFalse(groupId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SERVER_ERROR));
 
@@ -83,7 +87,7 @@ public class DuesPaymentService {
         accountRepository.depositByGroupId(groupId, request.amount());
         BigDecimal newBalance = account.getAmount().add(request.amount());
 
-        // TransactionHistory 1건 저장
+        // TransactionHistory 1건 저장 (클라이언트 idempotencyKey 사용)
         transactionHistoryRepository.save(TransactionHistory.builder()
                 .accountId(account.getId())
                 .type(Type.TRANSFER)
@@ -95,14 +99,18 @@ public class DuesPaymentService {
                 .counterpartyBankName(request.withdrawAccountBankName())
                 .counterpartyName(request.withdrawDisplayName())
                 .status(Status.APPROVED)
-                .idempotencyKey(UUID.randomUUID().toString())
+                .idempotencyKey(idempotencyKey)
                 .build());
 
         return new DuesPaymentResponseDto(firstPaymentId, groupId, userId, request.amount(), paidAt, allocations);
     }
 
     @Transactional
-    public DuesPaymentResponseDto paySelected(Long groupId, Long userId, CreateSelectedPaymentRequestDto request) {
+    public DuesPaymentResponseDto paySelected(Long groupId, Long userId, String idempotencyKey, CreateSelectedPaymentRequestDto request) {
+        if (transactionHistoryRepository.existsByIdempotencyKey(idempotencyKey)) {
+            throw new CustomException(ErrorCode.DUPLICATE_PAYMENT);
+        }
+
         Account account = accountRepository.findByGroupIdAndIsDeletedFalse(groupId)
                 .orElseThrow(() -> new CustomException(ErrorCode.SERVER_ERROR));
 
@@ -147,7 +155,7 @@ public class DuesPaymentService {
 
         BigDecimal newBalance = account.getAmount().add(totalPaid);
 
-        // TransactionHistory 1건 저장
+        // TransactionHistory 1건 저장 (클라이언트 idempotencyKey 사용)
         transactionHistoryRepository.save(TransactionHistory.builder()
                 .accountId(account.getId())
                 .type(Type.TRANSFER)
@@ -158,7 +166,7 @@ public class DuesPaymentService {
                 .displayName(request.depositDisplayName())
                 .counterpartyName(request.withdrawDisplayName())
                 .status(Status.APPROVED)
-                .idempotencyKey(UUID.randomUUID().toString())
+                .idempotencyKey(idempotencyKey)
                 .build());
 
         return new DuesPaymentResponseDto(firstPaymentId, groupId, userId, totalPaid, paidAt, allocations);

@@ -22,9 +22,10 @@ public class DuesPaymentController {
     public ResponseEntity<CommonResponse<DuesPaymentResponseDto>> payFree(
             @PathVariable Long groupId,
             @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody CreateFreePaymentRequestDto request
     ) {
-        DuesPaymentResponseDto result = duesPaymentService.payFree(groupId, userId, request);
+        DuesPaymentResponseDto result = duesPaymentService.payFree(groupId, userId, idempotencyKey, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(result));
     }
 
@@ -32,9 +33,10 @@ public class DuesPaymentController {
     public ResponseEntity<CommonResponse<DuesPaymentResponseDto>> paySelected(
             @PathVariable Long groupId,
             @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
             @Valid @RequestBody CreateSelectedPaymentRequestDto request
     ) {
-        DuesPaymentResponseDto result = duesPaymentService.paySelected(groupId, userId, request);
+        DuesPaymentResponseDto result = duesPaymentService.paySelected(groupId, userId, idempotencyKey, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(result));
     }
 }
