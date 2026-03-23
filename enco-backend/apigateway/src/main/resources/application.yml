@@ -54,6 +54,11 @@ spring:
                 - StripPrefix=1
                 - AuthorizationHeaderFilter
 
+            - id: chat-websocket
+              uri: ws://${CHAT_SERVICE_HOST}:${CHAT_SERVICE_PORT}
+              predicates:
+                - Path=/ws-stomp/**
+
             - id: travel-service
               uri: http://${TRAVEL_SERVICE_HOST}:${TRAVEL_SERVICE_PORT}
               predicates:
