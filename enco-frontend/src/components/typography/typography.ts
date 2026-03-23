@@ -14,6 +14,7 @@ export const COLORS = {
   disabled: '#AAAAAA',
   white: '#FFFFFF',
   danger: '#FF3B30',
+  muted: '#9CA3AF',
 } as const;
 
 export const TYPOGRAPHY = {
