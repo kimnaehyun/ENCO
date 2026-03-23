@@ -1,5 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import PieChart, { PieSlice } from '../charts/PieChart';
 
 type PaymentStatusCardProps = {
@@ -27,7 +28,7 @@ export default function PaymentStatusCard({
       <View style={styles.chartRow}>
         <View style={styles.sideBox}>
           <Text style={styles.sideLabel}>미납 인원</Text>
-          <Text style={[styles.sideValue, { color: '#22C55E' }]}>
+          <Text style={[styles.sideValue, { color: COLORS.success }]}>
             {unpaidCount}명
           </Text>
         </View>
@@ -60,8 +61,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 14,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.bold,
     marginBottom: 4,
   },
   chartRow: {
@@ -80,12 +81,12 @@ const styles = StyleSheet.create({
   },
   sideLabel: {
     fontSize: 12,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'center',
   },
   sideValue: {
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
 });

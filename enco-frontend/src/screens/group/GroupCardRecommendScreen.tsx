@@ -1,14 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-  FlatList,
-} from 'react-native';
+import { ActivityIndicator, Alert, Image, StyleSheet, TouchableOpacity, View, FlatList } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { getCardList, getCardDetail, CardListItem } from '../../services/paymentService';
@@ -259,21 +251,21 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // ── 헤더 ──────────────────────────────────
   pageTitle: {
     fontSize: 22,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
     marginBottom: 24,
   },
   pageSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     marginBottom: 16,
   },
 
@@ -314,8 +306,8 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // ── 더보기 / 완료 버튼 ────────────────────
@@ -331,8 +323,8 @@ const styles = StyleSheet.create({
   },
   showMoreText: {
     fontSize: 14,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
   },
   completeButton: {
     marginTop: 24,
@@ -347,9 +339,9 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   completeButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 상세 모달 ─────────────────────────────
@@ -373,8 +365,8 @@ const styles = StyleSheet.create({
   },
   modalCardName: {
     fontSize: 18,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
     marginBottom: 16,
   },
   modalCardImage: {
@@ -385,20 +377,20 @@ const styles = StyleSheet.create({
   modalBrand: {
     marginTop: 14,
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
   },
   modalSummary: {
     marginTop: 4,
     fontSize: 15,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   modalDetail: {
     marginTop: 8,
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     lineHeight: 22,
   },
   modalButtonRow: {
@@ -416,8 +408,8 @@ const styles = StyleSheet.create({
   },
   modalCloseText: {
     fontSize: 15,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
   },
   modalSelectButton: {
     flex: 1,
@@ -429,7 +421,7 @@ const styles = StyleSheet.create({
   },
   modalSelectText: {
     fontSize: 15,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 });

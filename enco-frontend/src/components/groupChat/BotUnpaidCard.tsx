@@ -1,4 +1,5 @@
-import { View, Text, Image, Pressable, Alert } from 'react-native';
+import { View, Image, Pressable, Alert } from 'react-native'
+import Text from '@/components/typography';;
 import React from 'react';
 import {
   botAvatar,
@@ -24,21 +25,21 @@ export default function BotUnpaidCard({ item }: { item: any }) {
       />
       <View className={botCard}>
         <View className={unpaidTitleRow}>
-          <Text
+          <Text weight="bold"
             className={unpaidTitlePrefix}
-            style={{ fontFamily: 'GmarketSansTTFBold' }}
+            
           >
             현재 미납 회원은{' '}
           </Text>
-          <Text
+          <Text weight="bold"
             className={unpaidTitleCount}
-            style={{ fontFamily: 'GmarketSansTTFBold' }}
+            
           >
             {item.unpaidCount}명
           </Text>
-          <Text
+          <Text weight="bold"
             className={unpaidTitlePrefix}
-            style={{ fontFamily: 'GmarketSansTTFBold' }}
+            
           >
             이에요!
           </Text>
@@ -50,15 +51,15 @@ export default function BotUnpaidCard({ item }: { item: any }) {
             resizeMode="contain"
           />
           <View className="flex-1">
-            <Text
+            <Text weight="bold"
               className="text-base text-[#111111] mb-0.5"
-              style={{ fontFamily: 'GmarketSansTTFBold' }}
+              
             >
               {item.memberName}
             </Text>
             <Text
               className="text-xs text-[#111111]"
-              style={{ fontFamily: 'GmarketSansTTFMedium' }}
+              
             >
               마지막 납입일 {item.lastPaidAt}
             </Text>
@@ -68,9 +69,9 @@ export default function BotUnpaidCard({ item }: { item: any }) {
           onPress={() => handleSendReminder(item.memberName)}
           className={remindButton}
         >
-          <Text
+          <Text weight="bold"
             className={remindButtonText}
-            style={{ fontFamily: 'GmarketSansTTFBold' }}
+            
           >
             알림 보내기
           </Text>

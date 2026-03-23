@@ -1,4 +1,5 @@
-import { Pressable, Text } from 'react-native';
+import { Pressable } from 'react-native'
+import Text from '@/components/typography';;
 
 export default function ActionButton({
   label,
@@ -12,9 +13,9 @@ export default function ActionButton({
       onPress={onPress}
       className="h-10 border border-[#8F8F8F] rounded-[20px] items-center justify-center bg-[#FFFFFF]"
     >
-      <Text
+      <Text weight="bold"
         className="text-[#111111] text-base"
-        style={{ fontFamily: 'GmarketSansTTFBold' }}
+        
       >
         {label}
       </Text>

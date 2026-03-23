@@ -1,15 +1,6 @@
 import React, { useState } from 'react';
-import {
-  Alert,
-  ActivityIndicator,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-  KeyboardAvoidingView,
-  Platform,
-  ScrollView,
-} from 'react-native';
+import { Alert, ActivityIndicator, Pressable, TextInput, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
+import Text from '@/components/typography';;
 import { useAuthStore } from '../../store/useAuthStore';
 import { updateAddress } from '../../services/userService';
 
@@ -69,11 +60,11 @@ export default function EditAddressScreen({ navigation }: any) {
             }}
           >
             <Pressable onPress={() => navigation.goBack()}>
-              <Text style={{ fontSize: 15, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
+              <Text variant="bodyMd" color="muted" >
                 취소
               </Text>
             </Pressable>
-            <Text style={{ fontSize: 18, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
+            <Text weight="bold" color="dark"  style={{ fontSize: 18 }}>
               주소 수정
             </Text>
             <View style={{ width: 30 }} />
@@ -81,14 +72,9 @@ export default function EditAddressScreen({ navigation }: any) {
 
           {/* 입력 영역 */}
           <View style={{ paddingHorizontal: 20, marginTop: 32 }}>
-            <Text
-              style={{
-                fontSize: 13,
-                color: '#9CA3AF',
-                fontFamily: 'GmarketSansTTFMedium',
-                marginBottom: 10,
-              }}
-            >
+            <Text variant="caption" color="placeholder"
+              
+             style={{ marginBottom: 10 }}>
               집 주소
             </Text>
 
@@ -105,17 +91,12 @@ export default function EditAddressScreen({ navigation }: any) {
                 elevation: 2,
               }}
             >
-              <TextInput
+              <Text variant="bodyMd" color="dark"Input
                 value={address}
                 onChangeText={setAddress}
                 placeholder="예) 서울시 강남구 테헤란로 212"
                 placeholderTextColor="#C7D2FE"
-                style={{
-                  fontSize: 15,
-                  fontFamily: 'GmarketSansTTFMedium',
-                  color: '#111827',
-                  paddingVertical: 14,
-                }}
+                
                 autoFocus
               />
             </View>
@@ -137,7 +118,7 @@ export default function EditAddressScreen({ navigation }: any) {
               {saving ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text style={{ fontSize: 16, color: '#FFFFFF', fontFamily: 'GmarketSansTTFBold' }}>
+                <Text weight="bold" color="white" >
                   저장하기
                 </Text>
               )}

@@ -1,14 +1,8 @@
 // src/screens/admin/AdminCardRecommendScreen.tsx
 // 카드 추가 발급 > 카드 추천/전체목록 — GroupCardRecommendScreen 디자인 기반
 import React, { useMemo, useState } from 'react';
-import {
-  Alert,
-  Image,
-  Text,
-  TouchableOpacity,
-  View,
-  FlatList,
-} from 'react-native';
+import { Alert, Image, TouchableOpacity, View, FlatList } from 'react-native'
+import Text from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { GroupCardItem } from '../../types/group';
@@ -120,34 +114,19 @@ export default function AdminCardRecommendScreen() {
 
   const ListHeader = () => (
     <>
-      <Text
-        style={{
-          fontSize: 22,
-          color: '#111827',
-          fontFamily: 'GmarketSansTTFBold',
-          marginBottom: 6,
-        }}
-      >
+      <Text variant="h2" color="dark"
+        
+       style={{ marginBottom: 6 }}>
         카드 추가 발급
       </Text>
-      <Text
-        style={{
-          fontSize: 13,
-          color: '#9CA3AF',
-          fontFamily: 'GmarketSansTTFMedium',
-          marginBottom: 24,
-        }}
-      >
+      <Text variant="caption" color="placeholder"
+        
+       style={{ marginBottom: 24 }}>
         {groupName}
       </Text>
-      <Text
-        style={{
-          fontSize: 14,
-          color: '#6B7280',
-          fontFamily: 'GmarketSansTTFMedium',
-          marginBottom: 16,
-        }}
-      >
+      <Text variant="bodySm" color="muted"
+        
+       style={{ marginBottom: 16 }}>
         {isRecommendMode
           ? `"${tags.join(', ')}" 태그 기반 추천 카드`
           : '전체 카드 목록'}
@@ -172,12 +151,8 @@ export default function AdminCardRecommendScreen() {
             alignItems: 'center',
           }}
         >
-          <Text
-            style={{
-              fontSize: 14,
-              color: '#374151',
-              fontFamily: 'GmarketSansTTFMedium',
-            }}
+          <Text variant="bodySm" color="subtle"
+            
           >
             더보기
           </Text>
@@ -199,12 +174,8 @@ export default function AdminCardRecommendScreen() {
           marginBottom: 16,
         }}
       >
-        <Text
-          style={{
-            color: '#FFFFFF',
-            fontSize: 16,
-            fontFamily: 'GmarketSansTTFBold',
-          }}
+        <Text weight="bold" color="white"
+          
         >
           완료
         </Text>
@@ -249,14 +220,9 @@ export default function AdminCardRecommendScreen() {
               padding: 22,
             }}
           >
-            <Text
-              style={{
-                fontSize: 18,
-                color: '#111827',
-                fontFamily: 'GmarketSansTTFBold',
-                marginBottom: 16,
-              }}
-            >
+            <Text weight="bold" color="dark"
+              
+             style={{ marginBottom: 16, fontSize: 18 }}>
               {detailCard.name}
             </Text>
 
@@ -266,35 +232,19 @@ export default function AdminCardRecommendScreen() {
               resizeMode="contain"
             />
 
-            <Text
-              style={{
-                marginTop: 14,
-                fontSize: 13,
-                color: '#9CA3AF',
-                fontFamily: 'GmarketSansTTFMedium',
-              }}
-            >
+            <Text variant="caption" color="placeholder"
+              
+             style={{ marginTop: 14 }}>
               {detailCard.brand}
             </Text>
-            <Text
-              style={{
-                marginTop: 4,
-                fontSize: 15,
-                color: '#111827',
-                fontFamily: 'GmarketSansTTFBold',
-              }}
-            >
+            <Text variant="bodyMd" weight="bold" color="dark"
+              
+             style={{ marginTop: 4 }}>
               {detailCard.summary}
             </Text>
-            <Text
-              style={{
-                marginTop: 8,
-                fontSize: 14,
-                color: '#6B7280',
-                fontFamily: 'GmarketSansTTFMedium',
-                lineHeight: 22,
-              }}
-            >
+            <Text variant="bodySm" color="muted"
+              
+             style={{ marginTop: 8 }}>
               {detailCard.detail}
             </Text>
 
@@ -311,12 +261,8 @@ export default function AdminCardRecommendScreen() {
                   alignItems: 'center',
                 }}
               >
-                <Text
-                  style={{
-                    fontSize: 15,
-                    color: '#374151',
-                    fontFamily: 'GmarketSansTTFMedium',
-                  }}
+                <Text variant="bodyMd" color="subtle"
+                  
                 >
                   닫기
                 </Text>
@@ -337,12 +283,8 @@ export default function AdminCardRecommendScreen() {
                   alignItems: 'center',
                 }}
               >
-                <Text
-                  style={{
-                    fontSize: 15,
-                    color: '#FFFFFF',
-                    fontFamily: 'GmarketSansTTFBold',
-                  }}
+                <Text variant="bodyMd" weight="bold" color="white"
+                  
                 >
                   이 카드 선택
                 </Text>

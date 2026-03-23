@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { View, Text } from "react-native";
+import { View } from "react-native"
+import Text from '@/components/typography';;
 import RandomKeypad from "./RandomKeypad";
 import PinDots from "./PinDots";
 import { PinEntryProps } from "../../types/pin";
@@ -47,9 +48,9 @@ export default function PinEntry({
     <View className="flex-1 bg-[#F0F4FF]">
       {/* 상단 타이틀 + dots */}
       <View className="flex-1 items-center justify-center gap-10 px-6">
-        <Text
+        <Text weight="bold"
           className="text-[#111827] text-3xl text-center leading-10"
-          style={{ fontFamily: "GmarketSansTTFBold" }}
+          
         >
           {title}
         </Text>

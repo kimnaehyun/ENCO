@@ -1,14 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  FlatList,
-  LayoutAnimation,
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
-  UIManager,
-  View,
-} from 'react-native';
+import { FlatList, LayoutAnimation, Platform, Pressable, StyleSheet, UIManager, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useVotes, Vote, VoteChoice } from '../../contexts/VotesContext';
 import { ROUTES } from '../../constants/routes';
 import { GroupScreenProps } from '../../types/group';
@@ -196,8 +188,8 @@ const styles = StyleSheet.create({
   // ── 헤더 ──────────────────────────────────
   headerTitle: {
     fontSize: 20,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
 
   // ── 투표 카드 (접힘) ──────────────────────
@@ -210,13 +202,13 @@ const styles = StyleSheet.create({
   itemTitle: {
     flex: 1,
     fontSize: 15,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   itemCount: {
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     marginLeft: 8,
   },
 
@@ -229,19 +221,19 @@ const styles = StyleSheet.create({
   },
   expandedSubTitle: {
     fontSize: 14,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
     marginBottom: 4,
   },
   expandedMeta: {
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
   expandedMetaTop: {
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     marginTop: 2,
   },
 
@@ -254,8 +246,8 @@ const styles = StyleSheet.create({
   },
   voteButtonText: {
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#fff',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.white,
   },
 
   // ── 상세보기 버튼 ─────────────────────────
@@ -264,7 +256,7 @@ const styles = StyleSheet.create({
   },
   detailButtonText: {
     fontSize: 13,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#374151',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.subtle,
   },
 });

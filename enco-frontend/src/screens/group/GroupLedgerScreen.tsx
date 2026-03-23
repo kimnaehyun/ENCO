@@ -1,6 +1,7 @@
 // src/screens/group/GroupLedgerScreen.tsx
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
@@ -500,8 +501,8 @@ const calStyles = StyleSheet.create({
   },
   calTitle: {
     fontSize: 15,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -514,12 +515,12 @@ const calStyles = StyleSheet.create({
   },
   calNavArrow: {
     fontSize: 20,
-    color: '#374151',
+    color: COLORS.subtle,
   },
   calMonthLabel: {
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   calDayNamesRow: {
     flexDirection: 'row',
@@ -531,7 +532,7 @@ const calStyles = StyleSheet.create({
   },
   calDayNameText: {
     fontSize: 12,
-    fontFamily: 'GmarketSansTTFMedium',
+    fontFamily: FONT_FAMILY.medium,
   },
   calWeekRow: {
     flexDirection: 'row',
@@ -555,7 +556,7 @@ const calStyles = StyleSheet.create({
   },
   calDayText: {
     fontSize: 14,
-    fontFamily: 'GmarketSansTTFMedium',
+    fontFamily: FONT_FAMILY.medium,
   },
 });
 
@@ -574,8 +575,8 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
 
   // ── 잔액 카드 ─────────────────────────────
@@ -592,14 +593,14 @@ const styles = StyleSheet.create({
   },
   balanceCardLabel: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     marginBottom: 4,
   },
   balanceCardAmount: {
     fontSize: 28,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
     textAlign: 'right',
     marginBottom: 12,
   },
@@ -615,13 +616,13 @@ const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
   summaryValue: {
     fontSize: 13,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 필터 버튼 행 ──────────────────────────
@@ -640,8 +641,8 @@ const styles = StyleSheet.create({
   },
   settleButtonText: {
     fontSize: 14,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
   filterButton: {
     backgroundColor: '#FFFFFF',
@@ -660,11 +661,11 @@ const styles = StyleSheet.create({
   },
   filterButtonText: {
     fontSize: 14,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.bold,
   },
   filterButtonTextActive: {
-    color: '#1428A0',
+    color: COLORS.brand,
   },
   clearFilterButton: {
     paddingHorizontal: 12,
@@ -672,8 +673,8 @@ const styles = StyleSheet.create({
   },
   clearFilterText: {
     fontSize: 13,
-    color: '#EF4444',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.error,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 적용된 필터 칩 ────────────────────────
@@ -694,8 +695,8 @@ const styles = StyleSheet.create({
   },
   appliedChipText: {
     fontSize: 12,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#1428A0',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.brand,
   },
 
   // ── 거래 내역 리스트 ──────────────────────
@@ -711,8 +712,8 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
   },
   ledgerItem: {
     backgroundColor: '#FFFFFF',
@@ -741,8 +742,8 @@ const styles = StyleSheet.create({
   },
   ledgerItemDate: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
   },
   settleBadge: {
     borderRadius: 10,
@@ -751,18 +752,18 @@ const styles = StyleSheet.create({
   },
   settleBadgeText: {
     fontSize: 10,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
   ledgerItemTitle: {
     fontSize: 15,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   ledgerItemMemo: {
     fontSize: 12,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     marginTop: 4,
   },
   ledgerItemRight: {
@@ -770,12 +771,12 @@ const styles = StyleSheet.create({
   },
   ledgerItemAmount: {
     fontSize: 18,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
   ledgerItemBalance: {
     fontSize: 12,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     marginTop: 2,
   },
 
@@ -789,8 +790,8 @@ const styles = StyleSheet.create({
   },
   pdfButtonText: {
     fontSize: 15,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 필터 바텀시트 ─────────────────────────
@@ -817,14 +818,14 @@ const styles = StyleSheet.create({
   },
   sheetTitle: {
     fontSize: 17,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
     marginBottom: 20,
   },
   sheetSectionLabel: {
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     marginBottom: 8,
   },
   chipRow: {
@@ -843,11 +844,11 @@ const styles = StyleSheet.create({
   },
   chipText: {
     fontSize: 13,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#374151',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.subtle,
   },
   chipTextActive: {
-    color: '#FFFFFF',
+    color: COLORS.white,
   },
   dateInputRow: {
     flexDirection: 'row',
@@ -863,14 +864,14 @@ const styles = StyleSheet.create({
   },
   dateInputText: {
     fontSize: 13,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
   },
   dateInputSeparator: {
     justifyContent: 'center',
   },
   dateInputTilde: {
-    color: '#9CA3AF',
+    color: COLORS.placeholder,
   },
   dateRangeDisplay: {
     backgroundColor: '#F3F4F6',
@@ -881,8 +882,8 @@ const styles = StyleSheet.create({
   },
   dateRangeText: {
     fontSize: 13,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'center',
   },
   queryButton: {
@@ -894,7 +895,7 @@ const styles = StyleSheet.create({
   },
   queryButtonText: {
     fontSize: 15,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 });

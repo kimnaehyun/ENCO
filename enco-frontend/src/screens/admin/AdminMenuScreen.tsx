@@ -1,6 +1,7 @@
 // src/screens/admin/AdminMenuScreen.tsx
 import React from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, View } from 'react-native'
+import Text from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
@@ -55,7 +56,7 @@ export default function AdminMenuScreen() {
           className="rounded-3xl px-6 py-4 mb-6 items-start justify-center"
           style={{ backgroundColor: '#1428A0' }}
         >
-          <Text style={{ fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#fff' }}>
+          <Text variant="bodyLg" weight="bold" color="white" >
             모임 관리
           </Text>
         </View>
@@ -70,7 +71,7 @@ export default function AdminMenuScreen() {
               className="bg-white rounded-3xl px-6 justify-center"
               style={{ height: 72, shadowColor: '#1428A0', shadowOpacity: 0.05, shadowRadius: 8, elevation: 1 }}
             >
-              <Text style={{ fontSize: 18, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
+              <Text weight="bold" color="dark"  style={{ fontSize: 18 }}>
                 {m.title}
               </Text>
             </Pressable>
@@ -83,7 +84,7 @@ export default function AdminMenuScreen() {
          className="rounded-3xl items-center justify-center mt-6 mb-8"
           style={{ height: 56, backgroundColor: '#FFBDBD' }}
         >
-          <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFBold', color: '#C0392B' }}>
+          <Text weight="bold" color='#C0392B' >
             모임 해산하기
           </Text>
         </Pressable>

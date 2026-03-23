@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native'
+import Text from '@/components/typography';;
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CommonParams } from '../../types/common';
@@ -59,9 +60,9 @@ export default function GroupChatScreen() {
         <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
           <Image source={images.left_arrow} className="mr-3" />
         </Pressable>
-        <Text
+        <Text weight="bold"
           className="flex-1 text-lg text-[#1428A0]"
-          style={{ fontFamily: 'GmarketSansTTFBold' }}
+          
         >
           {groupName}
         </Text>
