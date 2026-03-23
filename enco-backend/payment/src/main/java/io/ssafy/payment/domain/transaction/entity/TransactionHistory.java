@@ -74,6 +74,9 @@ public class TransactionHistory {
     private String counterpartyBankName;
 
     @Column(length = 50)
+    private String counterpartyBankAccountNumber;
+
+    @Column(length = 50)
     private String counterpartyName;
 
     @Builder.Default

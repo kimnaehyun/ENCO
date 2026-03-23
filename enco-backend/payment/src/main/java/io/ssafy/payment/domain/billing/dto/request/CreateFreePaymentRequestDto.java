@@ -17,10 +17,7 @@ public record CreateFreePaymentRequestDto(
 
         String withdrawDisplayName,
         String depositDisplayName,
-        String memo,
-
-        @NotNull(message = "멱등성 키는 필수입니다.")
-        String idempotencyKey
+        String memo
 
 ) {
 }
