@@ -7,7 +7,9 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "votes")
+@Table(name = "votes", indexes = {
+        @Index(name = "idx_status_expired", columnList = "status, expired_at")
+})
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Builder

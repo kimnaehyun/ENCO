@@ -8,9 +8,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface PaymentVoteRepository extends JpaRepository<PaymentVote, Long> {
-    List<PaymentVote> findByGroupIdAndStatusAndExpiredAtAfter(
-            Long groupId,
-            VoteStatus status,
-            LocalDateTime now
-    );
+    List<PaymentVote> findByGroupIdAndStatusAndExpiredAtAfter(Long groupId,VoteStatus status,LocalDateTime now);
+    List<PaymentVote> findByStatusAndExpiredAtBefore(VoteStatus status, LocalDateTime now);
 }
