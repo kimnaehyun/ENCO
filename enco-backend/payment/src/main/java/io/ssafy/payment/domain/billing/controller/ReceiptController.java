@@ -1,11 +1,14 @@
 package io.ssafy.payment.domain.billing.controller;
 
-import io.ssafy.payment.domain.ai.dto.response.ReceiptParseResponseDto;
+import io.ssafy.payment.domain.billing.dto.request.ReceiptContentSubmitRequestDto;
+import io.ssafy.payment.domain.billing.dto.response.ReceiptContentSubmitResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.ReceiptEvidenceUploadResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.ReceiptOcrDraftResponseDto;
+import io.ssafy.payment.domain.billing.service.ReceiptOcrService;
 import io.ssafy.payment.domain.billing.service.ReceiptService;
 import io.ssafy.payment.global.common.error.CustomException;
 import io.ssafy.payment.global.common.error.ErrorCode;
 import io.ssafy.payment.global.common.response.CommonResponse;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
@@ -24,6 +27,35 @@ import java.util.Map;
 public class ReceiptController {
 
     private final ReceiptService minioService;
+    private final ReceiptOcrService receiptOcrService;
+
+    @PostMapping(value = "/receipts/ocr", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CommonResponse<ReceiptOcrDraftResponseDto>> analyzeReceipt(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) Long groupId
+    ) {
+        ReceiptOcrDraftResponseDto result = receiptOcrService.analyze(file);
+        return ResponseEntity.ok(new CommonResponse<>("영수증 OCR 분석에 성공했습니다.", result));
+    }
+
+    @PostMapping(value = "/receipts/evidence", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CommonResponse<ReceiptEvidenceUploadResponseDto>> uploadReceiptEvidence(
+            @RequestPart("file") MultipartFile file,
+            @RequestParam(required = false) String source,
+            @RequestParam(required = false) Long groupId
+    ) {
+        ReceiptEvidenceUploadResponseDto result = receiptOcrService.uploadEvidence(file, source, groupId);
+        return ResponseEntity.ok(new CommonResponse<>("영수증 증빙 업로드에 성공했습니다.", result));
+    }
+
+    @PostMapping(value = "/receipts/content", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CommonResponse<ReceiptContentSubmitResponseDto>> submitReceiptContent(
+            @RequestBody ReceiptContentSubmitRequestDto request
+    ) {
+        ReceiptContentSubmitResponseDto result = receiptOcrService.submitContent(request);
+        return ResponseEntity.ok(new CommonResponse<>("영수증 내용 제출에 성공했습니다.", result));
+    }
 
     @PostMapping("/charges/{chargeId}/expenses/receipts")
     public ResponseEntity<CommonResponse<?>> uploadReceiptFile(
