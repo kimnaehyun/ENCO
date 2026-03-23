@@ -13,7 +13,6 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
-import { images } from '../../types/images';
 import {
   getGroupSettings,
   updateGroupSettings,
@@ -21,6 +20,10 @@ import {
   type GroupMember,
   updateGroupMemberRole,
 } from '../../services/groupService';
+import {
+  getGroupCards,
+  type GroupCardItem,
+} from '../../services/paymentService';
 
 const TAGS = ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'];
 
@@ -33,19 +36,12 @@ const TAG_TYPE_ID_MAP = {
   음식: 6,
 } as const;
 
-// 발급 카드 목록 (실제로는 API에서 받아올 데이터)
-const ISSUED_CARDS = [
-  {
-    id: 'card1',
-    name: '스타벅스카드 삼성',
-    image: images.card1,
-  },
-  {
-    id: 'card2',
-    name: '삼성카드 그린',
-    image: images.card2,
-  },
-];
+type IssuedCardUI = {
+  id: string;
+  name: string;
+  image: { uri: string };
+  isBasic: boolean;
+};
 
 function InfoRow({
   label,
@@ -57,7 +53,7 @@ function InfoRow({
   return (
     <View className="flex-row items-center py-4 border-b border-gray-100">
       <Text style={styles.infoLabel}>{label}</Text>
-      <View style={{ flex: 1 }}>{children}</View>
+      <View style={styles.infoRowContent}>{children}</View>
     </View>
   );
 }
@@ -76,7 +72,7 @@ export default function GroupInfoScreen() {
   const params = (route.params ?? {}) as CommonParams;
 
   const isAdmin = !!params.isAdmin;
-  const groupId = 1; // 임시 테스트용, 나중에 params.groupId로 교체
+  const groupId = params.groupId;
 
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [isEdit, setIsEdit] = useState(false);
@@ -93,12 +89,11 @@ export default function GroupInfoScreen() {
   const [groundRules, setGroundRules] = useState(
     '1. 아프면 사형\n2. 일정공유 잘하기\n3. MM 확인 체크하기\n4. 부드러운 말투로 대화해용',
   );
-  const [representativeCardId, setRepresentativeCardId] = useState<string>(
-    ISSUED_CARDS[0].id,
-  );
+  const [issuedCards, setIssuedCards] = useState<IssuedCardUI[]>([]);
+  const [representativeCardId, setRepresentativeCardId] = useState<string>('');
 
   const representativeCard =
-    ISSUED_CARDS.find(c => c.id === representativeCardId) ?? ISSUED_CARDS[0];
+    issuedCards.find(c => c.id === representativeCardId) ?? issuedCards[0];
 
   useEffect(() => {
     const fetchGroupSettings = async () => {
@@ -128,6 +123,28 @@ export default function GroupInfoScreen() {
         console.log('모임원 목록 조회 성공:', membersData);
         console.log('멤버 배열:', membersData.result);
         setMembers(membersData.result);
+
+        const cardsData = await getGroupCards(groupId!);
+        console.log('모임 카드 목록 조회 성공:', cardsData);
+        console.log('카드 배열:', cardsData.result);
+
+        const mappedCards: IssuedCardUI[] = cardsData.result.map((card: GroupCardItem) => ({
+          id: String(card.cardId),
+          name: card.cardName,
+          image: {
+            uri: `https://api.ssafywte.site${card.frontCardImageUrl}`,
+          },
+          isBasic: card.isBasic,
+        }));
+
+        setIssuedCards(mappedCards);
+
+        const basicCard = mappedCards.find(card => card.isBasic);
+        if (basicCard) {
+          setRepresentativeCardId(basicCard.id);
+        } else if (mappedCards.length > 0) {
+          setRepresentativeCardId(mappedCards[0].id);
+        }
       } catch (error: any) {
         console.error('조회 실패 전체:', error);
         console.error('error.message:', error?.message);
@@ -228,7 +245,7 @@ export default function GroupInfoScreen() {
     <ScreenLayout>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={styles.scrollContent}
       >
         <Pressable
           onPress={handleTestUpdateRole}
@@ -291,20 +308,15 @@ export default function GroupInfoScreen() {
                       key={tag}
                       onPress={() => toggleTag(tag)}
                       className="rounded-2xl px-3 py-1"
-                      style={{
-                        backgroundColor: selectedTags.includes(tag)
-                          ? '#1428A0'
-                          : '#F3F4F6',
-                      }}
+                      style={[
+                        styles.tagButtonEdit,
+                        selectedTags.includes(tag) && styles.tagButtonEditActive,
+                      ]}
                     >
                       <Text
                         style={[
                           styles.tagText,
-                          {
-                            color: selectedTags.includes(tag)
-                              ? '#fff'
-                              : '#6B7280',
-                          },
+                          selectedTags.includes(tag) && styles.tagTextActive,
                         ]}
                       >
                         {tag}
@@ -340,7 +352,7 @@ export default function GroupInfoScreen() {
             </View>
 
             {isEdit && (
-              <View style={{ gap: 8, paddingLeft: 80 }}>
+              <View style={styles.duesEditContainer}>
                 {/* 매월 + 일 */}
                 <View style={styles.inputRow}>
                   <Text style={styles.unitText}>매월</Text>
@@ -428,38 +440,46 @@ export default function GroupInfoScreen() {
           </View>
 
           {isEdit ? (
-            <View style={{ gap: 12 }}>
-              {ISSUED_CARDS.map(card => {
-                const isRep = card.id === representativeCardId;
-                return (
-                  <Pressable
-                    key={card.id}
-                    onPress={() => setRepresentativeCardId(card.id)}
-                    style={[
-                      styles.cardItem,
-                      { borderColor: isRep ? '#1428A0' : 'transparent' },
-                    ]}
-                  >
-                    <Image
-                      source={card.image}
-                      style={styles.cardImage}
-                      resizeMode="cover"
-                    />
-                    {isRep && (
-                      <View style={styles.repBadge}>
-                        <Text style={styles.repBadgeText}>대표 카드 ✓</Text>
-                      </View>
-                    )}
-                  </Pressable>
-                );
-              })}
-            </View>
+            issuedCards.length === 0 ? (
+              <Text style={styles.groundRulesText}>발급된 카드가 없습니다.</Text>
+            ) : (
+              <View style={styles.cardListContainer}>
+                {issuedCards.map(card => {
+                  const isRep = card.id === representativeCardId;
+                  return (
+                    <Pressable
+                      key={card.id}
+                      onPress={() => setRepresentativeCardId(card.id)}
+                      style={[
+                        styles.cardItem,
+                        isRep && styles.cardItemSelected,
+                      ]}
+                    >
+                      <Image
+                        source={card.image}
+                        style={styles.cardImage}
+                        resizeMode="cover"
+                      />
+                      {isRep && (
+                        <View style={styles.repBadge}>
+                          <Text style={styles.repBadgeText}>대표 카드 ✓</Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )
           ) : (
-            <Image
-              source={representativeCard.image}
-              style={styles.repCardImage}
-              resizeMode="cover"
-            />
+            representativeCard ? (
+              <Image
+                source={representativeCard.image}
+                style={styles.repCardImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <Text style={styles.groundRulesText}>발급된 카드가 없습니다.</Text>
+            )
           )}
         </View>
 
@@ -490,6 +510,15 @@ export default function GroupInfoScreen() {
 
 
 const styles = StyleSheet.create({
+  scrollContent: { paddingBottom: 32 },
+  infoRowContent: { flex: 1 },
+  duesEditContainer: { gap: 8, paddingLeft: 80 },
+  cardListContainer: { gap: 12 },
+  tagButtonEdit: { backgroundColor: '#F3F4F6' },
+  tagButtonEditActive: { backgroundColor: '#1428A0' },
+  tagTextActive: { color: '#fff' },
+  cardItemSelected: { borderColor: '#1428A0' },
+
   // 헤더
   headerTitle: { fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#111827' },
   cancelText: { fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' },
