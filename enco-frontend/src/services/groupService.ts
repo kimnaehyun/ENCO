@@ -146,3 +146,28 @@ export async function updateGroupMemberRole(
   );
   return response.data;
 }
+
+// 내 모임(대표카드) 전체 목록 조회
+export interface MyGroupAccount {
+  accountId: number;
+  accountNumber: string;
+  balance: number;
+}
+
+export interface MyGroupCard {
+  cardId: number;
+  frontImageUrl: string;
+}
+
+export interface MyGroupItem {
+  groupId: number;
+  groupName: string;
+  role: string;
+  account: MyGroupAccount;
+  card: MyGroupCard | null;
+}
+
+export interface MyGroupsResponse {
+  message: string;
+  result: MyGroupItem[];
+}
