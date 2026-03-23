@@ -1,13 +1,13 @@
-package com.frontend.ocr
+package com.frontend.docScan
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.uimanager.ViewManager
 
-class OcrPackage : ReactPackage {
+class DocumentScannerPackage : ReactPackage {
   override fun createNativeModules(reactContext: ReactApplicationContext): List<NativeModule> {
-    return listOf(OcrModule(reactContext))
+    return listOf(DocumentScannerModule(reactContext))
   }
 
   override fun createViewManagers(reactContext: ReactApplicationContext): List<ViewManager<*, *>> {

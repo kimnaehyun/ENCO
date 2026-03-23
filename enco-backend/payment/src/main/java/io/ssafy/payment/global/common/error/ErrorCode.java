@@ -23,8 +23,14 @@ public enum ErrorCode {
     VOTE_EXPIRED(HttpStatus.BAD_REQUEST, "만료된 투표입니다.", "VOTE_EXPIRED"),
     ALREADY_VOTED(HttpStatus.BAD_REQUEST, "이미 투표에 참여했습니다.", "ALREADY_VOTED"),
     NOT_FOUND_TRANSACTION(HttpStatus.NOT_FOUND, "거래내역을 찾을 수 없습니다.", "NOT_FOUND_TRANSACTION"),
-    DUPLICATE_PAYMENT(HttpStatus.CONFLICT, "이미 처리된 결제 요청입니다.", "DUPLICATE_PAYMENT");
-
+    DUPLICATE_PAYMENT(HttpStatus.CONFLICT, "이미 처리된 결제 요청입니다.", "DUPLICATE_PAYMENT")
+    
+    OCR_INVALID_FILE(HttpStatus.BAD_REQUEST, "OCR 처리 가능한 영수증 파일이 아닙니다.", "OCR_INVALID_FILE"),
+    OCR_PROVIDER_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "OCR 제공자 응답이 지연되고 있습니다.", "OCR_PROVIDER_TIMEOUT"),
+    OCR_PROVIDER_ERROR(HttpStatus.BAD_GATEWAY, "OCR 제공자 호출에 실패했습니다.", "OCR_PROVIDER_ERROR"),
+    OCR_PARSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "OCR 응답 파싱에 실패했습니다.", "OCR_PARSE_FAILED"),
+    OCR_LOW_CONFIDENCE(HttpStatus.UNPROCESSABLE_ENTITY, "OCR 결과의 신뢰도가 낮아 사용자 검수가 필요합니다.", "OCR_LOW_CONFIDENCE");
+    
     private final HttpStatus httpStatusCode;
     private final String errorMessage;
     private final String errorName;
