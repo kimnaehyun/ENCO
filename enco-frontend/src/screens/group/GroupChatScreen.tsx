@@ -20,6 +20,7 @@ import Chatbot from '@/components/groupChat/Chatbot';
 import BotUnpaidCard from '@/components/groupChat/BotUnpaidCard';
 import BotActions from '@/components/groupChat/BotActions';
 import BotLedgerCard from '@/components/groupChat/BotLedGerCard';
+import { getCachedAccessToken } from '@/utils/tokenStorage';
 
 // API 응답을 ChatItem으로 변환
 function apiMessageToChatItem(m: ApiMessage): ChatItem {
@@ -64,6 +65,8 @@ export default function GroupChatScreen() {
   const clientRef = useRef<Client | null>(null);
   const flatListRef = useRef<FlatList<ChatItem>>(null);
   const ROOM_ID = '1001';
+
+  const token = getCachedAccessToken();
 
   // cursor 기반 페이지네이션 상태
   const nextCursorRef = useRef<number | null>(null);
@@ -126,10 +129,9 @@ export default function GroupChatScreen() {
 
   useEffect(() => {
     const client = new Client({
-      brokerURL: 'ws://10.0.2.2:8084/ws-stomp',
       reconnectDelay: 5000,
       debug: str => console.log(str),
-      webSocketFactory: () => new WebSocket('ws://10.0.2.2:8084/ws-stomp'),
+      webSocketFactory: () => new WebSocket('wss://api.ssafywte.site/ws-stomp'),
       forceBinaryWSFrames: true,
       appendMissingNULLonIncoming: true,
     });
