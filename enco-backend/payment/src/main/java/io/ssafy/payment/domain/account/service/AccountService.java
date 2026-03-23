@@ -1,6 +1,9 @@
 package io.ssafy.payment.domain.account.service;
 
+import io.ssafy.payment.domain.account.dto.request.CardIssueRequestDto;
 import io.ssafy.payment.domain.account.dto.request.PaymentCreateRequestDto;
+import io.ssafy.payment.domain.account.dto.response.CardIssueResponseDto;
+import io.ssafy.payment.domain.account.dto.response.GroupAccountCardResponseDto;
 import io.ssafy.payment.domain.account.dto.response.PaymentCreateResponseDto;
 import io.ssafy.payment.domain.account.entity.Account;
 import io.ssafy.payment.domain.account.entity.Product;
@@ -22,6 +25,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -85,5 +89,38 @@ public class AccountService {
             log.error("[AccountService] Error creating account and card: {}", e.getMessage(), e);
             throw new RuntimeException("계좌 및 카드 생성 실패: " + e.getMessage(), e);
         }
+    }
+
+    @Transactional(readOnly = true)
+    public List<GroupAccountCardResponseDto> getAccountsByIds(List<Long> accountIds) {
+        return accountRepository.findByIdInWithBasicCard(accountIds)
+                .stream()
+                .map(GroupAccountCardResponseDto::from)
+                .toList();
+    }
+
+    @Transactional
+    public CardIssueResponseDto issueAdditionalCard(CardIssueRequestDto request) {
+        Account account = accountRepository.findById(request.accountId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ACCOUNT));
+
+        var cardProduct = cardProductRepository.findById(request.cardProductId())
+                .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+
+        Card card = Card.builder()
+                .account(account)
+                .cardNumber("5332-" + UUID.randomUUID().toString().substring(0, 10))
+                .cvc("123")
+                .type(CardType.CHECK)
+                .expirationAt(LocalDateTime.now().plusYears(5))
+                .isBasic(false)
+                .cardProduct(cardProduct)
+                .build();
+
+        Card savedCard = cardRepository.save(card);
+        log.info("[AccountService] Additional card issued: cardId={}, accountId={}",
+                savedCard.getId(), account.getId());
+
+        return CardIssueResponseDto.from(savedCard);
     }
 }

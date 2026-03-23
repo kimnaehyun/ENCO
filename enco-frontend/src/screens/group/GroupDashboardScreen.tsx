@@ -1,5 +1,4 @@
-// src/screens/group/GroupDashboardScreen.tsx
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -21,6 +20,7 @@ import ExpenseCategoryCard, {
 import MonthlyTrendCard, {
   MonthlyExpense,
 } from '../../components/analytics/MonthlyTrendCard';
+import { getGroupDashboard, getGroupDashboardReport } from '../../services/paymentService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 20;
@@ -39,62 +39,22 @@ export default function GroupDashboardScreen() {
   const navigation = useNavigation<any>();
 
   const params = (route.params ?? {}) as CommonParams;
-  const groupName = params.groupName ?? '모임명';
+  const groupId = 1; // 임시 테스트용, 나중에 params.groupId로 교체
   const { unreadCount } = useNotifications();
 
-  const onPressGroupInfo = () =>
-    navigation.navigate('GroupInfo', {
-      groupId: params.groupId,
-      groupName,
-      isAdmin: false,
-    });
-
-  const onPressLedger = () =>
-    navigation.navigate('GroupLedger', {
-      groupId: params.groupId,
-      groupName,
-    });
-
-  const onPressVotes = () =>
-    navigation.navigate('GroupVotes', {
-      groupId: params.groupId,
-      groupName,
-    });
-
-  const onPressPay = () =>
-    navigation.navigate('GroupPay', {
-      groupId: params.groupId,
-      groupName,
-    });
-
-  const onPressCommunity = () =>
-    navigation.navigate('GroupChat', {
-      groupId: params.groupId,
-      groupName,
-    });
-
-  const onPressAdmin = () =>
-    navigation.navigate('AdminMenu', {
-      groupId: params.groupId,
-      groupName,
-    });
-
-  const onPressAnalytics = () =>
-    navigation.navigate('GroupAnalytics', {
-      groupId: params.groupId,
-      groupName,
-    });
-
-  const onPressAttendance = () =>
-    navigation.navigate('GroupAttendance', {
-      groupId: params.groupId,
-      groupName,
-    });
-
-  const onPressInviteEntryTest = () =>
-    navigation.navigate('GroupInviteEntry');
-
-  const balance = 854443;
+  // --- useState ---
+  const [dashboardGroupName, setDashboardGroupName] = useState(
+    params.groupName ?? '모임명',
+  );
+  const [paidCount, setPaidCount] = useState(0);
+  const [unpaidCount, setUnpaidCount] = useState(0);
+  const [paidRatio, setPaidRatio] = useState(0);
+  const [unpaidRatio, setUnpaidRatio] = useState(0);
+  const [balance, setBalance] = useState(0);
+  const [reportBalance, setReportBalance] = useState(0);
+  const [paidAmount, setPaidAmount] = useState(0);
+  const [pointAmount, setPointAmount] = useState(0);
+  // --- 상수 ---
   const totalExpense = 428000;
   const monthlyBudget = 500000;
 
@@ -105,6 +65,7 @@ export default function GroupDashboardScreen() {
   const attendanceRatio = attendedCount / totalMembers;
   const requiredCount = Math.ceil(totalMembers * attendanceRewardThreshold);
 
+  // --- useMemo ---
   const categoryData = useMemo<ExpenseCategoryItem[]>(
     () => [
       { label: '식비', value: 180000, color: '#1428A0' },
@@ -112,7 +73,7 @@ export default function GroupDashboardScreen() {
       { label: '회비 적립', value: 110000, color: '#818CF8' },
       { label: '기타', value: 48000, color: '#C7D2FE' },
     ],
-    []
+    [],
   );
 
   const monthlyData = useMemo<MonthlyExpense[]>(
@@ -124,7 +85,7 @@ export default function GroupDashboardScreen() {
       { month: '5월', amount: 360000 },
       { month: '6월', amount: 428000 },
     ],
-    []
+    [],
   );
 
   const analyticsCards: AnalyticsCardItem[] = [
@@ -161,14 +122,100 @@ export default function GroupDashboardScreen() {
     };
   }, [attendanceRatio, attendanceRewardThreshold, attendedCount, requiredCount]);
 
+  // --- useEffect ---
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        console.log('dashboard groupId 확인:', groupId);
+
+        const dashboardData = await getGroupDashboard(groupId);
+        console.log('모임 대시보드 조회 성공:', dashboardData);
+        console.log('대시보드 result:', dashboardData.result);
+
+        const result = dashboardData.result;
+
+        setDashboardGroupName(result.groupName ?? '모임명');
+        setPaidCount(result.paymentStatus?.paidCount ?? 0);
+        setUnpaidCount(result.paymentStatus?.unpaidCount ?? 0);
+        setPaidRatio(result.paymentStatus?.paidRatio ?? 0);
+        setUnpaidRatio(result.paymentStatus?.unpaidRatio ?? 0);
+        setBalance(result.balance ?? 0);
+
+        const reportData = await getGroupDashboardReport(groupId);
+        console.log('모임비 대시보드 조회 성공:', reportData);
+        console.log('모임비 대시보드 result:', reportData.result);
+
+        const reportResult = reportData.result;
+        setReportBalance(reportResult.balance ?? 0);
+        setPaidAmount(reportResult.paidAmount ?? 0);
+        setPointAmount(reportResult.pointAmount ?? 0);
+      } catch (error: any) {
+        console.error('모임 대시보드 조회 실패:', error);
+        console.error('error.response?.status:', error?.response?.status);
+        console.error('error.response?.data:', error?.response?.data);
+      }
+    };
+
+    fetchDashboard();
+  }, [groupId]);
+
+  // --- 네비게이션 핸들러 ---
+  const onPressGroupInfo = () =>
+    navigation.navigate('GroupInfo', {
+      groupId: params.groupId,
+      groupName: dashboardGroupName,
+      isAdmin: false,
+    });
+
+  const onPressLedger = () =>
+    navigation.navigate('GroupLedger', {
+      groupId: params.groupId,
+      groupName: dashboardGroupName,
+    });
+
+  const onPressVotes = () =>
+    navigation.navigate('GroupVotes', {
+      groupId: params.groupId,
+      groupName: dashboardGroupName,
+    });
+
+  const onPressPay = () =>
+    navigation.navigate('GroupPay', {
+      groupId: params.groupId,
+      groupName: dashboardGroupName,
+    });
+
+  const onPressCommunity = () =>
+    navigation.navigate('GroupChat', {
+      groupId: params.groupId,
+      groupName: dashboardGroupName,
+    });
+
+  const onPressAdmin = () =>
+    navigation.navigate('AdminMenu', {
+      groupId: params.groupId,
+      groupName: dashboardGroupName,
+    });
+
+  const onPressAnalytics = () =>
+    navigation.navigate('GroupAnalytics', {
+      groupId: params.groupId,
+      groupName: dashboardGroupName,
+    });
+
+  const onPressAttendance = () =>
+    navigation.navigate('GroupAttendance', {
+      groupId: params.groupId,
+      groupName: dashboardGroupName,
+    });
+
+  const onPressInviteEntryTest = () => navigation.navigate('GroupInviteEntry');
+
   const renderAnalyticsCard = ({ item }: { item: AnalyticsCardItem }) => {
     return (
       <View style={{ width: ANALYTICS_CARD_WIDTH }}>
         {item.type === 'attendance' && (
-          <Pressable
-            onPress={onPressAttendance}
-            style={styles.attendanceCard}
-          >
+          <Pressable onPress={onPressAttendance} style={styles.attendanceCard}>
             <View style={styles.attendanceHeader}>
               <Text style={styles.attendanceTitle}>오늘의 출석 체크</Text>
               <View style={styles.attendanceBadge}>
@@ -268,7 +315,7 @@ export default function GroupDashboardScreen() {
             hitSlop={12}
             className="flex-row items-center gap-2"
           >
-            <Text style={styles.groupNameText}>{groupName}</Text>
+            <Text style={styles.groupNameText}>{dashboardGroupName}</Text>
             <Image
               source={images.alertCircleIcon}
               style={styles.alertIcon}
@@ -280,7 +327,7 @@ export default function GroupDashboardScreen() {
             onPress={() =>
               navigation.navigate('UserNotifications', {
                 groupId: params.groupId,
-                groupName,
+                groupName: dashboardGroupName,
               })
             }
             hitSlop={12}
@@ -311,12 +358,46 @@ export default function GroupDashboardScreen() {
         {/* 잔액 카드 */}
         <Pressable
           onPress={onPressLedger}
-          className="bg-white rounded-3xl px-6 mb-4 flex-row items-center justify-between"
+          className="bg-white rounded-3xl px-6 py-5 mb-4"
+          style={styles.reportCard}
+        >
+          <View className="flex-row items-center justify-between mb-3">
+            <Text style={styles.balanceEmoji}>💵</Text>
+            <Text style={styles.balanceValue}>{reportBalance.toLocaleString()}원</Text>
+          </View>
+
+          {/* <View className="flex-row items-center justify-between">
+            <Text style={styles.statusLabel}>총 납부액</Text>
+            <Text style={styles.statusValue}>{paidAmount.toLocaleString()}원</Text>
+          </View>
+
+          <View className="flex-row items-center justify-between mt-2">
+            <Text style={styles.statusLabel}>적립 포인트</Text>
+            <Text style={styles.statusValue}>{pointAmount.toLocaleString()}P</Text>
+          </View> */}
+        </Pressable>
+
+        {/* 납부/미납 현황 카드 */}
+        {/* <View
+          className="bg-white rounded-3xl px-6 py-5 mb-4"
           style={styles.shadowCard}
         >
-          <Text style={styles.balanceEmoji}>💵</Text>
-          <Text style={styles.balanceValue}>{balance.toLocaleString()}원</Text>
-        </Pressable>
+          <Text style={styles.statusTitle}>회비 납부 현황</Text>
+
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>납부</Text>
+            <Text style={styles.statusValue}>
+              {paidCount}명 ({paidRatio}%)
+            </Text>
+          </View>
+
+          <View style={styles.statusRow}>
+            <Text style={styles.statusLabel}>미납</Text>
+            <Text style={styles.statusValue}>
+              {unpaidCount}명 ({unpaidRatio}%)
+            </Text>
+          </View> */}
+        
 
         {/* 투표 현황 카드 */}
         <Pressable
@@ -413,11 +494,27 @@ const styles = StyleSheet.create({
   },
 
   // 잔액 카드
+  reportCard: {
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
   balanceEmoji: {
     fontSize: 26,
   },
   balanceValue: {
     fontSize: 22,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#111827',
+  },
+  statusLabel: {
+    fontSize: 14,
+    fontFamily: 'GmarketSansTTFMedium',
+    color: '#6B7280',
+  },
+  statusValue: {
+    fontSize: 14,
     fontFamily: 'GmarketSansTTFBold',
     color: '#111827',
   },

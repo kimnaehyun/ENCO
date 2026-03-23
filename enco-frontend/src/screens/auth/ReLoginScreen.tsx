@@ -13,25 +13,32 @@ import type { AuthScreenProps } from "../../types/navigation";
 import { useAuthStore } from "../../store/useAuthStore";
 import { ReLoginService } from "../../services/authService";
 import { saveTokens, saveDeviceToken } from "../../utils/tokenStorage";
+import PinEntry from "../../components/pin/PinEntry";
+
+type Step = "email" | "password";
 
 export default function ReLoginScreen({
   navigation,
 }: AuthScreenProps<"ReLogin">) {
+  const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [pinResetKey, setPinResetKey] = useState(0);
 
   const login = useAuthStore((s) => s.login);
 
-  const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert("입력 오류", "이메일과 비밀번호를 모두 입력해주세요.");
+  const handleEmailNext = () => {
+    if (!email.trim()) {
+      Alert.alert("입력 오류", "이메일을 입력해주세요.");
       return;
     }
+    setStep("password");
+  };
 
+  const handlePinComplete = async (pin: string) => {
     setLoading(true);
     try {
-      const response = await ReLoginService({ email, password });
+      const response = await ReLoginService({ email, password: pin });
 
       // 토큰 저장
       if (response.result?.accessToken) {
@@ -50,11 +57,52 @@ export default function ReLoginScreen({
         err?.response?.data?.message ||
         "로그인에 실패했습니다. 다시 시도해주세요.";
       Alert.alert("로그인 실패", message);
+      setPinResetKey((prev) => prev + 1);
     } finally {
       setLoading(false);
     }
   };
 
+  // 로딩 화면
+  if (loading) {
+    return (
+      <View className="flex-1 bg-[#F0F4FF] items-center justify-center">
+        <ActivityIndicator size="large" color="#1428A0" />
+        <Text
+          className="text-[#374151] text-lg mt-4"
+          style={{ fontFamily: "GmarketSansTTFMedium" }}
+        >
+          로그인 중...
+        </Text>
+      </View>
+    );
+  }
+
+  // Step 2: 비밀번호 PIN 입력
+  if (step === "password") {
+    return (
+      <View className="flex-1">
+        <PinEntry
+          title={"비밀번호를\n입력해주세요"}
+          resetKey={pinResetKey}
+          length={4}
+          onComplete={handlePinComplete}
+          footerContent={
+            <Pressable onPress={() => setStep("email")}>
+              <Text
+                className="text-[#6B7280] text-sm underline"
+                style={{ fontFamily: "GmarketSansTTFMedium" }}
+              >
+                이메일 다시 입력
+              </Text>
+            </Pressable>
+          }
+        />
+      </View>
+    );
+  }
+
+  // Step 1: 이메일 입력
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-[#F0F4FF]"
@@ -75,51 +123,33 @@ export default function ReLoginScreen({
           이메일
         </Text>
         <TextInput
-          className="bg-white rounded-xl px-4 py-3 mb-4 text-base"
+          className="bg-white rounded-xl px-4 py-3 mb-8 text-base"
           style={{ fontFamily: "GmarketSansTTFMedium" }}
           placeholder="example@email.com"
           placeholderTextColor="#9CA3AF"
           keyboardType="email-address"
           autoCapitalize="none"
           autoCorrect={false}
+          autoFocus
           value={email}
           onChangeText={setEmail}
-        />
-
-        <Text
-          className="text-sm mb-2 text-[#374151]"
-          style={{ fontFamily: "GmarketSansTTFMedium" }}
-        >
-          비밀번호
-        </Text>
-        <TextInput
-          className="bg-white rounded-xl px-4 py-3 mb-8 text-base"
-          style={{ fontFamily: "GmarketSansTTFMedium" }}
-          placeholder="비밀번호를 입력하세요"
-          placeholderTextColor="#9CA3AF"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
+          onSubmitEditing={handleEmailNext}
+          returnKeyType="next"
         />
 
         <Pressable
           className="bg-[#1428A0] rounded-2xl py-4 items-center"
-          onPress={handleLogin}
-          disabled={loading}
+          onPress={handleEmailNext}
         >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text
-              style={{
-                fontFamily: "GmarketSansTTFBold",
-                color: "white",
-                fontSize: 18,
-              }}
-            >
-              로그인
-            </Text>
-          )}
+          <Text
+            style={{
+              fontFamily: "GmarketSansTTFBold",
+              color: "white",
+              fontSize: 18,
+            }}
+          >
+            다음
+          </Text>
         </Pressable>
 
         <Pressable

@@ -166,3 +166,57 @@ export async function getUnpaidDues(groupId: number): Promise<GetUnpaidDuesRespo
         `/groups/${groupId}/dues/unpaid`);
     return response.data;
 }
+
+// 모임 대시보드 조회
+export type GroupDashboardResponse = {
+    message: string;
+    result: {
+        groupId: number;
+        groupName: string;
+        paymentStatus: {
+            paidCount: number;
+            unpaidCount: number;
+            paidRatio: number;
+            unpaidRatio: number;
+        };
+        balance: number;
+    };
+};
+
+export async function getGroupDashboard(
+    groupId: number
+): Promise<GroupDashboardResponse> {
+    const response = await paymentApi.get<GroupDashboardResponse>(
+        `/groups/${groupId}/dashboard`
+    );
+    return response.data;
+}
+
+// 모임 대시보드 리포트(장부) 조회
+
+export interface GroupDashboardReportResponse {
+  message: string;
+  result: {
+    groupId: number;
+    balance: number;
+    paidAmount: number;
+    pointAmount: number;
+  };
+}
+
+export async function getGroupDashboardReport(groupId: number | string) {
+  const token = getCachedAccessToken();
+
+  const response = await axios.get<GroupDashboardReportResponse>(
+    `https://api.ssafywte.site/payment-service/api/v1/groups/${groupId}/dashboard/report`,
+    {
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+    },
+  );
+
+  return response.data;
+}

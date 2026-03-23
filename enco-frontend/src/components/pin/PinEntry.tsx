@@ -9,6 +9,7 @@ export default function PinEntry({
   resetKey = 0,
   length = 4,
   onComplete,
+  footerContent,
 }: PinEntryProps) {
   const [pin, setPin] = useState("");
   const completedRef = useRef(false);
@@ -53,6 +54,11 @@ export default function PinEntry({
           {title}
         </Text>
         <PinDots length={length} filledCount={pin.length} />
+        {footerContent && (
+          <View className="items-center mt-2">
+            {footerContent}
+          </View>
+        )}
       </View>
 
       {/* 하단 키패드 */}
