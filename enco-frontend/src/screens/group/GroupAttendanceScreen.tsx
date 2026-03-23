@@ -130,7 +130,7 @@ export default function GroupAttendanceScreen() {
     <ScreenLayout>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>출석 체크</Text>
@@ -164,13 +164,13 @@ export default function GroupAttendanceScreen() {
         </View>
 
         <View style={styles.statsRow}>
-          <View style={[styles.statCard, { flex: 1, marginRight: 8 }]}>
+          <View style={[styles.statCard, styles.statCardLeft]}>
             <Text style={styles.statEmoji}>🔥</Text>
             <Text style={styles.statValue}>{streak}일</Text>
             <Text style={styles.statLabel}>연속 출석</Text>
           </View>
 
-          <View style={[styles.statCard, { flex: 1, marginLeft: 8 }]}>
+          <View style={[styles.statCard, styles.statCardRight]}>
             <Text style={styles.statEmoji}>💰</Text>
             <Text style={styles.statValue}>{currentGroupBalance}원</Text>
             <Text style={styles.statLabel}>모임통장</Text>
@@ -179,7 +179,7 @@ export default function GroupAttendanceScreen() {
 
         <View style={styles.rewardCard}>
           <View style={styles.rewardTopRow}>
-            <View style={{ flex: 1 }}>
+            <View style={styles.rewardFlexChild}>
               <Text style={styles.rewardTitle}>🗳️ 오늘의 투표 미션</Text>
               <Text style={styles.rewardDesc}>
                 모임원 <Text style={styles.highlight}>{requiredVoteCount}명</Text> 이상이
@@ -275,12 +275,12 @@ export default function GroupAttendanceScreen() {
 
           <View style={styles.legendRow}>
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#1428A0' }]} />
+              <View style={[styles.legendDot, styles.legendDotToday]} />
               <Text style={styles.legendText}>오늘</Text>
             </View>
 
             <View style={styles.legendItem}>
-              <View style={[styles.legendDot, { backgroundColor: '#818CF8' }]} />
+              <View style={[styles.legendDot, styles.legendDotAttended]} />
               <Text style={styles.legendText}>출석 완료</Text>
             </View>
           </View>
@@ -583,9 +583,30 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     marginRight: 6,
   },
+  legendDotToday: {
+    backgroundColor: '#1428A0',
+  },
+  legendDotAttended: {
+    backgroundColor: '#818CF8',
+  },
   legendText: {
     fontSize: 12,
     color: '#9CA3AF',
     fontFamily: 'GmarketSansTTFMedium',
+  },
+
+  scrollContent: {
+    paddingBottom: 40,
+  },
+  statCardLeft: {
+    flex: 1,
+    marginRight: 8,
+  },
+  statCardRight: {
+    flex: 1,
+    marginLeft: 8,
+  },
+  rewardFlexChild: {
+    flex: 1,
   },
 });

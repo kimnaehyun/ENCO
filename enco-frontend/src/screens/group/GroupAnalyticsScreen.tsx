@@ -64,7 +64,7 @@ export default function GroupAnalyticsScreen() {
     <ScreenLayout>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.headerRow}>
           <View>
@@ -83,14 +83,14 @@ export default function GroupAnalyticsScreen() {
           <StatCard label="현재 잔액" value={`${currentBalance.toLocaleString()}원`} />
         </View>
 
-        <View style={{ marginBottom: 16 }}>
+        <View style={styles.cardWrap}>
           <BudgetGaugeCard
             budget={monthlyBudget}
             spent={totalExpense}
           />
         </View>
 
-        <View style={{ marginBottom: 16 }}>
+        <View style={styles.cardWrap}>
           <ExpenseCategoryCard
             totalExpense={totalExpense}
             categories={categoryData}
@@ -104,6 +104,13 @@ export default function GroupAnalyticsScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 32,
+  },
+  cardWrap: {
+    marginBottom: 16,
+  },
+
   headerRow: {
     marginTop: 6,
     marginBottom: 20,

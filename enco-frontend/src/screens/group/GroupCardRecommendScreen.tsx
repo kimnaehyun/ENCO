@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -125,22 +126,12 @@ export default function GroupCardRecommendScreen() {
       <TouchableOpacity
         activeOpacity={0.7}
         onPress={() => handleCardPress(item)}
-        style={{
-          borderRadius: 16,
-          borderWidth: 2,
-          borderColor: selected ? '#1428A0' : 'transparent',
-          marginBottom: 14,
-          shadowColor: selected ? '#1428A0' : '#000',
-          shadowOffset: { width: 0, height: selected ? 4 : 1 },
-          shadowOpacity: selected ? 0.2 : 0.06,
-          shadowRadius: selected ? 8 : 4,
-          elevation: selected ? 4 : 1,
-        }}
+        style={[styles.cardItem, selected && styles.cardItemSelected]}
       >
-        <View style={{ borderRadius: 14, overflow: 'hidden', backgroundColor: '#F9FAFB' }}>
+        <View style={styles.cardImageWrap}>
           <Image
             source={{ uri: item.imageUrl }}
-            style={{ width: '100%', aspectRatio: 2 }}
+            style={styles.cardImage}
             resizeMode="contain"
           />
         </View>
@@ -150,24 +141,8 @@ export default function GroupCardRecommendScreen() {
 
   const ListHeader = () => (
     <>
-      <Text
-        style={{
-          fontSize: 22,
-          color: '#111827',
-          fontFamily: 'GmarketSansTTFBold',
-          marginBottom: 24,
-        }}
-      >
-        모임통장 개설하기
-      </Text>
-      <Text
-        style={{
-          fontSize: 14,
-          color: '#6B7280',
-          fontFamily: 'GmarketSansTTFMedium',
-          marginBottom: 16,
-        }}
-      >
+      <Text style={styles.pageTitle}>모임통장 개설하기</Text>
+      <Text style={styles.pageSubtitle}>
         {isRecommendMode ? `"${tags.join(', ')}" 태그 기반 추천 카드` : '전체 카드 목록'}
       </Text>
     </>
@@ -179,20 +154,9 @@ export default function GroupCardRecommendScreen() {
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => setShowAll(true)}
-          style={{
-            marginTop: 4,
-            height: 48,
-            borderRadius: 14,
-            backgroundColor: '#FFFFFF',
-            borderWidth: 1,
-            borderColor: '#E5E7EB',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
+          style={styles.showMoreButton}
         >
-          <Text style={{ fontSize: 14, color: '#374151', fontFamily: 'GmarketSansTTFMedium' }}>
-            더보기
-          </Text>
+          <Text style={styles.showMoreText}>더보기</Text>
         </TouchableOpacity>
       )}
 
@@ -200,20 +164,9 @@ export default function GroupCardRecommendScreen() {
         activeOpacity={0.8}
         onPress={handleComplete}
         disabled={!selectedCardId}
-        style={{
-          marginTop: 24,
-          height: 54,
-          borderRadius: 16,
-          backgroundColor: '#1428A0',
-          justifyContent: 'center',
-          alignItems: 'center',
-          opacity: selectedCardId ? 1 : 0.4,
-          marginBottom: 16,
-        }}
+        style={[styles.completeButton, !selectedCardId && styles.completeButtonDisabled]}
       >
-        <Text style={{ color: '#FFFFFF', fontSize: 16, fontFamily: 'GmarketSansTTFBold' }}>
-          완료
-        </Text>
+        <Text style={styles.completeButtonText}>완료</Text>
       </TouchableOpacity>
     </>
   );
@@ -221,25 +174,16 @@ export default function GroupCardRecommendScreen() {
   if (loading) {
     return (
       <ScreenLayout>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#1428A0" />
-          <Text
-            style={{
-              marginTop: 16,
-              fontSize: 14,
-              color: '#6B7280',
-              fontFamily: 'GmarketSansTTFMedium',
-            }}
-          >
-            카드 목록을 불러오는 중...
-          </Text>
+          <Text style={styles.loadingText}>카드 목록을 불러오는 중...</Text>
         </View>
       </ScreenLayout>
     );
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <ScreenLayout>
         <FlatList
           data={displayCards}
@@ -249,16 +193,8 @@ export default function GroupCardRecommendScreen() {
           ListFooterComponent={ListFooter}
           showsVerticalScrollIndicator={false}
           ListEmptyComponent={
-            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: '#9CA3AF',
-                  fontFamily: 'GmarketSansTTFMedium',
-                }}
-              >
-                조회된 카드가 없습니다.
-              </Text>
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>조회된 카드가 없습니다.</Text>
             </View>
           }
         />
@@ -266,90 +202,29 @@ export default function GroupCardRecommendScreen() {
 
       {/* 카드 상세 모달 */}
       {detailCard && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(17,24,39,0.5)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 24,
-            zIndex: 999,
-          }}
-        >
-          <View
-            style={{
-              width: '100%',
-              borderRadius: 24,
-              backgroundColor: '#FFFFFF',
-              padding: 22,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 18,
-                color: '#111827',
-                fontFamily: 'GmarketSansTTFBold',
-                marginBottom: 16,
-              }}
-            >
-              {detailCard.name}
-            </Text>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalCardName}>{detailCard.name}</Text>
 
             <Image
               source={{ uri: detailCard.imageUrl }}
-              style={{ width: '100%', aspectRatio: 2, borderRadius: 14 }}
+              style={styles.modalCardImage}
               resizeMode="contain"
             />
 
-            <Text
-              style={{
-                marginTop: 14,
-                fontSize: 13,
-                color: '#9CA3AF',
-                fontFamily: 'GmarketSansTTFMedium',
-              }}
-            >
-              {detailCard.brand}
-            </Text>
-            <Text
-              style={{
-                marginTop: 4,
-                fontSize: 15,
-                color: '#111827',
-                fontFamily: 'GmarketSansTTFBold',
-              }}
-            >
-              {detailCard.summary}
-            </Text>
-            <Text
-              style={{
-                marginTop: 8,
-                fontSize: 14,
-                color: '#6B7280',
-                fontFamily: 'GmarketSansTTFMedium',
-                lineHeight: 22,
-              }}
-            >
+            <Text style={styles.modalBrand}>{detailCard.brand}</Text>
+            <Text style={styles.modalSummary}>{detailCard.summary}</Text>
+            <Text style={styles.modalDetail}>
               {detailLoading ? '상세 정보를 불러오는 중...' : detailCard.detail}
             </Text>
 
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
+            <View style={styles.modalButtonRow}>
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => setDetailCard(null)}
-                style={{
-                  flex: 1,
-                  height: 50,
-                  borderRadius: 14,
-                  backgroundColor: '#F3F4F6',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
+                style={styles.modalCloseButton}
               >
-                <Text style={{ fontSize: 15, color: '#374151', fontFamily: 'GmarketSansTTFMedium' }}>
-                  닫기
-                </Text>
+                <Text style={styles.modalCloseText}>닫기</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -358,18 +233,9 @@ export default function GroupCardRecommendScreen() {
                   setSelectedCardId(detailCard.id);
                   setDetailCard(null);
                 }}
-                style={{
-                  flex: 1,
-                  height: 50,
-                  borderRadius: 14,
-                  backgroundColor: '#1428A0',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
+                style={styles.modalSelectButton}
               >
-                <Text style={{ fontSize: 15, color: '#FFFFFF', fontFamily: 'GmarketSansTTFBold' }}>
-                  이 카드 선택
-                </Text>
+                <Text style={styles.modalSelectText}>이 카드 선택</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -378,3 +244,192 @@ export default function GroupCardRecommendScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+
+  // ── 로딩 ──────────────────────────────────
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 14,
+    color: '#6B7280',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+
+  // ── 헤더 ──────────────────────────────────
+  pageTitle: {
+    fontSize: 22,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+    marginBottom: 24,
+  },
+  pageSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontFamily: 'GmarketSansTTFMedium',
+    marginBottom: 16,
+  },
+
+  // ── 카드 아이템 ───────────────────────────
+  cardItem: {
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  cardItemSelected: {
+    borderColor: '#1428A0',
+    shadowColor: '#1428A0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cardImageWrap: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#F9FAFB',
+  },
+  cardImage: {
+    width: '100%',
+    aspectRatio: 2,
+  },
+
+  // ── 빈 목록 ───────────────────────────────
+  emptyContainer: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+
+  // ── 더보기 / 완료 버튼 ────────────────────
+  showMoreButton: {
+    marginTop: 4,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  showMoreText: {
+    fontSize: 14,
+    color: '#374151',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  completeButton: {
+    marginTop: 24,
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: '#1428A0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  completeButtonDisabled: {
+    opacity: 0.4,
+  },
+  completeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'GmarketSansTTFBold',
+  },
+
+  // ── 상세 모달 ─────────────────────────────
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(17,24,39,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    zIndex: 999,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    padding: 22,
+  },
+  modalCardName: {
+    fontSize: 18,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+    marginBottom: 16,
+  },
+  modalCardImage: {
+    width: '100%',
+    aspectRatio: 2,
+    borderRadius: 14,
+  },
+  modalBrand: {
+    marginTop: 14,
+    fontSize: 13,
+    color: '#9CA3AF',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  modalSummary: {
+    marginTop: 4,
+    fontSize: 15,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  modalDetail: {
+    marginTop: 8,
+    fontSize: 14,
+    color: '#6B7280',
+    fontFamily: 'GmarketSansTTFMedium',
+    lineHeight: 22,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 20,
+  },
+  modalCloseButton: {
+    flex: 1,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    fontSize: 15,
+    color: '#374151',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  modalSelectButton: {
+    flex: 1,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: '#1428A0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalSelectText: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+});

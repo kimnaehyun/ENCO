@@ -39,7 +39,7 @@ export default function GroupDashboardScreen() {
   const navigation = useNavigation<any>();
 
   const params = (route.params ?? {}) as CommonParams;
-  const groupId = 1; // 임시 테스트용, 나중에 params.groupId로 교체
+  const groupId = params.groupId;
   const { unreadCount } = useNotifications();
 
   // --- useState ---
