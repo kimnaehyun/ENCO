@@ -1,5 +1,6 @@
 package io.ssafy.chat.chatbot.client;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ssafy.chat.chatbot.dto.GmsRequest;
 import io.ssafy.chat.chatbot.dto.GmsResponse;
 import lombok.extern.slf4j.Slf4j;
@@ -13,11 +14,13 @@ import org.springframework.web.reactive.function.client.WebClient;
 public class GmsLlmClient {
 
     private final WebClient webClient;
-
+    private final ObjectMapper objectMapper;
     public GmsLlmClient(
             @Value("${gms.api.url}") String apiUrl,
-            @Value("${gms.api.key}") String apiKey
+            @Value("${gms.api.key}") String apiKey,
+            ObjectMapper objectMapper       // Spring 빈 주입
     ) {
+        this.objectMapper = objectMapper;
         this.webClient = WebClient.builder()
                 .baseUrl(apiUrl)
                 .defaultHeader("Authorization", "Bearer " + apiKey)
