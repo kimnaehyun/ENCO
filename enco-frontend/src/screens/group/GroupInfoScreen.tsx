@@ -57,7 +57,7 @@ function InfoRow({
   return (
     <View className="flex-row items-center py-4 border-b border-gray-100">
       <Text style={styles.infoLabel}>{label}</Text>
-      <View style={{ flex: 1 }}>{children}</View>
+      <View style={styles.infoRowContent}>{children}</View>
     </View>
   );
 }
@@ -76,7 +76,7 @@ export default function GroupInfoScreen() {
   const params = (route.params ?? {}) as CommonParams;
 
   const isAdmin = !!params.isAdmin;
-  const groupId = 1; // 임시 테스트용, 나중에 params.groupId로 교체
+  const groupId = params.groupId;
 
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [isEdit, setIsEdit] = useState(false);
@@ -228,7 +228,7 @@ export default function GroupInfoScreen() {
     <ScreenLayout>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={styles.scrollContent}
       >
         <Pressable
           onPress={handleTestUpdateRole}
@@ -291,20 +291,15 @@ export default function GroupInfoScreen() {
                       key={tag}
                       onPress={() => toggleTag(tag)}
                       className="rounded-2xl px-3 py-1"
-                      style={{
-                        backgroundColor: selectedTags.includes(tag)
-                          ? '#1428A0'
-                          : '#F3F4F6',
-                      }}
+                      style={[
+                        styles.tagButtonEdit,
+                        selectedTags.includes(tag) && styles.tagButtonEditActive,
+                      ]}
                     >
                       <Text
                         style={[
                           styles.tagText,
-                          {
-                            color: selectedTags.includes(tag)
-                              ? '#fff'
-                              : '#6B7280',
-                          },
+                          selectedTags.includes(tag) && styles.tagTextActive,
                         ]}
                       >
                         {tag}
@@ -340,7 +335,7 @@ export default function GroupInfoScreen() {
             </View>
 
             {isEdit && (
-              <View style={{ gap: 8, paddingLeft: 80 }}>
+              <View style={styles.duesEditContainer}>
                 {/* 매월 + 일 */}
                 <View style={styles.inputRow}>
                   <Text style={styles.unitText}>매월</Text>
@@ -428,7 +423,7 @@ export default function GroupInfoScreen() {
           </View>
 
           {isEdit ? (
-            <View style={{ gap: 12 }}>
+            <View style={styles.cardListContainer}>
               {ISSUED_CARDS.map(card => {
                 const isRep = card.id === representativeCardId;
                 return (
@@ -437,7 +432,7 @@ export default function GroupInfoScreen() {
                     onPress={() => setRepresentativeCardId(card.id)}
                     style={[
                       styles.cardItem,
-                      { borderColor: isRep ? '#1428A0' : 'transparent' },
+                      isRep && styles.cardItemSelected,
                     ]}
                   >
                     <Image
@@ -490,6 +485,15 @@ export default function GroupInfoScreen() {
 
 
 const styles = StyleSheet.create({
+  scrollContent: { paddingBottom: 32 },
+  infoRowContent: { flex: 1 },
+  duesEditContainer: { gap: 8, paddingLeft: 80 },
+  cardListContainer: { gap: 12 },
+  tagButtonEdit: { backgroundColor: '#F3F4F6' },
+  tagButtonEditActive: { backgroundColor: '#1428A0' },
+  tagTextActive: { color: '#fff' },
+  cardItemSelected: { borderColor: '#1428A0' },
+
   // 헤더
   headerTitle: { fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#111827' },
   cancelText: { fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' },
