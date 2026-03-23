@@ -20,7 +20,6 @@ import Chatbot from '@/components/groupChat/Chatbot';
 import BotUnpaidCard from '@/components/groupChat/BotUnpaidCard';
 import BotActions from '@/components/groupChat/BotActions';
 import BotLedgerCard from '@/components/groupChat/BotLedGerCard';
-import { getCachedAccessToken } from '@/utils/tokenStorage';
 
 // API 응답을 ChatItem으로 변환
 function apiMessageToChatItem(m: ApiMessage): ChatItem {
