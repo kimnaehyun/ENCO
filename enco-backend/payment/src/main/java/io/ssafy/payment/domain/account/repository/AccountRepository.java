@@ -23,7 +23,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     @Query("UPDATE accounts a SET a.amount = a.amount + :amount WHERE a.groupId = :groupId AND a.isDeleted = false")
     int depositByGroupId(@Param("groupId") Long groupId, @Param("amount") BigDecimal amount);
 
-    // N+1 방지 fetch join
     @Query("""
     SELECT DISTINCT a FROM accounts a
     LEFT JOIN FETCH a.cardList c
@@ -31,4 +30,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
       AND a.isDeleted = false
     """)
     List<Account> findByIdInWithBasicCard(@Param("accountIds") List<Long> accountIds);
+
+    Optional<Account> findByGroupId(Long aLong);
 }

@@ -1,6 +1,9 @@
 spring:
   application:
     name: payment-service
+  jackson: # ← 추가
+    serialization:
+      write-dates-as-timestamps: false
   datasource:
     url: jdbc:mysql://${PAYMENT_DB_HOST}:${PAYMENT_DB_PORT}/${PAYMENT_DB_NAME}
     username: ${DB_USERNAME}
@@ -21,7 +24,9 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
-
+  cloud:
+    compatibility-verifier:
+      enabled: false
 server:
   port: ${PAYMENT_SERVICE_PORT}
 

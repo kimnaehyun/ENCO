@@ -4,7 +4,6 @@ import io.ssafy.payment.domain.ai.dto.request.ReceiptParseRequestDto;
 import io.ssafy.payment.domain.ai.dto.response.ReceiptParseResponseDto;
 import io.ssafy.payment.domain.ai.service.AiService;
 import io.ssafy.payment.global.common.response.CommonResponse;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
