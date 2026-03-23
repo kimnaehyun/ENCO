@@ -2,6 +2,8 @@ package io.ssafy.payment.domain.transaction.service;
 
 import io.ssafy.payment.domain.account.entity.Account;
 import io.ssafy.payment.domain.account.repository.AccountRepository;
+import io.ssafy.payment.domain.card.repository.CardRepository;
+import io.ssafy.payment.domain.transaction.dto.response.TransactionDetailResponseDto;
 import io.ssafy.payment.domain.transaction.dto.response.TransactionListResponseDto;
 import io.ssafy.payment.domain.transaction.entity.Direction;
 import io.ssafy.payment.domain.transaction.entity.TransactionHistory;
@@ -21,6 +23,7 @@ public class TransactionService {
 
     private final TransactionHistoryRepository transactionHistoryRepository;
     private final AccountRepository accountRepository;
+    private final CardRepository cardRepository;
 
     @Transactional(readOnly = true)
     public TransactionListResponseDto getTransactions(
@@ -57,5 +60,27 @@ public class TransactionService {
                 .toList();
 
         return new TransactionListResponseDto(transactions, nextCursor, hasNext);
+    }
+
+    @Transactional(readOnly = true)
+    public TransactionDetailResponseDto getTransactionDetail(Long groupId, Long transactionId) {
+        Account account = accountRepository.findByGroupIdAndIsDeletedFalse(groupId)
+                .orElseThrow(() -> new CustomException(ErrorCode.SERVER_ERROR));
+
+        TransactionHistory th = transactionHistoryRepository.findById(transactionId)
+                .orElseThrow(() -> new CustomException(ErrorCode.TRANSACTION_NOT_FOUND));
+
+        if (!th.getAccountId().equals(account.getId())) {
+            throw new CustomException(ErrorCode.TRANSACTION_NOT_FOUND);
+        }
+
+        String cardName = null;
+        if (th.getCardId() != null) {
+            cardName = cardRepository.findById(th.getCardId())
+                    .map(card -> card.getCardProduct().getName())
+                    .orElse(null);
+        }
+
+        return TransactionDetailResponseDto.of(th, cardName);
     }
 }

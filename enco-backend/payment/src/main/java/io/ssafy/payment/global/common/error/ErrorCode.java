@@ -15,7 +15,8 @@ public enum ErrorCode {
     AI_PARSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AI 응답 파싱에 실패했습니다.", "AI_PARSE_FAILED"),
     FILE_UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다.", "FILE_UPLOAD_FAIL"),
     DUPLICATE_PAYMENT(HttpStatus.CONFLICT, "이미 처리된 결제 요청입니다.", "DUPLICATE_PAYMENT"),
-    NOT_FOUND_ACCOUNT(HttpStatus.NOT_FOUND, "계좌 정보가 없습니다.", "NOT_FOUND_ACCOUNT");
+    NOT_FOUND_ACCOUNT(HttpStatus.NOT_FOUND, "계좌 정보가 없습니다.", "NOT_FOUND_ACCOUNT"),
+    TRANSACTION_NOT_FOUND(HttpStatus.NOT_FOUND, "거래 내역이 존재하지 않습니다.", "TRANSACTION_NOT_FOUND");
 
     private final HttpStatus httpStatusCode;
     private final String errorMessage;
