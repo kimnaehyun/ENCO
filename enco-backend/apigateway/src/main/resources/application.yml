@@ -57,10 +57,10 @@ spring:
                 - AuthorizationHeaderFilter
 
             - id: chat-websocket
-              uri: "ws://${CHAT_SERVICE_HOST}:${CHAT_SERVICE_PORT}"
+              uri: ws://${CHAT_SERVICE_HOST}:${CHAT_SERVICE_PORT}
               predicates:
-                Path=/ws-stomp
-
+                - Path=/ws-stomp/**
+                
             - id: travel-service-public
               uri: http://${TRAVEL_SERVICE_HOST}:${TRAVEL_SERVICE_PORT}
               predicates:

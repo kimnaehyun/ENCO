@@ -171,3 +171,8 @@ export interface MyGroupsResponse {
   message: string;
   result: MyGroupItem[];
 }
+
+export async function getMyGroups(): Promise<MyGroupsResponse> {
+  const response = await groupApi.get<MyGroupsResponse>('/users/me/groups');
+  return response.data;
+}
