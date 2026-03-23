@@ -5,6 +5,7 @@ import {
   NavigatorScreenParams,
 } from '@react-navigation/native';
 import { CommonParams } from './common';
+import type {ReceiptDraft} from './receipt';
 
 // Auth
 export type AuthStackParamList = {
@@ -141,6 +142,7 @@ export type GroupStackParamList = {
     date: string;
     memo: string;
     receiptUri: string | null;
+    receiptDraft?: ReceiptDraft | null;
     groupName: string;
     groupId?: string;
     settleMembers?: any[];
@@ -220,6 +222,7 @@ export type HomeStackParamList = {
     date: string;
     memo: string;
     receiptUri: string | null;
+    receiptDraft?: ReceiptDraft | null;
     groupName: string;
     groupId?: string;
     settleMembers?: any[];

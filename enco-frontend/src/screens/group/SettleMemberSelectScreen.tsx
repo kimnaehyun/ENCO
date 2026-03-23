@@ -3,6 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
+import type {ReceiptDraft} from '../../types/receipt';
 
 type SettleMember = {
   id: string;
@@ -16,6 +17,7 @@ type RouteParams = {
   date: string;
   memo: string;
   receiptUri: string | null;
+  receiptDraft?: ReceiptDraft | null;
   groupName: string;
   groupId?: string;
   settleMembers?: SettleMember[];

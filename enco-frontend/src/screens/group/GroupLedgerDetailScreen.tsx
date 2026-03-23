@@ -2,12 +2,8 @@
 import React, { useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
-import { NativeModules } from 'react-native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { LedgerItem, SettleMember } from '../../types/group';
-
-const { OcrModule } = NativeModules;
 
 type RouteParams = {
   item: LedgerItem;
@@ -38,8 +34,6 @@ export default function GroupLedgerDetailScreen() {
   const isPositive = item.amount >= 0;
 
   const [receiptUri, setReceiptUri] = useState<string | null>(null);
-  const [ocrText, setOcrText] = useState<string>('');
-  const [ocrLoading, setOcrLoading] = useState(false);
 
   // 정산 멤버 데이터 — LedgerItem에서 가져옴
   const settleMembers: SettleMember[] = item.settleMembers ?? [];
@@ -47,20 +41,6 @@ export default function GroupLedgerDetailScreen() {
   const totalCount = settleMembers.length;
   const unpaidCount = totalCount - paidCount;
   const isSettled = item.isSettled ?? (totalCount === 0 || paidCount === totalCount);
-
-  // OCR 실행
-  const runOcr = async (uri: string) => {
-    if (!OcrModule) return;
-    try {
-      setOcrLoading(true);
-      const text = await OcrModule.recognizeTextFromUri(uri);
-      setOcrText(text || '');
-    } catch (e: any) {
-      Alert.alert('OCR 실패', e?.message ?? '알 수 없는 오류');
-    } finally {
-      setOcrLoading(false);
-    }
-  };
 
   // 카메라 촬영
   const handleCamera = async () => {
@@ -76,7 +56,7 @@ export default function GroupLedgerDetailScreen() {
   const handleDeleteReceipt = () => {
     Alert.alert('삭제', '영수증을 삭제할까요?', [
       { text: '취소', style: 'cancel' },
-      { text: '삭제', style: 'destructive', onPress: () => { setReceiptUri(null); setOcrText(''); } },
+      { text: '삭제', style: 'destructive', onPress: () => { setReceiptUri(null); } },
     ]);
   };
 
@@ -173,14 +153,6 @@ export default function GroupLedgerDetailScreen() {
                     style={styles.receiptImage}
                     resizeMode="cover"
                   />
-                  {ocrLoading && (
-                    <Text style={styles.ocrLoadingText}>OCR 분석 중...</Text>
-                  )}
-                  {ocrText !== '' && (
-                    <View style={styles.ocrTextBox}>
-                      <Text style={styles.ocrText}>{ocrText}</Text>
-                    </View>
-                  )}
                   {isAdmin && (
                     <Pressable onPress={handleDeleteReceipt}>
                       <Text style={styles.deleteReceiptText}>삭제</Text>
