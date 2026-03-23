@@ -13,7 +13,6 @@ import {
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
-import { images } from '../../types/images';
 import {
   getGroupSettings,
   updateGroupSettings,
@@ -21,6 +20,10 @@ import {
   type GroupMember,
   updateGroupMemberRole,
 } from '../../services/groupService';
+import {
+  getGroupCards,
+  type GroupCardItem,
+} from '../../services/paymentService';
 
 const TAGS = ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'];
 
@@ -33,19 +36,12 @@ const TAG_TYPE_ID_MAP = {
   음식: 6,
 } as const;
 
-// 발급 카드 목록 (실제로는 API에서 받아올 데이터)
-const ISSUED_CARDS = [
-  {
-    id: 'card1',
-    name: '스타벅스카드 삼성',
-    image: images.card1,
-  },
-  {
-    id: 'card2',
-    name: '삼성카드 그린',
-    image: images.card2,
-  },
-];
+type IssuedCardUI = {
+  id: string;
+  name: string;
+  image: { uri: string };
+  isBasic: boolean;
+};
 
 function InfoRow({
   label,
@@ -93,12 +89,11 @@ export default function GroupInfoScreen() {
   const [groundRules, setGroundRules] = useState(
     '1. 아프면 사형\n2. 일정공유 잘하기\n3. MM 확인 체크하기\n4. 부드러운 말투로 대화해용',
   );
-  const [representativeCardId, setRepresentativeCardId] = useState<string>(
-    ISSUED_CARDS[0].id,
-  );
+  const [issuedCards, setIssuedCards] = useState<IssuedCardUI[]>([]);
+  const [representativeCardId, setRepresentativeCardId] = useState<string>('');
 
   const representativeCard =
-    ISSUED_CARDS.find(c => c.id === representativeCardId) ?? ISSUED_CARDS[0];
+    issuedCards.find(c => c.id === representativeCardId) ?? issuedCards[0];
 
   useEffect(() => {
     const fetchGroupSettings = async () => {
@@ -128,6 +123,28 @@ export default function GroupInfoScreen() {
         console.log('모임원 목록 조회 성공:', membersData);
         console.log('멤버 배열:', membersData.result);
         setMembers(membersData.result);
+
+        const cardsData = await getGroupCards(groupId!);
+        console.log('모임 카드 목록 조회 성공:', cardsData);
+        console.log('카드 배열:', cardsData.result);
+
+        const mappedCards: IssuedCardUI[] = cardsData.result.map((card: GroupCardItem) => ({
+          id: String(card.cardId),
+          name: card.cardName,
+          image: {
+            uri: `https://api.ssafywte.site${card.frontCardImageUrl}`,
+          },
+          isBasic: card.isBasic,
+        }));
+
+        setIssuedCards(mappedCards);
+
+        const basicCard = mappedCards.find(card => card.isBasic);
+        if (basicCard) {
+          setRepresentativeCardId(basicCard.id);
+        } else if (mappedCards.length > 0) {
+          setRepresentativeCardId(mappedCards[0].id);
+        }
       } catch (error: any) {
         console.error('조회 실패 전체:', error);
         console.error('error.message:', error?.message);
@@ -423,38 +440,46 @@ export default function GroupInfoScreen() {
           </View>
 
           {isEdit ? (
-            <View style={styles.cardListContainer}>
-              {ISSUED_CARDS.map(card => {
-                const isRep = card.id === representativeCardId;
-                return (
-                  <Pressable
-                    key={card.id}
-                    onPress={() => setRepresentativeCardId(card.id)}
-                    style={[
-                      styles.cardItem,
-                      isRep && styles.cardItemSelected,
-                    ]}
-                  >
-                    <Image
-                      source={card.image}
-                      style={styles.cardImage}
-                      resizeMode="cover"
-                    />
-                    {isRep && (
-                      <View style={styles.repBadge}>
-                        <Text style={styles.repBadgeText}>대표 카드 ✓</Text>
-                      </View>
-                    )}
-                  </Pressable>
-                );
-              })}
-            </View>
+            issuedCards.length === 0 ? (
+              <Text style={styles.groundRulesText}>발급된 카드가 없습니다.</Text>
+            ) : (
+              <View style={styles.cardListContainer}>
+                {issuedCards.map(card => {
+                  const isRep = card.id === representativeCardId;
+                  return (
+                    <Pressable
+                      key={card.id}
+                      onPress={() => setRepresentativeCardId(card.id)}
+                      style={[
+                        styles.cardItem,
+                        isRep && styles.cardItemSelected,
+                      ]}
+                    >
+                      <Image
+                        source={card.image}
+                        style={styles.cardImage}
+                        resizeMode="cover"
+                      />
+                      {isRep && (
+                        <View style={styles.repBadge}>
+                          <Text style={styles.repBadgeText}>대표 카드 ✓</Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )
           ) : (
-            <Image
-              source={representativeCard.image}
-              style={styles.repCardImage}
-              resizeMode="cover"
-            />
+            representativeCard ? (
+              <Image
+                source={representativeCard.image}
+                style={styles.repCardImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <Text style={styles.groundRulesText}>발급된 카드가 없습니다.</Text>
+            )
           )}
         </View>
 
