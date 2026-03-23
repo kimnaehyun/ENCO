@@ -23,15 +23,15 @@ public class AuthServiceClient {
     public List<Long> getActiveMemberIds(Long groupId) {
         String url = authServiceUrl + "/api/v1/groups/" + groupId + "/members";
 
-        List<GroupMemberResponse> members = restTemplate.exchange(
+        CommonResponse<List<GroupMemberResponse>> response = restTemplate.exchange(
                 url,
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<List<GroupMemberResponse>>() {}
+                new ParameterizedTypeReference<CommonResponse<List<GroupMemberResponse>>>() {}
         ).getBody();
 
-        if (members == null) return List.of();
-        return members.stream().map(GroupMemberResponse::userId).toList();
+        if (response == null || response.result() == null) return List.of();
+        return response.result().stream().map(GroupMemberResponse::userId).toList();
     }
 
     public GroupInfoResponse getGroupDashboardInfo(Long groupId) {
