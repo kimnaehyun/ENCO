@@ -220,3 +220,18 @@ export async function getGroupDashboardReport(groupId: number | string) {
 
   return response.data;
 }
+
+// 모임카드 조회
+export interface GroupCardItem {
+  cardId: number;
+  frontCardImageUrl: string;
+  cardName: string;
+  backCardImageUrl: string;
+  isBasic: boolean;
+}
+
+export interface GroupCardsResponse {
+  message: string;
+  result: GroupCardItem[];
+}
+
