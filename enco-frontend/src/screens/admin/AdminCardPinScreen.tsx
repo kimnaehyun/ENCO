@@ -1,7 +1,7 @@
 // src/screens/admin/AdminCardPinScreen.tsx
 // 카드 추가 발급 > PIN 확인 → 발급 완료 (mock: 2580)
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import PinEntry from '../../components/pin/PinEntry';
 import { useNavigation, useRoute } from '@react-navigation/native';
 
@@ -19,7 +19,7 @@ export default function AdminCardPinScreen() {
   const handleComplete = (pin: string) => {
     if (pin !== MOCK_PIN) {
       setError('비밀번호가 맞지 않아요');
-      setResetKey((k) => k + 1);
+      setResetKey(k => k + 1);
       return;
     }
 
