@@ -5,6 +5,7 @@ import io.ssafy.payment.domain.billing.dto.response.ReceiptOcrDraftResponseDto;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.DateTimeException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -13,7 +14,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -33,6 +33,7 @@ public class ClovaReceiptMapper {
         JsonNode imageRoot = root.path("images").isArray() && !root.path("images").isEmpty()
                 ? root.path("images").get(0)
                 : root;
+
         JsonNode receiptResult = firstNonMissing(
                 imageRoot.path("receipt").path("result"),
                 imageRoot.path("result"),
@@ -40,23 +41,28 @@ public class ClovaReceiptMapper {
                 root.path("result")
         );
 
+        if (receiptResult == null || receiptResult.isMissingNode() || receiptResult.isNull()) {
+            receiptResult = root;
+        }
+
         String merchantName = firstNonBlank(
-                textAt(receiptResult, "storeInfo", "name", "text"),
                 textAt(receiptResult, "storeInfo", "name", "formatted", "value"),
+                textAt(receiptResult, "storeInfo", "name", "text"),
                 textAt(receiptResult, "storeInfo", "subName", "text"),
                 textAt(receiptResult, "merchantName"),
                 firstTextByFieldName(receiptResult, Set.of("merchantName", "storeName"))
         );
 
         String address = firstNonBlank(
-                textAt(receiptResult, "storeInfo", "addresses", 0, "text"),
                 textAt(receiptResult, "storeInfo", "addresses", 0, "formatted", "value"),
+                textAt(receiptResult, "storeInfo", "addresses", 0, "text"),
                 textAt(receiptResult, "storeInfo", "address", "text"),
                 textAt(receiptResult, "address"),
                 firstTextByFieldName(receiptResult, Set.of("address", "roadAddress", "jibunAddress"))
         );
 
         String businessNumber = normalizeBusinessNumber(firstNonBlank(
+                textAt(receiptResult, "storeInfo", "bizNum", "formatted", "value"),
                 textAt(receiptResult, "storeInfo", "bizNum", "text"),
                 textAt(receiptResult, "businessNumber"),
                 firstBusinessNumber(receiptResult)
@@ -74,8 +80,8 @@ public class ClovaReceiptMapper {
         ));
 
         BigDecimal totalAmount = firstNonNull(
-                decimalAt(receiptResult, "totalPrice", "price", "text"),
                 decimalAt(receiptResult, "totalPrice", "price", "formatted", "value"),
+                decimalAt(receiptResult, "totalPrice", "price", "text"),
                 decimalAt(receiptResult, "paymentInfo", "totalPrice", "text"),
                 decimalAt(receiptResult, "totalAmount"),
                 firstDecimalByFieldName(receiptResult, Set.of("totalAmount", "totalPrice", "price"))
@@ -116,19 +122,22 @@ public class ClovaReceiptMapper {
 
         for (JsonNode itemNode : itemNodes) {
             String name = firstNonBlank(
+                    textAt(itemNode, "name", "formatted", "value"),
                     textAt(itemNode, "name", "text"),
                     textAt(itemNode, "name"),
                     firstTextByFieldName(itemNode, Set.of("name", "itemName", "menu"))
             );
 
             BigDecimal unitPrice = firstNonNull(
-                    decimalAt(itemNode, "unitPrice", "text"),
+                    decimalAt(itemNode, "price", "unitPrice", "formatted", "value"),
                     decimalAt(itemNode, "price", "unitPrice", "text"),
+                    decimalAt(itemNode, "unitPrice", "text"),
                     decimalAt(itemNode, "price", "text"),
                     firstDecimalByFieldName(itemNode, Set.of("unitPrice"))
             );
 
             Integer quantity = firstNonNull(
+                    integerAt(itemNode, "count", "formatted", "value"),
                     integerAt(itemNode, "count", "text"),
                     integerAt(itemNode, "quantity", "text"),
                     integerAt(itemNode, "count"),
@@ -136,6 +145,7 @@ public class ClovaReceiptMapper {
             );
 
             BigDecimal amount = firstNonNull(
+                    decimalAt(itemNode, "price", "price", "formatted", "value"),
                     decimalAt(itemNode, "price", "price", "text"),
                     decimalAt(itemNode, "itemTotal", "text"),
                     decimalAt(itemNode, "amount", "text"),
@@ -166,8 +176,9 @@ public class ClovaReceiptMapper {
     ) {
         Map<String, List<Object>> candidates = new LinkedHashMap<>();
 
-        List<Object> merchantCandidates = uniqueObjects(List.of(
+        List<Object> merchantCandidates = uniqueObjects(candidateList(
                 merchantName,
+                textAt(receiptResult, "storeInfo", "name", "formatted", "value"),
                 textAt(receiptResult, "storeInfo", "name", "text"),
                 textAt(receiptResult, "storeInfo", "subName", "text"),
                 firstTextByFieldName(receiptResult, Set.of("merchantName", "storeName"))
@@ -176,7 +187,7 @@ public class ClovaReceiptMapper {
             candidates.put("merchantName", merchantCandidates);
         }
 
-        List<Object> paidAtCandidates = uniqueObjects(List.of(
+        List<Object> paidAtCandidates = uniqueObjects(candidateList(
                 paidAt,
                 combineDateTime(
                         textAt(receiptResult, "paymentInfo", "date", "text"),
@@ -188,8 +199,9 @@ public class ClovaReceiptMapper {
             candidates.put("paidAt", paidAtCandidates);
         }
 
-        List<Object> totalAmountCandidates = uniqueObjects(List.of(
+        List<Object> totalAmountCandidates = uniqueObjects(candidateList(
                 totalAmount,
+                decimalAt(receiptResult, "totalPrice", "price", "formatted", "value"),
                 decimalAt(receiptResult, "totalPrice", "price", "text"),
                 decimalAt(receiptResult, "paymentInfo", "totalPrice", "text")
         ));
@@ -198,6 +210,14 @@ public class ClovaReceiptMapper {
         }
 
         return candidates;
+    }
+
+    private List<Object> candidateList(Object... values) {
+        List<Object> result = new ArrayList<>();
+        for (Object value : values) {
+            result.add(value);
+        }
+        return result;
     }
 
     private void collectArrayNodes(JsonNode subResults, String fieldName, List<JsonNode> sink) {
@@ -295,7 +315,7 @@ public class ClovaReceiptMapper {
         if (!isBlank(text)) {
             return text;
         }
-        String merged = node.toString();
+        String merged = node == null ? "" : node.toString();
         Matcher matcher = BUSINESS_NUMBER_PATTERN.matcher(merged);
         return matcher.find() ? matcher.group() : null;
     }
@@ -363,6 +383,10 @@ public class ClovaReceiptMapper {
             return null;
         }
 
+        String sanitized = raw.trim()
+                .replaceAll("\\s*:\\s*", ":")
+                .replaceAll("\\s+", " ");
+
         List<DateTimeFormatter> dateTimeFormatters = List.of(
                 DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"),
                 DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"),
@@ -374,7 +398,7 @@ public class ClovaReceiptMapper {
 
         for (DateTimeFormatter formatter : dateTimeFormatters) {
             try {
-                LocalDateTime parsed = LocalDateTime.parse(raw.trim(), formatter);
+                LocalDateTime parsed = LocalDateTime.parse(sanitized, formatter);
                 return parsed.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
             } catch (DateTimeParseException ignored) {
             }
@@ -387,22 +411,26 @@ public class ClovaReceiptMapper {
         );
         for (DateTimeFormatter formatter : dateFormatters) {
             try {
-                LocalDate parsed = LocalDate.parse(raw.trim(), formatter);
+                LocalDate parsed = LocalDate.parse(sanitized, formatter);
                 return parsed.atStartOfDay().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
             } catch (DateTimeParseException ignored) {
             }
         }
 
-        Matcher matcher = DATE_TIME_PATTERN.matcher(raw);
+        Matcher matcher = DATE_TIME_PATTERN.matcher(sanitized);
         if (matcher.find()) {
-            int year = Integer.parseInt(matcher.group(1));
-            int month = Integer.parseInt(matcher.group(2));
-            int day = Integer.parseInt(matcher.group(3));
-            int hour = matcher.group(4) == null ? 0 : Integer.parseInt(matcher.group(4));
-            int minute = matcher.group(5) == null ? 0 : Integer.parseInt(matcher.group(5));
-            int second = matcher.group(6) == null ? 0 : Integer.parseInt(matcher.group(6));
-            return LocalDateTime.of(year, month, day, hour, minute, second)
-                    .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            try {
+                int year = Integer.parseInt(matcher.group(1));
+                int month = Integer.parseInt(matcher.group(2));
+                int day = Integer.parseInt(matcher.group(3));
+                int hour = matcher.group(4) == null ? 0 : Integer.parseInt(matcher.group(4));
+                int minute = matcher.group(5) == null ? 0 : Integer.parseInt(matcher.group(5));
+                int second = matcher.group(6) == null ? 0 : Integer.parseInt(matcher.group(6));
+
+                return LocalDateTime.of(year, month, day, hour, minute, second)
+                        .format(DateTimeFormatter.ISO_LOCAL_DATE_TIME);
+            } catch (DateTimeException | NumberFormatException ignored) {
+            }
         }
 
         return raw;
@@ -418,7 +446,7 @@ public class ClovaReceiptMapper {
     }
 
     @SafeVarargs
-    private <T> T firstNonNull(T... values) {
+    private final <T> T firstNonNull(T... values) {
         for (T value : values) {
             if (value != null) {
                 return value;
