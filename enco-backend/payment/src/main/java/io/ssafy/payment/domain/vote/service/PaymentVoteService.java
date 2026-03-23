@@ -47,7 +47,7 @@ public class PaymentVoteService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public PaymentVoteCreateResponseDto createVote(PaymentVoteCreateRequestDto request) {
+    public PaymentVoteCreateResponseDto createVote(PaymentVoteCreateRequestDto request, String idempotencyKey) {
         Account account = accountRepository.findByGroupId(request.groupId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ACCOUNT));
 
@@ -82,6 +82,7 @@ public class PaymentVoteService {
                 .type(Type.CARD_PAYMENT)
                 .direction(Direction.OUT)
                 .status(Status.PENDING)
+                .idempotencyKey(idempotencyKey)
                 .build();
         transactionHistoryRepository.save(pendingTransaction);
         log.info("거래내역 생성 완료");
@@ -136,7 +137,12 @@ public class PaymentVoteService {
         );
     }
 
-    // 4. 찬성/반대 투표
+    /**
+     * 찬성 반대 투표
+     * @param voteId
+     * @param userId
+     * @param request
+     */
     @Transactional
     public void vote(Long voteId, Long userId, PaymentVoteChoiceRequestDto request) {
         PaymentVote vote = voteRepository.findById(voteId)
@@ -210,6 +216,6 @@ public class PaymentVoteService {
         transaction.updateBalance(account.getAmount()); // 거래내역 잔액 업데이트
 
         log.info("[PaymentVote] 결제 실행 및 승인 완료: voteId={}, 차감금액={}", vote.getId(), transaction.getAmount());
+
     }
-    
 }
