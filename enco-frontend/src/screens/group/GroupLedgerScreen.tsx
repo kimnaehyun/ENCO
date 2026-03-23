@@ -241,9 +241,31 @@ export default function GroupLedgerScreen() {
     return result;
   }, [items, balance]);
 
-  // ── PDF 생성 및 공유 ──
+  // ── PDF 생성 및 저장 ──
   const handleExportPDF = useCallback(async () => {
     if (!appliedFilter) return;
+
+    // Android 저장소 권한 요청 (API 23~29, API 30+ 은 scoped storage라 불필요)
+    if (Platform.OS === 'android' && Number(Platform.Version) < 30) {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: '저장소 접근 권한',
+            message: 'PDF 파일을 다운로드 폴더에 저장하려면 저장소 권한이 필요합니다.',
+            buttonPositive: '허용',
+            buttonNegative: '거부',
+          },
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('권한 필요', '저장소 권한이 거부되어 PDF를 저장할 수 없습니다.');
+          return;
+        }
+      } catch (err) {
+        console.error('권한 요청 실패:', err);
+        return;
+      }
+    }
 
     const filterLabel = appliedFilter.tx === 'all' ? '전체' : appliedFilter.tx === 'deposit' ? '입금' : '출금';
     const sortLabel = appliedFilter.sort === 'latest' ? '최신순' : '과거순';
