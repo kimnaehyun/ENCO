@@ -6,4 +6,5 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 public interface TransactionHistoryRepository extends JpaRepository<TransactionHistory, Long> {
+    boolean existsByIdempotencyKey(String idempotencyKey);
 }
