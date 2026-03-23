@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Pressable,
@@ -10,21 +11,57 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-
-const TAG_OPTIONS = ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'];
+import { useAuthStore } from '../../store/useAuthStore';
+import { getGroupType, GroupTypeItem } from '../../services/authService';
 
 export default function GroupCreateScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
 
+  // ── 프로필 정보 (store에서 가져오기) ──
+  const user = useAuthStore(s => s.user);
+  const profile = useAuthStore(s => s.profile);
+
   const manager = useMemo(
     () => ({
-      name: '나기',
-      email: 'test@test.com',
-      phone: '010-1234-5678',
+      name: profile?.name ?? user ?? '',
+      email: profile?.email ?? '',
+      phone: profile?.phoneNumber ?? '',
     }),
-    []
+    [profile, user],
   );
+
+  // ── 모임 성향 태그: API에서 동적 로딩 ──
+  const [tagOptions, setTagOptions] = useState<GroupTypeItem[]>([]);
+  const [tagLoading, setTagLoading] = useState(true);
+
+  const FALLBACK_TAGS: GroupTypeItem[] = [
+    { typeId: 1, typeName: '여행' },
+    { typeId: 2, typeName: '스포츠' },
+    { typeId: 3, typeName: '문화생활' },
+    { typeId: 4, typeName: '경조사' },
+    { typeId: 5, typeName: '공과금' },
+    { typeId: 6, typeName: '음식' },
+  ];
+
+  useEffect(() => {
+    getGroupType()
+      .then(res => {
+        console.log('[GroupCreate] GET /groups/types 응답:', JSON.stringify(res, null, 2));
+        const list = res?.result;
+        if (Array.isArray(list) && list.length > 0) {
+          setTagOptions(list);
+        } else {
+          console.warn('[GroupCreate] 모임 타입 응답이 비어있음, 폴백 사용');
+          setTagOptions(FALLBACK_TAGS);
+        }
+      })
+      .catch(err => {
+        console.warn('[GroupCreate] 모임 타입 조회 실패:', err);
+        setTagOptions(FALLBACK_TAGS);
+      })
+      .finally(() => setTagLoading(false));
+  }, []);
 
   const [groupName, setGroupName] = useState(route.params?.groupName ?? '');
   const [selectedTags, setSelectedTags] = useState<string[]>(route.params?.selectedTags ?? []);
@@ -45,11 +82,9 @@ export default function GroupCreateScreen() {
     }
   }, [route.params?.selectedCardId]);
 
-  const canGoNext = groupName.trim().length > 0 && selectedTags.length > 0;
-
-  const toggleTag = (tag: string) => {
+  const toggleTag = (tagName: string) => {
     setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag]
+      prev.includes(tagName) ? prev.filter((item) => item !== tagName) : [...prev, tagName]
     );
   };
 
@@ -218,34 +253,44 @@ export default function GroupCreateScreen() {
         >
           모임 성향(옵션 태그)
         </Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
-          {TAG_OPTIONS.map((tag) => {
-            const selected = selectedTags.includes(tag);
-            return (
-              <Pressable
-                key={tag}
-                onPress={() => toggleTag(tag)}
-                style={{
-                  width: '31%',
-                  paddingVertical: 18,
-                  borderRadius: 18,
-                  backgroundColor: selected ? '#1428A0' : '#C7D2FE',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  shadowColor: selected ? '#1428A0' : '#000',
-                  shadowOffset: { width: 0, height: selected ? 4 : 1 },
-                  shadowOpacity: selected ? 0.25 : 0.05,
-                  shadowRadius: selected ? 8 : 4,
-                  elevation: selected ? 4 : 1,
-                }}
-              >
-                <Text style={{ fontSize: 15, color: '#FFFFFF', fontFamily: 'GmarketSansTTFBold' }}>
-                  {tag}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+
+        {tagLoading ? (
+          <ActivityIndicator
+            size="small"
+            color="#1428A0"
+            style={{ marginVertical: 24 }}
+          />
+        ) : (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
+            {tagOptions.map((tag) => {
+              const selected = selectedTags.includes(tag.typeName);
+              return (
+                <Pressable
+                  key={tag.typeId}
+                  onPress={() => toggleTag(tag.typeName)}
+                  style={{
+                    width: '31%',
+                    paddingVertical: 18,
+                    borderRadius: 18,
+                    backgroundColor: selected ? '#1428A0' : '#C7D2FE',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    shadowColor: selected ? '#1428A0' : '#000',
+                    shadowOffset: { width: 0, height: selected ? 4 : 1 },
+                    shadowOpacity: selected ? 0.25 : 0.05,
+                    shadowRadius: selected ? 8 : 4,
+                    elevation: selected ? 4 : 1,
+                  }}
+                >
+                  <Text style={{ fontSize: 15, color: '#FFFFFF', fontFamily: 'GmarketSansTTFBold' }}>
+                    {tag.typeName}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+
         <Text
           style={{
             fontSize: 12,

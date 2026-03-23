@@ -26,6 +26,7 @@ public class Product {
     @Column(length = 100)
     private String productName;
 
+    @Builder.Default
     @Column(nullable = false, precision = 5, scale = 2)
     private BigDecimal baseInterestRate = new BigDecimal("0.10");
 
@@ -50,5 +51,6 @@ public class Product {
     private LocalDateTime deletedAt;
 
     @OneToMany(mappedBy = "product")
+    @Builder.Default
     private List<Account> account = new ArrayList<>();
 }

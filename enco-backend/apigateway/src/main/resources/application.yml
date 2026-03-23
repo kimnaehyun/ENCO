@@ -16,6 +16,11 @@ spring:
                 allowedHeaders: '*'
 #                allowedCredentials: true
           routes:
+            # - id: chat-websocket
+            #     uri: "ws://${CHAT_SERVICE_HOST}:${CHAT_SERVICE_PORT}"
+            #     predicates:
+            #       - Path=/ws-stomp
+
             - id: auth-service-public
               uri: http://${AUTH_SERVICE_HOST}:${AUTH_SERVICE_PORT}
               predicates:
@@ -34,7 +39,7 @@ spring:
             - id: payment-service-public
               uri: http://${PAYMENT_SERVICE_HOST}:${PAYMENT_SERVICE_PORT}
               predicates:
-                - Path=/payment-service/api/v1/ai/receipt/parse
+                - Path=/payment-service/api/v1/ai/receipt/parse, /payment-service/api/v1/files/image/**
               filters:
                 - StripPrefix=1
 
@@ -58,6 +63,13 @@ spring:
               uri: ws://${CHAT_SERVICE_HOST}:${CHAT_SERVICE_PORT}
               predicates:
                 - Path=/ws-stomp/**
+                
+            - id: travel-service-public
+              uri: http://${TRAVEL_SERVICE_HOST}:${TRAVEL_SERVICE_PORT}
+              predicates:
+                - Path=/travel-service/api/v1/products/**, /travel-service/images/**
+              filters:
+                - StripPrefix=1
 
             - id: travel-service
               uri: http://${TRAVEL_SERVICE_HOST}:${TRAVEL_SERVICE_PORT}
@@ -66,6 +78,8 @@ spring:
               filters:
                 - StripPrefix=1
                 - AuthorizationHeaderFilter
+
+
 jwt:
   secret: ${JWT_SECRET}
 server:

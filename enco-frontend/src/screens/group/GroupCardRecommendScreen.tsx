@@ -1,5 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Image,
   Text,
@@ -9,78 +10,121 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { GroupCardItem, CardRecommendRouteProp } from '../../types/group';
+import { getCardList, getCardDetail, CardListItem } from '../../services/paymentService';
+
+type DisplayCard = {
+  id: number;
+  name: string;
+  brand: string;
+  imageUrl: string;
+  summary: string;
+  detail: string;
+  benefits: { categoryName: string; discountRate: number }[];
+};
 
 export default function GroupCardRecommendScreen() {
   const navigation = useNavigation<any>();
-  const route = useRoute<CardRecommendRouteProp>();
+  const route = useRoute<any>();
 
   const { groupName, address, tags } = route.params;
   const isRecommendMode = tags && tags.length > 0;
 
-  const allCards = useMemo<GroupCardItem[]>(
-    () => [
-      {
-        id: 'card-samsung-1',
-        name: '삼성카드 A',
-        brand: '삼성카드',
-        imageUrl: 'https://static11.samsungcard.com/wcms/svc/__icsFiles/artimage/2025/09/02/ccom02_1/dm_AAP1870_02.png',
-        summary: '삼성카드 시리즈 A',
-        detail: '일상 결제에 무난하게 어울리는 카드입니다.',
-      },
-      {
-        id: 'card-samsung-2',
-        name: '삼성카드 B',
-        brand: '삼성카드',
-        imageUrl: 'https://static11.samsungcard.com/wcms/svc/__icsFiles/artimage/2025/09/02/ccom02_1/dm_AAP1870.png',
-        summary: '삼성카드 시리즈 B',
-        detail: '심플한 스타일의 카드입니다.',
-      },
-      {
-        id: 'card-samsung-3',
-        name: '삼성카드 C',
-        brand: '삼성카드',
-        imageUrl: 'https://static11.samsungcard.com/wcms/svc/__icsFiles/artimage/2025/09/02/ccom02_1/dm_AAP1870_03.png',
-        summary: '삼성카드 시리즈 C',
-        detail: '포인트 컬러가 있는 카드입니다.',
-      },
-    ],
-    []
-  );
+  // ── API에서 카드 목록 로딩 ──
+  const [allCards, setAllCards] = useState<DisplayCard[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCards = async () => {
+      try {
+        // GET /cards → { message, result: CardListItem[] }
+        const res = await getCardList();
+        console.log('[GroupCardRecommend] GET /cards 응답:', JSON.stringify(res, null, 2));
+
+        const list = res?.result ?? [];
+        const cards: DisplayCard[] = (Array.isArray(list) ? list : []).map(card => ({
+          id: card.id,
+          name: card.name,
+          brand: '삼성카드',
+          imageUrl: card.frontImageUrl,
+          summary: card.name,
+          detail: (card.benefits ?? [])
+            .map(b => `${b.categoryName} ${b.discountRate}%`)
+            .join(', '),
+          benefits: card.benefits ?? [],
+        }));
+
+        console.log('[GroupCardRecommend] 변환된 카드 수:', cards.length);
+        setAllCards(cards);
+      } catch (err) {
+        console.warn('[GroupCardRecommend] 카드 목록 조회 실패:', err);
+        Alert.alert('오류', '카드 목록을 불러오지 못했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCards();
+  }, []);
 
   const INITIAL_COUNT = 4;
   const [showAll, setShowAll] = useState(false);
-  const recommendedCards = allCards.slice(0, 2);
   const displayCards = isRecommendMode
-    ? recommendedCards
+    ? allCards
     : showAll
     ? allCards
     : allCards.slice(0, INITIAL_COUNT);
 
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  const [detailCard, setDetailCard] = useState<GroupCardItem | null>(null);
+  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
+  const [detailCard, setDetailCard] = useState<DisplayCard | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  // 카드 탭 → 상세 정보 API 호출
+  const handleCardPress = async (card: DisplayCard) => {
+    setDetailLoading(true);
+    setDetailCard(card);
+    try {
+      // GET /cards/{id} → { message, result: CardDetailResult }
+      const res = await getCardDetail(card.id);
+      console.log(`[GroupCardRecommend] GET /cards/${card.id} 응답:`, JSON.stringify(res, null, 2));
+      const d = res.result;
+      setDetailCard({
+        ...card,
+        name: d.name,
+        summary: d.description,
+        detail: `기본 실적 ${Number(d.baseSpending).toLocaleString()}원 · 월 최대 혜택 ${Number(d.maxBenefitLimit).toLocaleString()}원 · 한도 ${Number(d.maxLimit).toLocaleString()}원`,
+        imageUrl: d.frontImageUrl || card.imageUrl,
+      });
+    } catch (err) {
+      console.warn(`[GroupCardRecommend] 카드 상세 조회 실패 (id=${card.id}):`, err);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
 
   const handleComplete = () => {
-  if (!selectedCardId) {
-    Alert.alert('안내', '카드를 하나 선택해주세요.');
-    return;
-  }
-  navigation.navigate('GroupCreate', {
-    selectedCardId,
-    selectedCardImage: allCards.find(c => c.id === selectedCardId)?.imageUrl,
-    selectedCardName: allCards.find(c => c.id === selectedCardId)?.name,
-    groupName: route.params?.prevGroupName ?? '',
-    selectedTags: route.params?.prevTags ?? [],
-    recommendPressed: route.params?.prevRecommendPressed ?? false,  // ← 추가
-    viewAllPressed: route.params?.prevViewAllPressed ?? false,       // ← 추가
-  });
-};
-  const renderItem = ({ item }: { item: GroupCardItem }) => {
+    if (!selectedCardId) {
+      Alert.alert('안내', '카드를 하나 선택해주세요.');
+      return;
+    }
+    const selected = allCards.find(c => c.id === selectedCardId);
+    console.log('[GroupCardRecommend] 카드 선택 완료:', { selectedCardId, name: selected?.name });
+    navigation.navigate('GroupCreate', {
+      selectedCardId: String(selectedCardId),
+      selectedCardImage: selected?.imageUrl,
+      selectedCardName: selected?.name,
+      groupName: route.params?.prevGroupName ?? '',
+      selectedTags: route.params?.prevTags ?? [],
+      recommendPressed: route.params?.prevRecommendPressed ?? false,
+      viewAllPressed: route.params?.prevViewAllPressed ?? false,
+    });
+  };
+
+  const renderItem = ({ item }: { item: DisplayCard }) => {
     const selected = selectedCardId === item.id;
     return (
       <TouchableOpacity
         activeOpacity={0.7}
-        onPress={() => setDetailCard(item)}
+        onPress={() => handleCardPress(item)}
         style={{
           borderRadius: 16,
           borderWidth: 2,
@@ -174,19 +218,53 @@ export default function GroupCardRecommendScreen() {
     </>
   );
 
+  if (loading) {
+    return (
+      <ScreenLayout>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#1428A0" />
+          <Text
+            style={{
+              marginTop: 16,
+              fontSize: 14,
+              color: '#6B7280',
+              fontFamily: 'GmarketSansTTFMedium',
+            }}
+          >
+            카드 목록을 불러오는 중...
+          </Text>
+        </View>
+      </ScreenLayout>
+    );
+  }
+
   return (
     <View style={{ flex: 1 }}>
       <ScreenLayout>
         <FlatList
           data={displayCards}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           ListHeaderComponent={ListHeader}
           ListFooterComponent={ListFooter}
           showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+              <Text
+                style={{
+                  fontSize: 14,
+                  color: '#9CA3AF',
+                  fontFamily: 'GmarketSansTTFMedium',
+                }}
+              >
+                조회된 카드가 없습니다.
+              </Text>
+            </View>
+          }
         />
       </ScreenLayout>
 
+      {/* 카드 상세 모달 */}
       {detailCard && (
         <View
           style={{
@@ -253,7 +331,7 @@ export default function GroupCardRecommendScreen() {
                 lineHeight: 22,
               }}
             >
-              {detailCard.detail}
+              {detailLoading ? '상세 정보를 불러오는 중...' : detailCard.detail}
             </Text>
 
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>

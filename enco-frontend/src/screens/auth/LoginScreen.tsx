@@ -4,8 +4,7 @@ import type { AuthScreenProps } from "../../types/navigation";
 import PinEntry from "../../components/pin/PinEntry";
 import { useAuthStore } from "../../store/useAuthStore";
 import { loginService } from "../../services/authService";
-import { getDeviceToken } from "../../utils/tokenStorage";
-import { saveTokens } from "../../utils/tokenStorage";
+import { getDeviceToken, saveTokens } from "../../utils/tokenStorage";
 
 export default function LoginScreen({
   navigation,
@@ -21,7 +20,7 @@ export default function LoginScreen({
       const deviceToken = await getDeviceToken();
 
       if (!deviceToken) {
-        // 디바이스 토큰이 없으면 이메일/비밀번호 로그인으로 이동
+        // 혹시 여기까지 왔는데 디바이스 토큰이 없으면 ReLogin으로 이동
         navigation.replace("ReLogin");
         return;
       }

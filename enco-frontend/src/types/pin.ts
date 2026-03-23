@@ -1,3 +1,5 @@
+import { ReactNode } from "react";
+
 type PinDotsProps = {
     length: number;
   filledCount: number;
@@ -8,6 +10,7 @@ type PinEntryProps = {
   resetKey?: number;
   length?: number;
   onComplete: (pin: string) => void;
+  footerContent?: React.ReactNode;
 };
 
 type RandomKeypadProps = {

@@ -1,14 +1,38 @@
 // src/screens/group/GroupInfoScreen.tsx
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
 import { images } from '../../types/images';
-import { getGroupSettings, updateGroupSettings } from '../../services/groupService';
+import {
+  getGroupSettings,
+  updateGroupSettings,
+  getGroupMembers,
+  type GroupMember,
+  updateGroupMemberRole,
+} from '../../services/groupService';
 
 const TAGS = ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'];
-const TAG_TYPE_ID_MAP = {여행: 1, 스포츠: 2, 문화생활: 3, 경조사: 4, 공과금: 5, 음식: 6};
+
+const TAG_TYPE_ID_MAP = {
+  여행: 1,
+  스포츠: 2,
+  문화생활: 3,
+  경조사: 4,
+  공과금: 5,
+  음식: 6,
+} as const;
+
 // 발급 카드 목록 (실제로는 API에서 받아올 데이터)
 const ISSUED_CARDS = [
   {
@@ -23,7 +47,13 @@ const ISSUED_CARDS = [
   },
 ];
 
-function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
+function InfoRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <View className="flex-row items-center py-4 border-b border-gray-100">
       <Text style={styles.infoLabel}>{label}</Text>
@@ -45,11 +75,13 @@ export default function GroupInfoScreen() {
   const route = useRoute();
   const params = (route.params ?? {}) as CommonParams;
 
-  const groupName = params.groupName ?? '모임명';
   const isAdmin = !!params.isAdmin;
-  const groupId = 1;
+  const groupId = 1; // 임시 테스트용, 나중에 params.groupId로 교체
 
+  const [members, setMembers] = useState<GroupMember[]>([]);
   const [isEdit, setIsEdit] = useState(false);
+
+  const [groupName, setGroupName] = useState(params.groupName ?? '모임명');
   const [intro, setIntro] = useState('회식좋아하는사람들');
   const [selectedTags, setSelectedTags] = useState<string[]>(['여행', '음식']);
   const [dues, setDues] = useState<DuesState>({
@@ -61,25 +93,52 @@ export default function GroupInfoScreen() {
   const [groundRules, setGroundRules] = useState(
     '1. 아프면 사형\n2. 일정공유 잘하기\n3. MM 확인 체크하기\n4. 부드러운 말투로 대화해용',
   );
-  const [representativeCardId, setRepresentativeCardId] = useState<string>(ISSUED_CARDS[0].id);
+  const [representativeCardId, setRepresentativeCardId] = useState<string>(
+    ISSUED_CARDS[0].id,
+  );
 
   const representativeCard =
     ISSUED_CARDS.find(c => c.id === representativeCardId) ?? ISSUED_CARDS[0];
 
   useEffect(() => {
-  const fetchGroupSettings = async () => {
-    try {
-      console.log('groupId 확인:', groupId);
-      const data = await getGroupSettings(groupId);
-      console.log('모임 설정 조회 성공:', data);
-      console.log('result만 확인:', data.result);
-    } catch (error: any) {
-      console.error('error.response.data:', error?.response?.data);
-    }
-  };
+    const fetchGroupSettings = async () => {
+      try {
+        console.log('groupId 확인:', groupId);
 
-  fetchGroupSettings();
-}, [groupId]);
+        const data = await getGroupSettings(groupId);
+        console.log('모임 설정 조회 성공:', data);
+        console.log('result만 확인:', data.result);
+
+        const result = data.result;
+
+        setGroupName(result.groupName ?? '모임명');
+        setIntro(result.introduction ?? '');
+        setSelectedTags((result.types ?? []).map(type => type.typeName));
+        setGroundRules(result.groundRule ?? '');
+
+        if (result.policy) {
+          setDues(prev => ({
+            ...prev,
+            day: String(result.policy.dayOfMonth ?? ''),
+            amount: String(result.policy.monthlyFee ?? ''),
+          }));
+        }
+
+        const membersData = await getGroupMembers(groupId);
+        console.log('모임원 목록 조회 성공:', membersData);
+        console.log('멤버 배열:', membersData.result);
+        setMembers(membersData.result);
+      } catch (error: any) {
+        console.error('조회 실패 전체:', error);
+        console.error('error.message:', error?.message);
+        console.error('error.response?.status:', error?.response?.status);
+        console.error('error.response?.data:', error?.response?.data);
+        console.error('error.config?.url:', error?.config?.url);
+      }
+    };
+
+    fetchGroupSettings();
+  }, [groupId]);
 
   const buildUpdateRequestBody = () => {
     return {
@@ -89,7 +148,7 @@ export default function GroupInfoScreen() {
         .map(tag => TAG_TYPE_ID_MAP[tag as keyof typeof TAG_TYPE_ID_MAP])
         .filter(Boolean),
       policy: {
-        // 임시값
+        // 현재는 임시값, 나중에 조회 응답 policyId로 교체
         policyId: 1,
         dayOfMonth: Number(dues.day),
         monthlyFee: Number(String(dues.amount).replace(/,/g, '')),
@@ -100,7 +159,37 @@ export default function GroupInfoScreen() {
 
   const toggleTag = (tag: string) => {
     if (!isEdit) return;
-    setSelectedTags(prev => (prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]));
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag],
+    );
+  };
+
+  // 모임 권한 수정 임시 테스트 코드
+  const handleTestUpdateRole = async () => {
+    try {
+      const targetUserId = 23;
+
+      const response = await updateGroupMemberRole(groupId, targetUserId, {
+        role: 'TREASURER',
+      });
+
+      console.log('모임원 권한 변경 성공:', response);
+      console.log('권한 변경 result:', response.result);
+
+      Alert.alert('성공', '권한 변경 요청이 성공했습니다.');
+    } catch (error: any) {
+      console.error('모임원 권한 변경 실패:', error);
+      console.error('error.response?.status:', error?.response?.status);
+      console.error('error.response?.data:', error?.response?.data);
+
+      const errorData = error?.response?.data;
+      const errorMessage =
+        typeof errorData === 'object' && errorData?.message
+          ? errorData.message
+          : '권한 변경 중 오류가 발생했습니다.';
+
+      Alert.alert('오류', errorMessage);
+    }
   };
 
   const onToggleEdit = async () => {
@@ -137,7 +226,17 @@ export default function GroupInfoScreen() {
 
   return (
     <ScreenLayout>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 32 }}
+      >
+        <Pressable
+          onPress={handleTestUpdateRole}
+          style={styles.testButton}
+        >
+          <Text style={styles.testButtonText}>권한 변경 API 테스트</Text>
+        </Pressable>
+
         {/* 헤더 */}
         <View className="flex-row items-center justify-between mb-5">
           <Text style={styles.headerTitle}>모임 정보</Text>
@@ -179,7 +278,7 @@ export default function GroupInfoScreen() {
                 style={styles.introText}
               />
             ) : (
-              <Text style={styles.introText}>{intro}</Text>
+              <Text style={styles.introText}>{intro || '-'}</Text>
             )}
           </InfoRow>
 
@@ -192,15 +291,32 @@ export default function GroupInfoScreen() {
                       key={tag}
                       onPress={() => toggleTag(tag)}
                       className="rounded-2xl px-3 py-1"
-                      style={{ backgroundColor: selectedTags.includes(tag) ? '#1428A0' : '#F3F4F6' }}
+                      style={{
+                        backgroundColor: selectedTags.includes(tag)
+                          ? '#1428A0'
+                          : '#F3F4F6',
+                      }}
                     >
-                      <Text style={[styles.tagText, { color: selectedTags.includes(tag) ? '#fff' : '#6B7280' }]}>
+                      <Text
+                        style={[
+                          styles.tagText,
+                          {
+                            color: selectedTags.includes(tag)
+                              ? '#fff'
+                              : '#6B7280',
+                          },
+                        ]}
+                      >
                         {tag}
                       </Text>
                     </Pressable>
                   ))
                 : selectedTags.map(tag => (
-                    <View key={tag} className="rounded-2xl px-3 py-1" style={styles.tagInactive}>
+                    <View
+                      key={tag}
+                      className="rounded-2xl px-3 py-1"
+                      style={styles.tagInactive}
+                    >
                       <Text style={styles.tagTextInactive}>{tag}</Text>
                     </View>
                   ))}
@@ -232,7 +348,10 @@ export default function GroupInfoScreen() {
                     <TextInput
                       value={dues.day}
                       onChangeText={v =>
-                        setDues(prev => ({ ...prev, day: v.replace(/[^0-9]/g, '') }))
+                        setDues(prev => ({
+                          ...prev,
+                          day: v.replace(/[^0-9]/g, ''),
+                        }))
                       }
                       keyboardType="numeric"
                       style={styles.pillInput}
@@ -247,7 +366,10 @@ export default function GroupInfoScreen() {
                     <TextInput
                       value={dues.amount}
                       onChangeText={v =>
-                        setDues(prev => ({ ...prev, amount: v.replace(/[^0-9,]/g, '') }))
+                        setDues(prev => ({
+                          ...prev,
+                          amount: v.replace(/[^0-9,]/g, ''),
+                        }))
                       }
                       keyboardType="numeric"
                       style={styles.pillInputCompact}
@@ -263,7 +385,10 @@ export default function GroupInfoScreen() {
                     <TextInput
                       value={dues.rate}
                       onChangeText={v =>
-                        setDues(prev => ({ ...prev, rate: v.replace(/[^0-9]/g, '') }))
+                        setDues(prev => ({
+                          ...prev,
+                          rate: v.replace(/[^0-9]/g, ''),
+                        }))
                       }
                       keyboardType="numeric"
                       style={styles.pillInputCompact}
@@ -287,7 +412,7 @@ export default function GroupInfoScreen() {
               style={styles.groundRulesInput}
             />
           ) : (
-            <Text style={styles.groundRulesText}>{groundRules}</Text>
+            <Text style={styles.groundRulesText}>{groundRules || '-'}</Text>
           )}
         </View>
 
@@ -310,9 +435,16 @@ export default function GroupInfoScreen() {
                   <Pressable
                     key={card.id}
                     onPress={() => setRepresentativeCardId(card.id)}
-                    style={[styles.cardItem, { borderColor: isRep ? '#1428A0' : 'transparent' }]}
+                    style={[
+                      styles.cardItem,
+                      { borderColor: isRep ? '#1428A0' : 'transparent' },
+                    ]}
                   >
-                    <Image source={card.image} style={styles.cardImage} resizeMode="cover" />
+                    <Image
+                      source={card.image}
+                      style={styles.cardImage}
+                      resizeMode="cover"
+                    />
                     {isRep && (
                       <View style={styles.repBadge}>
                         <Text style={styles.repBadgeText}>대표 카드 ✓</Text>
@@ -330,10 +462,32 @@ export default function GroupInfoScreen() {
             />
           )}
         </View>
+
+        {/* 모임원 목록 테스트 */}
+        <View className="bg-white rounded-3xl px-6 py-5 mt-4" style={styles.card}>
+          <Text style={styles.sectionTitle}>모임원 목록 테스트</Text>
+
+          {members.length === 0 ? (
+            <Text style={styles.groundRulesText}>모임원이 없습니다.</Text>
+          ) : (
+            members.map(member => (
+              <View
+                key={member.userId}
+                className="flex-row items-center justify-between py-3 border-b border-gray-100"
+              >
+                <Text style={styles.infoValueText}>
+                  {member.name ?? `유저 ${member.userId}`}
+                </Text>
+                <Text style={styles.cancelText}>{member.role}</Text>
+              </View>
+            ))
+          )}
+        </View>
       </ScrollView>
     </ScreenLayout>
   );
 }
+
 
 const styles = StyleSheet.create({
   // 헤더

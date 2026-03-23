@@ -54,12 +54,13 @@ public class Group {
     @LastModifiedDate
     private LocalDateTime updatedAt;
 
-//    @Column(nullable = false)
     private Long accountId;
 
+    @Builder.Default
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupType> groupTypeList = new ArrayList<>();
 
+    @Builder.Default
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true )
     private List<GroupUser> groupUserList = new ArrayList<>();
 
