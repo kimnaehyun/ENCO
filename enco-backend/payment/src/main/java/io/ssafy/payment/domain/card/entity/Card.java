@@ -64,4 +64,8 @@ public class Card {
         this.isDeleted = true;
         this.deletedAt = LocalDateTime.now();
     }
+
+    public void setBasic(boolean isBasic) {
+        this.isBasic = isBasic;
+    }
 }
