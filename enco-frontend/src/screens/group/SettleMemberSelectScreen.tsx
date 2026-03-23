@@ -1,6 +1,7 @@
 // src/screens/group/SettleMemberSelectScreen.tsx
 import React, { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 
@@ -141,59 +142,46 @@ export default function SettleMemberSelectScreen() {
   if (isNewSettle) {
     return (
       <ScreenLayout>
-        <View style={{ flex: 1 }}>
+        <View style={styles.container}>
 
           {/* 헤더 */}
           <View className="flex-row items-center justify-between mb-5">
-            <Text style={{ fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
-              정산 인원 선택
-            </Text>
+            <Text style={styles.headerTitle}>정산 인원 선택</Text>
             <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-              <Text style={{ fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>닫기</Text>
+              <Text style={styles.closeText}>닫기</Text>
             </Pressable>
           </View>
 
           {/* 정산 정보 요약 카드 */}
           <View
             className="bg-white rounded-3xl px-6 py-5 mb-5"
-            style={{ shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}
+            style={styles.summaryCard}
           >
-            <Text style={{ fontSize: 13, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium', marginBottom: 4 }}>
-              {params.date} · {params.storeName}
-            </Text>
-            <Text style={{ fontSize: 28, fontFamily: 'GmarketSansTTFBold', color: '#EF4444', textAlign: 'right' }}>
-              -{amount.toLocaleString()}원
-            </Text>
+            <Text style={styles.summaryDate}>{params.date} · {params.storeName}</Text>
+            <Text style={styles.summaryAmount}>-{amount.toLocaleString()}원</Text>
             {selectedIds.size > 0 && (
-              <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right', marginTop: 4 }}>
+              <Text style={styles.summaryPerPerson}>
                 1인당 {perPerson.toLocaleString()}원 · {selectedIds.size}명
               </Text>
             )}
           </View>
 
           {/* 전체 선택 */}
-          <Pressable
-            onPress={selectAll}
-            className="flex-row items-center mb-4"
-            style={{ gap: 8 }}
-          >
-            <View style={{
-              width: 24, height: 24, borderRadius: 12,
-              backgroundColor: selectedIds.size === ALL_GROUP_MEMBERS.length ? '#1428A0' : '#E5E7EB',
-              alignItems: 'center', justifyContent: 'center',
-            }}>
-              <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>✓</Text>
+          <Pressable onPress={selectAll} className="flex-row items-center mb-4" style={styles.selectAllRow}>
+            <View style={[
+              styles.checkbox,
+              selectedIds.size === ALL_GROUP_MEMBERS.length && styles.checkboxSelected,
+            ]}>
+              <Text style={styles.checkMark}>✓</Text>
             </View>
-            <Text style={{ fontSize: 15, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
-              전체 선택
-            </Text>
+            <Text style={styles.selectAllText}>전체 선택</Text>
           </Pressable>
 
           {/* 멤버 리스트 */}
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 100, gap: 12 }}
-            style={{ flex: 1 }}
+            contentContainerStyle={styles.memberListContent}
+            style={styles.memberListScroll}
           >
             {ALL_GROUP_MEMBERS.map(m => {
               const isSelected = selectedIds.has(m.id);
@@ -202,43 +190,26 @@ export default function SettleMemberSelectScreen() {
                   key={m.id}
                   onPress={() => toggleMember(m.id)}
                   className="flex-row items-center"
-                  style={{ gap: 12 }}
+                  style={styles.newMemberRow}
                 >
                   {/* 체크박스 */}
-                  <View style={{
-                    width: 24, height: 24, borderRadius: 12,
-                    backgroundColor: isSelected ? '#1428A0' : '#E5E7EB',
-                    alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>✓</Text>
+                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                    <Text style={styles.checkMark}>✓</Text>
                   </View>
 
                   {/* 아바타 */}
-                  <View style={{
-                    width: 48, height: 48, borderRadius: 24,
-                    backgroundColor: isSelected ? '#EEF2FF' : '#F3F4F6',
-                    borderWidth: 2,
-                    borderColor: isSelected ? '#1428A0' : '#E5E7EB',
-                    alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <Text style={{ fontSize: 22 }}>🐹</Text>
+                  <View style={[styles.newMemberAvatar, isSelected && styles.newMemberAvatarSelected]}>
+                    <Text style={styles.memberEmoji}>🐹</Text>
                   </View>
 
                   {/* 이름 */}
-                  <Text style={{
-                    fontSize: 16,
-                    fontFamily: 'GmarketSansTTFBold',
-                    color: isSelected ? '#111827' : '#9CA3AF',
-                    flex: 1,
-                  }}>
+                  <Text style={[styles.newMemberName, !isSelected && styles.newMemberNameInactive]}>
                     {m.name}
                   </Text>
 
                   {/* 1인당 금액 표시 */}
                   {isSelected && selectedIds.size > 0 && (
-                    <Text style={{ fontSize: 14, color: '#1428A0', fontFamily: 'GmarketSansTTFBold' }}>
-                      {perPerson.toLocaleString()}원
-                    </Text>
+                    <Text style={styles.perPersonAmount}>{perPerson.toLocaleString()}원</Text>
                   )}
                 </Pressable>
               );
@@ -246,15 +217,13 @@ export default function SettleMemberSelectScreen() {
           </ScrollView>
 
           {/* 하단 등록 버튼 */}
-          <View style={{ paddingTop: 12, paddingBottom: 8 }}>
+          <View style={styles.bottomBar}>
             <Pressable
               onPress={handleRegister}
               className="rounded-2xl py-4 items-center justify-center"
-              style={{
-                backgroundColor: selectedIds.size > 0 ? '#1428A0' : '#D1D5DB',
-              }}
+              style={[styles.registerButton, selectedIds.size === 0 && styles.registerButtonDisabled]}
             >
-              <Text style={{ fontSize: 16, color: '#fff', fontFamily: 'GmarketSansTTFBold' }}>
+              <Text style={styles.registerButtonText}>
                 {selectedIds.size > 0
                   ? `정산 등록하기 (${selectedIds.size}명)`
                   : '인원을 선택하세요'}
@@ -272,52 +241,38 @@ export default function SettleMemberSelectScreen() {
   // ═══════════════════════════════════════
   return (
     <ScreenLayout>
-      <View style={{ flex: 1 }}>
+      <View style={styles.container}>
 
         {/* 헤더 */}
         <View className="flex-row items-center justify-between mb-5">
-          <Text style={{ fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
-            정산 현황
-          </Text>
+          <Text style={styles.headerTitle}>정산 현황</Text>
           <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-            <Text style={{ fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>닫기</Text>
+            <Text style={styles.closeText}>닫기</Text>
           </Pressable>
         </View>
 
         {/* 상태 요약 */}
         <View
           className="bg-white rounded-3xl px-6 py-5 mb-5"
-          style={{ shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}
+          style={styles.summaryCard}
         >
           <View className="flex-row items-center justify-between mb-2">
-            <Text style={{ fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
-              총 정산 금액
-            </Text>
-            <Text style={{ fontSize: 22, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
-              {amount.toLocaleString()}원
-            </Text>
+            <Text style={styles.summaryRowLabel}>총 정산 금액</Text>
+            <Text style={styles.summaryTotalAmount}>{amount.toLocaleString()}원</Text>
           </View>
           <View className="flex-row items-center justify-between">
-            <Text style={{ fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
-              1인당
-            </Text>
-            <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFBold', color: '#1428A0' }}>
-              {existingPerPerson.toLocaleString()}원
-            </Text>
+            <Text style={styles.summaryRowLabel}>1인당</Text>
+            <Text style={styles.summaryPerPersonBlue}>{existingPerPerson.toLocaleString()}원</Text>
           </View>
           <View className="h-px bg-gray-100 my-3" />
-          <View className="flex-row items-center" style={{ gap: 16 }}>
-            <View className="flex-row items-center" style={{ gap: 4 }}>
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#22C55E' }} />
-              <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
-                완료 {paidCount}명
-              </Text>
+          <View className="flex-row items-center" style={styles.statusDotRow}>
+            <View className="flex-row items-center" style={styles.statusDotItem}>
+              <View style={styles.dotGreen} />
+              <Text style={styles.statusDotText}>완료 {paidCount}명</Text>
             </View>
-            <View className="flex-row items-center" style={{ gap: 4 }}>
-              <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#EF4444' }} />
-              <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
-                미납 {unpaidCount}명
-              </Text>
+            <View className="flex-row items-center" style={styles.statusDotItem}>
+              <View style={styles.dotRed} />
+              <Text style={styles.statusDotText}>미납 {unpaidCount}명</Text>
             </View>
           </View>
         </View>
@@ -325,62 +280,42 @@ export default function SettleMemberSelectScreen() {
         {/* 멤버 리스트 */}
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 100, gap: 16 }}
-          style={{ flex: 1 }}
+          contentContainerStyle={styles.memberListContent}
+          style={styles.memberListScroll}
         >
           {/* 미납자 먼저 표시 */}
           {[...members].sort((a, b) => (a.isPaid === b.isPaid ? 0 : a.isPaid ? 1 : -1)).map(m => (
-            <View
-              key={m.id}
-              className="flex-row items-center"
-              style={{ gap: 12 }}
-            >
+            <View key={m.id} className="flex-row items-center" style={styles.existingMemberRow}>
               {/* 아바타 */}
-              <View style={{
-                width: 56, height: 56, borderRadius: 28,
-                backgroundColor: m.isPaid ? '#F0FDF4' : '#FEF2F2',
-                borderWidth: 2,
-                borderColor: m.isPaid ? '#22C55E' : '#EF4444',
-                alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Text style={{ fontSize: 28 }}>🐹</Text>
+              <View style={[
+                styles.existingMemberAvatar,
+                { backgroundColor: m.isPaid ? '#F0FDF4' : '#FEF2F2', borderColor: m.isPaid ? '#22C55E' : '#EF4444' },
+              ]}>
+                <Text style={styles.existingMemberEmoji}>🐹</Text>
               </View>
 
               {/* 이름 */}
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
-                  {m.name}
-                </Text>
-                <Text style={{ fontSize: 12, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium', marginTop: 2 }}>
-                  {existingPerPerson.toLocaleString()}원
-                </Text>
+              <View style={styles.existingMemberInfo}>
+                <Text style={styles.existingMemberName}>{m.name}</Text>
+                <Text style={styles.existingMemberAmount}>{existingPerPerson.toLocaleString()}원</Text>
               </View>
 
               {/* 상태 배지 */}
-              <View style={{
-                backgroundColor: m.isPaid ? '#22C55E' : '#EF4444',
-                borderRadius: 14,
-                paddingHorizontal: 14,
-                paddingVertical: 6,
-              }}>
-                <Text style={{ fontSize: 13, color: '#fff', fontFamily: 'GmarketSansTTFBold' }}>
-                  {m.isPaid ? '완료' : '미납'}
-                </Text>
+              <View style={[styles.statusBadge, { backgroundColor: m.isPaid ? '#22C55E' : '#EF4444' }]}>
+                <Text style={styles.statusBadgeText}>{m.isPaid ? '완료' : '미납'}</Text>
               </View>
             </View>
           ))}
         </ScrollView>
 
         {/* 하단 미납자 알림 보내기 버튼 */}
-        <View style={{ paddingTop: 12, paddingBottom: 8 }}>
+        <View style={styles.bottomBar}>
           <Pressable
             onPress={onSendNotification}
             className="rounded-2xl py-4 items-center justify-center"
-            style={{
-              backgroundColor: unpaidCount > 0 ? '#EF4444' : '#D1D5DB',
-            }}
+            style={[styles.notifyButton, unpaidCount === 0 && styles.notifyButtonDone]}
           >
-            <Text style={{ fontSize: 16, color: '#fff', fontFamily: 'GmarketSansTTFBold' }}>
+            <Text style={styles.notifyButtonText}>
               {unpaidCount > 0
                 ? `미납자 ${unpaidCount}명에게 알림 보내기`
                 : '전원 납부 완료'}
@@ -392,3 +327,225 @@ export default function SettleMemberSelectScreen() {
     </ScreenLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+
+  // ── 헤더 ──────────────────────────────────
+  headerTitle: {
+    fontSize: 20,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+  },
+  closeText: {
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+  },
+
+  // ── 요약 카드 ─────────────────────────────
+  summaryCard: {
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  summaryDate: {
+    fontSize: 13,
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
+    marginBottom: 4,
+  },
+  summaryAmount: {
+    fontSize: 28,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.error,
+    textAlign: 'right',
+  },
+  summaryPerPerson: {
+    fontSize: 13,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+    textAlign: 'right',
+    marginTop: 4,
+  },
+  summaryRowLabel: {
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  summaryTotalAmount: {
+    fontSize: 22,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+  },
+  summaryPerPersonBlue: {
+    fontSize: 16,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.brand,
+  },
+  statusDotRow: {
+    gap: 16,
+  },
+  statusDotItem: {
+    gap: 4,
+  },
+  dotGreen: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#22C55E',
+  },
+  dotRed: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#EF4444',
+  },
+  statusDotText: {
+    fontSize: 13,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+  },
+
+  // ── 전체 선택 ─────────────────────────────
+  selectAllRow: {
+    gap: 8,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxSelected: {
+    backgroundColor: '#1428A0',
+  },
+  checkMark: {
+    color: COLORS.white,
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  selectAllText: {
+    fontSize: 15,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+  },
+
+  // ── 멤버 리스트 (공통) ────────────────────
+  memberListScroll: {
+    flex: 1,
+  },
+  memberListContent: {
+    paddingBottom: 100,
+    gap: 12,
+  },
+
+  // ── 새 정산 멤버 행 ───────────────────────
+  newMemberRow: {
+    gap: 12,
+  },
+  newMemberAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  newMemberAvatarSelected: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#1428A0',
+  },
+  memberEmoji: {
+    fontSize: 22,
+  },
+  newMemberName: {
+    fontSize: 16,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+    flex: 1,
+  },
+  newMemberNameInactive: {
+    color: COLORS.placeholder,
+  },
+  perPersonAmount: {
+    fontSize: 14,
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.bold,
+  },
+
+  // ── 기존 정산 멤버 행 ─────────────────────
+  existingMemberRow: {
+    gap: 12,
+  },
+  existingMemberAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  existingMemberEmoji: {
+    fontSize: 28,
+  },
+  existingMemberInfo: {
+    flex: 1,
+  },
+  existingMemberName: {
+    fontSize: 16,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+  },
+  existingMemberAmount: {
+    fontSize: 12,
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
+    marginTop: 2,
+  },
+  statusBadge: {
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+  },
+  statusBadgeText: {
+    fontSize: 13,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
+  },
+
+  // ── 하단 버튼 ─────────────────────────────
+  bottomBar: {
+    paddingTop: 12,
+    paddingBottom: 8,
+  },
+  registerButton: {
+    backgroundColor: '#1428A0',
+  },
+  registerButtonDisabled: {
+    backgroundColor: '#D1D5DB',
+  },
+  registerButtonText: {
+    fontSize: 16,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  notifyButton: {
+    backgroundColor: '#EF4444',
+  },
+  notifyButtonDone: {
+    backgroundColor: '#D1D5DB',
+  },
+  notifyButtonText: {
+    fontSize: 16,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
+  },
+});

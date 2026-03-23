@@ -1,19 +1,10 @@
 // src/screens/group/GroupInfoScreen.tsx
 import React, { useEffect, useState } from 'react';
-import {
-  Alert,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
-import { images } from '../../types/images';
 import {
   getGroupSettings,
   updateGroupSettings,
@@ -21,6 +12,10 @@ import {
   type GroupMember,
   updateGroupMemberRole,
 } from '../../services/groupService';
+import {
+  getGroupCards,
+  type GroupCardItem,
+} from '../../services/paymentService';
 
 const TAGS = ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'];
 
@@ -33,19 +28,12 @@ const TAG_TYPE_ID_MAP = {
   음식: 6,
 } as const;
 
-// 발급 카드 목록 (실제로는 API에서 받아올 데이터)
-const ISSUED_CARDS = [
-  {
-    id: 'card1',
-    name: '스타벅스카드 삼성',
-    image: images.card1,
-  },
-  {
-    id: 'card2',
-    name: '삼성카드 그린',
-    image: images.card2,
-  },
-];
+type IssuedCardUI = {
+  id: string;
+  name: string;
+  image: { uri: string };
+  isBasic: boolean;
+};
 
 function InfoRow({
   label,
@@ -57,7 +45,7 @@ function InfoRow({
   return (
     <View className="flex-row items-center py-4 border-b border-gray-100">
       <Text style={styles.infoLabel}>{label}</Text>
-      <View style={{ flex: 1 }}>{children}</View>
+      <View style={styles.infoRowContent}>{children}</View>
     </View>
   );
 }
@@ -76,7 +64,7 @@ export default function GroupInfoScreen() {
   const params = (route.params ?? {}) as CommonParams;
 
   const isAdmin = !!params.isAdmin;
-  const groupId = 1; // 임시 테스트용, 나중에 params.groupId로 교체
+  const groupId = params.groupId;
 
   const [members, setMembers] = useState<GroupMember[]>([]);
   const [isEdit, setIsEdit] = useState(false);
@@ -93,12 +81,11 @@ export default function GroupInfoScreen() {
   const [groundRules, setGroundRules] = useState(
     '1. 아프면 사형\n2. 일정공유 잘하기\n3. MM 확인 체크하기\n4. 부드러운 말투로 대화해용',
   );
-  const [representativeCardId, setRepresentativeCardId] = useState<string>(
-    ISSUED_CARDS[0].id,
-  );
+  const [issuedCards, setIssuedCards] = useState<IssuedCardUI[]>([]);
+  const [representativeCardId, setRepresentativeCardId] = useState<string>('');
 
   const representativeCard =
-    ISSUED_CARDS.find(c => c.id === representativeCardId) ?? ISSUED_CARDS[0];
+    issuedCards.find(c => c.id === representativeCardId) ?? issuedCards[0];
 
   useEffect(() => {
     const fetchGroupSettings = async () => {
@@ -128,6 +115,28 @@ export default function GroupInfoScreen() {
         console.log('모임원 목록 조회 성공:', membersData);
         console.log('멤버 배열:', membersData.result);
         setMembers(membersData.result);
+
+        const cardsData = await getGroupCards(groupId!);
+        console.log('모임 카드 목록 조회 성공:', cardsData);
+        console.log('카드 배열:', cardsData.result);
+
+        const mappedCards: IssuedCardUI[] = cardsData.result.map((card: GroupCardItem) => ({
+          id: String(card.cardId),
+          name: card.cardName,
+          image: {
+            uri: `https://api.ssafywte.site${card.frontCardImageUrl}`,
+          },
+          isBasic: card.isBasic,
+        }));
+
+        setIssuedCards(mappedCards);
+
+        const basicCard = mappedCards.find(card => card.isBasic);
+        if (basicCard) {
+          setRepresentativeCardId(basicCard.id);
+        } else if (mappedCards.length > 0) {
+          setRepresentativeCardId(mappedCards[0].id);
+        }
       } catch (error: any) {
         console.error('조회 실패 전체:', error);
         console.error('error.message:', error?.message);
@@ -228,7 +237,7 @@ export default function GroupInfoScreen() {
     <ScreenLayout>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={styles.scrollContent}
       >
         <Pressable
           onPress={handleTestUpdateRole}
@@ -291,20 +300,15 @@ export default function GroupInfoScreen() {
                       key={tag}
                       onPress={() => toggleTag(tag)}
                       className="rounded-2xl px-3 py-1"
-                      style={{
-                        backgroundColor: selectedTags.includes(tag)
-                          ? '#1428A0'
-                          : '#F3F4F6',
-                      }}
+                      style={[
+                        styles.tagButtonEdit,
+                        selectedTags.includes(tag) && styles.tagButtonEditActive,
+                      ]}
                     >
                       <Text
                         style={[
                           styles.tagText,
-                          {
-                            color: selectedTags.includes(tag)
-                              ? '#fff'
-                              : '#6B7280',
-                          },
+                          selectedTags.includes(tag) && styles.tagTextActive,
                         ]}
                       >
                         {tag}
@@ -340,7 +344,7 @@ export default function GroupInfoScreen() {
             </View>
 
             {isEdit && (
-              <View style={{ gap: 8, paddingLeft: 80 }}>
+              <View style={styles.duesEditContainer}>
                 {/* 매월 + 일 */}
                 <View style={styles.inputRow}>
                   <Text style={styles.unitText}>매월</Text>
@@ -428,38 +432,46 @@ export default function GroupInfoScreen() {
           </View>
 
           {isEdit ? (
-            <View style={{ gap: 12 }}>
-              {ISSUED_CARDS.map(card => {
-                const isRep = card.id === representativeCardId;
-                return (
-                  <Pressable
-                    key={card.id}
-                    onPress={() => setRepresentativeCardId(card.id)}
-                    style={[
-                      styles.cardItem,
-                      { borderColor: isRep ? '#1428A0' : 'transparent' },
-                    ]}
-                  >
-                    <Image
-                      source={card.image}
-                      style={styles.cardImage}
-                      resizeMode="cover"
-                    />
-                    {isRep && (
-                      <View style={styles.repBadge}>
-                        <Text style={styles.repBadgeText}>대표 카드 ✓</Text>
-                      </View>
-                    )}
-                  </Pressable>
-                );
-              })}
-            </View>
+            issuedCards.length === 0 ? (
+              <Text style={styles.groundRulesText}>발급된 카드가 없습니다.</Text>
+            ) : (
+              <View style={styles.cardListContainer}>
+                {issuedCards.map(card => {
+                  const isRep = card.id === representativeCardId;
+                  return (
+                    <Pressable
+                      key={card.id}
+                      onPress={() => setRepresentativeCardId(card.id)}
+                      style={[
+                        styles.cardItem,
+                        isRep && styles.cardItemSelected,
+                      ]}
+                    >
+                      <Image
+                        source={card.image}
+                        style={styles.cardImage}
+                        resizeMode="cover"
+                      />
+                      {isRep && (
+                        <View style={styles.repBadge}>
+                          <Text style={styles.repBadgeText}>대표 카드 ✓</Text>
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+              </View>
+            )
           ) : (
-            <Image
-              source={representativeCard.image}
-              style={styles.repCardImage}
-              resizeMode="cover"
-            />
+            representativeCard ? (
+              <Image
+                source={representativeCard.image}
+                style={styles.repCardImage}
+                resizeMode="cover"
+              />
+            ) : (
+              <Text style={styles.groundRulesText}>발급된 카드가 없습니다.</Text>
+            )
           )}
         </View>
 
@@ -490,46 +502,55 @@ export default function GroupInfoScreen() {
 
 
 const styles = StyleSheet.create({
+  scrollContent: { paddingBottom: 32 },
+  infoRowContent: { flex: 1 },
+  duesEditContainer: { gap: 8, paddingLeft: 80 },
+  cardListContainer: { gap: 12 },
+  tagButtonEdit: { backgroundColor: '#F3F4F6' },
+  tagButtonEditActive: { backgroundColor: '#1428A0' },
+  tagTextActive: { color: COLORS.white },
+  cardItemSelected: { borderColor: '#1428A0' },
+
   // 헤더
-  headerTitle: { fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#111827' },
-  cancelText: { fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' },
-  editText: { fontSize: 14, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium' },
+  headerTitle: { fontSize: 20, fontFamily: FONT_FAMILY.bold, color: COLORS.dark },
+  cancelText: { fontSize: 14, color: COLORS.muted, fontFamily: FONT_FAMILY.medium },
+  editText: { fontSize: 14, color: COLORS.brand, fontFamily: FONT_FAMILY.medium },
 
   // 공통 카드 그림자
   card: { shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 },
 
   // InfoRow
-  infoLabel: { width: 80, fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' },
-  groupNameText: { fontSize: 18, fontFamily: 'GmarketSansTTFBold', color: '#111827', textAlign: 'right' },
-  introText: { fontSize: 14, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' },
-  infoValueText: { fontSize: 14, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' },
+  infoLabel: { width: 80, fontSize: 14, color: COLORS.muted, fontFamily: FONT_FAMILY.medium },
+  groupNameText: { fontSize: 18, fontFamily: FONT_FAMILY.bold, color: COLORS.dark, textAlign: 'right' },
+  introText: { fontSize: 14, color: COLORS.dark, fontFamily: FONT_FAMILY.medium, textAlign: 'right' },
+  infoValueText: { fontSize: 14, color: COLORS.dark, fontFamily: FONT_FAMILY.medium, textAlign: 'right' },
 
   // 태그
-  tagText: { fontSize: 13, fontFamily: 'GmarketSansTTFMedium' },
+  tagText: { fontSize: 13, fontFamily: FONT_FAMILY.medium },
   tagInactive: { backgroundColor: '#F3F4F6' },
-  tagTextInactive: { fontSize: 13, color: '#374151', fontFamily: 'GmarketSansTTFMedium' },
+  tagTextInactive: { fontSize: 13, color: COLORS.subtle, fontFamily: FONT_FAMILY.medium },
 
   // 회비
-  duesValue: { flex: 1, fontSize: 13, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' },
+  duesValue: { flex: 1, fontSize: 13, color: COLORS.dark, fontFamily: FONT_FAMILY.medium, textAlign: 'right' },
   inputRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginBottom: 10 },
   inputRowLast: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
   inputPill: { backgroundColor: '#E5E7EB', borderRadius: 50, paddingHorizontal: 20, height: 32, justifyContent: 'center', alignItems: 'center', minWidth: 80 },
   inputPillWide: { backgroundColor: '#E5E7EB', borderRadius: 50, paddingHorizontal: 20, height: 32, justifyContent: 'center', alignItems: 'center', minWidth: 120 },
-  pillInput: { fontSize: 16, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium', textAlign: 'center', paddingVertical: 0, includeFontPadding: false },
-  pillInputCompact: { fontSize: 16, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium', textAlign: 'center', padding: 0 },
-  unitText: { fontSize: 13, color: '#000', fontFamily: 'GmarketSansTTFMedium' },
+  pillInput: { fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', paddingVertical: 0, includeFontPadding: false },
+  pillInputCompact: { fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', padding: 0 },
+  unitText: { fontSize: 13, color: '#000', fontFamily: FONT_FAMILY.medium },
 
   // 그라운드룰
-  sectionTitle: { fontSize: 15, fontFamily: 'GmarketSansTTFBold', color: '#111827', marginBottom: 12 },
-  groundRulesInput: { fontSize: 14, color: '#111827', fontFamily: 'GmarketSansTTFMedium', lineHeight: 22, textAlignVertical: 'top', minHeight: 100, backgroundColor: '#F9FAFB', borderRadius: 12, padding: 12 },
-  groundRulesText: { fontSize: 14, color: '#374151', fontFamily: 'GmarketSansTTFMedium', lineHeight: 24 },
+  sectionTitle: { fontSize: 15, fontFamily: FONT_FAMILY.bold, color: COLORS.dark, marginBottom: 12 },
+  groundRulesInput: { fontSize: 14, color: COLORS.dark, fontFamily: FONT_FAMILY.medium, lineHeight: 22, textAlignVertical: 'top', minHeight: 100, backgroundColor: '#F9FAFB', borderRadius: 12, padding: 12 },
+  groundRulesText: { fontSize: 14, color: COLORS.subtle, fontFamily: FONT_FAMILY.medium, lineHeight: 24 },
 
   // 카드 섹션
-  cardSectionTitle: { fontSize: 15, fontFamily: 'GmarketSansTTFBold', color: '#111827' },
-  cardHintText: { fontSize: 12, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium' },
+  cardSectionTitle: { fontSize: 15, fontFamily: FONT_FAMILY.bold, color: COLORS.dark },
+  cardHintText: { fontSize: 12, color: COLORS.brand, fontFamily: FONT_FAMILY.medium },
   cardItem: { borderRadius: 16, borderWidth: 2, overflow: 'hidden' },
   cardImage: { width: '100%', height: 180 },
   repBadge: { position: 'absolute', top: 10, right: 10, backgroundColor: '#1428A0', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  repBadgeText: { fontSize: 11, color: '#fff', fontFamily: 'GmarketSansTTFMedium' },
+  repBadgeText: { fontSize: 11, color: COLORS.white, fontFamily: FONT_FAMILY.medium },
   repCardImage: { width: '100%', height: 200, borderRadius: 16 },
 });

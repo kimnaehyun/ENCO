@@ -1,6 +1,7 @@
 // src/screens/group/SettleDetailScreen.tsx
 import React, { useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 
@@ -25,8 +26,8 @@ type RouteParams = {
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <View className="flex-row items-center justify-between py-3 border-b border-gray-100">
-      <Text style={{ fontSize: 13, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium' }}>{label}</Text>
-      <View style={{ flex: 1, alignItems: 'flex-end' }}>{children}</View>
+      <Text style={styles.infoLabel}>{label}</Text>
+      <View style={styles.infoValueWrap}>{children}</View>
     </View>
   );
 }
@@ -94,100 +95,69 @@ export default function SettleDetailScreen() {
 
   return (
     <ScreenLayout>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
         {/* 헤더 */}
         <View className="flex-row items-center justify-between mb-5">
-          <Text style={{ fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
-            모임 장부
-          </Text>
+          <Text style={styles.headerTitle}>모임 장부</Text>
           <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-            <Text style={{ fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>닫기</Text>
+            <Text style={styles.closeText}>닫기</Text>
           </Pressable>
         </View>
 
         {/* 날짜 + 가맹점 */}
-        <Text style={{ fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium', marginBottom: 2 }}>
-          {date} {storeName}
-        </Text>
+        <Text style={styles.storeDateText}>{date} {storeName}</Text>
 
         {/* 금액 */}
-        <Text style={{ fontSize: 32, fontFamily: 'GmarketSansTTFBold', color: '#EF4444', marginBottom: 16 }}>
-          -{amount.toLocaleString()}원
-        </Text>
+        <Text style={styles.amountText}>-{amount.toLocaleString()}원</Text>
 
         {/* 정보 카드 */}
         <View
           className="bg-white rounded-3xl px-6 py-5 mb-4"
-          style={{ shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 }}
+          style={styles.shadowCard}
         >
           <InfoRow label="사용카드">
-            <Text style={{ fontSize: 14, color: '#111827', fontFamily: 'GmarketSansTTFMedium' }}>
-              총무개인카드
-            </Text>
+            <Text style={styles.infoValueText}>총무개인카드</Text>
           </InfoRow>
 
           <InfoRow label="상태">
-            <View style={{
-              backgroundColor: isSettled ? '#22C55E' : '#EF4444',
-              borderRadius: 12,
-              paddingHorizontal: 10,
-              paddingVertical: 4,
-            }}>
-              <Text style={{ fontSize: 12, color: '#fff', fontFamily: 'GmarketSansTTFBold' }}>
+            <View style={[styles.statusBadge, { backgroundColor: isSettled ? '#22C55E' : '#EF4444' }]}>
+              <Text style={styles.statusBadgeText}>
                 {isSettled ? '정산완료' : `정산미완료 (${paidCount}/${totalCount}명)`}
               </Text>
             </View>
           </InfoRow>
 
           <InfoRow label="거래구분">
-            <Text style={{ fontSize: 14, color: '#F59E0B', fontFamily: 'GmarketSansTTFBold' }}>
-              출금 (정산 필요)
-            </Text>
+            <Text style={styles.tradeTypeText}>출금 (정산 필요)</Text>
           </InfoRow>
 
           {/* 메모 (편집 가능) */}
           <View className="flex-row items-center justify-between py-3 border-b border-gray-100">
-            <Text style={{ fontSize: 13, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium' }}>메모</Text>
+            <Text style={styles.infoLabel}>메모</Text>
             <TextInput
               value={memoText}
               onChangeText={setMemoText}
               placeholder="내용을 입력하세요"
               placeholderTextColor="#D1D5DB"
-              style={{
-                flex: 1,
-                fontSize: 14,
-                color: '#111827',
-                fontFamily: 'GmarketSansTTFMedium',
-                textAlign: 'right',
-                paddingVertical: 0,
-                marginLeft: 12,
-              }}
+              style={styles.memoInput}
             />
           </View>
 
           {/* 영수증 */}
           <View className="flex-row items-start justify-between pt-3">
-            <Text style={{ fontSize: 13, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium' }}>영수증</Text>
-            <View style={{ flex: 1, alignItems: 'flex-end' }}>
+            <Text style={styles.infoLabel}>영수증</Text>
+            <View style={styles.infoValueWrap}>
               {receiptUri ? (
                 <Image
                   source={{ uri: receiptUri }}
-                  style={{ width: 200, height: 260, borderRadius: 12 }}
+                  style={styles.receiptImage}
                   resizeMode="cover"
                 />
               ) : (
-                <View style={{
-                  width: 160,
-                  height: 200,
-                  borderRadius: 12,
-                  backgroundColor: '#F3F4F6',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  padding: 16,
-                }}>
-                  <Text style={{ fontSize: 40, marginBottom: 8 }}>🧾</Text>
-                  <Text style={{ fontSize: 11, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium', textAlign: 'center' }}>
+                <View style={styles.receiptPlaceholder}>
+                  <Text style={styles.receiptEmoji}>🧾</Text>
+                  <Text style={styles.receiptPlaceholderText}>
                     RECEIPT{'\n'}(임시 영수증)
                   </Text>
                 </View>
@@ -200,40 +170,22 @@ export default function SettleDetailScreen() {
         {!isSettled && unpaidCount > 0 && (
           <View
             className="bg-white rounded-3xl px-6 py-5 mb-4"
-            style={{ shadowColor: '#EF4444', shadowOpacity: 0.08, shadowRadius: 12, elevation: 2 }}
+            style={styles.unpaidCard}
           >
             <View className="flex-row items-center justify-between mb-3">
-              <Text style={{ fontSize: 15, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
-                미납자 현황
-              </Text>
-              <View style={{
-                backgroundColor: '#FEF2F2',
-                borderRadius: 12,
-                paddingHorizontal: 10,
-                paddingVertical: 4,
-              }}>
-                <Text style={{ fontSize: 12, color: '#EF4444', fontFamily: 'GmarketSansTTFBold' }}>
-                  {unpaidCount}명 미납
-                </Text>
+              <Text style={styles.unpaidTitle}>미납자 현황</Text>
+              <View style={styles.unpaidBadge}>
+                <Text style={styles.unpaidBadgeText}>{unpaidCount}명 미납</Text>
               </View>
             </View>
 
             {settleMembers.filter(m => !m.isPaid).map(m => (
-              <View key={m.id} className="flex-row items-center mb-2" style={{ gap: 10 }}>
-                <View style={{
-                  width: 36, height: 36, borderRadius: 18,
-                  backgroundColor: '#FEF2F2',
-                  borderWidth: 1.5, borderColor: '#EF4444',
-                  alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Text style={{ fontSize: 18 }}>🐹</Text>
+              <View key={m.id} className="flex-row items-center mb-2" style={styles.memberRow}>
+                <View style={styles.memberAvatar}>
+                  <Text style={styles.memberEmoji}>🐹</Text>
                 </View>
-                <Text style={{ fontSize: 14, fontFamily: 'GmarketSansTTFBold', color: '#111827', flex: 1 }}>
-                  {m.name}
-                </Text>
-                <Text style={{ fontSize: 13, color: '#EF4444', fontFamily: 'GmarketSansTTFBold' }}>
-                  {perPerson.toLocaleString()}원
-                </Text>
+                <Text style={styles.memberName}>{m.name}</Text>
+                <Text style={styles.memberAmount}>{perPerson.toLocaleString()}원</Text>
               </View>
             ))}
 
@@ -241,11 +193,9 @@ export default function SettleDetailScreen() {
             <Pressable
               onPress={handleNotify}
               className="rounded-2xl py-3 items-center justify-center mt-2"
-              style={{ backgroundColor: '#EF4444' }}
+              style={styles.notifyButton}
             >
-              <Text style={{ fontSize: 14, color: '#fff', fontFamily: 'GmarketSansTTFBold' }}>
-                미납자에게 알림 보내기
-              </Text>
+              <Text style={styles.notifyButtonText}>미납자에게 알림 보내기</Text>
             </Pressable>
           </View>
         )}
@@ -264,14 +214,187 @@ export default function SettleDetailScreen() {
             isNewSettle: false,
           })}
           className="rounded-2xl py-4 items-center justify-center"
-          style={{ backgroundColor: '#1428A0' }}
+          style={styles.settleDetailButton}
         >
-          <Text style={{ fontSize: 16, color: '#fff', fontFamily: 'GmarketSansTTFBold' }}>
-            정산인원 보기
-          </Text>
+          <Text style={styles.settleDetailButtonText}>정산인원 보기</Text>
         </Pressable>
 
       </ScrollView>
     </ScreenLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 40,
+  },
+
+  // ── 헤더 ──────────────────────────────────
+  headerTitle: {
+    fontSize: 20,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+  },
+  closeText: {
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+  },
+
+  // ── 금액 정보 ─────────────────────────────
+  storeDateText: {
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+    marginBottom: 2,
+  },
+  amountText: {
+    fontSize: 32,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.error,
+    marginBottom: 16,
+  },
+
+  // ── 공통 카드 그림자 ─────────────────────
+  shadowCard: {
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+
+  // ── InfoRow ────────────────────────────────
+  infoLabel: {
+    fontSize: 13,
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  infoValueWrap: {
+    flex: 1,
+    alignItems: 'flex-end',
+  },
+  infoValueText: {
+    fontSize: 14,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  statusBadge: {
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  statusBadgeText: {
+    fontSize: 12,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  tradeTypeText: {
+    fontSize: 14,
+    color: COLORS.warning,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  memoInput: {
+    flex: 1,
+    fontSize: 14,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
+    textAlign: 'right',
+    paddingVertical: 0,
+    marginLeft: 12,
+  },
+
+  // ── 영수증 ────────────────────────────────
+  receiptImage: {
+    width: 200,
+    height: 260,
+    borderRadius: 12,
+  },
+  receiptPlaceholder: {
+    width: 160,
+    height: 200,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  receiptEmoji: {
+    fontSize: 40,
+    marginBottom: 8,
+  },
+  receiptPlaceholderText: {
+    fontSize: 11,
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
+    textAlign: 'center',
+  },
+
+  // ── 미납자 카드 ───────────────────────────
+  unpaidCard: {
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  unpaidTitle: {
+    fontSize: 15,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+  },
+  unpaidBadge: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  unpaidBadgeText: {
+    fontSize: 12,
+    color: COLORS.error,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  memberRow: {
+    gap: 10,
+  },
+  memberAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1.5,
+    borderColor: '#EF4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  memberEmoji: {
+    fontSize: 18,
+  },
+  memberName: {
+    fontSize: 14,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+    flex: 1,
+  },
+  memberAmount: {
+    fontSize: 13,
+    color: COLORS.error,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  notifyButton: {
+    backgroundColor: '#EF4444',
+  },
+  notifyButtonText: {
+    fontSize: 14,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
+  },
+
+  // ── 정산인원 보기 버튼 ────────────────────
+  settleDetailButton: {
+    backgroundColor: '#1428A0',
+  },
+  settleDetailButtonText: {
+    fontSize: 16,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
+  },
+});

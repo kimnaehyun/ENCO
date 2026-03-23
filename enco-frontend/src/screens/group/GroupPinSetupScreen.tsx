@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Alert, Text, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native"
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import PinEntry from "../../components/pin/PinEntry";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../types/navigation";
@@ -98,28 +99,11 @@ export default function GroupPinSetupScreen({ route, navigation }: Props) {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
+    <View style={styles.container}>
       {submitting ? (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <Text
-            style={{
-              fontSize: 18,
-              color: '#1428A0',
-              fontFamily: 'GmarketSansTTFBold',
-              marginBottom: 12,
-            }}
-          >
-            모임통장 개설 중...
-          </Text>
-          <Text
-            style={{
-              fontSize: 14,
-              color: '#6B7280',
-              fontFamily: 'GmarketSansTTFMedium',
-            }}
-          >
-            잠시만 기다려주세요
-          </Text>
+        <View style={styles.loadingContainer}>
+          <Text style={styles.loadingTitle}>모임통장 개설 중...</Text>
+          <Text style={styles.loadingSubtitle}>잠시만 기다려주세요</Text>
         </View>
       ) : (
         <PinEntry
@@ -138,3 +122,26 @@ export default function GroupPinSetupScreen({ route, navigation }: Props) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F0F4FF',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingTitle: {
+    fontSize: 18,
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.bold,
+    marginBottom: 12,
+  },
+  loadingSubtitle: {
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+  },
+});

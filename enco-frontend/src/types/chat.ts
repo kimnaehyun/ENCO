@@ -1,3 +1,5 @@
+import { FlatList } from 'react-native';
+
 type ChatMsgProps = {
   content: string;
   senderId: number;
@@ -87,5 +89,15 @@ type ApiMessage = {
   metadata?: null;
   messageType?: string;
 };
+
+export interface ChatMessageListProps {
+  messages: ChatItem[];
+  flatListRef: React.RefObject<FlatList<ChatItem> | null>;
+  userId: number;
+  onRetry: (id: string, content: string) => void;
+  onCancel: (id: string) => void;
+  onActionPress: (action: ChatAction, label: string) => void;
+  onLoadMore: () => void;
+}
 
 export type { ChatMsgProps, ChatAction, ChatItem, ApiMessage };

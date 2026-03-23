@@ -1,17 +1,7 @@
 // src/screens/group/GroupPayScreen.tsx
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import {
-  Alert,
-  Pressable,
-  Text,
-  TextInput,
-  View,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
-  BackHandler,
-  ScrollView,
-} from 'react-native';
+import { Alert, Pressable, TextInput, View, StyleSheet, KeyboardAvoidingView, Platform, BackHandler, ScrollView } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import ScreenLayout from '../../components/ScreenLayout';
 import PinEntry from '../../components/pin/PinEntry';
 import { GroupPayStep, GroupProps } from '../../types/group';
@@ -387,8 +377,8 @@ const styles = StyleSheet.create({
   },
   closeText: {
     fontSize: 15,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   heroCard: {
@@ -401,8 +391,8 @@ const styles = StyleSheet.create({
   },
   heroLine: {
     fontSize: 20,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.primary,
+    fontFamily: FONT_FAMILY.bold,
     textAlign: 'center',
   },
   heroAmountRow: {
@@ -417,8 +407,8 @@ const styles = StyleSheet.create({
   },
   heroAmount: {
     fontSize: 20,
-    color: '#1428A0',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.bold,
     textAlign: 'center',
   },
   heroUnderline: {
@@ -439,7 +429,7 @@ const styles = StyleSheet.create({
   sectionLabel: {
     fontSize: 15,
     color: '#444444',
-    fontFamily: 'GmarketSansTTFMedium',
+    fontFamily: FONT_FAMILY.medium,
   },
   amountInputRow: {
     flexDirection: 'row',
@@ -455,15 +445,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 16,
     fontSize: 16,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.primary,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'right',
   },
   amountUnit: {
     marginLeft: 10,
     fontSize: 18,
     color: '#444444',
-    fontFamily: 'GmarketSansTTFMedium',
+    fontFamily: FONT_FAMILY.medium,
   },
 
   unpaidList: {
@@ -487,15 +477,15 @@ const styles = StyleSheet.create({
   unpaidItemLabel: {
     fontSize: 12,
     color: '#FF5A5A',
-    fontFamily: 'GmarketSansTTFMedium',
+    fontFamily: FONT_FAMILY.medium,
   },
   unpaidItemAmount: {
     fontSize: 18,
     color: '#FF5A5A',
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
   unpaidItemTextSelected: {
-    color: '#FF3B30',
+    color: COLORS.danger,
   },
 
   confirmContainer: {
@@ -515,13 +505,13 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 16,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.primary,
+    fontFamily: FONT_FAMILY.bold,
   },
   infoValue: {
     fontSize: 18,
-    color: '#666666',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.secondary,
+    fontFamily: FONT_FAMILY.medium,
     maxWidth: '62%',
     textAlign: 'right',
   },
@@ -529,15 +519,15 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 16,
     fontSize: 18,
-    color: '#666666',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.secondary,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'right',
     paddingVertical: 0,
   },
   amountConfirmValue: {
     fontSize: 24,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.primary,
+    fontFamily: FONT_FAMILY.bold,
     textAlign: 'right',
   },
 
@@ -554,8 +544,8 @@ const styles = StyleSheet.create({
   },
   primaryBtnText: {
     fontSize: 18,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   successContainer: {
@@ -566,8 +556,8 @@ const styles = StyleSheet.create({
   },
   successTitle: {
     fontSize: 22,
-    color: '#111111',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.primary,
+    fontFamily: FONT_FAMILY.bold,
     textAlign: 'center',
   },
   successButton: {

@@ -1,13 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  ScrollView,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+import { View, TextInput, Pressable, ScrollView, KeyboardAvoidingView, Platform } from "react-native"
+import Text from '@/components/typography';;
 import { AuthScreenProps } from "../../types/navigation";
 import type { SignupStep } from "../../types/navigation";
 
@@ -98,9 +91,9 @@ export default function InputInfoScreen({
             {/* 입력 영역 */}
             <View className="gap-8">
               <Pressable className="rounded-xl py-3">
-                <Text
+                <Text weight="bold"
                   className="text-[#111827] text-center text-2xl"
-                  style={{ fontFamily: "GmarketSansTTFBold" }}
+                  
                 >
                   회원가입
                 </Text>
@@ -169,7 +162,7 @@ export default function InputInfoScreen({
                           className={`text-lg ${
                             gender === g ? "text-white" : "text-gray-700"
                           }`}
-                          style={{ fontFamily: "GmarketSansTTFMedium" }}
+                          
                         >
                           {g === "M" ? "남성" : "여성"}
                         </Text>
@@ -198,11 +191,11 @@ export default function InputInfoScreen({
                               : "bg-white border border-gray-300"
                           }`}
                         >
-                          <Text
+                          <Text weight="bold"
                             className={`text-lg ${
                               sel ? "text-white" : "text-gray-700"
                             }`}
-                            style={{ fontFamily: "GmarketSansTTFBold" }}
+                            
                           >
                             {num}
                           </Text>
@@ -232,9 +225,9 @@ export default function InputInfoScreen({
                   canDone ? "bg-[#1428A0]" : "bg-gray-400"
                 }`}
               >
-                <Text
+                <Text weight="bold"
                   className="text-white text-center font-bold text-2xl"
-                  style={{ fontFamily: "GmarketSansTTFBold" }}
+                  
                 >
                   간편비밀번호 설정하기
                 </Text>

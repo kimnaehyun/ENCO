@@ -110,6 +110,8 @@ public class GroupCreateService {
             return response;
 
         } catch (Exception e) {
+            log.error("==== 모임 통장 생성 에러 ====");
+            e.printStackTrace();
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }

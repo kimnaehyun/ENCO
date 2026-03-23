@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, Text, View, Pressable } from 'react-native';
+import { ScrollView, StyleSheet, View, Pressable } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
@@ -40,7 +41,7 @@ export default function GroupAnalyticsScreen() {
 
   const categoryData = useMemo<ExpenseCategoryItem[]>(
     () => [
-      { label: '식비', value: 180000, color: '#1428A0' },
+      { label: '식비', value: 180000, color: COLORS.brand },
       { label: '유흥', value: 90000, color: '#60A5FA' },
       { label: '회비 적립', value: 110000, color: '#818CF8' },
       { label: '기타', value: 48000, color: '#C7D2FE' },
@@ -64,7 +65,7 @@ export default function GroupAnalyticsScreen() {
     <ScreenLayout>
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 32 }}
+        contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.headerRow}>
           <View>
@@ -83,14 +84,14 @@ export default function GroupAnalyticsScreen() {
           <StatCard label="현재 잔액" value={`${currentBalance.toLocaleString()}원`} />
         </View>
 
-        <View style={{ marginBottom: 16 }}>
+        <View style={styles.cardWrap}>
           <BudgetGaugeCard
             budget={monthlyBudget}
             spent={totalExpense}
           />
         </View>
 
-        <View style={{ marginBottom: 16 }}>
+        <View style={styles.cardWrap}>
           <ExpenseCategoryCard
             totalExpense={totalExpense}
             categories={categoryData}
@@ -104,6 +105,13 @@ export default function GroupAnalyticsScreen() {
 }
 
 const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 32,
+  },
+  cardWrap: {
+    marginBottom: 16,
+  },
+
   headerRow: {
     marginTop: 6,
     marginBottom: 20,
@@ -113,19 +121,19 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 20,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   headerSub: {
     marginTop: 4,
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
   closeText: {
     fontSize: 14,
-    color: '#1428A0',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   statRow: {
@@ -146,13 +154,13 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     marginBottom: 8,
   },
   statValue: {
     fontSize: 16,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
 });

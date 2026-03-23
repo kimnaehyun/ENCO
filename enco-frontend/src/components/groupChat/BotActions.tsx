@@ -1,4 +1,5 @@
-import { View, Text, Image } from 'react-native';
+import { View, Image } from 'react-native'
+import Text from '@/components/typography';;
 import {
   botAvatar,
   botCard,
@@ -10,10 +11,10 @@ import { ChatAction } from '@/types/chat';
 
 export default function BotActions({
   item,
-  onpress,
+  onPress,
 }: {
   item: any;
-  onpress: (action: ChatAction) => void;
+  onPress: (action: ChatAction, label: string) => void;
 }) {
   return (
     <View className={botRow}>
@@ -23,7 +24,7 @@ export default function BotActions({
         resizeMode="contain"
       />
       <View className={botCard}>
-        <Text className={botText} style={{ fontFamily: 'GmarketSansTTFBold' }}>
+        <Text weight="bold" className={botText} >
           {item.text}
         </Text>
         <View className="gap-3">
@@ -31,7 +32,7 @@ export default function BotActions({
             <ActionButton
               key={`${item.id}-${action.label}`}
               label={action.label}
-              onPress={() => onpress(action.action)}
+              onPress={() => onPress(action.action, action.label)}
             />
           ))}
         </View>

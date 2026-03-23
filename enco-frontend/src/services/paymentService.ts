@@ -220,3 +220,34 @@ export async function getGroupDashboardReport(groupId: number | string) {
 
   return response.data;
 }
+
+// 모임카드 조회
+export interface GroupCardItem {
+  cardId: number;
+  frontCardImageUrl: string;
+  cardName: string;
+  backCardImageUrl: string;
+  isBasic: boolean;
+}
+
+export interface GroupCardsResponse {
+  message: string;
+  result: GroupCardItem[];
+}
+
+export async function getGroupCards(groupId: number | string) {
+  const token = getCachedAccessToken();
+
+  const response = await axios.get<GroupCardsResponse>(
+    `https://api.ssafywte.site/payment-service/api/v1/cards/groups/${groupId}/cards`,
+    {
+      timeout: 10000,
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: token ? `Bearer ${token}` : '',
+      },
+    },
+  );
+
+  return response.data;
+}

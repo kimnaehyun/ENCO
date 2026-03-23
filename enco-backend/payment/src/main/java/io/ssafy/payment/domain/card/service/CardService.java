@@ -4,6 +4,7 @@ import io.ssafy.payment.domain.card.dto.response.CardListResponseDto;
 import io.ssafy.payment.domain.card.dto.response.CardProductDetailResponseDto;
 import io.ssafy.payment.domain.card.dto.response.CardProductListResponseDto;
 import io.ssafy.payment.domain.card.dto.response.GroupCardResponseDto;
+import io.ssafy.payment.domain.card.entity.Card;
 import io.ssafy.payment.domain.card.entity.CardProduct;
 import io.ssafy.payment.domain.card.repository.CardProductRepository;
 import io.ssafy.payment.domain.card.repository.CardRepository;
@@ -62,5 +63,15 @@ public class CardService {
         return cards.stream()
                 .map(CardProductDetailResponseDto::from)
                 .toList();
+    }
+
+    @Transactional
+    public void updateBasicCard(Long groupId, Long cardId) {
+        cardRepository.findFirstByAccount_GroupIdAndIsBasicTrueAndIsDeletedFalse(groupId)
+                .ifPresent(card -> card.setBasic(false));
+
+        Card newBasicCard = cardRepository.findById(cardId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CARD));
+        newBasicCard.setBasic(true);
     }
 }

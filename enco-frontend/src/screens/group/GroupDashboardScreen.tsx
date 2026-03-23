@@ -1,14 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  Dimensions,
-  FlatList,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Dimensions, FlatList, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CommonParams } from '../../types/common';
 import { useNotifications } from '../../contexts/NotificationsContext';
@@ -39,7 +31,7 @@ export default function GroupDashboardScreen() {
   const navigation = useNavigation<any>();
 
   const params = (route.params ?? {}) as CommonParams;
-  const groupId = 1; // 임시 테스트용, 나중에 params.groupId로 교체
+  const groupId = params.groupId;
   const { unreadCount } = useNotifications();
 
   // --- useState ---
@@ -68,7 +60,7 @@ export default function GroupDashboardScreen() {
   // --- useMemo ---
   const categoryData = useMemo<ExpenseCategoryItem[]>(
     () => [
-      { label: '식비', value: 180000, color: '#1428A0' },
+      { label: '식비', value: 180000, color: COLORS.brand },
       { label: '유흥', value: 90000, color: '#60A5FA' },
       { label: '회비 적립', value: 110000, color: '#818CF8' },
       { label: '기타', value: 48000, color: '#C7D2FE' },
@@ -481,8 +473,8 @@ const styles = StyleSheet.create({
   // 헤더
   groupNameText: {
     fontSize: 22,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   alertIcon: {
     width: 20,
@@ -505,18 +497,18 @@ const styles = StyleSheet.create({
   },
   balanceValue: {
     fontSize: 22,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   statusLabel: {
     fontSize: 14,
-    fontFamily: 'GmarketSansTTFMedium',
-    color: '#6B7280',
+    fontFamily: FONT_FAMILY.medium,
+    color: COLORS.muted,
   },
   statusValue: {
     fontSize: 14,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
 
   // 투표 카드
@@ -525,8 +517,8 @@ const styles = StyleSheet.create({
   },
   votesText: {
     fontSize: 18,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
 
   // 납부 / 채팅
@@ -535,8 +527,8 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
 
   // 모임 관리 버튼
@@ -545,8 +537,8 @@ const styles = StyleSheet.create({
   },
   adminText: {
     fontSize: 18,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#FFFFFF',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.white,
   },
 
   // 테스트 버튼
@@ -555,8 +547,8 @@ const styles = StyleSheet.create({
   },
   inviteTestText: {
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#374151',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.subtle,
   },
 
   // 출석 카드
@@ -580,8 +572,8 @@ const styles = StyleSheet.create({
   },
   attendanceTitle: {
     fontSize: 15,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   attendanceBadge: {
     backgroundColor: '#F3F4F6',
@@ -591,8 +583,8 @@ const styles = StyleSheet.create({
   },
   attendanceBadgeText: {
     fontSize: 12,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
   attendanceInner: {
     flex: 1,
@@ -609,15 +601,15 @@ const styles = StyleSheet.create({
   },
   moodTitle: {
     fontSize: 17,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
     textAlign: 'center',
     marginBottom: 6,
   },
   moodSubtitle: {
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'center',
     lineHeight: 20,
     marginBottom: 18,
@@ -638,13 +630,13 @@ const styles = StyleSheet.create({
   },
   membersText: {
     fontSize: 14,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'center',
   },
   rewardText: {
     fontSize: 12,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
     marginTop: 8,
   },
 });

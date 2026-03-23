@@ -1,14 +1,8 @@
 // src/screens/admin/AdminCardScreen.tsx
 // 카드 추가 발급 — GroupCreateScreen 디자인 기반
 import React, { useMemo, useState, useEffect } from 'react';
-import {
-  Alert,
-  Image,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, Image, Pressable, ScrollView, View } from 'react-native'
+import Text from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
@@ -138,36 +132,21 @@ export default function AdminCardScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* 헤더 */}
-        <Text
-          style={{
-            fontSize: 22,
-            color: '#111827',
-            fontFamily: 'GmarketSansTTFBold',
-            marginBottom: 6,
-          }}
-        >
+        <Text variant="h2" color="dark"
+          
+         style={{ marginBottom: 6 }}>
           카드 추가 발급
         </Text>
-        <Text
-          style={{
-            fontSize: 13,
-            color: '#9CA3AF',
-            fontFamily: 'GmarketSansTTFMedium',
-            marginBottom: 28,
-          }}
-        >
+        <Text variant="caption" color="placeholder"
+          
+         style={{ marginBottom: 28 }}>
           {groupName}
         </Text>
 
         {/* 총무 정보(자동 입력) */}
-        <Text
-          style={{
-            fontSize: 14,
-            color: '#6B7280',
-            fontFamily: 'GmarketSansTTFMedium',
-            marginBottom: 8,
-          }}
-        >
+        <Text variant="bodySm" color="muted"
+          
+         style={{ marginBottom: 8 }}>
           총무 정보(자동 입력)
         </Text>
         <View
@@ -199,21 +178,13 @@ export default function AdminCardScreen() {
                 borderBottomColor: '#F3F4F6',
               }}
             >
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: '#9CA3AF',
-                  fontFamily: 'GmarketSansTTFMedium',
-                }}
+              <Text variant="bodySm" color="placeholder"
+                
               >
                 {item.label}
               </Text>
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: '#111827',
-                  fontFamily: 'GmarketSansTTFMedium',
-                }}
+              <Text variant="bodySm" color="dark"
+                
               >
                 {item.value}
               </Text>
@@ -222,14 +193,9 @@ export default function AdminCardScreen() {
         </View>
 
         {/* 모임 성향 태그 */}
-        <Text
-          style={{
-            fontSize: 14,
-            color: '#6B7280',
-            fontFamily: 'GmarketSansTTFMedium',
-            marginBottom: 12,
-          }}
-        >
+        <Text variant="bodySm" color="muted"
+          
+         style={{ marginBottom: 12 }}>
           모임 성향(옵션 태그)
         </Text>
         <View
@@ -260,12 +226,8 @@ export default function AdminCardScreen() {
                   elevation: selected ? 4 : 1,
                 }}
               >
-                <Text
-                  style={{
-                    fontSize: 15,
-                    color: '#FFFFFF',
-                    fontFamily: 'GmarketSansTTFBold',
-                  }}
+                <Text variant="bodyMd" weight="bold" color="white"
+                  
                 >
                   {tag}
                 </Text>
@@ -273,15 +235,9 @@ export default function AdminCardScreen() {
             );
           })}
         </View>
-        <Text
-          style={{
-            fontSize: 12,
-            color: '#9CA3AF',
-            fontFamily: 'GmarketSansTTFMedium',
-            textAlign: 'center',
-            marginBottom: 28,
-          }}
-        >
+        <Text variant="tiny" color="placeholder" align="center"
+          
+         style={{ marginBottom: 28 }}>
           중복 선택 가능
         </Text>
 
@@ -301,14 +257,9 @@ export default function AdminCardScreen() {
               elevation: 1,
             }}
           >
-            <Text
-              style={{
-                fontSize: 13,
-                color: '#9CA3AF',
-                fontFamily: 'GmarketSansTTFMedium',
-                marginBottom: 12,
-              }}
-            >
+            <Text variant="caption" color="placeholder"
+              
+             style={{ marginBottom: 12 }}>
               선택한 카드
             </Text>
             <Image
@@ -316,14 +267,9 @@ export default function AdminCardScreen() {
               style={{ width: '60%', aspectRatio: 2, borderRadius: 12 }}
               resizeMode="contain"
             />
-            <Text
-              style={{
-                marginTop: 10,
-                fontSize: 14,
-                color: '#111827',
-                fontFamily: 'GmarketSansTTFBold',
-              }}
-            >
+            <Text variant="bodySm" weight="bold" color="dark"
+              
+             style={{ marginTop: 10 }}>
               {selectedCardName}
             </Text>
           </View>
@@ -346,12 +292,8 @@ export default function AdminCardScreen() {
                 alignItems: 'center',
               }}
             >
-              <Text
-                style={{
-                  color: '#FFFFFF',
-                  fontSize: 14,
-                  fontFamily: 'GmarketSansTTFBold',
-                }}
+              <Text variant="bodySm" weight="bold" color="white"
+                
               >
                 카드 추천 받기
               </Text>
@@ -371,12 +313,8 @@ export default function AdminCardScreen() {
                 alignItems: 'center',
               }}
             >
-              <Text
-                style={{
-                  color: '#FFFFFF',
-                  fontSize: 14,
-                  fontFamily: 'GmarketSansTTFBold',
-                }}
+              <Text variant="bodySm" weight="bold" color="white"
+                
               >
                 전체 카드 보기
               </Text>
@@ -395,12 +333,8 @@ export default function AdminCardScreen() {
                 alignItems: 'center',
               }}
             >
-              <Text
-                style={{
-                  color: '#FFFFFF',
-                  fontSize: 16,
-                  fontFamily: 'GmarketSansTTFBold',
-                }}
+              <Text weight="bold" color="white"
+                
               >
                 카드 발급 신청하기
               </Text>
