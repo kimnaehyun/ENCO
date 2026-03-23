@@ -24,7 +24,7 @@ public class AccountClientController {
     private final AccountService accountService;
     private final CardService cardService;
 
-    @PostMapping("/payments/graoup-account")
+    @PostMapping("/payments/group-account")
     public ResponseEntity<CommonResponse<PaymentCreateResponseDto>> createAccountAndCard(@RequestBody PaymentCreateRequestDto request) {
         PaymentCreateResponseDto response = accountService.createAccountAndCard(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(response));
