@@ -151,15 +151,8 @@ export default function GroupCardRecommendScreen() {
           <Text style={styles.showMoreText}>더보기</Text>
         </TouchableOpacity>
       )}
-
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={handleComplete}
-        disabled={!selectedCardId}
-        style={[styles.completeButton, !selectedCardId && styles.completeButtonDisabled]}
-      >
-        <Text style={styles.completeButtonText}>완료</Text>
-      </TouchableOpacity>
+      {/* 하단 고정 버튼 영역만큼 여백 확보 */}
+      <View style={{ height: 90 }} />
     </>
   );
 
@@ -191,6 +184,18 @@ export default function GroupCardRecommendScreen() {
           }
         />
       </ScreenLayout>
+
+      {/* 하단 고정 완료 버튼 */}
+      <View style={styles.fixedBottomContainer}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={handleComplete}
+          disabled={!selectedCardId}
+          style={[styles.completeButton, !selectedCardId && styles.completeButtonDisabled]}
+        >
+          <Text style={styles.completeButtonText}>완료</Text>
+        </TouchableOpacity>
+      </View>
 
       {/* 카드 상세 모달 */}
       {detailCard && (
@@ -326,14 +331,23 @@ const styles = StyleSheet.create({
     color: COLORS.subtle,
     fontFamily: FONT_FAMILY.medium,
   },
+  // ── 하단 고정 완료 버튼 ─────────────────
+  fixedBottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#F0F4FF',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 24,
+  },
   completeButton: {
-    marginTop: 24,
     height: 54,
     borderRadius: 16,
     backgroundColor: '#1428A0',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
   },
   completeButtonDisabled: {
     opacity: 0.4,
