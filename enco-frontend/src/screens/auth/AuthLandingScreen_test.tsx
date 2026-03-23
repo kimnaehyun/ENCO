@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, Image, Pressable, ActivityIndicator } from 'react-native';
+import { View, Image, Pressable, ActivityIndicator } from 'react-native'
+import Text from '@/components/typography';;
 import { images } from '../../types/images';
 import { AuthScreenProps } from '../../types/navigation';
 import { getDeviceToken, saveDeviceToken } from '../../utils/tokenStorage';
@@ -53,13 +54,9 @@ export default function AuthLandingScreen({
           {checking ? (
             <ActivityIndicator color="white" size="small" />
           ) : (
-            <Text
-              style={{
-                fontFamily: 'GmarketSansTTFBold',
-                color: 'white',
-                fontSize: 24,
-              }}
-            >
+            <Text weight="bold" color='white'
+              
+             style={{ fontSize: 24 }}>
               LOGIN
             </Text>
           )}
@@ -68,18 +65,13 @@ export default function AuthLandingScreen({
 
       <View className="items-center mb-10">
         <Text
-          style={{ fontFamily: 'GmarketSansTTFMedium', fontSize: 16 }}
+          
         >
           ENCO에 처음 오셨나요?
         </Text>
         <Pressable onPress={() => navigation.navigate('SignupVerify')}>
-          <Text
-            style={{
-              textDecorationLine: 'underline',
-              color: 'blue',
-              fontFamily: 'GmarketSansTTFMedium',
-              fontSize: 16,
-            }}
+          <Text color='blue'
+            
           >
             회원가입하러 가기
           </Text>

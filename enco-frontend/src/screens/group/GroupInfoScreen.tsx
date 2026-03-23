@@ -1,15 +1,7 @@
 // src/screens/group/GroupInfoScreen.tsx
 import React, { useEffect, useState } from 'react';
-import {
-  Alert,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
@@ -516,49 +508,49 @@ const styles = StyleSheet.create({
   cardListContainer: { gap: 12 },
   tagButtonEdit: { backgroundColor: '#F3F4F6' },
   tagButtonEditActive: { backgroundColor: '#1428A0' },
-  tagTextActive: { color: '#fff' },
+  tagTextActive: { color: COLORS.white },
   cardItemSelected: { borderColor: '#1428A0' },
 
   // 헤더
-  headerTitle: { fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#111827' },
-  cancelText: { fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' },
-  editText: { fontSize: 14, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium' },
+  headerTitle: { fontSize: 20, fontFamily: FONT_FAMILY.bold, color: COLORS.dark },
+  cancelText: { fontSize: 14, color: COLORS.muted, fontFamily: FONT_FAMILY.medium },
+  editText: { fontSize: 14, color: COLORS.brand, fontFamily: FONT_FAMILY.medium },
 
   // 공통 카드 그림자
   card: { shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 },
 
   // InfoRow
-  infoLabel: { width: 80, fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' },
-  groupNameText: { fontSize: 18, fontFamily: 'GmarketSansTTFBold', color: '#111827', textAlign: 'right' },
-  introText: { fontSize: 14, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' },
-  infoValueText: { fontSize: 14, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' },
+  infoLabel: { width: 80, fontSize: 14, color: COLORS.muted, fontFamily: FONT_FAMILY.medium },
+  groupNameText: { fontSize: 18, fontFamily: FONT_FAMILY.bold, color: COLORS.dark, textAlign: 'right' },
+  introText: { fontSize: 14, color: COLORS.dark, fontFamily: FONT_FAMILY.medium, textAlign: 'right' },
+  infoValueText: { fontSize: 14, color: COLORS.dark, fontFamily: FONT_FAMILY.medium, textAlign: 'right' },
 
   // 태그
-  tagText: { fontSize: 13, fontFamily: 'GmarketSansTTFMedium' },
+  tagText: { fontSize: 13, fontFamily: FONT_FAMILY.medium },
   tagInactive: { backgroundColor: '#F3F4F6' },
-  tagTextInactive: { fontSize: 13, color: '#374151', fontFamily: 'GmarketSansTTFMedium' },
+  tagTextInactive: { fontSize: 13, color: COLORS.subtle, fontFamily: FONT_FAMILY.medium },
 
   // 회비
-  duesValue: { flex: 1, fontSize: 13, color: '#111827', fontFamily: 'GmarketSansTTFMedium', textAlign: 'right' },
+  duesValue: { flex: 1, fontSize: 13, color: COLORS.dark, fontFamily: FONT_FAMILY.medium, textAlign: 'right' },
   inputRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginBottom: 10 },
   inputRowLast: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
   inputPill: { backgroundColor: '#E5E7EB', borderRadius: 50, paddingHorizontal: 20, height: 32, justifyContent: 'center', alignItems: 'center', minWidth: 80 },
   inputPillWide: { backgroundColor: '#E5E7EB', borderRadius: 50, paddingHorizontal: 20, height: 32, justifyContent: 'center', alignItems: 'center', minWidth: 120 },
-  pillInput: { fontSize: 16, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium', textAlign: 'center', paddingVertical: 0, includeFontPadding: false },
-  pillInputCompact: { fontSize: 16, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium', textAlign: 'center', padding: 0 },
-  unitText: { fontSize: 13, color: '#000', fontFamily: 'GmarketSansTTFMedium' },
+  pillInput: { fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', paddingVertical: 0, includeFontPadding: false },
+  pillInputCompact: { fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', padding: 0 },
+  unitText: { fontSize: 13, color: '#000', fontFamily: FONT_FAMILY.medium },
 
   // 그라운드룰
-  sectionTitle: { fontSize: 15, fontFamily: 'GmarketSansTTFBold', color: '#111827', marginBottom: 12 },
-  groundRulesInput: { fontSize: 14, color: '#111827', fontFamily: 'GmarketSansTTFMedium', lineHeight: 22, textAlignVertical: 'top', minHeight: 100, backgroundColor: '#F9FAFB', borderRadius: 12, padding: 12 },
-  groundRulesText: { fontSize: 14, color: '#374151', fontFamily: 'GmarketSansTTFMedium', lineHeight: 24 },
+  sectionTitle: { fontSize: 15, fontFamily: FONT_FAMILY.bold, color: COLORS.dark, marginBottom: 12 },
+  groundRulesInput: { fontSize: 14, color: COLORS.dark, fontFamily: FONT_FAMILY.medium, lineHeight: 22, textAlignVertical: 'top', minHeight: 100, backgroundColor: '#F9FAFB', borderRadius: 12, padding: 12 },
+  groundRulesText: { fontSize: 14, color: COLORS.subtle, fontFamily: FONT_FAMILY.medium, lineHeight: 24 },
 
   // 카드 섹션
-  cardSectionTitle: { fontSize: 15, fontFamily: 'GmarketSansTTFBold', color: '#111827' },
-  cardHintText: { fontSize: 12, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium' },
+  cardSectionTitle: { fontSize: 15, fontFamily: FONT_FAMILY.bold, color: COLORS.dark },
+  cardHintText: { fontSize: 12, color: COLORS.brand, fontFamily: FONT_FAMILY.medium },
   cardItem: { borderRadius: 16, borderWidth: 2, overflow: 'hidden' },
   cardImage: { width: '100%', height: 180 },
   repBadge: { position: 'absolute', top: 10, right: 10, backgroundColor: '#1428A0', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  repBadgeText: { fontSize: 11, color: '#fff', fontFamily: 'GmarketSansTTFMedium' },
+  repBadgeText: { fontSize: 11, color: COLORS.white, fontFamily: FONT_FAMILY.medium },
   repCardImage: { width: '100%', height: 200, borderRadius: 16 },
 });

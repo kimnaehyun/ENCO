@@ -1,14 +1,6 @@
 import React, { useState } from "react";
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  Alert,
-  ActivityIndicator,
-  KeyboardAvoidingView,
-  Platform,
-} from "react-native";
+import { View, TextInput, Pressable, Alert, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native"
+import Text from '@/components/typography';;
 import type { AuthScreenProps } from "../../types/navigation";
 import { useAuthStore } from "../../store/useAuthStore";
 import { ReLoginService } from "../../services/authService";
@@ -70,7 +62,7 @@ export default function ReLoginScreen({
         <ActivityIndicator size="large" color="#1428A0" />
         <Text
           className="text-[#374151] text-lg mt-4"
-          style={{ fontFamily: "GmarketSansTTFMedium" }}
+          
         >
           로그인 중...
         </Text>
@@ -91,7 +83,7 @@ export default function ReLoginScreen({
             <Pressable onPress={() => setStep("email")}>
               <Text
                 className="text-[#6B7280] text-sm underline"
-                style={{ fontFamily: "GmarketSansTTFMedium" }}
+                
               >
                 이메일 다시 입력
               </Text>
@@ -109,22 +101,22 @@ export default function ReLoginScreen({
       behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
       <View className="flex-1 justify-center px-8">
-        <Text
+        <Text weight="bold" color="#1428A0"
           className="text-2xl text-center mb-10"
-          style={{ fontFamily: "GmarketSansTTFBold", color: "#1428A0" }}
+          
         >
           이메일로 로그인
         </Text>
 
         <Text
           className="text-sm mb-2 text-[#374151]"
-          style={{ fontFamily: "GmarketSansTTFMedium" }}
+          
         >
           이메일
         </Text>
         <TextInput
           className="bg-white rounded-xl px-4 py-3 mb-8 text-base"
-          style={{ fontFamily: "GmarketSansTTFMedium" }}
+          
           placeholder="example@email.com"
           placeholderTextColor="#9CA3AF"
           keyboardType="email-address"
@@ -141,13 +133,9 @@ export default function ReLoginScreen({
           className="bg-[#1428A0] rounded-2xl py-4 items-center"
           onPress={handleEmailNext}
         >
-          <Text
-            style={{
-              fontFamily: "GmarketSansTTFBold",
-              color: "white",
-              fontSize: 18,
-            }}
-          >
+          <Text weight="bold" color="white"
+            
+           style={{ fontSize: 18 }}>
             다음
           </Text>
         </Pressable>
@@ -158,7 +146,7 @@ export default function ReLoginScreen({
         >
           <Text
             className="text-[#6B7280] text-sm underline"
-            style={{ fontFamily: "GmarketSansTTFMedium" }}
+            
           >
             뒤로 가기
           </Text>

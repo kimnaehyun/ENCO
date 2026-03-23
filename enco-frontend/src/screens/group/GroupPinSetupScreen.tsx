@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Alert, StyleSheet, Text, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native"
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import PinEntry from "../../components/pin/PinEntry";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../types/navigation";
@@ -134,13 +135,13 @@ const styles = StyleSheet.create({
   },
   loadingTitle: {
     fontSize: 18,
-    color: '#1428A0',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.bold,
     marginBottom: 12,
   },
   loadingSubtitle: {
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 });

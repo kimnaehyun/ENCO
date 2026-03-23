@@ -1,15 +1,7 @@
 // src/screens/admin/AdminMembersScreen.tsx
 import React, { useMemo, useState } from 'react';
-import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  Image
-} from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, View, Image } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
@@ -91,23 +83,14 @@ export default function AdminMembersScreen() {
         {/* 헤더 */}
         <View className="flex-row items-center justify-between mb-5">
           <View>
-            <Text
-              style={{
-                fontSize: 20,
-                fontFamily: 'GmarketSansTTFBold',
-                color: '#111827',
-              }}
+            <Text variant="bodyLg" weight="bold" color="dark"
+              
             >
               멤버 관리
             </Text>
-            <Text
-              style={{
-                marginTop: 6,
-                fontSize: 13,
-                color: '#6B7280',
-                fontFamily: 'GmarketSansTTFMedium',
-              }}
-            >
+            <Text variant="caption" color="muted"
+              
+             style={{ marginTop: 6 }}>
               {groupName} 멤버를 관리할 수 있어요
             </Text>
           </View>
@@ -118,12 +101,8 @@ export default function AdminMembersScreen() {
               className="rounded-2xl px-4 py-2"
               style={{ backgroundColor: '#1428A0' }}
             >
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: '#FFFFFF',
-                  fontFamily: 'GmarketSansTTFBold',
-                }}
+              <Text variant="bodySm" weight="bold" color="white"
+                
               >
                 초대
               </Text>
@@ -134,12 +113,8 @@ export default function AdminMembersScreen() {
               className="rounded-2xl px-4 py-2"
               style={{ backgroundColor: kickMode ? '#9CA3AF' : '#FF3B30' }}
             >
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: '#FFFFFF',
-                  fontFamily: 'GmarketSansTTFBold',
-                }}
+              <Text variant="bodySm" weight="bold" color="white"
+                
               >
                 {kickMode ? '취소' : '방출'}
               </Text>
@@ -157,14 +132,9 @@ export default function AdminMembersScreen() {
             elevation: 2,
           }}
         >
-          <Text
-            style={{
-              fontSize: 15,
-              fontFamily: 'GmarketSansTTFBold',
-              color: '#111827',
-              marginBottom: 16,
-            }}
-          >
+          <Text variant="bodyMd" weight="bold" color="dark"
+            
+           style={{ marginBottom: 16 }}>
             전체 멤버
           </Text>
 
@@ -220,13 +190,8 @@ export default function AdminMembersScreen() {
               elevation: 2,
             }}
           >
-            <Text
-              style={{
-                fontSize: 14,
-                color: '#6B7280',
-                fontFamily: 'GmarketSansTTFMedium',
-                lineHeight: 22,
-              }}
+            <Text variant="bodySm" color="muted"
+              
             >
               방출할 멤버를 선택한 뒤 아래 버튼을 눌러주세요.
             </Text>
@@ -323,14 +288,14 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 17,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   memberJoinedAt: {
     marginTop: 6,
     fontSize: 13,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   selectionBadge: {
@@ -342,8 +307,8 @@ const styles = StyleSheet.create({
   },
   selectionBadgeText: {
     fontSize: 12,
-    color: '#1428A0',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   bottomBar: {
@@ -368,8 +333,8 @@ const styles = StyleSheet.create({
   },
   kickButtonText: {
     fontSize: 16,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   modalOverlay: {
@@ -406,22 +371,22 @@ const styles = StyleSheet.create({
   },
   modalCloseText: {
     fontSize: 16,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.bold,
   },
   modalTitle: {
     marginTop: 6,
     fontSize: 19,
-    color: '#111827',
+    color: COLORS.dark,
     textAlign: 'center',
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
   modalDescription: {
     marginTop: 10,
     fontSize: 14,
     lineHeight: 22,
-    color: '#6B7280',
+    color: COLORS.muted,
     textAlign: 'center',
-    fontFamily: 'GmarketSansTTFMedium',
+    fontFamily: FONT_FAMILY.medium,
   },
 });

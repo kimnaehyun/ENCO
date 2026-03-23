@@ -1,4 +1,5 @@
-import { View, Text } from 'react-native';
+import { View } from 'react-native'
+import Text from '@/components/typography';;
 import React from 'react';
 import {
   botAvatar,
@@ -21,7 +22,7 @@ export default function Chatbot({ item }: { item: any }) {
         resizeMode="contain"
       />
       <View className={botCard}>
-        <Text className={botText} style={{ fontFamily: 'GmarketSansTTFBold' }}>
+        <Text weight="bold" className={botText} >
           {item.content}
         </Text>
       </View>

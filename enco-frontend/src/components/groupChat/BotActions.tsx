@@ -1,4 +1,5 @@
-import { View, Text, Image } from 'react-native';
+import { View, Image } from 'react-native'
+import Text from '@/components/typography';;
 import {
   botAvatar,
   botCard,
@@ -23,7 +24,7 @@ export default function BotActions({
         resizeMode="contain"
       />
       <View className={botCard}>
-        <Text className={botText} style={{ fontFamily: 'GmarketSansTTFBold' }}>
+        <Text weight="bold" className={botText} >
           {item.text}
         </Text>
         <View className="gap-3">

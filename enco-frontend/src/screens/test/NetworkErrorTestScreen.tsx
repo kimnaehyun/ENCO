@@ -2,7 +2,8 @@
 // TODO: 실제 페이지 적용 완료 후 삭제 가능
 
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import NetworkErrorView from '../../components/network/NetworkErrorView';
 
 type ScreenStatus = 'offline' | 'retrying' | 'ready';
@@ -59,14 +60,14 @@ const styles = StyleSheet.create({
   },
   pageTitle: {
     fontSize: 24,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#1428A0',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.brand,
     marginBottom: 12,
   },
   pageDescription: {
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFMedium',
-    color: '#666666',
+    fontFamily: FONT_FAMILY.medium,
+    color: COLORS.secondary,
     marginBottom: 8,
     textAlign: 'center',
   },
@@ -79,7 +80,7 @@ const styles = StyleSheet.create({
   },
   testButtonText: {
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#FFFFFF',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.white,
   },
 });

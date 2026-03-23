@@ -1,11 +1,5 @@
-import {
-  View,
-  Text,
-  Image,
-  TouchableOpacity,
-  ActivityIndicator,
-  StyleSheet,
-} from 'react-native';
+import { View, Image, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import React from 'react';
 import { images } from '../../types/images';
 import { ChatMsgProps } from '../../types/chat';
@@ -99,9 +93,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 6,
   },
   userBubbleText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // 상대 메시지
@@ -120,9 +114,9 @@ const styles = StyleSheet.create({
   },
   senderText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: COLORS.placeholder,
     marginBottom: 4,
-    fontFamily: 'GmarketSansTTFMedium',
+    fontFamily: FONT_FAMILY.medium,
   },
   otherBubble: {
     maxWidth: '72%',
@@ -133,15 +127,15 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 6,
   },
   otherBubbleText: {
-    color: '#111111',
+    color: COLORS.primary,
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // 공통
   timeText: {
     fontSize: 11,
-    color: '#9CA3AF',
+    color: COLORS.placeholder,
     marginLeft: 6,
     marginBottom: 4,
   },
@@ -151,6 +145,6 @@ const styles = StyleSheet.create({
   },
   cancelText: {
     fontSize: 12,
-    color: '#EF4444',
+    color: COLORS.error,
   },
 });
