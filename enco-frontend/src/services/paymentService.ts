@@ -120,6 +120,8 @@ export async function duesPayment(
 }
 
 export type SelectedDuesPaymentRequest = {
+    withdrawAccountBankName: string;
+    withdrawAccountNumber: string;
     amount: number;
     targetChargeTargetIds: number[];
     withdrawDisplayName: string;
@@ -251,3 +253,5 @@ export async function getGroupCards(groupId: number | string) {
 
   return response.data;
 }
+
+//회비납부
