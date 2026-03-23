@@ -341,6 +341,7 @@ export default function OcrTestScreen() {
     }
   };
 
+  // 정산 인원 선택으로 이동하는 공통 함수
   const goToSettleMemberSelect = () => {
     if (!receiptDraft) {
       Alert.alert('안내', '먼저 영수증을 분석하고 내용을 검증하세요.');

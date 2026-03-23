@@ -1,32 +1,74 @@
-export type ReceiptOptionDraft = {
-  id: string;
+export type ReceiptOcrCandidateMap = Record<string, unknown[]>;
+
+export type ReceiptOcrMeta = {
+  provider: string;
+  requestId: string;
+  inferResult: string;
+};
+
+export type ReceiptOptionDto = {
   name: string;
   unitPrice: number | null;
   quantity: number | null;
   amount: number | null;
 };
 
-export type ReceiptItemDraft = {
-  id: string;
+export type ReceiptItemDto = {
   name: string;
   unitPrice: number | null;
   quantity: number | null;
   amount: number | null;
-  options: ReceiptOptionDraft[];
+  options: ReceiptOptionDto[];
 };
 
-export type ReceiptDraft = {
+export type ReceiptDto = {
   merchantName: string;
   address: string;
   paidAt: string;
-  items: ReceiptItemDraft[];
-  totalAmount: number | null;
   businessNumber: string;
+  totalAmount: number | null;
+  items: ReceiptItemDto[];
+  candidates: ReceiptOcrCandidateMap;
+  ocrMeta: ReceiptOcrMeta | null;
+};
+
+export type ReceiptOptionDraft = ReceiptOptionDto & {
+  id: string;
+};
+
+export type ReceiptItemDraft = Omit<ReceiptItemDto, 'options'> & {
+  id: string;
+  options: ReceiptOptionDraft[];
+};
+
+export type ReceiptDraft = Omit<ReceiptDto, 'items'> & {
+  items: ReceiptItemDraft[];
 };
 
 export type ReceiptOcrResult = {
   message: string;
   receipt: ReceiptDraft;
+  rawResponse: unknown;
+};
+
+export type ReceiptEvidenceUploadResponse = {
+  evidenceId: string;
+  receiptImageUrl: string;
+  source: string;
+  groupId: number | null;
+};
+
+export type ReceiptContentSubmitRequestDto = {
+  groupId?: number;
+  evidenceId?: string;
+  receipt: ReceiptDto;
+};
+
+export type ReceiptContentSubmitResponse = {
+  groupId: number | null;
+  evidenceId: string;
+  receipt: ReceiptDraft;
+  accepted: boolean;
   rawResponse: unknown;
 };
 
@@ -37,4 +79,6 @@ export const createEmptyReceiptDraft = (): ReceiptDraft => ({
   items: [],
   totalAmount: null,
   businessNumber: '',
+  candidates: {},
+  ocrMeta: null,
 });

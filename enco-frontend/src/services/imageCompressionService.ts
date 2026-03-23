@@ -1,5 +1,7 @@
 import {NativeModules} from 'react-native';
 
+// 이미지 압축(10MB 이하로)용 서비스
+
 const {ImageCompression} = NativeModules;
 
 export type CompressedImageResult = {

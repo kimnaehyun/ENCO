@@ -5,6 +5,7 @@ import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import type {ReceiptDraft} from '../../types/receipt';
+import {submitVerifiedReceipt} from '../../services/receiptService';
 
 type SettleMember = {
   id: string;
@@ -40,6 +41,7 @@ export default function SettleMemberSelectScreen() {
   const params = (route.params ?? {}) as RouteParams;
 
   const { amount = 10000, groupName = '', isNewSettle = false } = params;
+  const [submitting, setSubmitting] = useState(false);
 
   // ── 새 정산 등록 모드 ──
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -69,6 +71,16 @@ export default function SettleMemberSelectScreen() {
       return;
     }
 
+    if (!params.receiptDraft) {
+      Alert.alert('안내', '검수된 영수증 데이터가 없습니다. OCR 검수부터 진행해 주세요.');
+      return;
+    }
+
+    if (!params.receiptUri) {
+      Alert.alert('안내', '영수증 스캔본이 없습니다. 영수증 이미지를 다시 선택해 주세요.');
+      return;
+    }
+
     const selectedMembers = ALL_GROUP_MEMBERS
       .filter(m => selectedIds.has(m.id))
       .map(m => ({ ...m, isPaid: false }));
@@ -80,18 +92,33 @@ export default function SettleMemberSelectScreen() {
         { text: '취소', style: 'cancel' },
         {
           text: '등록',
-          onPress: () => {
-            // 등록 후 정산 플로우 스택을 정리하고 장부로 돌아감
-            Alert.alert('완료', '새로운 정산이 등록되었습니다.', [
-              {
-                text: '확인',
-                onPress: () => {
-                  // OcrTest → SettleMemberSelect 스택을 모두 날리고 GroupLedger로
-                  navigation.popToTop();
-                  navigation.navigate('GroupLedger', { groupName });
+          onPress: async () => {
+            try {
+              setSubmitting(true);
+
+              await submitVerifiedReceipt({
+                receipt: params.receiptDraft as ReceiptDraft,
+                imageUri: params.receiptUri as string,
+                groupId: params.groupId,
+              });
+
+              Alert.alert('완료', '영수증 증빙과 영수증 내용이 등록되었습니다.', [
+                {
+                  text: '확인',
+                  onPress: () => {
+                    navigation.popToTop();
+                    navigation.navigate('GroupLedger', { groupName });
+                  },
                 },
-              },
-            ]);
+              ]);
+            } catch (error: any) {
+              Alert.alert(
+                '등록 실패',
+                error?.response?.data?.message || error?.message || '영수증 등록 중 오류가 발생했습니다.',
+              );
+            } finally {
+              setSubmitting(false);
+            }
           },
         },
       ]
@@ -222,11 +249,14 @@ export default function SettleMemberSelectScreen() {
           <View style={styles.bottomBar}>
             <Pressable
               onPress={handleRegister}
+              disabled={selectedIds.size === 0 || submitting}
               className="rounded-2xl py-4 items-center justify-center"
-              style={[styles.registerButton, selectedIds.size === 0 && styles.registerButtonDisabled]}
+              style={[styles.registerButton, (selectedIds.size === 0 || submitting) && styles.registerButtonDisabled]}
             >
               <Text style={styles.registerButtonText}>
-                {selectedIds.size > 0
+                {submitting
+                  ? '영수증 등록 중...'
+                  : selectedIds.size > 0
                   ? `정산 등록하기 (${selectedIds.size}명)`
                   : '인원을 선택하세요'}
               </Text>
