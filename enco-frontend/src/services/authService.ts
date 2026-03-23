@@ -1,13 +1,13 @@
-import axios from "axios";
-import { getCachedAccessToken } from "../utils/tokenStorage";
+import axios from 'axios';
+import { getCachedAccessToken } from '../utils/tokenStorage';
 
-const AUTH_BASE_URL = "https://api.ssafywte.site/auth-service/api/v1";
+const AUTH_BASE_URL = 'https://api.ssafywte.site/auth-service/api/v1';
 
-const authApi = axios.create({
+export const authApi = axios.create({
   baseURL: AUTH_BASE_URL,
   timeout: 10000,
   headers: {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   },
 });
 
@@ -38,8 +38,10 @@ export type LoginResponse = {
   };
 };
 
-export async function loginService(payload: LoginRequest): Promise<LoginResponse> {
-  const response = await authApi.post<LoginResponse>("/auth/login", payload);
+export async function loginService(
+  payload: LoginRequest,
+): Promise<LoginResponse> {
+  const response = await authApi.post<LoginResponse>('/auth/login', payload);
   return response.data;
 }
 
@@ -65,7 +67,7 @@ export async function ReLoginService(
   payload: ReLoginRequest,
 ): Promise<ReLoginResponse> {
   const response = await authApi.post<ReLoginResponse>(
-    "/auth/re-login",
+    '/auth/re-login',
     payload,
   );
   return response.data;
@@ -78,7 +80,7 @@ export type SignupRequest = {
   password: string;
   birthDay: string; // "2000-01-01"
   phoneNumber: string; // "01012345678"
-  gender: "M" | "W";
+  gender: 'M' | 'W';
   pinCode: string; // "1234"
   profileUrl: number;
 };
@@ -91,39 +93,44 @@ export type SignupResponse = {
   };
 };
 
-export async function signupService(payload: SignupRequest): Promise<SignupResponse> {
-  const response = await authApi.post<SignupResponse>("/auth/regist", payload);
+export async function signupService(
+  payload: SignupRequest,
+): Promise<SignupResponse> {
+  const response = await authApi.post<SignupResponse>('/auth/regist', payload);
   return response.data;
 }
-
 
 // ── 통장 개설 (POST /groups/account) ──
 
 export type CreateGroupRequest = {
-    name: string,
-    groupName: string,
-    groupCategory: string[],
-    cardProductId: number,
-    password: string,
+  name: string;
+  groupName: string;
+  groupCategory: string[];
+  cardProductId: number;
+  password: string;
 };
 
 export type CreateGroupResponse = {
-    message: string;
-    result: {
-        groupId: number,
-        groupName: string,
-        accountId: number,
-        accountNumber: string,
-        cardId: number,
-        chatRoomId: number,
-    };
-}
+  message: string;
+  result: {
+    groupId: number;
+    groupName: string;
+    accountId: number;
+    accountNumber: string;
+    cardId: number;
+    chatRoomId: number;
+  };
+};
 
-export async function createGroup(payload: CreateGroupRequest): Promise<CreateGroupResponse> {
-    const response = await authApi.post<CreateGroupResponse>("/groups/account", payload);
-    return response.data;
+export async function createGroup(
+  payload: CreateGroupRequest,
+): Promise<CreateGroupResponse> {
+  const response = await authApi.post<CreateGroupResponse>(
+    '/groups/account',
+    payload,
+  );
+  return response.data;
 }
-
 
 // ── 모임 타입(카테고리) 조회 (GET /groups/types) ──
 // 응답: { message: "...", result: [{typeId, typeName}, ...] }
@@ -136,9 +143,9 @@ export type GroupTypeItem = {
 export type GetGroupTypeResponse = {
   message: string;
   result: GroupTypeItem[];
-}
+};
 
 export async function getGroupType(): Promise<GetGroupTypeResponse> {
-    const response = await authApi.get<GetGroupTypeResponse>("/groups/types");
-    return response.data;
+  const response = await authApi.get<GetGroupTypeResponse>('/groups/types');
+  return response.data;
 }
