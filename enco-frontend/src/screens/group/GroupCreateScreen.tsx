@@ -5,6 +5,7 @@ import {
   Image,
   Pressable,
   ScrollView,
+  StyleSheet,
   Text,
   TextInput,
   View,
@@ -144,45 +145,15 @@ export default function GroupCreateScreen() {
   return (
     <ScreenLayout>
       <ScrollView
-        contentContainerStyle={{ paddingTop: 8, paddingBottom: 40 }}
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
         {/* 헤더 */}
-        <Text
-          style={{
-            fontSize: 22,
-            color: '#111827',
-            fontFamily: 'GmarketSansTTFBold',
-            marginBottom: 28,
-          }}
-        >
-          모임통장 개설하기
-        </Text>
+        <Text style={styles.pageTitle}>모임통장 개설하기</Text>
 
         {/* 총무 정보 */}
-        <Text
-          style={{
-            fontSize: 14,
-            color: '#6B7280',
-            fontFamily: 'GmarketSansTTFMedium',
-            marginBottom: 8,
-          }}
-        >
-          총무 정보(자동 입력)
-        </Text>
-        <View
-          style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: 20,
-            paddingHorizontal: 18,
-            marginBottom: 20,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 1,
-          }}
-        >
+        <Text style={styles.sectionLabel}>총무 정보(자동 입력)</Text>
+        <View style={styles.managerCard}>
           {[
             { label: '이름', value: manager.name },
             { label: '이메일', value: manager.email },
@@ -190,187 +161,76 @@ export default function GroupCreateScreen() {
           ].map((item, i) => (
             <View
               key={item.label}
-              style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                paddingVertical: 14,
-                borderBottomWidth: i < 2 ? 1 : 0,
-                borderBottomColor: '#F3F4F6',
-              }}
+              style={[styles.managerRow, i < 2 && styles.managerRowBorder]}
             >
-              <Text style={{ fontSize: 14, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium' }}>
-                {item.label}
-              </Text>
-              <Text style={{ fontSize: 14, color: '#111827', fontFamily: 'GmarketSansTTFMedium' }}>
-                {item.value}
-              </Text>
+              <Text style={styles.managerLabel}>{item.label}</Text>
+              <Text style={styles.managerValue}>{item.value}</Text>
             </View>
           ))}
         </View>
 
         {/* 모임명 */}
-        <Text
-          style={{
-            fontSize: 14,
-            color: '#6B7280',
-            fontFamily: 'GmarketSansTTFMedium',
-            marginBottom: 8,
-          }}
-        >
-          모임명
-        </Text>
+        <Text style={styles.sectionLabel}>모임명</Text>
         <TextInput
           value={groupName}
           onChangeText={setGroupName}
           placeholder="모임명을 입력해주세요"
           placeholderTextColor="#9CA3AF"
-          style={{
-            height: 56,
-            borderRadius: 16,
-            backgroundColor: '#FFFFFF',
-            paddingHorizontal: 18,
-            fontSize: 15,
-            color: '#111827',
-            fontFamily: 'GmarketSansTTFMedium',
-            marginBottom: 20,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 4,
-            elevation: 1,
-          }}
+          style={styles.groupNameInput}
         />
 
         {/* 모임 성향 태그 */}
-        <Text
-          style={{
-            fontSize: 14,
-            color: '#6B7280',
-            fontFamily: 'GmarketSansTTFMedium',
-            marginBottom: 12,
-          }}
-        >
-          모임 성향(옵션 태그)
-        </Text>
+        <Text style={styles.sectionLabel}>모임 성향(옵션 태그)</Text>
 
         {tagLoading ? (
           <ActivityIndicator
             size="small"
             color="#1428A0"
-            style={{ marginVertical: 24 }}
+            style={styles.tagLoader}
           />
         ) : (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 6 }}>
+          <View style={styles.tagGrid}>
             {tagOptions.map((tag) => {
               const selected = selectedTags.includes(tag.typeName);
               return (
                 <Pressable
                   key={tag.typeId}
                   onPress={() => toggleTag(tag.typeName)}
-                  style={{
-                    width: '31%',
-                    paddingVertical: 18,
-                    borderRadius: 18,
-                    backgroundColor: selected ? '#1428A0' : '#C7D2FE',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    shadowColor: selected ? '#1428A0' : '#000',
-                    shadowOffset: { width: 0, height: selected ? 4 : 1 },
-                    shadowOpacity: selected ? 0.25 : 0.05,
-                    shadowRadius: selected ? 8 : 4,
-                    elevation: selected ? 4 : 1,
-                  }}
+                  style={[styles.tagButton, selected && styles.tagButtonSelected]}
                 >
-                  <Text style={{ fontSize: 15, color: '#FFFFFF', fontFamily: 'GmarketSansTTFBold' }}>
-                    {tag.typeName}
-                  </Text>
+                  <Text style={styles.tagButtonText}>{tag.typeName}</Text>
                 </Pressable>
               );
             })}
           </View>
         )}
 
-        <Text
-          style={{
-            fontSize: 12,
-            color: '#9CA3AF',
-            fontFamily: 'GmarketSansTTFMedium',
-            textAlign: 'center',
-            marginBottom: 28,
-          }}
-        >
-          중복 선택 가능
-        </Text>
+        <Text style={styles.tagHint}>중복 선택 가능</Text>
 
         {/* 선택된 카드 프리뷰 */}
         {selectedCardImage && (
-          <View
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: 20,
-              padding: 18,
-              alignItems: 'center',
-              marginBottom: 20,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.05,
-              shadowRadius: 4,
-              elevation: 1,
-            }}
-          >
-            <Text
-              style={{
-                fontSize: 13,
-                color: '#9CA3AF',
-                fontFamily: 'GmarketSansTTFMedium',
-                marginBottom: 12,
-              }}
-            >
-              선택한 카드
-            </Text>
+          <View style={styles.selectedCardPreview}>
+            <Text style={styles.selectedCardLabel}>선택한 카드</Text>
             <Image
               source={{ uri: selectedCardImage }}
-              style={{ width: '60%', aspectRatio: 2, borderRadius: 12 }}
+              style={styles.selectedCardImage}
               resizeMode="contain"
             />
-            <Text
-              style={{
-                marginTop: 10,
-                fontSize: 14,
-                color: '#111827',
-                fontFamily: 'GmarketSansTTFBold',
-              }}
-            >
-              {selectedCardName}
-            </Text>
+            <Text style={styles.selectedCardName}>{selectedCardName}</Text>
           </View>
         )}
 
         {/* 버튼 */}
-        <View style={{ gap: 10 }}>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+        <View style={styles.buttonGroup}>
+          <View style={styles.buttonRow}>
             <Pressable
               onPress={() => {
                 setRecommendPressed(true);
                 handleRecommend();
               }}
-              style={{
-                flex: 1,
-                height: 54,
-                borderRadius: 16,
-                backgroundColor: recommendPressed ? '#C7D2FE' : '#1428A0',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
+              style={[styles.halfButton, recommendPressed && styles.halfButtonPressed]}
             >
-              <Text style={{
-                color: '#FFFFFF',
-                fontSize: 14,
-                fontFamily: 'GmarketSansTTFBold',
-              }}>
-                카드 추천 받기
-              </Text>
+              <Text style={styles.halfButtonText}>카드 추천 받기</Text>
             </Pressable>
 
             <Pressable
@@ -378,40 +238,16 @@ export default function GroupCreateScreen() {
                 setViewAllPressed(true);
                 handleViewAll();
               }}
-              style={{
-                flex: 1,
-                height: 54,
-                borderRadius: 16,
-                backgroundColor: viewAllPressed ? '#C7D2FE' : '#1428A0',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
+              style={[styles.halfButton, viewAllPressed && styles.halfButtonPressed]}
             >
-              <Text style={{
-                color: '#FFFFFF',
-                fontSize: 14,
-                fontFamily: 'GmarketSansTTFBold',
-              }}>
-                전체 카드 보기
-              </Text>
+              <Text style={styles.halfButtonText}>전체 카드 보기</Text>
             </Pressable>
           </View>
 
           {/* 개설하기 - 카드 선택 후에만 표시 */}
           {selectedCardId && (
-            <Pressable
-              onPress={handleSubmit}
-              style={{
-                height: 54,
-                borderRadius: 16,
-                backgroundColor: '#1428A0',
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
-              <Text style={{ color: '#FFFFFF', fontSize: 16, fontFamily: 'GmarketSansTTFBold' }}>
-                모임통장 개설하기
-              </Text>
+            <Pressable onPress={handleSubmit} style={styles.submitButton}>
+              <Text style={styles.submitButtonText}>모임통장 개설하기</Text>
             </Pressable>
           )}
         </View>
@@ -419,3 +255,188 @@ export default function GroupCreateScreen() {
     </ScreenLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingTop: 8,
+    paddingBottom: 40,
+  },
+
+  // ── 헤더 ──────────────────────────────────
+  pageTitle: {
+    fontSize: 22,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+    marginBottom: 28,
+  },
+
+  // ── 섹션 레이블 ───────────────────────────
+  sectionLabel: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontFamily: 'GmarketSansTTFMedium',
+    marginBottom: 8,
+  },
+
+  // ── 총무 정보 카드 ────────────────────────
+  managerCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  managerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+  },
+  managerRowBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  managerLabel: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  managerValue: {
+    fontSize: 14,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+
+  // ── 모임명 입력 ───────────────────────────
+  groupNameInput: {
+    height: 56,
+    borderRadius: 16,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 18,
+    fontSize: 15,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFMedium',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+
+  // ── 태그 그리드 ───────────────────────────
+  tagLoader: {
+    marginVertical: 24,
+  },
+  tagGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 6,
+  },
+  tagButton: {
+    width: '31%',
+    paddingVertical: 18,
+    borderRadius: 18,
+    backgroundColor: '#C7D2FE',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  tagButtonSelected: {
+    backgroundColor: '#1428A0',
+    shadowColor: '#1428A0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  tagButtonText: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  tagHint: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontFamily: 'GmarketSansTTFMedium',
+    textAlign: 'center',
+    marginBottom: 28,
+  },
+
+  // ── 선택된 카드 프리뷰 ────────────────────
+  selectedCardPreview: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 18,
+    alignItems: 'center',
+    marginBottom: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  selectedCardLabel: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    fontFamily: 'GmarketSansTTFMedium',
+    marginBottom: 12,
+  },
+  selectedCardImage: {
+    width: '60%',
+    aspectRatio: 2,
+    borderRadius: 12,
+  },
+  selectedCardName: {
+    marginTop: 10,
+    fontSize: 14,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+
+  // ── 버튼 그룹 ─────────────────────────────
+  buttonGroup: {
+    gap: 10,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  halfButton: {
+    flex: 1,
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: '#1428A0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  halfButtonPressed: {
+    backgroundColor: '#C7D2FE',
+  },
+  halfButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  submitButton: {
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: '#1428A0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontFamily: 'GmarketSansTTFBold',
+  },
+});

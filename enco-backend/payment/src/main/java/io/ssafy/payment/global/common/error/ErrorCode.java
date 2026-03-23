@@ -21,7 +21,9 @@ public enum ErrorCode {
     VOTE_ALREADY_CLOSED(HttpStatus.BAD_REQUEST, "이미 종료된 투표입니다.", "VOTE_ALREADY_CLOSED"),
     VOTE_EXPIRED(HttpStatus.BAD_REQUEST, "만료된 투표입니다.", "VOTE_EXPIRED"),
     ALREADY_VOTED(HttpStatus.BAD_REQUEST, "이미 투표에 참여했습니다.", "ALREADY_VOTED"),
-    NOT_FOUND_TRANSACTION(HttpStatus.NOT_FOUND, "거래내역을 찾을 수 없습니다.", "NOT_FOUND_TRANSACTION");
+    NOT_FOUND_TRANSACTION(HttpStatus.NOT_FOUND, "거래내역을 찾을 수 없습니다.", "NOT_FOUND_TRANSACTION"),
+    DUPLICATE_PAYMENT(HttpStatus.CONFLICT, "이미 처리된 결제 요청입니다.", "DUPLICATE_PAYMENT");
+
 
     private final HttpStatus httpStatusCode;
     private final String errorMessage;

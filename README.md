@@ -107,7 +107,7 @@
         </td>
         <td width="33%" align="center" valign="bottom">
             <a href="https://github.com/ssafy14cici">
-                <img src="./readme-assets/jhs1.png" width="160px" />
+                <img src="./readme-assets/jhs.png" width="160px" />
             </a>
         </td>
         <td width="33%" align="center" valign="bottom">

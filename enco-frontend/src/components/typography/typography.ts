@@ -14,31 +14,18 @@ export const COLORS = {
   disabled: '#AAAAAA',
   white: '#FFFFFF',
   danger: '#FF3B30',
+  muted: '#9CA3AF',
 } as const;
 
 export const TYPOGRAPHY = {
-  h1: {
-    fontSize: 28,
-    lineHeight: 36,
-    fontFamily: FONT_FAMILY.bold,
-  },
-  h2: {
-    fontSize: 22,
-    lineHeight: 30,
-    fontFamily: FONT_FAMILY.bold,
-  },
-  body: {
-    fontSize: 16,
-    lineHeight: 24,
-    fontFamily: FONT_FAMILY.medium,
-  },
-  caption: {
-    fontSize: 13,
-    lineHeight: 18,
-    fontFamily: FONT_FAMILY.light,
-  },
+  h1: { fontSize: 28, lineHeight: 36 },
+  h2: { fontSize: 22, lineHeight: 30 },
+  body: { fontSize: 16, lineHeight: 24 },
+  bodyLg: { fontSize: 24, lineHeight: 32 },
+  caption: { fontSize: 13, lineHeight: 18 },
 } as const;
 
 export type Variant = keyof typeof TYPOGRAPHY;
 export type Color = keyof typeof COLORS;
 export type ColorValue = (typeof COLORS)[Color];
+export type Weight = keyof typeof FONT_FAMILY;

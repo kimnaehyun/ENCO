@@ -14,6 +14,8 @@ import java.util.Optional;
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Long> {
 
+    Optional<Account> findByGroupIdAndIsDeletedFalse(Long groupId);
+
     @Query("SELECT a.amount FROM accounts a WHERE a.groupId = :groupId AND a.isDeleted = false")
     Optional<BigDecimal> findAmountByGroupId(@Param("groupId") Long groupId);
 

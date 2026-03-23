@@ -10,10 +10,10 @@ import { ChatAction } from '@/types/chat';
 
 export default function BotActions({
   item,
-  onpress,
+  onPress,
 }: {
   item: any;
-  onpress: (action: ChatAction) => void;
+  onPress: (action: ChatAction, label: string) => void;
 }) {
   return (
     <View className={botRow}>
@@ -31,7 +31,7 @@ export default function BotActions({
             <ActionButton
               key={`${item.id}-${action.label}`}
               label={action.label}
-              onPress={() => onpress(action.action)}
+              onPress={() => onPress(action.action, action.label)}
             />
           ))}
         </View>

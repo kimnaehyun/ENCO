@@ -1,10 +1,11 @@
 // src/screens/group/GroupLedgerScreen.tsx
-import React, { useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
 import { LedgerItem } from '../../types/group';
+import { getGroupDashboardReport } from '../../services/paymentService';
 
 // ─── helpers ───
 function formatMoney(n: number) {
@@ -64,32 +65,45 @@ function CalendarModal({ selected, onSelect, onClose, title }: {
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'center', alignItems: 'center' }} onPress={onClose}>
-        <Pressable onPress={() => {}} style={{ width: '88%', backgroundColor: '#fff', borderRadius: 24, padding: 20 }}>
-          <Text style={{ fontSize: 15, fontFamily: 'GmarketSansTTFBold', color: '#111827', textAlign: 'center', marginBottom: 16 }}>{title}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 24, marginBottom: 16 }}>
-            <Pressable onPress={() => goMonth(-1)} hitSlop={12}><Text style={{ fontSize: 20, color: '#374151' }}>{'<'}</Text></Pressable>
-            <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>{viewYear}년 {viewMonth + 1}월</Text>
-            <Pressable onPress={() => goMonth(1)} hitSlop={12}><Text style={{ fontSize: 20, color: '#374151' }}>{'>'}</Text></Pressable>
+      <Pressable style={calStyles.calOverlay} onPress={onClose}>
+        <Pressable onPress={() => {}} style={calStyles.calCard}>
+          <Text style={calStyles.calTitle}>{title}</Text>
+          <View style={calStyles.calNavRow}>
+            <Pressable onPress={() => goMonth(-1)} hitSlop={12}>
+              <Text style={calStyles.calNavArrow}>{'<'}</Text>
+            </Pressable>
+            <Text style={calStyles.calMonthLabel}>{viewYear}년 {viewMonth + 1}월</Text>
+            <Pressable onPress={() => goMonth(1)} hitSlop={12}>
+              <Text style={calStyles.calNavArrow}>{'>'}</Text>
+            </Pressable>
           </View>
-          <View style={{ flexDirection: 'row' }}>
+          <View style={calStyles.calDayNamesRow}>
             {dayNames.map((dn, i) => (
-              <View key={dn} style={{ flex: 1, alignItems: 'center', paddingBottom: 8 }}>
-                <Text style={{ fontSize: 12, fontFamily: 'GmarketSansTTFMedium', color: i === 0 ? '#EF4444' : i === 6 ? '#3B82F6' : '#9CA3AF' }}>{dn}</Text>
+              <View key={dn} style={calStyles.calDayNameCell}>
+                <Text style={[
+                  calStyles.calDayNameText,
+                  { color: i === 0 ? '#EF4444' : i === 6 ? '#3B82F6' : '#9CA3AF' },
+                ]}>{dn}</Text>
               </View>
             ))}
           </View>
           {weeks.map((week, wi) => (
-            <View key={wi} style={{ flexDirection: 'row' }}>
+            <View key={wi} style={calStyles.calWeekRow}>
               {week.map((d, di) => {
                 const other = d <= 0;
                 const display = other ? (d > -100 ? Math.abs(d) : Math.abs(d) - 100) : d;
                 const sel = !other && isSelected(d);
                 return (
-                  <Pressable key={di} onPress={() => { if (!other) { onSelect(new Date(viewYear, viewMonth, d)); onClose(); } }}
-                    style={{ flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 10 }}>
-                    <View style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', borderWidth: sel ? 1.5 : 0, borderColor: '#1428A0' }}>
-                      <Text style={{ fontSize: 14, fontFamily: 'GmarketSansTTFMedium', color: other ? '#D1D5DB' : sel ? '#1428A0' : '#374151' }}>{display || ''}</Text>
+                  <Pressable
+                    key={di}
+                    onPress={() => { if (!other) { onSelect(new Date(viewYear, viewMonth, d)); onClose(); } }}
+                    style={calStyles.calDayCell}
+                  >
+                    <View style={[calStyles.calDayInner, sel && calStyles.calDayInnerSelected]}>
+                      <Text style={[
+                        calStyles.calDayText,
+                        { color: other ? '#D1D5DB' : sel ? '#1428A0' : '#374151' },
+                      ]}>{display || ''}</Text>
                     </View>
                   </Pressable>
                 );
@@ -108,11 +122,39 @@ type SortOrder = 'latest' | 'oldest';
 type TxFilter = 'all' | 'deposit' | 'withdraw';
 
 export default function GroupLedgerScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation();
   const route = useRoute();
   const params = (route.params ?? {}) as CommonParams;
   const groupName = params.groupName ?? '모임명';
   const isAdmin = !!params.isAdmin;
+  const groupId = params.groupId;
+
+  const [balance, setBalance] = useState(0);
+  const [paidAmount, setPaidAmount] = useState(0);
+  const [pointAmount, setPointAmount] = useState(0);
+
+  useEffect(() => {
+    const fetchLedgerSummary = async () => {
+      try {
+        console.log('ledger groupId 확인:', groupId);
+
+        const reportData = await getGroupDashboardReport(groupId);
+        console.log('모임비 대시보드 조회 성공:', reportData);
+        console.log('모임비 대시보드 result:', reportData.result);
+
+        const result = reportData.result;
+        setBalance(result.balance ?? 0);
+        setPaidAmount(result.paidAmount ?? 0);
+        setPointAmount(result.pointAmount ?? 0);
+      } catch (error: any) {
+        console.error('모임비 대시보드 조회 실패:', error);
+        console.error('error.response?.status:', error?.response?.status);
+        console.error('error.response?.data:', error?.response?.data);
+      }
+    };
+
+    fetchLedgerSummary();
+  }, [groupId]);
 
   // ── mock 데이터 ──
   const items: LedgerItem[] = useMemo(() => [
@@ -127,10 +169,6 @@ export default function GroupLedgerScreen() {
       ],
     },
   ], []);
-
-  const balance = 854440;
-  const paidAmount = 854000;
-  const pointAmount = 443;
 
   // ── 필터 상태 ──
   const today = useMemo(() => new Date(), []);
@@ -200,88 +238,70 @@ export default function GroupLedgerScreen() {
     return result;
   }, [items, balance]);
 
-  // 칩 스타일
-  const chip = (active: boolean) => ({
-    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12,
-    backgroundColor: active ? '#1428A0' : '#F3F4F6',
-  });
-  const chipTxt = (active: boolean) => ({
-    fontSize: 13 as number, fontFamily: 'GmarketSansTTFBold' as const,
-    color: active ? '#FFFFFF' : '#374151',
-  });
-
   return (
     <ScreenLayout>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
 
         {/* 헤더 */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <Text style={{ fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>모임 장부</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>모임 장부</Text>
         </View>
 
         {/* 잔액 카드 */}
-        <View style={{
-          backgroundColor: '#FFFFFF', borderRadius: 24, paddingHorizontal: 24, paddingVertical: 20, marginBottom: 16,
-          shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2,
-        }}>
-          <Text style={{ fontSize: 13, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium', marginBottom: 4 }}>현재 모임 통장 잔액</Text>
-          <Text style={{ fontSize: 28, fontFamily: 'GmarketSansTTFBold', color: '#111827', textAlign: 'right', marginBottom: 12 }}>{balance.toLocaleString()}원</Text>
-          <View style={{ height: 1, backgroundColor: '#F3F4F6', marginBottom: 12 }} />
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-            <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>납부 금액</Text>
-            <Text style={{ fontSize: 13, color: '#111827', fontFamily: 'GmarketSansTTFBold' }}>{paidAmount.toLocaleString()}원</Text>
+        <View style={styles.balanceCard}>
+          <Text style={styles.balanceCardLabel}>현재 모임 통장 잔액</Text>
+          <Text style={styles.balanceCardAmount}>{balance.toLocaleString()}원</Text>
+          <View style={styles.divider} />
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>납부 금액</Text>
+            <Text style={styles.summaryValue}>{paidAmount.toLocaleString()}원</Text>
           </View>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>포인트 금액</Text>
-            <Text style={{ fontSize: 13, color: '#111827', fontFamily: 'GmarketSansTTFBold' }}>{pointAmount.toLocaleString()}원</Text>
+          <View style={styles.summaryRow}>
+            <Text style={styles.summaryLabel}>포인트 금액</Text>
+            <Text style={styles.summaryValue}>{pointAmount.toLocaleString()}원</Text>
           </View>
         </View>
 
         {/* 버튼 행: 정산하기 + 필터 + 필터 해제 */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 4 }}>
+        <View style={styles.filterButtonRow}>
           {isAdmin && (
             <Pressable
               onPress={() => navigation.navigate('OcrTest', { groupName, groupId: params.groupId })}
-              style={{ backgroundColor: '#1428A0', borderRadius: 16, paddingHorizontal: 20, paddingVertical: 12 }}
+              style={styles.settleButton}
             >
-              <Text style={{ fontSize: 14, color: '#fff', fontFamily: 'GmarketSansTTFBold' }}>정산하기</Text>
+              <Text style={styles.settleButtonText}>정산하기</Text>
             </Pressable>
           )}
           <Pressable
             onPress={() => setFilterVisible(true)}
-            style={{
-              backgroundColor: appliedFilter ? '#EEF2FF' : '#FFFFFF', borderRadius: 16,
-              paddingHorizontal: 20, paddingVertical: 12,
-              borderWidth: appliedFilter ? 1.5 : 0, borderColor: '#1428A0',
-              shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 8, elevation: 1,
-            }}
+            style={[styles.filterButton, appliedFilter && styles.filterButtonActive]}
           >
-            <Text style={{ fontSize: 14, color: appliedFilter ? '#1428A0' : '#374151', fontFamily: 'GmarketSansTTFBold' }}>
+            <Text style={[styles.filterButtonText, appliedFilter && styles.filterButtonTextActive]}>
               {appliedFilter ? '필터 변경' : '필터'}
             </Text>
           </Pressable>
           {appliedFilter && (
-            <Pressable onPress={clearFilter} style={{ paddingHorizontal: 12, paddingVertical: 12 }}>
-              <Text style={{ fontSize: 13, color: '#EF4444', fontFamily: 'GmarketSansTTFBold' }}>초기화</Text>
+            <Pressable onPress={clearFilter} style={styles.clearFilterButton}>
+              <Text style={styles.clearFilterText}>초기화</Text>
             </Pressable>
           )}
         </View>
 
         {/* 적용된 필터 요약 칩 */}
         {appliedFilter && (
-          <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 12, marginTop: 8 }}>
-            <View style={{ backgroundColor: '#EEF2FF', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#C7D2FE' }}>
-              <Text style={{ fontSize: 12, fontFamily: 'GmarketSansTTFBold', color: '#1428A0' }}>
+          <View style={styles.appliedChipRow}>
+            <View style={styles.appliedChip}>
+              <Text style={styles.appliedChipText}>
                 {fmtDate(appliedFilter.start)} ~ {fmtDate(appliedFilter.end)}
               </Text>
             </View>
-            <View style={{ backgroundColor: '#EEF2FF', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#C7D2FE' }}>
-              <Text style={{ fontSize: 12, fontFamily: 'GmarketSansTTFBold', color: '#1428A0' }}>
+            <View style={styles.appliedChip}>
+              <Text style={styles.appliedChipText}>
                 {appliedFilter.tx === 'all' ? '전체' : appliedFilter.tx === 'deposit' ? '입금' : '출금'}
               </Text>
             </View>
-            <View style={{ backgroundColor: '#EEF2FF', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#C7D2FE' }}>
-              <Text style={{ fontSize: 12, fontFamily: 'GmarketSansTTFBold', color: '#1428A0' }}>
+            <View style={styles.appliedChip}>
+              <Text style={styles.appliedChipText}>
                 {appliedFilter.sort === 'latest' ? '최신순' : '과거순'}
               </Text>
             </View>
@@ -289,10 +309,10 @@ export default function GroupLedgerScreen() {
         )}
 
         {/* 거래 내역 리스트 */}
-        <View style={{ gap: 8, marginTop: 8 }}>
+        <View style={styles.ledgerList}>
           {filteredItems.length === 0 ? (
-            <View style={{ backgroundColor: '#FFFFFF', borderRadius: 20, paddingVertical: 40, alignItems: 'center' }}>
-              <Text style={{ fontSize: 14, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium' }}>조회 결과가 없습니다.</Text>
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>조회 결과가 없습니다.</Text>
             </View>
           ) : (
             filteredItems.map((it) => {
@@ -306,29 +326,38 @@ export default function GroupLedgerScreen() {
                 <Pressable
                   key={it.id}
                   onPress={() => navigation.navigate('GroupLedgerDetail', { item: it, balance: runningBalances[it.id], isAdmin, groupName })}
-                  style={{
-                    backgroundColor: '#FFFFFF', borderRadius: 20, paddingHorizontal: 20, paddingVertical: 16,
-                    shadowColor: '#1428A0', shadowOpacity: 0.04, shadowRadius: 8, elevation: 1,
-                  }}
+                  style={styles.ledgerItem}
                 >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <View style={{ flex: 1, marginRight: 12 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 }}>
-                        <Text style={{ fontSize: 13, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium' }}>{shortDate(it.date)}</Text>
+                  <View style={styles.ledgerItemInner}>
+                    <View style={styles.ledgerItemLeft}>
+                      <View style={styles.ledgerItemTopRow}>
+                        <Text style={styles.ledgerItemDate}>{shortDate(it.date)}</Text>
                         {it.needsSettle && (
-                          <View style={{ backgroundColor: settled ? '#22C55E' : '#EF4444', borderRadius: 10, paddingHorizontal: 8, paddingVertical: 2 }}>
-                            <Text style={{ fontSize: 10, color: '#fff', fontFamily: 'GmarketSansTTFBold' }}>
+                          <View style={[
+                            styles.settleBadge,
+                            { backgroundColor: settled ? '#22C55E' : '#EF4444' },
+                          ]}>
+                            <Text style={styles.settleBadgeText}>
                               {settled ? '정산완료' : `정산미완료 ${paidCount}/${totalCount}`}
                             </Text>
                           </View>
                         )}
                       </View>
-                      <Text style={{ fontSize: 15, color: '#111827', fontFamily: 'GmarketSansTTFBold' }}>{it.title}</Text>
-                      {it.memo ? <Text style={{ fontSize: 12, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium', marginTop: 4 }}>{it.memo}</Text> : null}
+                      <Text style={styles.ledgerItemTitle}>{it.title}</Text>
+                      {it.memo ? (
+                        <Text style={styles.ledgerItemMemo}>{it.memo}</Text>
+                      ) : null}
                     </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                      <Text style={{ fontSize: 18, fontFamily: 'GmarketSansTTFBold', color: isPositive ? '#1428A0' : '#EF4444' }}>{formatMoney(it.amount)}</Text>
-                      <Text style={{ fontSize: 12, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium', marginTop: 2 }}>{(runningBalances[it.id] ?? 0).toLocaleString()}원</Text>
+                    <View style={styles.ledgerItemRight}>
+                      <Text style={[
+                        styles.ledgerItemAmount,
+                        { color: isPositive ? '#1428A0' : '#EF4444' },
+                      ]}>
+                        {formatMoney(it.amount)}
+                      </Text>
+                      <Text style={styles.ledgerItemBalance}>
+                        {(runningBalances[it.id] ?? 0).toLocaleString()}원
+                      </Text>
                     </View>
                   </View>
                 </Pressable>
@@ -341,9 +370,9 @@ export default function GroupLedgerScreen() {
         {appliedFilter && (
           <Pressable
             onPress={() => Alert.alert('PDF 다운로드', '장부 PDF가 생성되었습니다. (임시)')}
-            style={{ backgroundColor: '#111827', borderRadius: 16, paddingVertical: 14, alignItems: 'center', marginTop: 16 }}
+            style={styles.pdfButton}
           >
-            <Text style={{ fontSize: 15, color: '#FFFFFF', fontFamily: 'GmarketSansTTFBold' }}>PDF 다운로드</Text>
+            <Text style={styles.pdfButtonText}>PDF 다운로드</Text>
           </Pressable>
         )}
 
@@ -351,67 +380,85 @@ export default function GroupLedgerScreen() {
 
       {/* ── 필터 바텀시트 ── */}
       <Modal visible={filterVisible} transparent animationType="slide" onRequestClose={() => setFilterVisible(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }} onPress={() => setFilterVisible(false)}>
-          <Pressable onPress={() => {}} style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 24, paddingTop: 16, paddingBottom: 36 }}>
+        <Pressable style={styles.sheetOverlay} onPress={() => setFilterVisible(false)}>
+          <Pressable onPress={() => {}} style={styles.sheet}>
 
             {/* 핸들 바 */}
-            <View style={{ width: 40, height: 4, borderRadius: 2, backgroundColor: '#D1D5DB', alignSelf: 'center', marginBottom: 20 }} />
+            <View style={styles.sheetHandle} />
 
-            <Text style={{ fontSize: 17, fontFamily: 'GmarketSansTTFBold', color: '#111827', marginBottom: 20 }}>조회조건</Text>
+            <Text style={styles.sheetTitle}>조회조건</Text>
 
             {/* 조회기간 */}
-            <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium', marginBottom: 8 }}>조회기간</Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+            <Text style={styles.sheetSectionLabel}>조회기간</Text>
+            <View style={styles.chipRow}>
               {([['1m', '1개월'], ['3m', '3개월'], ['custom', '직접입력']] as const).map(([key, label]) => (
-                <Pressable key={key} onPress={() => handlePreset(key)} style={chip(tmpPreset === key)}>
-                  <Text style={chipTxt(tmpPreset === key)}>{label}</Text>
+                <Pressable
+                  key={key}
+                  onPress={() => handlePreset(key)}
+                  style={[styles.chip, tmpPreset === key && styles.chipActive]}
+                >
+                  <Text style={[styles.chipText, tmpPreset === key && styles.chipTextActive]}>{label}</Text>
                 </Pressable>
               ))}
             </View>
 
             {tmpPreset === 'custom' ? (
-              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
-                <Pressable onPress={() => { setFilterVisible(false); setTimeout(() => setCalendarTarget('start'), 300); }}
-                  style={{ flex: 1, backgroundColor: '#F3F4F6', borderRadius: 14, paddingVertical: 12, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 13, color: '#374151', fontFamily: 'GmarketSansTTFMedium' }}>{fmtDate(tmpStart)}</Text>
+              <View style={styles.dateInputRow}>
+                <Pressable
+                  onPress={() => { setFilterVisible(false); setTimeout(() => setCalendarTarget('start'), 300); }}
+                  style={styles.dateInputButton}
+                >
+                  <Text style={styles.dateInputText}>{fmtDate(tmpStart)}</Text>
                 </Pressable>
-                <View style={{ justifyContent: 'center' }}><Text style={{ color: '#9CA3AF' }}>~</Text></View>
-                <Pressable onPress={() => { setFilterVisible(false); setTimeout(() => setCalendarTarget('end'), 300); }}
-                  style={{ flex: 1, backgroundColor: '#F3F4F6', borderRadius: 14, paddingVertical: 12, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 13, color: '#374151', fontFamily: 'GmarketSansTTFMedium' }}>{fmtDate(tmpEnd)}</Text>
+                <View style={styles.dateInputSeparator}>
+                  <Text style={styles.dateInputTilde}>~</Text>
+                </View>
+                <Pressable
+                  onPress={() => { setFilterVisible(false); setTimeout(() => setCalendarTarget('end'), 300); }}
+                  style={styles.dateInputButton}
+                >
+                  <Text style={styles.dateInputText}>{fmtDate(tmpEnd)}</Text>
                 </Pressable>
               </View>
             ) : (
-              <View style={{ backgroundColor: '#F3F4F6', borderRadius: 14, paddingVertical: 12, paddingHorizontal: 16, marginBottom: 16 }}>
-                <Text style={{ fontSize: 13, color: '#374151', fontFamily: 'GmarketSansTTFMedium', textAlign: 'center' }}>
+              <View style={styles.dateRangeDisplay}>
+                <Text style={styles.dateRangeText}>
                   {fmtDate(tmpStart)} ~ {fmtDate(tmpEnd)}
                 </Text>
               </View>
             )}
 
             {/* 정렬 */}
-            <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium', marginBottom: 8 }}>정렬</Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+            <Text style={styles.sheetSectionLabel}>정렬</Text>
+            <View style={styles.chipRow}>
               {([['latest', '최신순'], ['oldest', '과거순']] as const).map(([key, label]) => (
-                <Pressable key={key} onPress={() => setTmpSort(key)} style={chip(tmpSort === key)}>
-                  <Text style={chipTxt(tmpSort === key)}>{label}</Text>
+                <Pressable
+                  key={key}
+                  onPress={() => setTmpSort(key)}
+                  style={[styles.chip, tmpSort === key && styles.chipActive]}
+                >
+                  <Text style={[styles.chipText, tmpSort === key && styles.chipTextActive]}>{label}</Text>
                 </Pressable>
               ))}
             </View>
 
             {/* 조회구분 */}
-            <Text style={{ fontSize: 13, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium', marginBottom: 8 }}>조회구분</Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
+            <Text style={styles.sheetSectionLabel}>조회구분</Text>
+            <View style={styles.chipRow}>
               {([['all', '전체'], ['deposit', '입금'], ['withdraw', '출금']] as const).map(([key, label]) => (
-                <Pressable key={key} onPress={() => setTmpTx(key)} style={chip(tmpTx === key)}>
-                  <Text style={chipTxt(tmpTx === key)}>{label}</Text>
+                <Pressable
+                  key={key}
+                  onPress={() => setTmpTx(key)}
+                  style={[styles.chip, tmpTx === key && styles.chipActive]}
+                >
+                  <Text style={[styles.chipText, tmpTx === key && styles.chipTextActive]}>{label}</Text>
                 </Pressable>
               ))}
             </View>
 
             {/* 조회 버튼 */}
-            <Pressable onPress={handleQuery} style={{ backgroundColor: '#1428A0', borderRadius: 16, paddingVertical: 14, alignItems: 'center' }}>
-              <Text style={{ fontSize: 15, color: '#FFFFFF', fontFamily: 'GmarketSansTTFBold' }}>조회</Text>
+            <Pressable onPress={handleQuery} style={styles.queryButton}>
+              <Text style={styles.queryButtonText}>조회</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -424,7 +471,6 @@ export default function GroupLedgerScreen() {
           selected={calendarTarget === 'start' ? tmpStart : tmpEnd}
           onSelect={(d) => {
             if (calendarTarget === 'start') setTmpStart(d); else setTmpEnd(d);
-            // 달력 닫고 바텀시트 다시 열기
             setCalendarTarget(null);
             setTimeout(() => setFilterVisible(true), 300);
           }}
@@ -437,3 +483,418 @@ export default function GroupLedgerScreen() {
     </ScreenLayout>
   );
 }
+
+// ─── 달력 모달 스타일 ───
+const calStyles = StyleSheet.create({
+  calOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  calCard: {
+    width: '88%',
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 20,
+  },
+  calTitle: {
+    fontSize: 15,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#111827',
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  calNavRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 24,
+    marginBottom: 16,
+  },
+  calNavArrow: {
+    fontSize: 20,
+    color: '#374151',
+  },
+  calMonthLabel: {
+    fontSize: 16,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#111827',
+  },
+  calDayNamesRow: {
+    flexDirection: 'row',
+  },
+  calDayNameCell: {
+    flex: 1,
+    alignItems: 'center',
+    paddingBottom: 8,
+  },
+  calDayNameText: {
+    fontSize: 12,
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  calWeekRow: {
+    flexDirection: 'row',
+  },
+  calDayCell: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
+  calDayInner: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  calDayInnerSelected: {
+    borderWidth: 1.5,
+    borderColor: '#1428A0',
+  },
+  calDayText: {
+    fontSize: 14,
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+});
+
+// ─── 화면 스타일 ───
+const styles = StyleSheet.create({
+  scrollContent: {
+    paddingBottom: 32,
+  },
+
+  // ── 헤더 ──────────────────────────────────
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#111827',
+  },
+
+  // ── 잔액 카드 ─────────────────────────────
+  balanceCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    marginBottom: 16,
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  balanceCardLabel: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    fontFamily: 'GmarketSansTTFMedium',
+    marginBottom: 4,
+  },
+  balanceCardAmount: {
+    fontSize: 28,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#111827',
+    textAlign: 'right',
+    marginBottom: 12,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginBottom: 12,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  summaryLabel: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  summaryValue: {
+    fontSize: 13,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+
+  // ── 필터 버튼 행 ──────────────────────────
+  filterButtonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flexWrap: 'wrap',
+    marginBottom: 4,
+  },
+  settleButton: {
+    backgroundColor: '#1428A0',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  settleButtonText: {
+    fontSize: 14,
+    color: '#fff',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  filterButton: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+  filterButtonActive: {
+    backgroundColor: '#EEF2FF',
+    borderWidth: 1.5,
+    borderColor: '#1428A0',
+  },
+  filterButtonText: {
+    fontSize: 14,
+    color: '#374151',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  filterButtonTextActive: {
+    color: '#1428A0',
+  },
+  clearFilterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+  },
+  clearFilterText: {
+    fontSize: 13,
+    color: '#EF4444',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+
+  // ── 적용된 필터 칩 ────────────────────────
+  appliedChipRow: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
+    marginBottom: 12,
+    marginTop: 8,
+  },
+  appliedChip: {
+    backgroundColor: '#EEF2FF',
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  appliedChipText: {
+    fontSize: 12,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#1428A0',
+  },
+
+  // ── 거래 내역 리스트 ──────────────────────
+  ledgerList: {
+    gap: 8,
+    marginTop: 8,
+  },
+  emptyCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 40,
+    alignItems: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#9CA3AF',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  ledgerItem: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 1,
+  },
+  ledgerItemInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  ledgerItemLeft: {
+    flex: 1,
+    marginRight: 12,
+  },
+  ledgerItemTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 2,
+  },
+  ledgerItemDate: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  settleBadge: {
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+  },
+  settleBadgeText: {
+    fontSize: 10,
+    color: '#fff',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  ledgerItemTitle: {
+    fontSize: 15,
+    color: '#111827',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  ledgerItemMemo: {
+    fontSize: 12,
+    color: '#6B7280',
+    fontFamily: 'GmarketSansTTFMedium',
+    marginTop: 4,
+  },
+  ledgerItemRight: {
+    alignItems: 'flex-end',
+  },
+  ledgerItemAmount: {
+    fontSize: 18,
+    fontFamily: 'GmarketSansTTFBold',
+  },
+  ledgerItemBalance: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontFamily: 'GmarketSansTTFMedium',
+    marginTop: 2,
+  },
+
+  // ── PDF 버튼 ──────────────────────────────
+  pdfButton: {
+    backgroundColor: '#111827',
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  pdfButtonText: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+
+  // ── 필터 바텀시트 ─────────────────────────
+  sheetOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    paddingHorizontal: 24,
+    paddingTop: 16,
+    paddingBottom: 36,
+  },
+  sheetHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#D1D5DB',
+    alignSelf: 'center',
+    marginBottom: 20,
+  },
+  sheetTitle: {
+    fontSize: 17,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#111827',
+    marginBottom: 20,
+  },
+  sheetSectionLabel: {
+    fontSize: 13,
+    color: '#6B7280',
+    fontFamily: 'GmarketSansTTFMedium',
+    marginBottom: 8,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#F3F4F6',
+  },
+  chipActive: {
+    backgroundColor: '#1428A0',
+  },
+  chipText: {
+    fontSize: 13,
+    fontFamily: 'GmarketSansTTFBold',
+    color: '#374151',
+  },
+  chipTextActive: {
+    color: '#FFFFFF',
+  },
+  dateInputRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 16,
+  },
+  dateInputButton: {
+    flex: 1,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 14,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  dateInputText: {
+    fontSize: 13,
+    color: '#374151',
+    fontFamily: 'GmarketSansTTFMedium',
+  },
+  dateInputSeparator: {
+    justifyContent: 'center',
+  },
+  dateInputTilde: {
+    color: '#9CA3AF',
+  },
+  dateRangeDisplay: {
+    backgroundColor: '#F3F4F6',
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+  },
+  dateRangeText: {
+    fontSize: 13,
+    color: '#374151',
+    fontFamily: 'GmarketSansTTFMedium',
+    textAlign: 'center',
+  },
+  queryButton: {
+    backgroundColor: '#1428A0',
+    borderRadius: 16,
+    paddingVertical: 14,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  queryButtonText: {
+    fontSize: 15,
+    color: '#FFFFFF',
+    fontFamily: 'GmarketSansTTFBold',
+  },
+});
