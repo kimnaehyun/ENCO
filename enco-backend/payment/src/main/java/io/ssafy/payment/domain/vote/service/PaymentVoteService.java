@@ -31,6 +31,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -46,46 +47,50 @@ public class PaymentVoteService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public PaymentVoteCreateResponseDto createVote(Long userId, PaymentVoteCreateRequestDto request) {
+    public PaymentVoteCreateResponseDto createVote(PaymentVoteCreateRequestDto request) {
         Account account = accountRepository.findByGroupId(request.groupId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ACCOUNT));
 
         if (!passwordEncoder.matches(request.password(), account.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
+        log.info("계좌 객체 생성 완료");
 
         Card card = cardRepository.findById(request.cardId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CARD));
+        log.info("카드 객체 생성 완료");
 
         PaymentVote vote = PaymentVote.builder()
-                .transactionId(request.transactionId())
                 .groupId(request.groupId())
-                .card(card)
-                .account(account)
                 .title(request.title())
-                .amount(request.amount())
+                .description(request.description())
                 .expiredAt(LocalDateTime.now().plusHours(1))
                 .build();
 
         PaymentVote savedVote = voteRepository.save(vote);
+        log.info("결제 투표 생성 완료");
 
         TransactionHistory pendingTransaction = TransactionHistory.builder()
                 .accountId(account.getId())
                 .cardId(card.getId())
                 .voteId(savedVote.getId())
+                .counterpartyBankAccountNumber(request.counterpartyBankAccountNumber()) // 상대 계좌번호
+                .counterpartyBankName(request.counterpartyBankName()) //상대 은행명
+                .counterpartyName(request.counterpartyName()) //상대방명
                 .amount(request.amount())
-                .displayName(request.title())
+                .displayName(request.counterpartyName())
                 .type(Type.CARD_PAYMENT)
                 .direction(Direction.OUT)
                 .status(Status.PENDING)
                 .build();
         transactionHistoryRepository.save(pendingTransaction);
+        log.info("거래내역 생성 완료");
 
         return PaymentVoteCreateResponseDto.from(savedVote);
     }
 
     public List<PaymentVoteListResponseDto> getVoteList(Long groupId) {
-        return voteRepository.findByGroupIdAndStatus(groupId, VoteStatus.VOTING)
+        return voteRepository.findByGroupIdAndStatusAndExpiredAtAfter(groupId, VoteStatus.VOTING, LocalDateTime.now())
                 .stream()
                 .map(vote -> PaymentVoteListResponseDto.of(
                         vote,
@@ -99,6 +104,9 @@ public class PaymentVoteService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_VOTE));
 
         List<PaymentVoteHistory> histories = historyRepository.findByVote(vote);
+
+        TransactionHistory transaction = transactionHistoryRepository.findByVoteId(vote.getId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_TRANSACTION));
 
         int totalMembers = userServiceClient.getGroupMemberCount(groupId).result();
 
@@ -114,9 +122,10 @@ public class PaymentVoteService {
 
         return new PaymentVoteDetailResponseDto(
                 vote.getId(),
-                vote.getTransactionId(),
+                transaction.getId(),
                 vote.getTitle(),
-                vote.getAmount(),
+                vote.getDescription(),
+                transaction.getAmount(),
                 vote.getStatus(),
                 vote.getExpiredAt().toString(),
                 totalMembers,
@@ -140,56 +149,67 @@ public class PaymentVoteService {
             vote.expire();
             throw new CustomException(ErrorCode.VOTE_EXPIRED);
         }
-        if (historyRepository.existsByVoteAndUserId(vote, userId)) {
-            throw new CustomException(ErrorCode.ALREADY_VOTED);
+        Optional<PaymentVoteHistory> optionalHistory = historyRepository.findByVoteAndUserId(vote, userId);
+
+        if (optionalHistory.isPresent()) {
+            PaymentVoteHistory history = optionalHistory.get();
+            history.updateChoice(request.choice());
+            log.info("[PaymentVote] 유저 재투표 완료: voteId={}, userId={}, choice={}", voteId, userId, request.choice());
+        } else {
+            PaymentVoteHistory history = PaymentVoteHistory.builder()
+                    .vote(vote)
+                    .userId(userId)
+                    .choice(request.choice())
+                    .build();
+            historyRepository.save(history);
+            log.info("[PaymentVote] 유저 첫 투표 완료: voteId={}, userId={}, choice={}", voteId, userId, request.choice());
         }
 
-        PaymentVoteHistory history = PaymentVoteHistory.builder()
-                .vote(vote)
-                .userId(userId)
-                .choice(request.choice())
-                .build();
-        historyRepository.save(history);
-
         int totalMembers = userServiceClient.getGroupMemberCount(vote.getGroupId()).result();
+        int voteCriteria = userServiceClient.getVoteCriteria(vote.getGroupId()).result();
+        int approveCount = historyRepository.countByVoteAndChoice(vote, VoteChoice.APPROVE);
+
+        double currentApprovalRate = ((double) approveCount / totalMembers) * 100;
+
+        if (currentApprovalRate >= voteCriteria) {
+            vote.approve();
+            executePayment(vote);
+            return;
+        }
+
         int totalVoted = historyRepository.findByVote(vote).size();
-
         if (totalVoted >= totalMembers) {
-            int voteCriteria = userServiceClient.getVoteCriteria(vote.getGroupId()).result();
-            int approveCount = historyRepository.countByVoteAndChoice(vote, VoteChoice.APPROVE);
+            vote.reject();
 
-            double currentApprovalRate = ((double) approveCount / totalMembers) * 100;
+            TransactionHistory transaction = transactionHistoryRepository.findByVoteId(vote.getId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_TRANSACTION));
 
-            if (currentApprovalRate >= voteCriteria) {
-                vote.approve();
-                executePayment(vote);
-            } else {
-                vote.reject();
-                updateTransactionStatus(vote, Status.REJECTED); // 거래내역도 REJECTED 처리
-            }
+            transaction.updateStatus(Status.REJECTED);
+
+            log.info("[PaymentVote] 투표 부결 및 거래내역 취소 완료: voteId={}", vote.getId());
         }
     }
 
     private void executePayment(PaymentVote vote) {
-        Account account = vote.getAccount();
-
-        if (account.getAmount().compareTo(vote.getAmount()) < 0) {
-            log.warn("[PaymentVote] 결제 실패 (잔액 부족): voteId={}", vote.getId());
-            updateTransactionStatus(vote, Status.REJECTED);
-            return;
-        }
-
-         account.deductAmount(account.getAmount().subtract(vote.getAmount()));
-
-        updateTransactionStatus(vote, Status.APPROVED);
-
-        log.info("[PaymentVote] 결제 실행 및 승인 완료: voteId={}, 차감금액={}", vote.getId(), vote.getAmount());
-    }
-
-    private void updateTransactionStatus(PaymentVote vote, Status newStatus) {
         TransactionHistory transaction = transactionHistoryRepository.findByVoteId(vote.getId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_TRANSACTION));
 
-        log.info("[PaymentVote] 거래내역 상태 변경: voteId={}, {} -> {}", vote.getId(), transaction.getStatus(), newStatus);
+        Account account = accountRepository.findById(transaction.getAccountId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ACCOUNT));
+
+        if (account.getAmount().compareTo(transaction.getAmount()) < 0) {
+            log.warn("[PaymentVote] 결제 실패 (잔액 부족): voteId={}", vote.getId());
+
+            transaction.updateStatus(Status.REJECTED);
+            vote.reject();
+            return;
+        }
+
+        account.deductAmount(transaction.getAmount()); // 실제 돈 차감
+        transaction.updateStatus(Status.APPROVED); // 거래내역 상태 업데이트
+        transaction.updateBalance(account.getAmount()); // 거래내역 잔액 업데이트
+
+        log.info("[PaymentVote] 결제 실행 및 승인 완료: voteId={}, 차감금액={}", vote.getId(), transaction.getAmount());
     }
+    
 }

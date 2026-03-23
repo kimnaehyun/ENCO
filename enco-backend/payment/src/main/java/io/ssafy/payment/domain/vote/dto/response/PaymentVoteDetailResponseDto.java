@@ -5,13 +5,13 @@ import io.ssafy.payment.domain.vote.entity.VoteChoice;
 import io.ssafy.payment.domain.vote.entity.VoteStatus;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.List;
 
 public record PaymentVoteDetailResponseDto(
         Long voteId,
-        String transactionId,
+        Long transactionId,
         String title,
+        String description,
         BigDecimal amount,
         VoteStatus status,
         String expiredAt,

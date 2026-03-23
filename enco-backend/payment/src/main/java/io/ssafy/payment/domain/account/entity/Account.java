@@ -78,7 +78,6 @@ public class Account {
         }
 
         this.amount = this.amount.subtract(requestAmount);
-
         this.lastTransactionAt = LocalDateTime.now();
     }
 }

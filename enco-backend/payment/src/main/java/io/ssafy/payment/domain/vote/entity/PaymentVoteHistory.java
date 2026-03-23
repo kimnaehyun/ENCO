@@ -8,7 +8,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "payment_vote_histories")
+@Table(name = "vote_histories")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Builder
@@ -32,4 +32,8 @@ public class PaymentVoteHistory {
     @CreatedDate
     @Column(updatable = false)
     private LocalDateTime createdAt;
+
+    public void updateChoice(VoteChoice newChoice) {
+        this.choice = newChoice;
+    }
 }
