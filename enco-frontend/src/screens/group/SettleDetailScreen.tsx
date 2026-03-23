@@ -1,6 +1,7 @@
 // src/screens/group/SettleDetailScreen.tsx
 import React, { useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 
@@ -231,26 +232,26 @@ const styles = StyleSheet.create({
   // ── 헤더 ──────────────────────────────────
   headerTitle: {
     fontSize: 20,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   closeText: {
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // ── 금액 정보 ─────────────────────────────
   storeDateText: {
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     marginBottom: 2,
   },
   amountText: {
     fontSize: 32,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#EF4444',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.error,
     marginBottom: 16,
   },
 
@@ -265,8 +266,8 @@ const styles = StyleSheet.create({
   // ── InfoRow ────────────────────────────────
   infoLabel: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
   },
   infoValueWrap: {
     flex: 1,
@@ -274,8 +275,8 @@ const styles = StyleSheet.create({
   },
   infoValueText: {
     fontSize: 14,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
   },
   statusBadge: {
     borderRadius: 12,
@@ -284,19 +285,19 @@ const styles = StyleSheet.create({
   },
   statusBadgeText: {
     fontSize: 12,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
   tradeTypeText: {
     fontSize: 14,
-    color: '#F59E0B',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.warning,
+    fontFamily: FONT_FAMILY.bold,
   },
   memoInput: {
     flex: 1,
     fontSize: 14,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'right',
     paddingVertical: 0,
     marginLeft: 12,
@@ -323,8 +324,8 @@ const styles = StyleSheet.create({
   },
   receiptPlaceholderText: {
     fontSize: 11,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'center',
   },
 
@@ -337,8 +338,8 @@ const styles = StyleSheet.create({
   },
   unpaidTitle: {
     fontSize: 15,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   unpaidBadge: {
     backgroundColor: '#FEF2F2',
@@ -348,8 +349,8 @@ const styles = StyleSheet.create({
   },
   unpaidBadgeText: {
     fontSize: 12,
-    color: '#EF4444',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.error,
+    fontFamily: FONT_FAMILY.bold,
   },
   memberRow: {
     gap: 10,
@@ -369,22 +370,22 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 14,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
     flex: 1,
   },
   memberAmount: {
     fontSize: 13,
-    color: '#EF4444',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.error,
+    fontFamily: FONT_FAMILY.bold,
   },
   notifyButton: {
     backgroundColor: '#EF4444',
   },
   notifyButtonText: {
     fontSize: 14,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 정산인원 보기 버튼 ────────────────────
@@ -393,7 +394,7 @@ const styles = StyleSheet.create({
   },
   settleDetailButtonText: {
     fontSize: 16,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 });

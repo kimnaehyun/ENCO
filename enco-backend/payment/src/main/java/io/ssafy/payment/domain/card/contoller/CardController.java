@@ -54,4 +54,13 @@ public class CardController {
         List<CardProductDetailResponseDto> recommendations = cardProductService.getRecommendedCards(categories);
         return ResponseEntity.ok(CommonResponse.success(recommendations));
     }
+
+    @PatchMapping("/groups/{groupId}/cards/{cardId}/basic")
+    public ResponseEntity<CommonResponse<Void>> updateBasicCard(
+            @PathVariable Long groupId,
+            @PathVariable Long cardId) {
+        cardProductService.updateBasicCard(groupId, cardId);
+        return ResponseEntity.ok(CommonResponse.success());
+    }
+
 }

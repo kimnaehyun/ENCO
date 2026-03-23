@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import Svg, { Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
 type BudgetGaugeCardProps = {
@@ -172,8 +173,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 16,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   chartWrap: {
     alignItems: 'center',
@@ -187,19 +188,19 @@ const styles = StyleSheet.create({
   },
   centerLabel: {
     fontSize: 12,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     marginBottom: 4,
   },
   centerValue: {
     fontSize: 22,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   centerPercent: {
     marginTop: 4,
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
   infoRow: {
     flexDirection: 'row',
@@ -214,23 +215,23 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 12,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     marginBottom: 6,
   },
   infoValue: {
     fontSize: 15,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
   helperText: {
     fontSize: 13,
     lineHeight: 18,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
   safeText: {
-    color: '#1428A0',
+    color: COLORS.brand,
   },
   warnText: {
     color: '#D97706',

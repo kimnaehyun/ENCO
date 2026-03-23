@@ -1,5 +1,6 @@
 import { useMemo } from "react";
-import { View, Text, Pressable } from "react-native";
+import { View, Pressable } from "react-native"
+import Text from '@/components/typography';;
 import { shuffle } from "../../utils/shuffle";
 import { RandomKeypadProps } from "../../types/pin";
 
@@ -42,7 +43,7 @@ export default function RandomKeypad({
                 className={`text-[#111827] text-lg ${
                   k.type === "reset" ? "text-sm text-[#6B7280]" : ""
                 }`}
-                style={{ fontFamily: k.type === "digit" ? "GmarketSansTTFBold" : "GmarketSansTTFMedium" }}
+                weight={k.type === "digit" ? "bold" : "medium"}
               >
                 {k.type === "digit" ? k.v : k.type === "backspace" ? "⌫" : "전체\n삭제"}
               </Text>

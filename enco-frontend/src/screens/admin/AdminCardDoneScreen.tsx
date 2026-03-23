@@ -1,7 +1,8 @@
 // src/screens/admin/AdminCardDoneScreen.tsx
 // 카드 추가 발급 > 신청 완료 화면
 import React from 'react';
-import { Image, Pressable, Text, View } from 'react-native';
+import { Image, Pressable, View } from 'react-native'
+import Text from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { images } from '../../types/images';
 
@@ -39,15 +40,9 @@ export default function AdminCardDoneScreen() {
       />
 
       {/* 완료 텍스트 */}
-      <Text
-        style={{
-          fontSize: 24,
-          color: '#111827',
-          fontFamily: 'GmarketSansTTFBold',
-          textAlign: 'center',
-          marginBottom: 40,
-        }}
-      >
+      <Text weight="bold" color="dark" align="center"
+        
+       style={{ marginBottom: 40, fontSize: 24 }}>
         신청 완료되었습니다!
       </Text>
 
@@ -61,12 +56,8 @@ export default function AdminCardDoneScreen() {
           backgroundColor: '#1428A0',
         }}
       >
-        <Text
-          style={{
-            fontSize: 16,
-            color: '#FFFFFF',
-            fontFamily: 'GmarketSansTTFBold',
-          }}
+        <Text weight="bold" color="white"
+          
         >
           홈으로
         </Text>

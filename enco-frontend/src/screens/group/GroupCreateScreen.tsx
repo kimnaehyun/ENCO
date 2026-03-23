@@ -1,15 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Image,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { useAuthStore } from '../../store/useAuthStore';
@@ -265,16 +256,16 @@ const styles = StyleSheet.create({
   // ── 헤더 ──────────────────────────────────
   pageTitle: {
     fontSize: 22,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
     marginBottom: 28,
   },
 
   // ── 섹션 레이블 ───────────────────────────
   sectionLabel: {
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
     marginBottom: 8,
   },
 
@@ -302,13 +293,13 @@ const styles = StyleSheet.create({
   },
   managerLabel: {
     fontSize: 14,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
   },
   managerValue: {
     fontSize: 14,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // ── 모임명 입력 ───────────────────────────
@@ -318,8 +309,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingHorizontal: 18,
     fontSize: 15,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -361,13 +352,13 @@ const styles = StyleSheet.create({
   },
   tagButtonText: {
     fontSize: 15,
-    color: '#FFFFFF',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
   tagHint: {
     fontSize: 12,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'center',
     marginBottom: 28,
   },
@@ -387,8 +378,8 @@ const styles = StyleSheet.create({
   },
   selectedCardLabel: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     marginBottom: 12,
   },
   selectedCardImage: {
@@ -399,8 +390,8 @@ const styles = StyleSheet.create({
   selectedCardName: {
     marginTop: 10,
     fontSize: 14,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 버튼 그룹 ─────────────────────────────
@@ -423,9 +414,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#C7D2FE',
   },
   halfButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 14,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
   submitButton: {
     height: 54,
@@ -435,8 +426,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.white,
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
 });

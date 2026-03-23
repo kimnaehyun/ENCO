@@ -1,4 +1,5 @@
-import { View, Text, Image, Pressable } from 'react-native';
+import { View, Image, Pressable } from 'react-native'
+import Text from '@/components/typography';;
 import {
   botAvatar,
   botCard,
@@ -35,52 +36,52 @@ export default function BotLedgerCard({
       />
       <View className={botCard}>
         <View className={unpaidTitleRow}>
-          <Text
+          <Text weight="bold"
             className={unpaidTitlePrefix}
-            style={{ fontFamily: 'GmarketSansTTFBold' }}
+            
           >
             현재 누락된 증빙을{' '}
           </Text>
-          <Text
+          <Text weight="bold"
             className={unpaidTitleCount}
-            style={{ fontFamily: 'GmarketSansTTFBold' }}
+            
           >
             {item.missingCount}건
           </Text>
-          <Text
+          <Text weight="bold"
             className={unpaidTitlePrefix}
-            style={{ fontFamily: 'GmarketSansTTFBold' }}
+            
           >
             {' '}
             발견했어요!
           </Text>
         </View>
         <View className="border border-[#7A7A7A] rounded-[18px] px-3.5 py-3 bg-white">
-          <Text
+          <Text weight="bold"
             className="text-base text-[#111111] mb-2.5"
-            style={{ fontFamily: 'GmarketSansTTFBold' }}
+            
           >
             {item.transactionDate}
           </Text>
           <View className="flex-row items-center justify-between">
-            <Text
+            <Text weight="bold"
               className="text-base text-[#111111]"
-              style={{ fontFamily: 'GmarketSansTTFBold' }}
+              
             >
               {item.transactionType}
             </Text>
-            <Text
+            <Text weight="bold"
               className="text-[22px] text-[#FF1A0F]"
-              style={{ fontFamily: 'GmarketSansTTFBold' }}
+              
             >
               {formatKRW(item.amount)}
             </Text>
           </View>
         </View>
         <Pressable onPress={onPress} className={remindButton}>
-          <Text
+          <Text weight="bold"
             className={remindButtonText}
-            style={{ fontFamily: 'GmarketSansTTFBold' }}
+            
           >
             증빙 바로가기
           </Text>

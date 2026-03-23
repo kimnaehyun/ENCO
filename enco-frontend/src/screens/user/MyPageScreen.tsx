@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, View } from 'react-native'
+import Text from '@/components/typography';;
 import { images } from '../../types/images';
 import { useAuthStore } from '../../store/useAuthStore';
 import { fetchMyPage } from '../../services/userService';
@@ -42,7 +43,7 @@ export default function MyPageScreen({ navigation }: any) {
     return (
       <View style={{ flex: 1, backgroundColor: '#F0F4FF', justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#1428A0" />
-        <Text style={{ marginTop: 12, fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
+        <Text variant="bodySm" color="muted"  style={{ marginTop: 12 }}>
           프로필 불러오는 중...
         </Text>
       </View>
@@ -66,11 +67,11 @@ export default function MyPageScreen({ navigation }: any) {
             paddingBottom: 12,
           }}
         >
-          <Text style={{ fontSize: 20, fontFamily: 'GmarketSansTTFBold', color: '#111827' }}>
+          <Text variant="bodyLg" weight="bold" color="dark" >
             마이페이지
           </Text>
           <Pressable onPress={() => navigation.navigate('EditAddress')}>
-            <Text style={{ fontSize: 15, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium' }}>
+            <Text variant="bodyMd" color="brand" >
               수정
             </Text>
           </Pressable>
@@ -96,25 +97,15 @@ export default function MyPageScreen({ navigation }: any) {
             />
           </View>
           {/* 이름 표시 */}
-          <Text
-            style={{
-              marginTop: 16,
-              fontSize: 20,
-              fontFamily: 'GmarketSansTTFBold',
-              color: '#111827',
-            }}
-          >
+          <Text variant="bodyLg" weight="bold" color="dark"
+            
+           style={{ marginTop: 16 }}>
             {profile?.name ?? '사용자'}
           </Text>
           {profile?.gender && (
-            <Text
-              style={{
-                marginTop: 4,
-                fontSize: 13,
-                fontFamily: 'GmarketSansTTFMedium',
-                color: '#9CA3AF',
-              }}
-            >
+            <Text variant="caption" color="placeholder"
+              
+             style={{ marginTop: 4 }}>
               {profile.gender === 'M' ? '남성' : '여성'} · {profile.birthDay ?? ''}
             </Text>
           )}
@@ -137,14 +128,8 @@ export default function MyPageScreen({ navigation }: any) {
             {profile?.address ? (
               <InfoRow label="주소" value={profile.address} />
             ) : (
-              <Text
-                style={{
-                  fontSize: 14,
-                  color: '#9CA3AF',
-                  fontFamily: 'GmarketSansTTFMedium',
-                  textAlign: 'center',
-                  paddingVertical: 4,
-                }}
+              <Text variant="bodySm" color="placeholder" align="center"
+                
               >
                 등록된 주소가 없어요{'\n'}
                 <Text style={{ fontSize: 12, color: '#C7D2FE' }}>수정을 눌러 추가할 수 있어요</Text>
@@ -165,7 +150,7 @@ export default function MyPageScreen({ navigation }: any) {
               alignItems: 'center',
             }}
           >
-            <Text style={{ fontSize: 16, color: '#D44', fontFamily: 'GmarketSansTTFBold' }}>
+            <Text weight="bold" color='#D44' >
               로그아웃
             </Text>
           </Pressable>
@@ -191,7 +176,7 @@ function InfoCard({ title, children }: { title: string; children: React.ReactNod
         elevation: 2,
       }}
     >
-      <Text style={{ fontSize: 13, color: '#9CA3AF', fontFamily: 'GmarketSansTTFMedium', marginBottom: 2 }}>
+      <Text variant="caption" color="placeholder"  style={{ marginBottom: 2 }}>
         {title}
       </Text>
       {children}
@@ -202,10 +187,10 @@ function InfoCard({ title, children }: { title: string; children: React.ReactNod
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Text style={{ fontSize: 14, color: '#6B7280', fontFamily: 'GmarketSansTTFMedium' }}>
+      <Text variant="bodySm" color="muted" >
         {label}
       </Text>
-      <Text style={{ fontSize: 14, color: '#111827', fontFamily: 'GmarketSansTTFBold' }}>
+      <Text variant="bodySm" weight="bold" color="dark" >
         {value}
       </Text>
     </View>

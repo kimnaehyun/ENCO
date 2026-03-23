@@ -3,14 +3,8 @@
 // TODO: retryDisabled로 재시도 중 중복 클릭 방지
 
 import React from 'react';
-import {
-  View,
-  Text,
-  Pressable,
-  StyleSheet,
-  Image,
-  ImageSourcePropType,
-} from 'react-native';
+import { View, Pressable, StyleSheet, Image, ImageSourcePropType } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 
 type NetworkErrorViewProps = {
   title?: string;
@@ -49,7 +43,7 @@ export default function NetworkErrorView({
 
         <Pressable
           onPress={onRetry}
-          android_ripple={{ color: '#1428A0' }}
+          android_ripple={{ color: COLORS.brand }}
           style={[
             styles.retryButton,
             retryDisabled && styles.retryButtonDisabled,
@@ -92,16 +86,16 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#1428A0',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.brand,
     textAlign: 'center',
     marginBottom: 12,
   },
   description: {
     fontSize: 14,
     lineHeight: 20,
-    fontFamily: 'GmarketSansTTFMedium',
-    color: '#666666',
+    fontFamily: FONT_FAMILY.medium,
+    color: COLORS.secondary,
     textAlign: 'center',
     marginBottom: 22,
   },
@@ -118,9 +112,9 @@ const styles = StyleSheet.create({
     opacity: 0.85,
   },
   retryButtonText: {
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
     fontSize: 24,
-    color: '#FFFFFF',
+    color: COLORS.white,
     includeFontPadding: false,
     textAlignVertical: 'center',
   },

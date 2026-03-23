@@ -1,6 +1,7 @@
 // src/screens/group/GroupLedgerDetailScreen.tsx
 import React, { useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { LedgerItem, SettleMember } from '../../types/group';
@@ -275,13 +276,13 @@ const styles = StyleSheet.create({
   // ── 헤더 ──────────────────────────────────
   headerTitle: {
     fontSize: 20,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   closeText: {
     fontSize: 14,
-    color: '#6B7280',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // ── 공통 카드 그림자 ─────────────────────
@@ -295,14 +296,14 @@ const styles = StyleSheet.create({
   // ── 금액 / 잔액 ───────────────────────────
   amountText: {
     fontSize: 32,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
     textAlign: 'right',
     marginBottom: 4,
   },
   balanceText: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'right',
     marginBottom: 16,
   },
@@ -310,8 +311,8 @@ const styles = StyleSheet.create({
   // ── InfoRow ────────────────────────────────
   infoLabel: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
   },
   infoValueWrap: {
     flex: 1,
@@ -319,8 +320,8 @@ const styles = StyleSheet.create({
   },
   infoValueText: {
     fontSize: 14,
-    color: '#111827',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
   },
   statusBadge: {
     borderRadius: 12,
@@ -329,12 +330,12 @@ const styles = StyleSheet.create({
   },
   statusBadgeText: {
     fontSize: 12,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
   tradTypeText: {
     fontSize: 14,
-    fontFamily: 'GmarketSansTTFBold',
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 영수증 ────────────────────────────────
@@ -346,8 +347,8 @@ const styles = StyleSheet.create({
   },
   ocrLoadingText: {
     fontSize: 12,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'center',
   },
   ocrTextBox: {
@@ -359,20 +360,20 @@ const styles = StyleSheet.create({
   },
   ocrText: {
     fontSize: 11,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
     lineHeight: 18,
   },
   deleteReceiptText: {
     fontSize: 12,
-    color: '#EF4444',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.error,
+    fontFamily: FONT_FAMILY.medium,
     textAlign: 'right',
   },
   noReceiptText: {
     fontSize: 13,
-    color: '#D1D5DB',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.faint,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // ── 촬영/첨부 버튼 ────────────────────────
@@ -387,8 +388,8 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     fontSize: 14,
-    color: '#374151',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 미납자 카드 ───────────────────────────
@@ -400,8 +401,8 @@ const styles = StyleSheet.create({
   },
   unpaidTitle: {
     fontSize: 15,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
   },
   unpaidBadge: {
     backgroundColor: '#FEF2F2',
@@ -411,8 +412,8 @@ const styles = StyleSheet.create({
   },
   unpaidBadgeText: {
     fontSize: 12,
-    color: '#EF4444',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.error,
+    fontFamily: FONT_FAMILY.bold,
   },
   memberList: {
     gap: 8,
@@ -436,22 +437,22 @@ const styles = StyleSheet.create({
   },
   memberName: {
     fontSize: 14,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#111827',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
     flex: 1,
   },
   unpaidLabel: {
     fontSize: 13,
-    color: '#EF4444',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.error,
+    fontFamily: FONT_FAMILY.bold,
   },
   notifyButton: {
     backgroundColor: '#EF4444',
   },
   notifyButtonText: {
     fontSize: 14,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 
   // ── 정산완료 카드 ─────────────────────────
@@ -467,13 +468,13 @@ const styles = StyleSheet.create({
   },
   settledTitle: {
     fontSize: 16,
-    fontFamily: 'GmarketSansTTFBold',
-    color: '#22C55E',
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.success,
   },
   settledSubtitle: {
     fontSize: 13,
-    color: '#9CA3AF',
-    fontFamily: 'GmarketSansTTFMedium',
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
     marginTop: 4,
   },
 
@@ -483,7 +484,7 @@ const styles = StyleSheet.create({
   },
   detailButtonText: {
     fontSize: 16,
-    color: '#fff',
-    fontFamily: 'GmarketSansTTFBold',
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
   },
 });
