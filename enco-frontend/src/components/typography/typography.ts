@@ -20,6 +20,7 @@ export const TYPOGRAPHY = {
   h1: { fontSize: 28, lineHeight: 36 },
   h2: { fontSize: 22, lineHeight: 30 },
   body: { fontSize: 16, lineHeight: 24 },
+  bodyLg: { fontSize: 24, lineHeight: 32 },
   caption: { fontSize: 13, lineHeight: 18 },
 } as const;
 
