@@ -66,8 +66,6 @@ export default function GroupChatScreen() {
   const flatListRef = useRef<FlatList<ChatItem>>(null);
   const ROOM_ID = '1001';
 
-  const token = getCachedAccessToken();
-
   // cursor 기반 페이지네이션 상태
   const nextCursorRef = useRef<number | null>(null);
   const isLoadingMoreRef = useRef(false);
@@ -91,12 +89,17 @@ export default function GroupChatScreen() {
         );
 
         const data = res.data?.result ?? res.data;
-        const rawMessages: ApiMessage[] = data.messages ?? [];
+
+        // 배열이면 바로 사용, 아니면 .messages에서 꺼내기
+        const rawMessages: ApiMessage[] = Array.isArray(data)
+          ? data
+          : (data.messages ?? []);
+
         nextCursorRef.current = data.nextCursor ?? null;
 
         setMessages(rawMessages.reverse().map(apiMessageToChatItem));
       } catch (e) {
-        console.error('❌ 메시지 조회 실패:', e);
+        console.error(' 메시지 조회 실패:', e);
       }
     };
 
@@ -121,7 +124,7 @@ export default function GroupChatScreen() {
       const older = rawMessages.reverse().map(apiMessageToChatItem);
       setMessages(prev => [...older, ...prev]);
     } catch (e) {
-      console.error('❌ 이전 메시지 조회 실패:', e);
+      console.error('이전 메시지 조회 실패:', e);
     } finally {
       isLoadingMoreRef.current = false;
     }
@@ -397,6 +400,7 @@ export default function GroupChatScreen() {
     if (item.type === 'chat') {
       return (
         <ChatMessage
+          key={item.id}
           content={item.content}
           senderId={item.senderId}
           isMe={item.senderId === userId}
@@ -412,13 +416,14 @@ export default function GroupChatScreen() {
 
     //  서버에서 내려오는 챗봇 응답 (CHATBOT_RESPONSE)
     if (item.type === 'chatbot') {
-      return <Chatbot item={item} />;
+      return <Chatbot key={item.id} item={item} />;
     }
 
     // 챗봇 트리거 (@햄코 로컬)
     if (item.type === 'user') {
       return (
         <ChatMessage
+          key={item.id}
           content={item.text}
           senderId={userId}
           isMe={true}
@@ -429,12 +434,13 @@ export default function GroupChatScreen() {
     }
 
     if (item.type === 'bot-unpaid-card') {
-      return <BotUnpaidCard item={item} />;
+      return <BotUnpaidCard key={item.id} item={item} />;
     }
 
     if (item.type === 'bot-ledger-card') {
       return (
         <BotLedgerCard
+          key={item.id}
           item={item}
           onPress={() => handleActionPress('ledger-go')}
         />
@@ -443,7 +449,11 @@ export default function GroupChatScreen() {
 
     // bot-actions
     return (
-      <BotActions item={item} onpress={action => handleActionPress(action)} />
+      <BotActions
+        key={item.id}
+        item={item}
+        onpress={action => handleActionPress(action)}
+      />
     );
   };
 
