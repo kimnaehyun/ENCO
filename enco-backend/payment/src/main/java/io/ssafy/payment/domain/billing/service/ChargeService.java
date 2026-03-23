@@ -91,6 +91,37 @@ public class ChargeService {
         return ChargeResponseDto.of(charge, targets);
     }
 
+    @Transactional
+    public void createScheduledRegularCharge(Long groupId, Long policyId, BigDecimal amount) {
+        List<Long> memberIds = authServiceClient.getActiveMemberIds(groupId);
+        if (memberIds.isEmpty()) return;
+
+        String displayName = LocalDate.now().getYear() + "년 "
+                + LocalDate.now().getMonthValue() + "월 정기회비";
+
+        BigDecimal totalAmount = amount.multiply(BigDecimal.valueOf(memberIds.size()));
+
+        Charge charge = Charge.builder()
+                .groupId(groupId)
+                .policyId(policyId)
+                .displayName(displayName)
+                .totalAmount(totalAmount)
+                .chargeType(ChargeType.REGULAR_DUE)
+                .build();
+
+        chargeRepository.save(charge);
+
+        List<ChargeTarget> targets = memberIds.stream()
+                .map(userId -> ChargeTarget.builder()
+                        .charge(charge)
+                        .userId(userId)
+                        .amount(amount)
+                        .build())
+                .toList();
+
+        chargeTargetRepository.saveAll(targets);
+    }
+
     @Transactional(readOnly = true)
     public UnpaidChargeResponseDto getUnpaidCharges(Long groupId, Long userId) {
         List<ChargeTarget> targets = chargeTargetRepository
