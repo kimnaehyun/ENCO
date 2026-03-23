@@ -1,17 +1,27 @@
 // src/screens/group/GroupVoteCreateScreen.tsx
 import { useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import Header from '../../components/internet/Header';
 import KeyValueRow from '../../components/common/KeyValueRow';
 import { ROUTES } from '../../constants/routes';
+import { voteApi } from '@/services/payment/vote';
 
 export default function VoteCreateScreen() {
   const navigation = useNavigation<any>();
   const [description, setDescription] = useState('');
-
-  const onPressDone = () => {
+  const route = useRoute();
+  const params = route.params as { groupId: number; cardId: number };
+  const onPressDone = async () => {
+    await voteApi.create({
+      transactionId: 'null',
+      groupId: params.groupId,
+      cardId: params.groupId,
+      password: '2580',
+      title: '공용 운동화 결제 건',
+      amount: 5000,
+    });
     Alert.alert('완료', '투표가 생성되었습니다.', [
       {
         text: '확인',
@@ -30,7 +40,10 @@ export default function VoteCreateScreen() {
         {/* 투표 제목 */}
         <View className="bg-white rounded-[20px] px-5 py-4">
           <KeyValueRow title="투표 제목">
-            <Text className="text-[20px]">다낭 여행 숙소</Text>
+            <TextInput
+              className="flex-1 text-right text-xl ml-10 p-0 border border-black "
+              maxLength={20}
+            />
           </KeyValueRow>
         </View>
 

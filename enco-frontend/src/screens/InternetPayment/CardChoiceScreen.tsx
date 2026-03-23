@@ -12,8 +12,7 @@ import BarcodeCardRecommendation from '@/components/onsite/Barcode/BarcodeCardRe
 export default function CardChoiceScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const params = route.params as { title: string };
-  const insets = useSafeAreaInsets();
+  const params = route.params as { title: string; groupId: number };
   const [cardNumber, setCardNumber] = useState<number>(0);
   return (
     <ScreenLayout className="gap-4">
@@ -48,7 +47,12 @@ export default function CardChoiceScreen() {
           </View>
           <View className="flex items-center">
             <PayButton
-              onPress={() => navigation.navigate('PaymentPinScreen')}
+              onPress={() =>
+                navigation.navigate('PaymentPinScreen', {
+                  groupId: params.groupId,
+                  cardId: cardNumber,
+                })
+              }
             />
           </View>
         </View>

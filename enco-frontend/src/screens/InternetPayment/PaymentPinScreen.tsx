@@ -1,7 +1,7 @@
 import { View, Alert } from 'react-native';
 import React, { useState } from 'react';
 import PinEntry from '../../components/pin/PinEntry';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 
 const TEST_PIN = '2580';
@@ -9,12 +9,16 @@ const TEST_PIN = '2580';
 export default function PaymentPinScreen() {
   const [resetKey, setResetKey] = useState(0);
   const navigation = useNavigation<any>();
-
+  const route = useRoute();
+  const params = route.params as { groupId: number; cardId: number };
   const handlePinComplete = (pin: string) => {
     const isValid = pin === TEST_PIN;
 
     if (isValid) {
-      return navigation.navigate('VoteCreateScreen');
+      return navigation.navigate('VoteCreateScreen', {
+        groupId: params.groupId,
+        cardId: params.cardId,
+      });
     }
 
     Alert.alert('인증 실패', 'pin 번호가 올바르지 않습니다.');
