@@ -23,8 +23,8 @@ public interface TransactionHistoryRepository extends JpaRepository<TransactionH
               AND (:direction IS NULL OR t.direction = :direction)
               AND (:startDate IS NULL OR t.createdAt >= :startDate)
               AND (:endDate IS NULL OR t.createdAt <= :endDate)
-              AND (:cursor IS NULL OR t.id < :cursor)
-            ORDER BY t.id DESC
+              AND (:cursor IS NULL OR t.createdAt < :cursor)
+            ORDER BY t.createdAt DESC
             LIMIT :size
             """)
     List<TransactionHistory> findLatestWithCursor(
@@ -32,7 +32,7 @@ public interface TransactionHistoryRepository extends JpaRepository<TransactionH
             @Param("direction") Direction direction,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
-            @Param("cursor") Long cursor,
+            @Param("cursor") LocalDateTime cursor,
             @Param("size") int size
     );
 
@@ -44,8 +44,8 @@ public interface TransactionHistoryRepository extends JpaRepository<TransactionH
               AND (:direction IS NULL OR t.direction = :direction)
               AND (:startDate IS NULL OR t.createdAt >= :startDate)
               AND (:endDate IS NULL OR t.createdAt <= :endDate)
-              AND (:cursor IS NULL OR t.id > :cursor)
-            ORDER BY t.id ASC
+              AND (:cursor IS NULL OR t.createdAt > :cursor)
+            ORDER BY t.createdAt ASC
             LIMIT :size
             """)
     List<TransactionHistory> findOldestWithCursor(
@@ -53,7 +53,7 @@ public interface TransactionHistoryRepository extends JpaRepository<TransactionH
             @Param("direction") Direction direction,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
-            @Param("cursor") Long cursor,
+            @Param("cursor") LocalDateTime cursor,
             @Param("size") int size
     );
 }
