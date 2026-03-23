@@ -14,6 +14,7 @@ import { HomeCardItem, HomeGroupSummary } from '../types/screen';
 import { images } from '../types/images';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchMyPage } from '../services/userService';
+import { getMyGroups } from '../services/groupService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 24;
@@ -28,6 +29,7 @@ export default function HomeScreen() {
   const setProfile = useAuthStore(s => s.setProfile);
 
   const [loading, setLoading] = useState(false);
+  const [groups, setGroups] = useState<HomeGroupSummary[]>([]);
 
   // 프로필이 없으면 API에서 가져오기
   useEffect(() => {
@@ -42,16 +44,33 @@ export default function HomeScreen() {
 
   const displayName = profile?.name ?? user ?? '';
 
-  // TODO: 모임 목록 API 연동 시 여기를 교체
-  const groups: HomeGroupSummary[] = [
-    {
-      id: 'g1',
-      name: '회식주의자',
-      coverImage: {
-        uri: 'https://cdn-lostark.game.onstove.com/2022/event/220126_event_M3YUrtR2/images/pc/card5_f.png',
-      },
-    },
-  ];
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const data = await getMyGroups();
+        console.log('내 모임 목록 조회 성공:', data);
+        console.log('내 모임 배열:', data.result);
+
+        const mappedGroups: HomeGroupSummary[] = data.result.map(group => ({
+          id: String(group.groupId),
+          name: group.groupName,
+          coverImage: group.card?.frontImageUrl
+            ? { uri: `https://api.ssafywte.site${group.card.frontImageUrl}` }
+            : {
+                uri: 'https://dummy.image/default-card.png',
+              },
+        }));
+
+        setGroups(mappedGroups);
+      } catch (error: any) {
+        console.error('내 모임 목록 조회 실패:', error);
+        console.error('error.response?.status:', error?.response?.status);
+        console.error('error.response?.data:', error?.response?.data);
+      }
+    };
+
+    fetchGroups();
+  }, []);
 
   const cards: HomeCardItem[] =
     groups.length > 0
