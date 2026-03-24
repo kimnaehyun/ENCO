@@ -5,6 +5,7 @@ import {
   NavigatorScreenParams,
 } from '@react-navigation/native';
 import { CommonParams } from './common';
+import type {ReceiptDraft} from './receipt';
 
 // Auth
 export type AuthStackParamList = {
@@ -141,6 +142,7 @@ export type GroupStackParamList = {
     date: string;
     memo: string;
     receiptUri: string | null;
+    receiptDraft?: ReceiptDraft | null;
     groupName: string;
     groupId?: string;
     settleMembers?: any[];
@@ -220,6 +222,7 @@ export type HomeStackParamList = {
     date: string;
     memo: string;
     receiptUri: string | null;
+    receiptDraft?: ReceiptDraft | null;
     groupName: string;
     groupId?: string;
     settleMembers?: any[];
@@ -288,6 +291,25 @@ export type GroupScreenProps<T extends keyof GroupStackParamList> =
   >;
 
 export type SignupStep = 'name' | 'birth' | 'phone' | 'email' | 'done';
+
+// ── 모임 장부 관련 타입 ──
+export type SettleMember = {
+  id: string;
+  name: string;
+  isPaid: boolean;
+};
+
+export type LedgerItem = {
+  id: string;
+  date: string;
+  amount: number;
+  title: string;
+  memo: string;
+  hasReceipt: boolean;
+  needsSettle: boolean;
+  isSettled: boolean;
+  settleMembers: SettleMember[];
+};
 
 export type Message = {
   id: string;

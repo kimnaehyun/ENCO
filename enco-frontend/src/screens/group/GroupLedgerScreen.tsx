@@ -1,12 +1,14 @@
 // src/screens/group/GroupLedgerScreen.tsx
-import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native'
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, View, Platform, PermissionsAndroid } from 'react-native'
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
 import { LedgerItem } from '../../types/group';
 import { getGroupDashboardReport } from '../../services/paymentService';
+import { generatePDF } from 'react-native-html-to-pdf';
+import RNFS from 'react-native-fs';
 
 // ─── helpers ───
 function formatMoney(n: number) {
@@ -123,12 +125,12 @@ type SortOrder = 'latest' | 'oldest';
 type TxFilter = 'all' | 'deposit' | 'withdraw';
 
 export default function GroupLedgerScreen() {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const route = useRoute();
   const params = (route.params ?? {}) as CommonParams;
   const groupName = params.groupName ?? '모임명';
   const isAdmin = !!params.isAdmin;
-  const groupId = params.groupId;
+  const groupId = params.groupId ?? '';
 
   const [balance, setBalance] = useState(0);
   const [paidAmount, setPaidAmount] = useState(0);
@@ -238,6 +240,146 @@ export default function GroupLedgerScreen() {
     sorted.forEach(it => { result[it.id] = running; running -= it.amount; });
     return result;
   }, [items, balance]);
+
+  // ── PDF 생성 및 저장 ──
+  const handleExportPDF = useCallback(async () => {
+    if (!appliedFilter) return;
+
+    // Android 저장소 권한 요청 (API 23~29, API 30+ 은 scoped storage라 불필요)
+    if (Platform.OS === 'android' && Number(Platform.Version) < 30) {
+      try {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+          {
+            title: '저장소 접근 권한',
+            message: 'PDF 파일을 다운로드 폴더에 저장하려면 저장소 권한이 필요합니다.',
+            buttonPositive: '허용',
+            buttonNegative: '거부',
+          },
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('권한 필요', '저장소 권한이 거부되어 PDF를 저장할 수 없습니다.');
+          return;
+        }
+      } catch (err) {
+        console.error('권한 요청 실패:', err);
+        return;
+      }
+    }
+
+    const filterLabel = appliedFilter.tx === 'all' ? '전체' : appliedFilter.tx === 'deposit' ? '입금' : '출금';
+    const sortLabel = appliedFilter.sort === 'latest' ? '최신순' : '과거순';
+
+    const totalDeposit = filteredItems.filter(it => it.amount >= 0).reduce((sum, it) => sum + it.amount, 0);
+    const totalWithdraw = filteredItems.filter(it => it.amount < 0).reduce((sum, it) => sum + Math.abs(it.amount), 0);
+
+    const rows = filteredItems.map(it => {
+      const isPositive = it.amount >= 0;
+      return `
+        <tr>
+          <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#6B7280;">${it.date}</td>
+          <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#111827; font-weight:600;">${it.title}</td>
+          <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:${isPositive ? '#1428A0' : '#EF4444'}; text-align:right; font-weight:700;">
+            ${formatMoney(it.amount)}
+          </td>
+          <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#6B7280; text-align:right;">
+            ${(runningBalances[it.id] ?? 0).toLocaleString()}원
+          </td>
+        </tr>`;
+    }).join('');
+
+    const html = `
+      <html>
+        <head>
+          <meta charset="utf-8" />
+          <style>
+            body { font-family: 'Helvetica Neue', sans-serif; padding: 32px; color: #111827; }
+            h1 { font-size: 22px; margin-bottom: 4px; }
+            .subtitle { font-size: 13px; color: #6B7280; margin-bottom: 24px; }
+            .summary-box {
+              background: #F9FAFB; border-radius: 12px; padding: 16px 20px;
+              margin-bottom: 24px; display: flex; gap: 24px;
+            }
+            .summary-item { font-size: 13px; color: #6B7280; }
+            .summary-value { font-size: 15px; font-weight: 700; color: #111827; margin-top: 2px; }
+            .filter-info { font-size: 12px; color: #9CA3AF; margin-bottom: 16px; }
+            table { width: 100%; border-collapse: collapse; }
+            th {
+              padding: 10px 12px; text-align: left; font-size: 12px;
+              color: #9CA3AF; border-bottom: 2px solid #E5E7EB; font-weight: 600;
+            }
+            th:nth-child(3), th:nth-child(4) { text-align: right; }
+            .footer { margin-top: 32px; font-size: 11px; color: #D1D5DB; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <h1>${groupName} 모임 장부</h1>
+          <p class="subtitle">조회기간: ${fmtDate(appliedFilter.start)} ~ ${fmtDate(appliedFilter.end)}</p>
+
+          <div class="summary-box">
+            <div>
+              <div class="summary-item">현재 잔액</div>
+              <div class="summary-value">${balance.toLocaleString()}원</div>
+            </div>
+            <div>
+              <div class="summary-item">입금 합계</div>
+              <div class="summary-value" style="color:#1428A0;">+${totalDeposit.toLocaleString()}원</div>
+            </div>
+            <div>
+              <div class="summary-item">출금 합계</div>
+              <div class="summary-value" style="color:#EF4444;">-${totalWithdraw.toLocaleString()}원</div>
+            </div>
+          </div>
+
+          <p class="filter-info">필터: ${filterLabel} · ${sortLabel} · ${filteredItems.length}건</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>날짜</th>
+                <th>내용</th>
+                <th style="text-align:right;">금액</th>
+                <th style="text-align:right;">잔액</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+
+          <p class="footer">생성일시: ${new Date().toLocaleString('ko-KR')} · 본 문서는 모임 장부 앱에서 자동 생성되었습니다.</p>
+        </body>
+      </html>
+    `;
+
+    try {
+      const pdfFileName = `${groupName}_장부_${fmtDate(appliedFilter.start)}_${fmtDate(appliedFilter.end)}.pdf`;
+
+      const options = {
+        html,
+        fileName: pdfFileName.replace('.pdf', ''),
+        ...(Platform.OS === 'ios' ? { directory: 'Documents' } : {}),
+      };
+
+      const file = await generatePDF(options);
+
+      if (!file.filePath) {
+        Alert.alert('오류', 'PDF 파일 경로를 가져올 수 없습니다.');
+        return;
+      }
+
+      if (Platform.OS === 'android') {
+        const destPath = `${RNFS.DownloadDirectoryPath}/${pdfFileName}`;
+        await RNFS.copyFile(file.filePath, destPath);
+        Alert.alert('저장 완료', `PDF가 다운로드 폴더에 저장되었습니다.\n${pdfFileName}`);
+      } else {
+        Alert.alert('저장 완료', `PDF가 저장되었습니다.\n${pdfFileName}`);
+      }
+    } catch (err: any) {
+      console.error('PDF 생성 실패:', err);
+      Alert.alert('오류', 'PDF 생성에 실패했습니다. 다시 시도해주세요.');
+    }
+  }, [appliedFilter, filteredItems, runningBalances, groupName, balance]);
 
   return (
     <ScreenLayout>
@@ -370,10 +512,10 @@ export default function GroupLedgerScreen() {
         {/* PDF 다운로드 (필터 적용 시만 노출) */}
         {appliedFilter && (
           <Pressable
-            onPress={() => Alert.alert('PDF 다운로드', '장부 PDF가 생성되었습니다. (임시)')}
+            onPress={() => handleExportPDF()}
             style={styles.pdfButton}
           >
-            <Text style={styles.pdfButtonText}>PDF 다운로드</Text>
+            <Text style={styles.pdfButtonText}>PDF로 저장</Text>
           </Pressable>
         )}
 
