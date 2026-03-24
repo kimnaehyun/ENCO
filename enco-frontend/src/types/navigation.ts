@@ -93,9 +93,9 @@ export type GroupStackParamList = {
   AdminSettle: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
   VoteCreate: CommonParams | undefined;
-  GroupInviteEntry: undefined;
-  GroupInviteDecision: undefined;
-  GroupInviteSuccess: undefined;
+  GroupInviteEntry: { inviteToken?: string; groupName?: string } | undefined;
+  GroupInviteDecision: { inviteToken?: string; groupName?: string } | undefined;
+  GroupInviteSuccess: { groupId?: number | string; groupName?: string } | undefined;
 
   GroupCreate:
     | {
@@ -204,9 +204,9 @@ export type HomeStackParamList = {
     selectedCardId?: string;
   };
   AdminSettle: CommonParams | undefined;
-  GroupInviteEntry: undefined;
-  GroupInviteDecision: undefined;
-  GroupInviteSuccess: undefined;
+  GroupInviteEntry: { inviteToken?: string; groupName?: string } | undefined;
+  GroupInviteDecision: { inviteToken?: string; groupName?: string } | undefined;
+  GroupInviteSuccess: { groupId?: number | string; groupName?: string } | undefined;
   OcrTest:
     | { imageUri?: string; groupName?: string; groupId?: string }
     | undefined;

@@ -15,7 +15,7 @@ public record PaymentVoteDetailResponseDto(
         BigDecimal amount,
         VoteStatus status,
         String expiredAt,
-        int totalMembers,
+        Integer totalMembers,
         int votedCount,
         int approveCount,
         int rejectCount,

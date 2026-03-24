@@ -127,8 +127,9 @@ export default function GroupDashboardScreen() {
 
   useEffect(() => {
     const fetchDashboard = async () => {
+      if (!groupId) return;
       try {
-        const dashboardData = await getGroupDashboard(groupId);
+        const dashboardData = await getGroupDashboard(Number(groupId));
         const result = dashboardData.result;
 
         setDashboardGroupName(result.groupName ?? '모임명');
