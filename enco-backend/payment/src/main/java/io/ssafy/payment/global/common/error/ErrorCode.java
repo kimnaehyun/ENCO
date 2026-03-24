@@ -16,6 +16,7 @@ public enum ErrorCode {
     FILE_UPLOAD_FAIL(HttpStatus.INTERNAL_SERVER_ERROR, "파일 업로드에 실패했습니다.", "FILE_UPLOAD_FAIL"),
     NOT_FOUND_ACCOUNT(HttpStatus.NOT_FOUND, "계좌 정보가 없습니다.", "NOT_FOUND_ACCOUNT"),
     TRANSACTION_NOT_FOUND(HttpStatus.NOT_FOUND, "거래 내역이 존재하지 않습니다.", "TRANSACTION_NOT_FOUND"),
+    TRANSACTION_ACCESS_DENIED(HttpStatus.FORBIDDEN, "해당 거래 내역에 접근 권한이 없습니다.", "TRANSACTION_ACCESS_DENIED"),
     INSUFFICIENT_BALANCE(HttpStatus.NOT_FOUND, "계좌 잔액이 부족합니다.", "INSUFFICIENT_BALANCE"),
     INVALID_PASSWORD(HttpStatus.NOT_FOUND, "계좌 비밀번호가 일치하지 않습니다.", "INVALID_PASSWORD"),
     NOT_FOUND_VOTE(HttpStatus.NOT_FOUND, "투표가 존재하지 않습니다.", "NOT_FOUND_VOTE"),

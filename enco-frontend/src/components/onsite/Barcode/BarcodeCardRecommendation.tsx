@@ -2,28 +2,22 @@ import { Animated, Dimensions } from 'react-native';
 import { useRef } from 'react';
 import BarcodeCard from './BarcodeCard';
 import { CARD_WIDTH, ITEM_SIZE } from '@/constants/carousel';
-import { images } from '@/types/images';
 
 const { width } = Dimensions.get('window');
 
-const data = [
-  { image: images.card1 },
-  { image: images.card2 },
-  { image: images.card3 },
-  { image: images.card4 },
-];
-
 export default function BarcodeCardRecommendation({
   onSelectCard,
+  cardsInfo,
 }: {
   onSelectCard: React.Dispatch<React.SetStateAction<number>>;
+  cardsInfo: any;
 }) {
   const scrollX = useRef(new Animated.Value(0)).current;
 
   return (
     <Animated.FlatList
       className="flex-1"
-      data={data}
+      data={cardsInfo}
       horizontal
       showsHorizontalScrollIndicator={false}
       snapToInterval={ITEM_SIZE}
@@ -44,7 +38,7 @@ export default function BarcodeCardRecommendation({
       onMomentumScrollEnd={event => {
         const offsetX = event.nativeEvent.contentOffset.x;
         const index = Math.round(offsetX / ITEM_SIZE);
-        onSelectCard(index);
+        onSelectCard(cardsInfo[index]?.cardId ?? 0);
       }}
     />
   );

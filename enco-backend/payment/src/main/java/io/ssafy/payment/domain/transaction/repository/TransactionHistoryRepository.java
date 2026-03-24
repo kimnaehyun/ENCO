@@ -4,6 +4,7 @@ import io.ssafy.payment.domain.transaction.entity.Direction;
 import io.ssafy.payment.domain.transaction.entity.TransactionHistory;
 import io.ssafy.payment.domain.vote.entity.PaymentVote;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -18,6 +19,10 @@ public interface TransactionHistoryRepository extends JpaRepository<TransactionH
     Optional<TransactionHistory> findByVoteId(Long voteId);
 
     boolean existsByIdempotencyKey(String idempotencyKey);
+
+    @Modifying
+    @Query("UPDATE TransactionHistory t SET t.receiptUrl = :receiptUrl WHERE t.id = :id")
+    void updateReceiptUrl(@Param("id") Long id, @Param("receiptUrl") String receiptUrl);
 
     // LATEST(DESC) - cursor 이전 항목
     @Query("""

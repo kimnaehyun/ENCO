@@ -20,8 +20,8 @@ export default function InternetPayNavigator() {
       />
       <Stack.Screen name="SelectGroupScreen" component={SelectGroupScreen} />
       <Stack.Screen name="CardChoiceScreen" component={CardChoiceScreen} />
-      <Stack.Screen name="PaymentPinScreen" component={PaymentPinScreen} />
       <Stack.Screen name="VoteCreateScreen" component={VoteCreateScreen} />
+      <Stack.Screen name="PaymentPinScreen" component={PaymentPinScreen} />
     </Stack.Navigator>
   );
 }

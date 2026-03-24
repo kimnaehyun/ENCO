@@ -1,15 +1,63 @@
-import React from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native'
+// src/screens/group/GroupInviteEntryScreen.tsx
+import React, { useState } from 'react';
+import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, View } from 'react-native'
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
+import { acceptInvite } from '../../services/inviteService';
 
+/**
+ * 초대 딥링크로 진입했을 때 보여주는 화면.
+ *
+ * route.params로 inviteToken을 전달받습니다.
+ * 딥링크 URL 예시: enco://invite?token=fb510545-...
+ * → RootNavigator의 linking config에서 파싱하여
+ *   GroupInviteEntry 화면에 { inviteToken } params로 전달됩니다.
+ */
 export default function GroupInviteEntryScreen() {
-  const navigation = useNavigation();
-  const groupName = '모임명';
+  const navigation = useNavigation<any>();
+  const route = useRoute();
+  const params = (route.params ?? {}) as { inviteToken?: string; groupName?: string };
 
-  const onPressJoin = () => {
-    navigation.navigate('GroupInviteDecision');
+  const inviteToken = params.inviteToken ?? '';
+  const groupName = params.groupName ?? '모임';
+
+  const [loading, setLoading] = useState(false);
+
+  const onPressJoin = async () => {
+    if (!inviteToken) {
+      Alert.alert('오류', '유효하지 않은 초대 링크입니다.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // 초대 수락 API 호출
+      const response = await acceptInvite(inviteToken);
+      const { groupId, groupName: joinedGroupName } = response.result;
+
+      // 성공 → 모임 정보와 함께 Decision 또는 Success 화면으로 이동
+      navigation.navigate('GroupInviteSuccess', {
+        groupId,
+        groupName: joinedGroupName,
+      });
+    } catch (error: any) {
+      console.error('초대 수락 실패:', error?.response?.data ?? error.message);
+
+      const status = error?.response?.status;
+      const errorMessage = error?.response?.data?.message;
+
+      if (status === 409) {
+        Alert.alert('알림', errorMessage ?? '이미 가입된 모임입니다.');
+      } else if (status === 404) {
+        Alert.alert('오류', errorMessage ?? '만료되었거나 유효하지 않은 초대 링크입니다.');
+      } else {
+        Alert.alert('오류', errorMessage ?? '초대 수락 중 오류가 발생했습니다.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -25,8 +73,16 @@ export default function GroupInviteEntryScreen() {
           <Text style={styles.groupName}>[{groupName}]</Text>
           <Text style={styles.title}>초대받았어요</Text>
 
-          <Pressable onPress={onPressJoin} style={styles.primaryButton}>
-            <Text style={styles.primaryButtonText}>가입하기</Text>
+          <Pressable
+            onPress={onPressJoin}
+            disabled={loading}
+            style={[styles.primaryButton, loading && { opacity: 0.6 }]}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Text style={styles.primaryButtonText}>가입하기</Text>
+            )}
           </Pressable>
         </View>
       </View>
