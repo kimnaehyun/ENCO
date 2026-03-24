@@ -103,6 +103,8 @@ export type DuesPaymentResponse = {
   };
 };
 
+// 자유납부
+
 export async function duesPayment(
   groupId: number,
   payload: DuesPaymentRequest,
@@ -119,6 +121,7 @@ export async function duesPayment(
   return response.data;
 }
 
+// 선택 납부
 export type SelectedDuesPaymentRequest = {
   amount: number;
   targetChargeTargetIds: number[];
@@ -142,6 +145,7 @@ export async function selectedDuesPayment(
   );
   return response.data;
 }
+
 
 export type GetUnpaidDuesResponse = {
   message: string;
@@ -254,3 +258,4 @@ export async function getGroupCards(groupId: number | string) {
 
   return response.data;
 }
+

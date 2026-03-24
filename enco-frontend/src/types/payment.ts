@@ -14,4 +14,10 @@ interface Group {
   card: string;
 }
 
+export type SelectedAccount = {
+  bankName: string;
+  accountNumber: string;
+  label: string;
+};
+
 export type { paymentMethod, PaymentState, Group };

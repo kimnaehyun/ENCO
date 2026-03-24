@@ -15,6 +15,8 @@ import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import ScreenLayout from '../../components/ScreenLayout';
 import PinEntry from '../../components/pin/PinEntry';
 import { GroupPayStep, GroupProps } from '../../types/group';
+import { SelectedAccount } from '../../types/payment';
+import { duesPayment } from '../../services/paymentService';
 
 const PIN_LEN = 4;
 
@@ -71,14 +73,31 @@ export default function GroupPayScreen({
   const paySource = route.params?.paySource ?? 'default';
   const presetUnpaidId = route.params?.presetUnpaidId;
 
+  const DEFAULT_ACCOUNT: SelectedAccount = {
+    bankName: '부산은행',
+    accountNumber: '111-1111-1111-11',
+    label: '부산은행 111-1111-1111-11',
+  };
+
+  // useState는 한 구간에 몰아서 선언
   const [step, setStep] = useState<GroupPayStep>('summary');
   const [pinResetKey, setPinResetKey] = useState(0);
   const [isSettlementLocked, setIsSettlementLocked] = useState(
     paySource === 'settlement'
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedUnpaidIds, setSelectedUnpaidIds] = useState<string[]>(
+    presetUnpaidId ? [presetUnpaidId] : []
+  );
+  const [amountText, setAmountText] = useState<string>(
+    presetAmount ? String(presetAmount) : ''
+  );
+  const [selectedAccount, setSelectedAccount] =
+    useState<SelectedAccount>(DEFAULT_ACCOUNT);
+  const [myAccountLabel, setMyAccountLabel] = useState('');
+  const [groupAccountLabel, setGroupAccountLabel] = useState('');
+  const [memo, setMemo] = useState(presetMemo);
 
-  // TODO: 서버 연동 시 getUnpaidItems(groupId) API 응답으로 교체
-  // 응답 형태: { id, label(날짜+항목명), amount } 배열
   const unpaidItems = useMemo<UnpaidItem[]>(
     () => [
       { id: 'u1', label: '26.3.1 3월 회비', amount: 10000 },
@@ -88,26 +107,13 @@ export default function GroupPayScreen({
     []
   );
 
-  const [selectedUnpaidIds, setSelectedUnpaidIds] = useState<string[]>(
-    presetUnpaidId ? [presetUnpaidId] : []
-  );
-  const [amountText, setAmountText] = useState<string>(
-    presetAmount ? String(presetAmount) : ''
-  );
-  const [selectedAccount, setSelectedAccount] = useState('부산은행 112');
-  const [myAccountLabel, setMyAccountLabel] = useState('');
-  const [groupAccountLabel, setGroupAccountLabel] = useState('');
-  const [memo, setMemo] = useState(presetMemo);
-
   const parsedAmount = useMemo(() => {
     const parsed = parseInt(formatInputNumber(amountText), 10);
     return Number.isNaN(parsed) ? 0 : parsed;
   }, [amountText]);
 
-
-
   const resetConfirmInputs = useCallback(() => {
-    setSelectedAccount('부산은행 112');
+    setSelectedAccount(DEFAULT_ACCOUNT);
     setMyAccountLabel('');
     setGroupAccountLabel('');
     setMemo(presetMemo);
@@ -116,15 +122,18 @@ export default function GroupPayScreen({
   const resetAllPayState = useCallback(() => {
     setSelectedUnpaidIds([]);
     setAmountText('');
-    setSelectedAccount('부산은행 112');
+    setSelectedAccount(DEFAULT_ACCOUNT);
     setMyAccountLabel('');
     setGroupAccountLabel('');
     setMemo('');
     setPinResetKey(prev => prev + 1);
     setIsSettlementLocked(false);
+    setIsSubmitting(false);
   }, []);
 
   const goBackLike = useCallback(() => {
+    if (isSubmitting) return;
+
     if (step === 'summary') {
       navigation.goBack();
       return;
@@ -143,7 +152,7 @@ export default function GroupPayScreen({
       setStep('summary');
       return;
     }
-  }, [navigation, resetConfirmInputs, resetAllPayState, step]);
+  }, [navigation, resetConfirmInputs, resetAllPayState, step, isSubmitting]);
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
@@ -167,9 +176,11 @@ export default function GroupPayScreen({
       const nextIds = isSelected
         ? prev.filter(id => id !== item.id)
         : [...prev, item.id];
+
       const nextAmount = unpaidItems
         .filter(unpaid => nextIds.includes(unpaid.id))
         .reduce((sum, unpaid) => sum + unpaid.amount, 0);
+
       setAmountText(nextAmount > 0 ? String(nextAmount) : '');
       return nextIds;
     });
@@ -197,6 +208,72 @@ export default function GroupPayScreen({
     }
     setPinResetKey(prev => prev + 1);
     setStep('pin');
+  };
+
+  const handleSubmitPayment = async () => {
+    if (isSubmitting) return;
+
+    const groupIdParam = route.params?.groupId;
+    const numericGroupId = groupIdParam ? Number(groupIdParam) : NaN;
+
+    if (!Number.isFinite(numericGroupId)) {
+      Alert.alert('오류', '유효하지 않은 모임 ID입니다.');
+      return;
+    }
+
+    if (!parsedAmount || parsedAmount <= 0) {
+      Alert.alert('확인', '금액을 입력해주세요.');
+      return;
+    }
+
+    const requestBody = {
+      withdrawAccountBankName: selectedAccount.bankName,
+      withdrawAccountNumber: selectedAccount.accountNumber,
+      amount: parsedAmount,
+      withdrawDisplayName: myAccountLabel || '모임비 납부',
+      depositDisplayName:
+        groupAccountLabel || `${route.params?.groupName ?? '모임'} 통장`,
+      memo: memo || '',
+    };
+
+    try {
+      setIsSubmitting(true);
+
+      console.log('[DuesPayment] submit start');
+      console.log('[DuesPayment] groupId:', numericGroupId);
+      console.log('[DuesPayment] requestBody:', requestBody);
+
+      const result = await duesPayment(numericGroupId, requestBody);
+
+      console.log('[DuesPayment] success response:', result);
+      console.log('[DuesPayment] paymentId:', result.result.paymentId);
+      console.log('[DuesPayment] paidAt:', result.result.paidAt);
+      console.log('[DuesPayment] allocations:', result.result.allocations);
+
+      setStep('success');
+    } catch (error: any) {
+      console.error('[DuesPayment] failed:', error);
+      console.error('[DuesPayment] status:', error?.response?.status);
+      console.error('[DuesPayment] data:', error?.response?.data);
+
+      const status = error?.response?.status;
+      const code = error?.response?.data?.result?.code;
+      const message =
+        error?.response?.data?.result?.message ||
+        error?.response?.data?.message ||
+        '회비 납부 중 오류가 발생했습니다.';
+
+      if (status === 409 && code === 'INSUFFICIENT_BALANCE') {
+        Alert.alert('잔액 부족', '출금 계좌 잔액이 부족합니다.');
+      } else {
+        Alert.alert('납부 실패', message);
+      }
+
+      setStep('form');
+      setPinResetKey(prev => prev + 1);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const onPressNotify = () => {
@@ -321,8 +398,10 @@ export default function GroupPayScreen({
 
             <InfoInputBox
               label="계좌 선택"
-              value={selectedAccount}
-              onChangeText={setSelectedAccount}
+              value={selectedAccount.label}
+              onChangeText={text =>
+                setSelectedAccount(prev => ({ ...prev, label: text }))
+              }
             />
 
             <InfoInputBox
@@ -343,18 +422,27 @@ export default function GroupPayScreen({
               onChangeText={setMemo}
             />
 
-            <Pressable onPress={onPressGoPin} style={styles.primaryBtn}>
-              <Text style={styles.primaryBtnText}>납부하기</Text>
+            <Pressable
+              onPress={onPressGoPin}
+              style={[
+                styles.primaryBtn,
+                isSubmitting && styles.primaryBtnDisabled,
+              ]}
+              disabled={isSubmitting}
+            >
+              <Text style={styles.primaryBtnText}>
+                {isSubmitting ? '처리 중...' : '납부하기'}
+              </Text>
             </Pressable>
           </View>
         )}
 
         {step === 'pin' && (
           <PinEntry
-            title="비밀번호를 입력해주세요"
+            title={isSubmitting ? '납부 처리 중입니다' : '비밀번호를 입력해주세요'}
             length={PIN_LEN}
             resetKey={pinResetKey}
-            onComplete={() => setStep('success')}
+            onComplete={handleSubmitPayment}
           />
         )}
 
@@ -378,7 +466,6 @@ export default function GroupPayScreen({
     </KeyboardAvoidingView>
   );
 }
-
 
 const styles = StyleSheet.create({
   headerSimple: {
