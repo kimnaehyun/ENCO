@@ -2,16 +2,20 @@ package io.ssafy.payment.domain.transaction.repository;
 
 import io.ssafy.payment.domain.transaction.entity.Direction;
 import io.ssafy.payment.domain.transaction.entity.TransactionHistory;
+import io.ssafy.payment.domain.vote.entity.PaymentVote;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+
+import java.util.Optional;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
 public interface TransactionHistoryRepository extends JpaRepository<TransactionHistory, Long> {
+    Optional<TransactionHistory> findByVoteId(Long voteId);
 
     boolean existsByIdempotencyKey(String idempotencyKey);
 
@@ -23,8 +27,8 @@ public interface TransactionHistoryRepository extends JpaRepository<TransactionH
               AND (:direction IS NULL OR t.direction = :direction)
               AND (:startDate IS NULL OR t.createdAt >= :startDate)
               AND (:endDate IS NULL OR t.createdAt <= :endDate)
-              AND (:cursor IS NULL OR t.id < :cursor)
-            ORDER BY t.id DESC
+              AND (:cursor IS NULL OR t.createdAt < :cursor)
+            ORDER BY t.createdAt DESC
             LIMIT :size
             """)
     List<TransactionHistory> findLatestWithCursor(
@@ -32,7 +36,7 @@ public interface TransactionHistoryRepository extends JpaRepository<TransactionH
             @Param("direction") Direction direction,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
-            @Param("cursor") Long cursor,
+            @Param("cursor") LocalDateTime cursor,
             @Param("size") int size
     );
 
@@ -44,8 +48,8 @@ public interface TransactionHistoryRepository extends JpaRepository<TransactionH
               AND (:direction IS NULL OR t.direction = :direction)
               AND (:startDate IS NULL OR t.createdAt >= :startDate)
               AND (:endDate IS NULL OR t.createdAt <= :endDate)
-              AND (:cursor IS NULL OR t.id > :cursor)
-            ORDER BY t.id ASC
+              AND (:cursor IS NULL OR t.createdAt > :cursor)
+            ORDER BY t.createdAt ASC
             LIMIT :size
             """)
     List<TransactionHistory> findOldestWithCursor(
@@ -53,7 +57,7 @@ public interface TransactionHistoryRepository extends JpaRepository<TransactionH
             @Param("direction") Direction direction,
             @Param("startDate") LocalDateTime startDate,
             @Param("endDate") LocalDateTime endDate,
-            @Param("cursor") Long cursor,
+            @Param("cursor") LocalDateTime cursor,
             @Param("size") int size
     );
 }

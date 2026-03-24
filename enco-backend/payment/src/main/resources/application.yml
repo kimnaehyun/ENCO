@@ -1,6 +1,9 @@
 spring:
   application:
     name: payment-service
+  jackson: # ← 추가
+    serialization:
+      write-dates-as-timestamps: false
   datasource:
     url: jdbc:mysql://${PAYMENT_DB_HOST}:${PAYMENT_DB_PORT}/${PAYMENT_DB_NAME}
     username: ${DB_USERNAME}
@@ -21,9 +24,15 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
-
+  cloud:
+    compatibility-verifier:
+      enabled: false
 server:
   port: ${PAYMENT_SERVICE_PORT}
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 12MB
 
 service:
   auth:
@@ -33,6 +42,13 @@ gms:
   url: ${GMS_URL}
   key: ${GMS_KEY}
   model: ${GMS_MODEL}
+
+clova:
+  ocr:
+    invoke-url: ${CLOVA_OCR_INVOKE_URL:}
+    secret: ${CLOVA_OCR_SECRET:}
+    version: ${CLOVA_OCR_VERSION:V1}
+    timeout-ms: ${CLOVA_OCR_TIMEOUT_MS:15000}
 
 minio:
   endpoint: ${MINIO_ENDPOINT}

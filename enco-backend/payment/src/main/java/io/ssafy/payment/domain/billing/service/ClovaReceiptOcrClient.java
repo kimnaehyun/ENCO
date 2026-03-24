@@ -1,0 +1,158 @@
+package io.ssafy.payment.domain.billing.service;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.ssafy.payment.global.common.error.CustomException;
+import io.ssafy.payment.global.common.error.ErrorCode;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpStatusCodeException;
+import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.io.IOException;
+import java.time.Duration;
+import java.util.Base64;
+import java.util.List;
+import java.util.UUID;
+
+@Slf4j
+@Component
+@RequiredArgsConstructor
+public class ClovaReceiptOcrClient {
+
+    private final RestTemplateBuilder restTemplateBuilder;
+    private final ObjectMapper objectMapper;
+
+    @Value("${clova.ocr.invoke-url:}")
+    private String invokeUrl;
+
+    @Value("${clova.ocr.secret:}")
+    private String secret;
+
+    @Value("${clova.ocr.version:V2}")
+    private String version;
+
+    @Value("${clova.ocr.timeout-ms:30000}")
+    private long timeoutMs;
+
+    public ClovaReceiptOcrRawResult callReceiptOcr(MultipartFile file) {
+        if (invokeUrl == null || invokeUrl.isBlank() || secret == null || secret.isBlank()) {
+            throw new CustomException(ErrorCode.OCR_PROVIDER_ERROR);
+        }
+
+        String requestId = UUID.randomUUID().toString();
+        String extension = extractExtension(file.getOriginalFilename());
+
+        try {
+            String base64 = Base64.getEncoder().encodeToString(file.getBytes());
+
+            ClovaOcrRequest request = new ClovaOcrRequest(
+                    version,
+                    requestId,
+                    System.currentTimeMillis(),
+                    List.of(new ImageDto(
+                            normalizeFormat(extension),
+                            base64,
+                            "receipt"
+                    ))
+            );
+
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            headers.set("X-OCR-SECRET", secret);
+
+            RestTemplate restTemplate = restTemplateBuilder
+                    .setConnectTimeout(Duration.ofMillis(timeoutMs))
+                    .setReadTimeout(Duration.ofMillis(timeoutMs))
+                    .build();
+
+            HttpEntity<ClovaOcrRequest> entity = new HttpEntity<>(request, headers);
+
+            long startedAt = System.currentTimeMillis();
+
+            log.info("CLOVA invokeUrl={}", invokeUrl);
+            log.info("CLOVA request version={}", request.version());
+            log.info("CLOVA requestId={}", request.requestId());
+            log.info("CLOVA timestamp={}", request.timestamp());
+            log.info("CLOVA image format={}", request.images().get(0).format());
+            log.info("CLOVA image base64Length={}", request.images().get(0).data() == null ? 0 : request.images().get(0).data().length());
+
+            ResponseEntity<String> response = restTemplate.exchange(
+                    invokeUrl,
+                    HttpMethod.POST,
+                    entity,
+                    String.class
+            );
+
+            long elapsedMs = System.currentTimeMillis() - startedAt;
+            log.info("CLOVA response status={} elapsedMs={}", response.getStatusCode(), elapsedMs);
+
+            JsonNode rawResponse = objectMapper.readTree(response.getBody());
+            return new ClovaReceiptOcrRawResult(requestId, rawResponse);
+
+        } catch (ResourceAccessException e) {
+            log.error("CLOVA OCR timeout/access error", e);
+            throw new CustomException(ErrorCode.OCR_PROVIDER_TIMEOUT);
+        } catch (HttpStatusCodeException e) {
+            log.error("CLOVA OCR provider error: status={}, body={}", e.getStatusCode(), e.getResponseBodyAsString(), e);
+            throw new CustomException(ErrorCode.OCR_PROVIDER_ERROR);
+        } catch (IOException e) {
+            log.error("Failed to serialize image or parse CLOVA response", e);
+            throw new CustomException(ErrorCode.OCR_PARSE_FAILED);
+        } catch (Exception e) {
+            log.error("Unexpected CLOVA OCR error", e);
+            throw new CustomException(ErrorCode.OCR_PROVIDER_ERROR);
+        }
+    }
+
+    private String extractExtension(String originalFilename) {
+        if (originalFilename == null || !originalFilename.contains(".")) {
+            return "jpg";
+        }
+        return originalFilename.substring(originalFilename.lastIndexOf('.') + 1);
+    }
+
+    private String normalizeFormat(String extension) {
+        if (extension == null) {
+            return "jpg";
+        }
+        String normalized = extension.toLowerCase();
+        return switch (normalized) {
+            case "jpg", "jpeg" -> "jpg";
+            case "png" -> "png";
+            case "pdf" -> "pdf";
+            default -> "jpg";
+        };
+    }
+
+    public record ClovaReceiptOcrRawResult(
+            String requestId,
+            JsonNode rawResponse
+    ) {
+    }
+
+    private record ClovaOcrRequest(
+            String version,
+            String requestId,
+            long timestamp,
+            List<ImageDto> images
+    ) {
+    }
+
+    private record ImageDto(
+            String format,
+            String data,
+            String name
+    ) {
+    }
+}

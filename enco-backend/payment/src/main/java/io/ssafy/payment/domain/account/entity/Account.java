@@ -72,4 +72,12 @@ public class Account {
     @Builder.Default
     private List<Card> cardList = new ArrayList<>();
 
+    public void deductAmount(BigDecimal requestAmount) {
+        if (this.amount.compareTo(requestAmount) < 0) {
+            throw new IllegalArgumentException("계좌 잔액이 부족합니다.");
+        }
+
+        this.amount = this.amount.subtract(requestAmount);
+        this.lastTransactionAt = LocalDateTime.now();
+    }
 }
