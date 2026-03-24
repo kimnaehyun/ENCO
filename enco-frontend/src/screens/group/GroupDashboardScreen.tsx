@@ -1,6 +1,15 @@
+// src/screens/group/GroupDashboardScreen.tsx
 import React, { useEffect, useMemo, useState } from 'react';
-import { Dimensions, FlatList, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
+import {
+  Dimensions,
+  FlatList,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CommonParams } from '../../types/common';
 import { useNotifications } from '../../contexts/NotificationsContext';
@@ -12,7 +21,11 @@ import ExpenseCategoryCard, {
 import MonthlyTrendCard, {
   MonthlyExpense,
 } from '../../components/analytics/MonthlyTrendCard';
-import { getGroupDashboard, getGroupDashboardReport } from '../../services/paymentService';
+import {
+  getGroupDashboard,
+  getGroupDashboardReport,
+} from '../../services/paymentService';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 20;
@@ -30,13 +43,13 @@ export default function GroupDashboardScreen() {
   const route = useRoute();
   const navigation = useNavigation<any>();
 
+  const { top: topInset } = useSafeAreaInsets();
   const params = (route.params ?? {}) as CommonParams;
   const groupId = params.groupId;
   const { unreadCount } = useNotifications();
 
-  // --- useState ---
   const [dashboardGroupName, setDashboardGroupName] = useState(
-    params.groupName ?? '모임명',
+    params.groupName ?? '모임명'
   );
   const [paidCount, setPaidCount] = useState(0);
   const [unpaidCount, setUnpaidCount] = useState(0);
@@ -46,18 +59,16 @@ export default function GroupDashboardScreen() {
   const [reportBalance, setReportBalance] = useState(0);
   const [paidAmount, setPaidAmount] = useState(0);
   const [pointAmount, setPointAmount] = useState(0);
-  // --- 상수 ---
+
   const totalExpense = 428000;
   const monthlyBudget = 500000;
 
-  // TODO: 백엔드 연결 후 실제 출석 데이터로 교체
   const attendedCount = 6;
   const totalMembers = 10;
   const attendanceRewardThreshold = 0.7;
   const attendanceRatio = attendedCount / totalMembers;
   const requiredCount = Math.ceil(totalMembers * attendanceRewardThreshold);
 
-  // --- useMemo ---
   const categoryData = useMemo<ExpenseCategoryItem[]>(
     () => [
       { label: '식비', value: 180000, color: COLORS.brand },
@@ -65,7 +76,7 @@ export default function GroupDashboardScreen() {
       { label: '회비 적립', value: 110000, color: '#818CF8' },
       { label: '기타', value: 48000, color: '#C7D2FE' },
     ],
-    [],
+    []
   );
 
   const monthlyData = useMemo<MonthlyExpense[]>(
@@ -77,7 +88,7 @@ export default function GroupDashboardScreen() {
       { month: '5월', amount: 360000 },
       { month: '6월', amount: 428000 },
     ],
-    [],
+    []
   );
 
   const analyticsCards: AnalyticsCardItem[] = [
@@ -114,16 +125,10 @@ export default function GroupDashboardScreen() {
     };
   }, [attendanceRatio, attendanceRewardThreshold, attendedCount, requiredCount]);
 
-  // --- useEffect ---
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        console.log('dashboard groupId 확인:', groupId);
-
         const dashboardData = await getGroupDashboard(groupId);
-        console.log('모임 대시보드 조회 성공:', dashboardData);
-        console.log('대시보드 result:', dashboardData.result);
-
         const result = dashboardData.result;
 
         setDashboardGroupName(result.groupName ?? '모임명');
@@ -134,9 +139,6 @@ export default function GroupDashboardScreen() {
         setBalance(result.balance ?? 0);
 
         const reportData = await getGroupDashboardReport(groupId);
-        console.log('모임비 대시보드 조회 성공:', reportData);
-        console.log('모임비 대시보드 result:', reportData.result);
-
         const reportResult = reportData.result;
         setReportBalance(reportResult.balance ?? 0);
         setPaidAmount(reportResult.paidAmount ?? 0);
@@ -151,7 +153,6 @@ export default function GroupDashboardScreen() {
     fetchDashboard();
   }, [groupId]);
 
-  // --- 네비게이션 핸들러 ---
   const onPressGroupInfo = () =>
     navigation.navigate('GroupInfo', {
       groupId: params.groupId,
@@ -175,6 +176,7 @@ export default function GroupDashboardScreen() {
     navigation.navigate('GroupPay', {
       groupId: params.groupId,
       groupName: dashboardGroupName,
+      paySource: 'default',
     });
 
   const onPressCommunity = () =>
@@ -225,7 +227,6 @@ export default function GroupDashboardScreen() {
               />
 
               <Text style={styles.moodTitle}>{attendanceMood.title}</Text>
-
               <Text style={styles.moodSubtitle}>{attendanceMood.subtitle}</Text>
 
               <View style={styles.progressBarWrap}>
@@ -297,8 +298,9 @@ export default function GroupDashboardScreen() {
   return (
     <View className="flex-1 bg-[#F0F4FF]">
       <ScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { paddingTop: topInset + 16 }]}
         showsVerticalScrollIndicator={false}
+        nestedScrollEnabled
       >
         {/* 헤더 */}
         <View className="flex-row items-center justify-between mb-5">
@@ -333,19 +335,21 @@ export default function GroupDashboardScreen() {
         </View>
 
         {/* 시각화 카드 스와이프 */}
-        <FlatList
-          data={analyticsCards}
-          keyExtractor={item => item.id}
-          renderItem={renderAnalyticsCard}
-          horizontal
-          pagingEnabled
-          snapToInterval={ANALYTICS_CARD_WIDTH + CARD_GAP}
-          decelerationRate="fast"
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.flatListContent}
-          ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
-          style={styles.flatList}
-        />
+        <View style={styles.analyticsSection}>
+          <FlatList
+            data={analyticsCards}
+            keyExtractor={item => item.id}
+            renderItem={renderAnalyticsCard}
+            horizontal
+            snapToInterval={ANALYTICS_CARD_WIDTH + CARD_GAP}
+            snapToAlignment="start"
+            decelerationRate="fast"
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.flatListContent}
+            ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
+            style={styles.flatList}
+          />
+        </View>
 
         {/* 잔액 카드 */}
         <Pressable
@@ -355,41 +359,11 @@ export default function GroupDashboardScreen() {
         >
           <View className="flex-row items-center justify-between mb-3">
             <Text style={styles.balanceEmoji}>💵</Text>
-            <Text style={styles.balanceValue}>{reportBalance.toLocaleString()}원</Text>
+            <Text style={styles.balanceValue}>
+              {reportBalance.toLocaleString()}원
+            </Text>
           </View>
-
-          {/* <View className="flex-row items-center justify-between">
-            <Text style={styles.statusLabel}>총 납부액</Text>
-            <Text style={styles.statusValue}>{paidAmount.toLocaleString()}원</Text>
-          </View>
-
-          <View className="flex-row items-center justify-between mt-2">
-            <Text style={styles.statusLabel}>적립 포인트</Text>
-            <Text style={styles.statusValue}>{pointAmount.toLocaleString()}P</Text>
-          </View> */}
         </Pressable>
-
-        {/* 납부/미납 현황 카드 */}
-        {/* <View
-          className="bg-white rounded-3xl px-6 py-5 mb-4"
-          style={styles.shadowCard}
-        >
-          <Text style={styles.statusTitle}>회비 납부 현황</Text>
-
-          <View style={styles.statusRow}>
-            <Text style={styles.statusLabel}>납부</Text>
-            <Text style={styles.statusValue}>
-              {paidCount}명 ({paidRatio}%)
-            </Text>
-          </View>
-
-          <View style={styles.statusRow}>
-            <Text style={styles.statusLabel}>미납</Text>
-            <Text style={styles.statusValue}>
-              {unpaidCount}명 ({unpaidRatio}%)
-            </Text>
-          </View> */}
-        
 
         {/* 투표 현황 카드 */}
         <Pressable
@@ -402,7 +376,7 @@ export default function GroupDashboardScreen() {
         </Pressable>
 
         {/* 납부 / 채팅 */}
-        <View className="flex-row gap-4 mb-4">
+        <View style={styles.actionRow}>
           <Pressable
             onPress={onPressPay}
             className="flex-1 bg-white rounded-3xl flex-row items-center justify-center gap-3"
@@ -445,181 +419,145 @@ export default function GroupDashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  // 레이아웃
   scrollContent: {
-    paddingHorizontal: HORIZONTAL_PADDING,
-    paddingTop: 56,
+    paddingHorizontal: 20,
+    paddingTop: 20,
     paddingBottom: 32,
   },
-  flatList: {
+  analyticsSection: {
+    height: ANALYTICS_CARD_HEIGHT,
     marginBottom: 16,
+    overflow: 'hidden',
   },
-  flatListContent: {
-    paddingRight: 2,
+  flatList: {
+    height: ANALYTICS_CARD_HEIGHT,
   },
+  flatListContent: {},
   cardSeparator: {
     width: CARD_GAP,
   },
-
-  // 공통 카드 그림자
-  shadowCard: {
-    height: 72,
-    shadowColor: '#1428A0',
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-
-  // 헤더
   groupNameText: {
-    fontSize: 22,
+    fontSize: 24,
     fontFamily: FONT_FAMILY.bold,
-    color: COLORS.dark,
+    color: COLORS.primary,
   },
   alertIcon: {
-    width: 20,
-    height: 20,
-    tintColor: '#9CA3AF',
+    width: 18,
+    height: 18,
   },
   bellEmoji: {
-    fontSize: 24,
+    fontSize: 26,
   },
-
-  // 잔액 카드
-  reportCard: {
-    shadowColor: '#1428A0',
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 2,
+  reportCard: {},
+  shadowCard: {
+    minHeight: 90,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
   },
   balanceEmoji: {
-    fontSize: 26,
+    fontSize: 24,
   },
   balanceValue: {
-    fontSize: 22,
+    fontSize: 28,
     fontFamily: FONT_FAMILY.bold,
-    color: COLORS.dark,
+    color: COLORS.primary,
   },
-  statusLabel: {
-    fontSize: 14,
-    fontFamily: FONT_FAMILY.medium,
-    color: COLORS.muted,
-  },
-  statusValue: {
-    fontSize: 14,
-    fontFamily: FONT_FAMILY.bold,
-    color: COLORS.dark,
-  },
-
-  // 투표 카드
   votesEmoji: {
-    fontSize: 26,
+    fontSize: 28,
   },
   votesText: {
     fontSize: 18,
     fontFamily: FONT_FAMILY.bold,
-    color: COLORS.dark,
+    color: COLORS.primary,
   },
-
-  // 납부 / 채팅
+  actionRow: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 16,
+    position: 'relative',
+    zIndex: 10,
+    elevation: 10,
+  },
   actionEmoji: {
-    fontSize: 22,
+    fontSize: 28,
   },
   actionText: {
-    fontSize: 16,
+    fontSize: 18,
     fontFamily: FONT_FAMILY.bold,
-    color: COLORS.dark,
+    color: COLORS.primary,
   },
-
-  // 모임 관리 버튼
   adminButton: {
     backgroundColor: '#1428A0',
   },
   adminText: {
     fontSize: 18,
     fontFamily: FONT_FAMILY.bold,
-    color: COLORS.white,
+    color: '#FFFFFF',
   },
-
-  // 테스트 버튼
   inviteTestButton: {
     backgroundColor: '#E5E7EB',
   },
   inviteTestText: {
     fontSize: 16,
-    fontFamily: FONT_FAMILY.bold,
-    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
+    color: COLORS.primary,
   },
-
-  // 출석 카드
   attendanceCard: {
-    width: ANALYTICS_CARD_WIDTH,
-    height: ANALYTICS_CARD_HEIGHT,
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 20,
-    shadowColor: '#1428A0',
-    shadowOpacity: 0.06,
-    shadowRadius: 12,
-    elevation: 2,
+    backgroundColor: '#FFFFFF',
+    padding: 20,
+    minHeight: ANALYTICS_CARD_HEIGHT,
   },
   attendanceHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    alignItems: 'center',
   },
   attendanceTitle: {
-    fontSize: 15,
-    color: COLORS.dark,
+    fontSize: 18,
     fontFamily: FONT_FAMILY.bold,
+    color: COLORS.primary,
   },
   attendanceBadge: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#EEF2FF',
     borderRadius: 999,
     paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingVertical: 5,
   },
   attendanceBadgeText: {
     fontSize: 12,
-    color: COLORS.muted,
-    fontFamily: FONT_FAMILY.medium,
+    fontFamily: FONT_FAMILY.bold,
+    color: '#1428A0',
   },
   attendanceInner: {
     flex: 1,
-    borderRadius: 22,
-    backgroundColor: '#F8FAFC',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 20,
   },
   moodImage: {
-    width: 92,
-    height: 92,
-    marginBottom: 12,
+    width: 100,
+    height: 100,
+    marginBottom: 14,
   },
   moodTitle: {
-    fontSize: 17,
-    color: COLORS.dark,
+    fontSize: 20,
     fontFamily: FONT_FAMILY.bold,
+    color: COLORS.primary,
     textAlign: 'center',
-    marginBottom: 6,
   },
   moodSubtitle: {
-    fontSize: 13,
-    color: COLORS.muted,
+    fontSize: 14,
     fontFamily: FONT_FAMILY.medium,
+    color: '#6B7280',
     textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 18,
+    marginTop: 6,
   },
   progressBarWrap: {
     width: '100%',
-    maxWidth: 220,
-    marginBottom: 10,
+    marginTop: 18,
   },
   progressBarBg: {
+    width: '100%',
     height: 10,
     backgroundColor: '#E5E7EB',
     borderRadius: 999,
@@ -627,16 +565,17 @@ const styles = StyleSheet.create({
   },
   progressBarFill: {
     height: '100%',
+    borderRadius: 999,
   },
   membersText: {
-    fontSize: 14,
-    color: COLORS.subtle,
-    fontFamily: FONT_FAMILY.medium,
-    textAlign: 'center',
+    marginTop: 12,
+    fontSize: 15,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.primary,
   },
   rewardText: {
-    fontSize: 12,
-    fontFamily: FONT_FAMILY.bold,
-    marginTop: 8,
+    marginTop: 6,
+    fontSize: 13,
+    fontFamily: FONT_FAMILY.medium,
   },
 });

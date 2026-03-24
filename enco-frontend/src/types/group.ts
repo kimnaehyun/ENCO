@@ -7,6 +7,17 @@ import {
 import { CommonParams } from './common';
 import type {ReceiptDraft} from './receipt';
 
+export type GroupPayStep = 'summary' | 'form' | 'pin' | 'success';
+
+export type GroupPaySource = 'default' | 'due' | 'settlement';
+
+export type GroupPayParams = CommonParams & {
+  presetAmount?: number;
+  presetMemo?: string;
+  paySource?: GroupPaySource;
+  presetUnpaidId?: string;
+};
+
 // Auth
 export type AuthStackParamList = {
   AuthLanding: undefined;
@@ -46,7 +57,7 @@ export type GroupStackParamList = {
   GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
   GroupInfo: CommonParams | undefined;
   GroupVotes: CommonParams | undefined;
-  GroupPay: CommonParams | undefined;
+  GroupPay: GroupPayParams | undefined;
   GroupChat: CommonParams | undefined;
   GroupLedger: CommonParams | undefined;
   AdminMenu: CommonParams | undefined;
@@ -155,7 +166,7 @@ export type HomeStackParamList = {
   GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
   GroupInfo: CommonParams | undefined;
   GroupVotes: CommonParams | undefined;
-  GroupPay: CommonParams | undefined;
+  GroupPay: GroupPayParams | undefined;
   GroupChat: CommonParams | undefined;
   GroupLedger: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
@@ -289,6 +300,8 @@ export type GroupScreenProps<T extends keyof GroupStackParamList> =
     NativeStackScreenProps<GroupStackParamList, T>,
     BottomTabScreenProps<BottomTabParamList>
   >;
+
+export type GroupProps<T extends keyof GroupStackParamList> = GroupScreenProps<T>;
 
 export type SignupStep = 'name' | 'birth' | 'phone' | 'email' | 'done';
 

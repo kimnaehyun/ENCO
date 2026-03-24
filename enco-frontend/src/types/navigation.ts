@@ -5,6 +5,7 @@ import {
   NavigatorScreenParams,
 } from '@react-navigation/native';
 import { CommonParams } from './common';
+import { GroupPayParams } from './group';
 import type {ReceiptDraft} from './receipt';
 
 // Auth
@@ -50,7 +51,7 @@ export type GroupStackParamList = {
   GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
   GroupInfo: CommonParams | undefined;
   GroupVotes: CommonParams | undefined;
-  GroupPay: CommonParams | undefined;
+  GroupPay: GroupPayParams | undefined;
   GroupChat: CommonParams | undefined;
   GroupLedger: CommonParams | undefined;
   GroupAttendance: CommonParams | undefined;
@@ -161,7 +162,7 @@ export type HomeStackParamList = {
   GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
   GroupInfo: CommonParams | undefined;
   GroupVotes: CommonParams | undefined;
-  GroupPay: CommonParams | undefined;
+  GroupPay: GroupPayParams | undefined;
   GroupChat: CommonParams | undefined;
   GroupLedger: CommonParams | undefined;
   GroupAttendance: CommonParams | undefined;
