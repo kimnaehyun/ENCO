@@ -6,4 +6,18 @@ interface PaymentState {
   qr: () => void;
 }
 
-export type { paymentMethod, PaymentState };
+interface Group {
+  groupId: string | number;
+  groupName: string;
+  role: string;
+  account: string;
+  card: string;
+}
+
+export type SelectedAccount = {
+  bankName: string;
+  accountNumber: string;
+  label: string;
+};
+
+export type { paymentMethod, PaymentState, Group };

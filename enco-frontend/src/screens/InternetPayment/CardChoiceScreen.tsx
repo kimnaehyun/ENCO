@@ -1,20 +1,36 @@
 import { View, Text, Pressable, Image } from 'react-native';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { images } from '../../types/images';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import KeyValueRow from '../../components/common/KeyValueRow';
 import PointToggleButton from '../../components/payment/PointToggleButton';
 import PayButton from '../../components/internet/PayButton';
 import ScreenLayout from '../../components/ScreenLayout';
 import BarcodeCardRecommendation from '@/components/onsite/Barcode/BarcodeCardRecommendation';
+import { getGroupCards } from '@/services/paymentService';
 
 export default function CardChoiceScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const params = route.params as { title: string };
-  const insets = useSafeAreaInsets();
+  const params = route.params as { title: string; groupId: number };
   const [cardNumber, setCardNumber] = useState<number>(0);
+
+  const [cardsInfo, setCardsInfo] = useState<any>();
+
+  useEffect(() => {
+    const fetchCards = async () => {
+      const response = await getGroupCards(params.groupId);
+      console.log(response);
+
+      const mapped = response.result.map(item => ({
+        image: images.card1, // 임시 폴백
+        cardId: item.cardId,
+      }));
+      setCardsInfo(mapped);
+    };
+    fetchCards();
+  }, []);
+
   return (
     <ScreenLayout className="gap-4">
       <View className="flex-row items-center gap-4 bg-white rounded-[20px] p-4">
@@ -29,7 +45,10 @@ export default function CardChoiceScreen() {
         </View>
         <View className="flex-1">
           <View className="h-96">
-            <BarcodeCardRecommendation onSelectCard={setCardNumber} />
+            <BarcodeCardRecommendation
+              onSelectCard={setCardNumber}
+              cardsInfo={cardsInfo}
+            />
           </View>
           <View className="flex-1 gap-5">
             <KeyValueRow title="금액">
@@ -48,7 +67,12 @@ export default function CardChoiceScreen() {
           </View>
           <View className="flex items-center">
             <PayButton
-              onPress={() => navigation.navigate('PaymentPinScreen')}
+              onPress={() =>
+                navigation.navigate('VoteCreateScreen', {
+                  groupId: params.groupId,
+                  cardId: cardNumber,
+                })
+              }
             />
           </View>
         </View>

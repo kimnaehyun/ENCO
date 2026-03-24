@@ -1,195 +1,202 @@
-import axios from "axios";
-import { v4 as uuidv4 } from "uuid";
-import { getCachedAccessToken } from "../utils/tokenStorage";
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
+import { getCachedAccessToken } from '../utils/tokenStorage';
 
-const PAYMENT_BASE_URL = "https://api.ssafywte.site/payment-service/api/v1";
+const PAYMENT_BASE_URL = 'https://api.ssafywte.site/payment-service/api/v1';
 
-const paymentApi = axios.create({
-    baseURL: PAYMENT_BASE_URL,
-    timeout: 10000,
-    headers: {
-        "Content-Type": "application/json",
-    },
+export const paymentApi = axios.create({
+  baseURL: PAYMENT_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 // 요청마다 토큰 자동 주입
 paymentApi.interceptors.request.use(config => {
-    const token = getCachedAccessToken();
-    if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
+  const token = getCachedAccessToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
-
 
 // ── 카드 상세 조회 (GET /cards/{cardProductId}) ──
 // 응답: { message: "...", result: { id, name, baseSpending, ... } }
 
 export type CardDetailResult = {
-    id: number;
-    name: string;
-    baseSpending: number;
-    maxBenefitLimit: number;
-    description: string;
-    maxLimit: number;
-    frontImageUrl: string;
-    backImageUrl: string;
+  id: number;
+  name: string;
+  baseSpending: number;
+  maxBenefitLimit: number;
+  description: string;
+  maxLimit: number;
+  frontImageUrl: string;
+  backImageUrl: string;
 };
 
 export type GetCardDetailResponse = {
-    message: string;
-    result: CardDetailResult;
+  message: string;
+  result: CardDetailResult;
 };
 
-export async function getCardDetail(cardProductId: number): Promise<GetCardDetailResponse> {
-    const response = await paymentApi.get<GetCardDetailResponse>(
-        `/cards/${cardProductId}`
-    );
-    return response.data;
+export async function getCardDetail(
+  cardProductId: number,
+): Promise<GetCardDetailResponse> {
+  const response = await paymentApi.get<GetCardDetailResponse>(
+    `/cards/${cardProductId}`,
+  );
+  return response.data;
 }
 
 // ── 전체 카드 목록 조회 (GET /cards) ──
 // 응답: { message: "...", result: [{ id, name, frontImageUrl, ... }] }
 
 export type CardBenefitItem = {
-    categoryName: string;
-    discountRate: number;
+  categoryName: string;
+  discountRate: number;
 };
 
 export type CardListItem = {
-    id: number;
-    name: string;
-    frontImageUrl: string;
-    backImageUrl: string;
-    baseSpending: number;
-    maxBenefitLimit: number;
-    benefits: CardBenefitItem[];
+  id: number;
+  name: string;
+  frontImageUrl: string;
+  backImageUrl: string;
+  baseSpending: number;
+  maxBenefitLimit: number;
+  benefits: CardBenefitItem[];
 };
 
 export type GetCardListResponse = {
-    message: string;
-    result: CardListItem[];
+  message: string;
+  result: CardListItem[];
 };
 
 export async function getCardList(): Promise<GetCardListResponse> {
-    const response = await paymentApi.get<GetCardListResponse>("/cards");
-    return response.data;
+  const response = await paymentApi.get<GetCardListResponse>('/cards');
+  return response.data;
 }
 
-
 export type DuesPaymentRequest = {
-    withdrawAccountBankName: string;
-    withdrawAccountNumber: string;
-    amount: number;
-    withdrawDisplayName: string;
-    depositDisplayName: string;
-    memo: string;
+  withdrawAccountBankName: string;
+  withdrawAccountNumber: string;
+  amount: number;
+  withdrawDisplayName: string;
+  depositDisplayName: string;
+  memo: string;
 };
 
 export type DuesPaymentResponse = {
-    message: string;
-    result: {
-        paymentId: number;
-        groupId: number;
-        payerUserId: number;
-        totalAmount: number;
-        paidAt: string;
-        allocations: {
-            chargeTargetId: number;
-            allocatedAmount: number;
-            chargeStatus: string;
-            remainingAmount: number;
-        }[];
-    };
+  message: string;
+  result: {
+    paymentId: number;
+    groupId: number;
+    payerUserId: number;
+    totalAmount: number;
+    paidAt: string;
+    allocations: {
+      chargeTargetId: number;
+      allocatedAmount: number;
+      chargeStatus: string;
+      remainingAmount: number;
+    }[];
+  };
 };
 
+// 자유납부
+
 export async function duesPayment(
-    groupId: number,
-    payload: DuesPaymentRequest
+  groupId: number,
+  payload: DuesPaymentRequest,
 ): Promise<DuesPaymentResponse> {
-    const response = await paymentApi.post<DuesPaymentResponse>(
-        `/groups/${groupId}/dues-payments/free`,
-        payload,
-        {
-            headers: {
-                "Idempotency-Key": uuidv4(),
-            },
-        }
-    );
-    return response.data;
+  const response = await paymentApi.post<DuesPaymentResponse>(
+    `/groups/${groupId}/dues-payments/free`,
+    payload,
+    {
+      headers: {
+        'Idempotency-Key': uuidv4(),
+      },
+    },
+  );
+  return response.data;
 }
 
+// 선택 납부
 export type SelectedDuesPaymentRequest = {
-    amount: number;
-    targetChargeTargetIds: number[];
-    withdrawDisplayName: string;
-    depositDisplayName: string;
-    memo: string;
+  amount: number;
+  targetChargeTargetIds: number[];
+  withdrawDisplayName: string;
+  depositDisplayName: string;
+  memo: string;
 };
 
 export async function selectedDuesPayment(
-    groupId: number,
-    payload: SelectedDuesPaymentRequest
+  groupId: number,
+  payload: SelectedDuesPaymentRequest,
 ): Promise<DuesPaymentResponse> {
-    const response = await paymentApi.post<DuesPaymentResponse>(
-        `/groups/${groupId}/dues-payments/selected`,
-        payload,
-        {
-            headers: {
-                "Idempotency-Key": uuidv4(),
-            },
-        }
-    );
-    return response.data;
+  const response = await paymentApi.post<DuesPaymentResponse>(
+    `/groups/${groupId}/dues-payments/selected`,
+    payload,
+    {
+      headers: {
+        'Idempotency-Key': uuidv4(),
+      },
+    },
+  );
+  return response.data;
 }
+
 
 export type GetUnpaidDuesResponse = {
-    message: string;
-    result: {
-        groupId: number,
-        userId: number,
-        totalUnpaidAmount: number,
-        totalUnpaidCount: number,
-        charges: {
-            chargeTargetId: number,
-            chargeId: number,
-            title: string,
-            amout: number,
-            paidAmount: number,
-            remainingAmount: number,
-        }[]
-    }
-}
+  message: string;
+  result: {
+    groupId: number;
+    userId: number;
+    totalUnpaidAmount: number;
+    totalUnpaidCount: number;
+    charges: {
+      chargeTargetId: number;
+      chargeId: number;
+      title: string;
+      amout: number;
+      paidAmount: number;
+      remainingAmount: number;
+    }[];
+  };
+};
 
-export async function getUnpaidDues(groupId: number): Promise<GetUnpaidDuesResponse> {
-    const response = await paymentApi.get<GetUnpaidDuesResponse>(
-        `/groups/${groupId}/dues/unpaid`);
-    return response.data;
+export async function getUnpaidDues(
+  groupId: number,
+): Promise<GetUnpaidDuesResponse> {
+  const response = await paymentApi.get<GetUnpaidDuesResponse>(
+    `/groups/${groupId}/dues/unpaid`,
+  );
+  return response.data;
 }
 
 // 모임 대시보드 조회
 export type GroupDashboardResponse = {
-    message: string;
-    result: {
-        groupId: number;
-        groupName: string;
-        paymentStatus: {
-            paidCount: number;
-            unpaidCount: number;
-            paidRatio: number;
-            unpaidRatio: number;
-        };
-        balance: number;
+  message: string;
+  result: {
+    groupId: number;
+    groupName: string;
+    paymentStatus: {
+      paidCount: number;
+      unpaidCount: number;
+      paidRatio: number;
+      unpaidRatio: number;
     };
+    balance: number;
+  };
 };
 
 export async function getGroupDashboard(
-    groupId: number
+  groupId: number,
 ): Promise<GroupDashboardResponse> {
-    const response = await paymentApi.get<GroupDashboardResponse>(
-        `/groups/${groupId}/dashboard`
-    );
-    return response.data;
+  const response = await paymentApi.get<GroupDashboardResponse>(
+    `/groups/${groupId}/dashboard`,
+  );
+  return response.data;
 }
 
 // 모임 대시보드 리포트(장부) 조회
@@ -249,5 +256,51 @@ export async function getGroupCards(groupId: number | string) {
     },
   );
 
+  return response.data;
+}
+
+// 모임 장부 조회
+export type GroupTransactionSort = 'LATEST' | 'OLDEST';
+export type GroupTransactionType = 'ALL' | 'DEPOSIT' | 'WITHDRAW';
+export type GroupTransactionReferenceType = 'TRANSACTION' | 'EXPENSE' | 'POINT';
+
+export type GroupTransactionItem = {
+  referenceType: GroupTransactionReferenceType;
+  referenceId: number;
+  transactionDate: string;
+  title: string;
+  type: 'DEPOSIT' | 'WITHDRAW';
+  amount: number;
+  balanceAfter: number;
+};
+
+export type GetGroupTransactionsParams = {
+  startDate?: string;
+  endDate?: string;
+  sort?: GroupTransactionSort;
+  type?: GroupTransactionType;
+  cursor?: number;
+  size?: number;
+};
+
+export type GetGroupTransactionsResponse = {
+  message: string;
+  result: {
+    items: GroupTransactionItem[];
+    nextCursor: number | null;
+    hasNext: boolean;
+  };
+};
+
+export async function getGroupTransactions(
+  groupId: number,
+  params: GetGroupTransactionsParams,
+): Promise<GetGroupTransactionsResponse> {
+  const response = await paymentApi.get<GetGroupTransactionsResponse>(
+    `/groups/${groupId}/transactions`,
+    {
+      params,
+    },
+  );
   return response.data;
 }
