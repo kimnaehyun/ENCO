@@ -7,5 +7,5 @@ export const voteApi = {
         'Idempotency-Key': `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       },
     }),
-  list: () => paymentApi.get('/votes'),
+  list: (groupId: number) => paymentApi.get(`/votes/groups/${groupId}`),
 };

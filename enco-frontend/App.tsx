@@ -9,7 +9,6 @@ import {
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import RootNavigator from './src/navigation/RootNavigator';
-import { VotesProvider } from './src/contexts/VotesContext';
 import { NotificationsProvider } from './src/contexts/NotificationsContext';
 import './global.css';
 import type { RootStackParamList } from './src/types/navigation';
@@ -103,28 +102,23 @@ function App() {
     return () => subscription.remove();
   }, []);
   return (
-    <VotesProvider>
-      <NotificationsProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <SafeAreaProvider>
-            <NavigationContainer
-              linking={linking}
-              onStateChange={state => {}}
-              ref={navigationRef}
-            >
-              <RootNavigator />
-            </NavigationContainer>
-          </SafeAreaProvider>
-        </GestureHandlerRootView>
-      </NotificationsProvider>
-    </VotesProvider>
+    <NotificationsProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <NavigationContainer
+            linking={linking}
+            onStateChange={state => {}}
+            ref={navigationRef}
+          >
+            <RootNavigator />
+          </NavigationContainer>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </NotificationsProvider>
   );
 }
 
 export default App;
-
-
-
 
 // 에러페이지 테스트용 코드
 // import 'react-native-gesture-handler';
