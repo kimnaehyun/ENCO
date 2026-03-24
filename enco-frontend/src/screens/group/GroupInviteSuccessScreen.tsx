@@ -1,12 +1,20 @@
+// src/screens/group/GroupInviteSuccessScreen.tsx
 import React from 'react';
 import { Image, Pressable, StyleSheet, View } from 'react-native'
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
-import { CommonActions, useNavigation } from '@react-navigation/native';
+import { CommonActions, useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 
 export default function GroupInviteSuccessScreen() {
   const navigation = useNavigation<any>();
-  const groupName = '모임명';
+  const route = useRoute();
+  const params = (route.params ?? {}) as {
+    groupId?: number | string;
+    groupName?: string;
+  };
+
+  const groupId = params.groupId;
+  const groupName = params.groupName ?? '모임명';
 
   const onPressConfirm = () => {
     navigation.dispatch(
@@ -14,14 +22,28 @@ export default function GroupInviteSuccessScreen() {
         index: 0,
         routes: [
           {
-            name: 'GroupDashboard',
-            params: {
-              groupId: 'G1',
-              groupName,
+            name: 'App',
+            state: {
+              routes: [
+                {
+                  name: 'Together',
+                  state: {
+                    routes: [
+                      {
+                        name: 'GroupDashboard',
+                        params: {
+                          groupId,
+                          groupName,
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
             },
           },
         ],
-      })
+      }),
     );
   };
 
@@ -37,7 +59,6 @@ export default function GroupInviteSuccessScreen() {
 
           <Text style={styles.groupName}>[{groupName}]</Text>
           <Text style={styles.title}>가입완료!</Text>
-
 
           <Pressable onPress={onPressConfirm} style={styles.primaryButton}>
             <Text style={styles.primaryButtonText}>모임홈으로</Text>
