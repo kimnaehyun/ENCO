@@ -128,9 +128,16 @@ public class TransactionService {
     }
 
     @Transactional
-    public String attachReceiptContent(Long transactionId, MultipartFile file, PaymentInfoDto data) {
+    public String attachReceiptContent(Long groupId, Long transactionId, MultipartFile file, PaymentInfoDto data) {
+        Account account = accountRepository.findByGroupIdAndIsDeletedFalse(groupId)
+                .orElseThrow(() -> new CustomException(ErrorCode.SERVER_ERROR));
+
         TransactionHistory th = transactionHistoryRepository.findById(transactionId)
                 .orElseThrow(() -> new CustomException(ErrorCode.TRANSACTION_NOT_FOUND));
+
+        if (!th.getAccountId().equals(account.getId())) {
+            throw new CustomException(ErrorCode.TRANSACTION_NOT_FOUND);
+        }
 
         // 영수증 이미지 업로드
         String receiptImageUrl = null;

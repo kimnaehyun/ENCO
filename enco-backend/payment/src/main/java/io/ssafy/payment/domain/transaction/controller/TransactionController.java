@@ -55,7 +55,7 @@ public class TransactionController {
             @RequestPart("data") String data
     ) throws Exception {
         PaymentInfoDto paymentInfo = objectMapper.readValue(data, PaymentInfoDto.class);
-        String receiptImageUrl = transactionService.attachReceiptContent(transactionId, file, paymentInfo);
+        String receiptImageUrl = transactionService.attachReceiptContent(groupId, transactionId, file, paymentInfo);
         return ResponseEntity.ok(CommonResponse.success(receiptImageUrl));
     }
 }
