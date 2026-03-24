@@ -259,3 +259,48 @@ export async function getGroupCards(groupId: number | string) {
   return response.data;
 }
 
+// 모임 장부 조회
+export type GroupTransactionSort = 'LATEST' | 'OLDEST';
+export type GroupTransactionType = 'ALL' | 'DEPOSIT' | 'WITHDRAW';
+export type GroupTransactionReferenceType = 'TRANSACTION' | 'EXPENSE' | 'POINT';
+
+export type GroupTransactionItem = {
+  referenceType: GroupTransactionReferenceType;
+  referenceId: number;
+  transactionDate: string;
+  title: string;
+  type: 'DEPOSIT' | 'WITHDRAW';
+  amount: number;
+  balanceAfter: number;
+};
+
+export type GetGroupTransactionsParams = {
+  startDate?: string;
+  endDate?: string;
+  sort?: GroupTransactionSort;
+  type?: GroupTransactionType;
+  cursor?: number;
+  size?: number;
+};
+
+export type GetGroupTransactionsResponse = {
+  message: string;
+  result: {
+    items: GroupTransactionItem[];
+    nextCursor: number | null;
+    hasNext: boolean;
+  };
+};
+
+export async function getGroupTransactions(
+  groupId: number,
+  params: GetGroupTransactionsParams,
+): Promise<GetGroupTransactionsResponse> {
+  const response = await paymentApi.get<GetGroupTransactionsResponse>(
+    `/groups/${groupId}/transactions`,
+    {
+      params,
+    },
+  );
+  return response.data;
+}
