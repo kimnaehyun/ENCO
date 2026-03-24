@@ -9,7 +9,6 @@ import {
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import RootNavigator from './src/navigation/RootNavigator';
-import { VotesProvider } from './src/contexts/VotesContext';
 import { NotificationsProvider } from './src/contexts/NotificationsContext';
 import './global.css';
 import type { RootStackParamList } from './src/types/navigation';
@@ -74,9 +73,19 @@ function App() {
 
       if (tokenMatch && tokenMatch[1]) {
         const inviteToken = tokenMatch[1];
-        const groupName = nameMatch ? decodeURIComponent(nameMatch[1]) : undefined;
-        console.log('[DeepLink] inviteToken:', inviteToken, 'groupName:', groupName);
-        console.log('[DeepLink] navigationRef.isReady():', navigationRef.isReady());
+        const groupName = nameMatch
+          ? decodeURIComponent(nameMatch[1])
+          : undefined;
+        console.log(
+          '[DeepLink] inviteToken:',
+          inviteToken,
+          'groupName:',
+          groupName,
+        );
+        console.log(
+          '[DeepLink] navigationRef.isReady():',
+          navigationRef.isReady(),
+        );
 
         const doNavigate = () => {
           if (navigationRef.isReady()) {
@@ -108,7 +117,9 @@ function App() {
               }),
             );
           } else {
-            console.log('[DeepLink] Navigation not ready, retrying in 500ms...');
+            console.log(
+              '[DeepLink] Navigation not ready, retrying in 500ms...',
+            );
             setTimeout(doNavigate, 500);
           }
         };
@@ -190,21 +201,19 @@ function App() {
     return () => subscription.remove();
   }, []);
   return (
-    <VotesProvider>
-      <NotificationsProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <SafeAreaProvider>
-            <NavigationContainer
-              linking={linking}
-              onStateChange={state => {}}
-              ref={navigationRef}
-            >
-              <RootNavigator />
-            </NavigationContainer>
-          </SafeAreaProvider>
-        </GestureHandlerRootView>
-      </NotificationsProvider>
-    </VotesProvider>
+    <NotificationsProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <NavigationContainer
+            linking={linking}
+            onStateChange={state => {}}
+            ref={navigationRef}
+          >
+            <RootNavigator />
+          </NavigationContainer>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </NotificationsProvider>
   );
 }
 

@@ -7,5 +7,9 @@ export const voteApi = {
         'Idempotency-Key': `${Date.now()}-${Math.random().toString(36).slice(2)}`,
       },
     }),
-  list: () => paymentApi.get('/votes'),
+  list: (groupId: number) => paymentApi.get(`/votes/groups/${groupId}`),
+  detail: (voteId: number, groupId: number) =>
+    paymentApi.get(`/votes/${voteId}/groups/${groupId}`),
+  vote: (voteId: number, choice: 'APPROVE' | 'REJECTED') =>
+    paymentApi.post(`/votes/${voteId}/choice`, { choice }),
 };
