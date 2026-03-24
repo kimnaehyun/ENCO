@@ -5,6 +5,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { VoteDetail } from '../../types/vote';
 import { GroupStackParamList } from '../../types/navigation';
 import { voteApi } from '@/services/payment/vote';
+import { castVote } from '@/services/payment/voteHelpers';
 
 type Props = NativeStackScreenProps<GroupStackParamList, 'GroupVoteDetail'>;
 
@@ -52,13 +53,9 @@ export default function GroupVoteDetailScreen({ route, navigation }: Props) {
 
   const isOngoing = data.status === 'VOTING';
 
-  const handleVote = async (choice: 'agree' | 'disagree') => {
-    try {
-      // TODO: 찬성/반대 API 연결
-      navigation.goBack();
-    } catch (e) {
-      console.log(e);
-    }
+  const handleVote = async (choice: 'APPROVE' | 'REJECTED') => {
+    castVote(choice, Number(voteId));
+    navigation.goBack();
   };
 
   return (
@@ -107,14 +104,14 @@ export default function GroupVoteDetailScreen({ route, navigation }: Props) {
         {isOngoing && (
           <View style={styles.buttonRow}>
             <Pressable
-              onPress={() => handleVote('agree')}
+              onPress={() => handleVote('APPROVE')}
               style={[styles.voteButton, styles.agreeButton]}
             >
               <Text style={styles.voteButtonText}>찬성</Text>
             </Pressable>
 
             <Pressable
-              onPress={() => handleVote('disagree')}
+              onPress={() => handleVote('REJECTED')}
               style={[styles.voteButton, styles.disagreeButton]}
             >
               <Text style={styles.voteButtonText}>반대</Text>

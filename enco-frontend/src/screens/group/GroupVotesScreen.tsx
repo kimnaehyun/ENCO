@@ -13,6 +13,7 @@ import { Vote } from '../../types/vote';
 import { ROUTES } from '../../constants/routes';
 import { GroupScreenProps } from '../../types/group';
 import { voteApi } from '@/services/payment/vote';
+import { castVote } from '@/services/payment/voteHelpers';
 
 const formatKRW = (n: number) => n.toLocaleString();
 
@@ -55,7 +56,16 @@ export default function GroupVotesScreen({
 
   const renderExpandedContent = (item: Vote) => {
     const ongoing = item.status === 'VOTING';
-
+    const handleVote = async (choice: 'APPROVE' | 'REJECTED') => {
+      try {
+        await castVote(choice, item.voteId);
+        const response = await voteApi.list(Number(groupId));
+        setVotes(response.data.result);
+        setExpandedId(null);
+      } catch (e) {
+        console.log(e);
+      }
+    };
     return (
       <View
         className="bg-white rounded-2xl px-5 py-4 mt-1"
@@ -76,9 +86,7 @@ export default function GroupVotesScreen({
         {ongoing && (
           <View className="flex-row gap-3 mt-3 mb-3">
             <Pressable
-              onPress={() => {
-                /* TODO: 찬성 API */
-              }}
+              onPress={() => handleVote('APPROVE')}
               className="flex-1 rounded-2xl py-3 items-center justify-center"
               style={styles.agreeButton}
             >
@@ -86,9 +94,7 @@ export default function GroupVotesScreen({
             </Pressable>
 
             <Pressable
-              onPress={() => {
-                /* TODO: 반대 API */
-              }}
+              onPress={() => handleVote('REJECTED')}
               className="flex-1 rounded-2xl py-3 items-center justify-center"
               style={styles.disagreeButton}
             >
