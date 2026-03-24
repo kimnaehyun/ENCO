@@ -67,7 +67,7 @@ public class PaymentVoteService {
                 .expiredAt(LocalDateTime.now().plusHours(1))
                 .build();
 
-        PaymentVote savedVote = voteRepository.save(vote);
+        PaymentVote savedVote = voteRepository.saveAndFlush(vote);
         log.info("결제 투표 생성 완료");
 
         TransactionHistory pendingTransaction = TransactionHistory.builder()
