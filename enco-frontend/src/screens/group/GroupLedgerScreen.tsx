@@ -478,9 +478,22 @@ export default function GroupLedgerScreen() {
               const signedAmount = isDeposit ? it.amount : -it.amount;
 
               return (
-                <View
+                <Pressable
                   key={`${it.referenceType}-${it.referenceId}-${it.transactionDate}`}
                   style={styles.ledgerItem}
+                  onPress={() => {
+                    if (it.referenceType === 'TRANSACTION') {
+                      navigation.navigate('GroupLedgerDetail', {
+                        groupId: params.groupId,
+                        groupName: params.groupName ?? groupName,
+                        transactionId: it.referenceId,
+                        referenceType: it.referenceType,
+                        isAdmin,
+                      });
+                    } else {
+                      Alert.alert('준비 중', '해당 거래 유형의 상세 내역은 준비 중입니다.');
+                    }
+                  }}
                 >
                   <View style={styles.ledgerItemInner}>
                     <View style={styles.ledgerItemLeft}>
@@ -511,7 +524,7 @@ export default function GroupLedgerScreen() {
                       </Text>
                     </View>
                   </View>
-                </View>
+                </Pressable>
               );
             })
           )}
