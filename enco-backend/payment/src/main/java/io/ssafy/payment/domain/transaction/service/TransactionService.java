@@ -2,8 +2,14 @@ package io.ssafy.payment.domain.transaction.service;
 
 import io.ssafy.payment.domain.account.entity.Account;
 import io.ssafy.payment.domain.account.repository.AccountRepository;
+import io.ssafy.payment.domain.billing.dto.request.CreateExpenseRequestDto.PaymentInfoDto;
 import io.ssafy.payment.domain.billing.entity.Expense;
+import io.ssafy.payment.domain.billing.entity.Receipt;
+import io.ssafy.payment.domain.billing.entity.ReceiptItem;
+import io.ssafy.payment.domain.billing.entity.ReceiptItemOption;
 import io.ssafy.payment.domain.billing.repository.ExpenseRepository;
+import io.ssafy.payment.domain.billing.repository.ReceiptRepository;
+import io.ssafy.payment.domain.billing.service.ReceiptService;
 import io.ssafy.payment.domain.card.repository.CardRepository;
 import io.ssafy.payment.domain.transaction.dto.response.TransactionDetailResponseDto;
 import io.ssafy.payment.domain.transaction.dto.response.TransactionListResponseDto;
@@ -14,8 +20,10 @@ import io.ssafy.payment.domain.transaction.repository.TransactionHistoryReposito
 import io.ssafy.payment.global.common.error.CustomException;
 import io.ssafy.payment.global.common.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -24,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TransactionService {
@@ -32,6 +41,8 @@ public class TransactionService {
     private final AccountRepository accountRepository;
     private final ExpenseRepository expenseRepository;
     private final CardRepository cardRepository;
+    private final ReceiptRepository receiptRepository;
+    private final ReceiptService receiptService;
 
     @Transactional(readOnly = true)
     public TransactionListResponseDto getTransactions(
@@ -112,5 +123,64 @@ public class TransactionService {
         }
 
         return TransactionDetailResponseDto.of(th, cardName);
+    }
+
+    @Transactional
+    public String attachReceiptContent(Long transactionId, MultipartFile file, PaymentInfoDto data) {
+        TransactionHistory th = transactionHistoryRepository.findById(transactionId)
+                .orElseThrow(() -> new CustomException(ErrorCode.TRANSACTION_NOT_FOUND));
+
+        // 영수증 이미지 업로드
+        String receiptImageUrl = null;
+        if (file != null && !file.isEmpty()) {
+            try {
+                receiptImageUrl = receiptService.uploadFile(file, "receipt");
+                transactionHistoryRepository.updateReceiptUrl(transactionId, receiptImageUrl);
+            } catch (Exception e) {
+                log.error("Receipt upload failed", e);
+                throw new CustomException(ErrorCode.FILE_UPLOAD_FAIL);
+            }
+        }
+
+        // Receipt 저장
+        Receipt receipt = Receipt.builder()
+                .transactionId(transactionId)
+                .merchantName(data.merchantName())
+                .address(data.address())
+                .paidAt(data.paidAt())
+                .totalAmount(data.totalAmount())
+                .businessNumber(data.businessNumber())
+                .build();
+        receiptRepository.save(receipt);
+
+        // ReceiptItem + ReceiptItemOption 저장
+        if (data.items() != null) {
+            for (var itemDto : data.items()) {
+                ReceiptItem item = ReceiptItem.builder()
+                        .receipt(receipt)
+                        .name(itemDto.name())
+                        .unitPrice(itemDto.unitPrice())
+                        .quantity(itemDto.quantity())
+                        .amount(itemDto.amount())
+                        .build();
+                receipt.getItems().add(item);
+
+                if (itemDto.options() != null) {
+                    for (var optionDto : itemDto.options()) {
+                        ReceiptItemOption option = ReceiptItemOption.builder()
+                                .receiptItem(item)
+                                .name(optionDto.name())
+                                .unitPrice(optionDto.unitPrice())
+                                .quantity(optionDto.quantity())
+                                .amount(optionDto.amount())
+                                .build();
+                        item.getOptions().add(option);
+                    }
+                }
+            }
+            receiptRepository.save(receipt);
+        }
+
+        return receiptImageUrl;
     }
 }
