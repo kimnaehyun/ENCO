@@ -1,7 +1,17 @@
 // src/screens/group/GroupPayScreen.tsx
 import React, { useMemo, useState, useCallback, useEffect } from 'react';
-import { Alert, Pressable, TextInput, View, StyleSheet, KeyboardAvoidingView, Platform, BackHandler, ScrollView } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
+import {
+  Alert,
+  Pressable,
+  TextInput,
+  View,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  BackHandler,
+  ScrollView,
+} from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import ScreenLayout from '../../components/ScreenLayout';
 import PinEntry from '../../components/pin/PinEntry';
 import { GroupPayStep, GroupProps } from '../../types/group';
@@ -59,6 +69,7 @@ export default function GroupPayScreen({
   const presetAmount = route.params?.presetAmount;
   const presetMemo = route.params?.presetMemo ?? '';
   const paySource = route.params?.paySource ?? 'default';
+  const presetUnpaidId = route.params?.presetUnpaidId;
 
   const [step, setStep] = useState<GroupPayStep>('summary');
   const [pinResetKey, setPinResetKey] = useState(0);
@@ -66,6 +77,8 @@ export default function GroupPayScreen({
     paySource === 'settlement'
   );
 
+  // TODO: 서버 연동 시 getUnpaidItems(groupId) API 응답으로 교체
+  // 응답 형태: { id, label(날짜+항목명), amount } 배열
   const unpaidItems = useMemo<UnpaidItem[]>(
     () => [
       { id: 'u1', label: '26.3.1 3월 회비', amount: 10000 },
@@ -75,7 +88,9 @@ export default function GroupPayScreen({
     []
   );
 
-  const [selectedUnpaidIds, setSelectedUnpaidIds] = useState<string[]>([]);
+  const [selectedUnpaidIds, setSelectedUnpaidIds] = useState<string[]>(
+    presetUnpaidId ? [presetUnpaidId] : []
+  );
   const [amountText, setAmountText] = useState<string>(
     presetAmount ? String(presetAmount) : ''
   );
@@ -83,6 +98,13 @@ export default function GroupPayScreen({
   const [myAccountLabel, setMyAccountLabel] = useState('');
   const [groupAccountLabel, setGroupAccountLabel] = useState('');
   const [memo, setMemo] = useState(presetMemo);
+
+  const parsedAmount = useMemo(() => {
+    const parsed = parseInt(formatInputNumber(amountText), 10);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }, [amountText]);
+
+
 
   const resetConfirmInputs = useCallback(() => {
     setSelectedAccount('부산은행 112');
@@ -101,11 +123,6 @@ export default function GroupPayScreen({
     setPinResetKey(prev => prev + 1);
     setIsSettlementLocked(false);
   }, []);
-
-  const parsedAmount = useMemo(() => {
-    const parsed = parseInt(formatInputNumber(amountText), 10);
-    return Number.isNaN(parsed) ? 0 : parsed;
-  }, [amountText]);
 
   const goBackLike = useCallback(() => {
     if (step === 'summary') {
@@ -147,24 +164,19 @@ export default function GroupPayScreen({
 
     setSelectedUnpaidIds(prev => {
       const isSelected = prev.includes(item.id);
-
       const nextIds = isSelected
         ? prev.filter(id => id !== item.id)
         : [...prev, item.id];
-
       const nextAmount = unpaidItems
         .filter(unpaid => nextIds.includes(unpaid.id))
         .reduce((sum, unpaid) => sum + unpaid.amount, 0);
-
       setAmountText(nextAmount > 0 ? String(nextAmount) : '');
-
       return nextIds;
     });
   };
 
   const onChangeAmount = (text: string) => {
     if (isSettlementLocked) return;
-
     setSelectedUnpaidIds([]);
     setAmountText(formatInputNumber(text));
   };
@@ -342,9 +354,7 @@ export default function GroupPayScreen({
             title="비밀번호를 입력해주세요"
             length={PIN_LEN}
             resetKey={pinResetKey}
-            onComplete={() => {
-              setStep('success');
-            }}
+            onComplete={() => setStep('success')}
           />
         )}
 
@@ -368,6 +378,7 @@ export default function GroupPayScreen({
     </KeyboardAvoidingView>
   );
 }
+
 
 const styles = StyleSheet.create({
   headerSimple: {
