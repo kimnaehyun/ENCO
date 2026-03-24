@@ -21,7 +21,11 @@ public enum ErrorCode {
     ALREADY_GROUP_MEMBER(HttpStatus.CONFLICT, "이미 모임에 참여 중입니다.", "ALREADY_GROUP_MEMBER"),
     NOT_FOUND_USER(HttpStatus.NOT_FOUND, "사용자가 존재하지 않습니다.", "NOT_FOUND_USER"),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "사용자를 찾을 수 없습니다.", "USER_NOT_FOUND"),
-    NOT_CORRECT_PASSWORD(HttpStatus.NOT_FOUND, "비밀번호가 일치하지 않습니다.", "NOT_CORRECT_PASSWORD");
+    NOT_CORRECT_PASSWORD(HttpStatus.NOT_FOUND, "비밀번호가 일치하지 않습니다.", "NOT_CORRECT_PASSWORD"),
+    NOT_FOUND_GROUP(HttpStatus.NOT_FOUND, "해당 모임을 찾을 수 없습니다.", "NOT_FOUND_GROUP"),
+    NO_ACTIVE_EVENT(HttpStatus.NOT_FOUND, "현재 진행 중인 출석 이벤트가 없습니다.", "NO_ACTIVE_EVENT"),
+    INVALID_ATTENDANCE_TIME(HttpStatus.BAD_REQUEST, "출석 가능한 기간 또는 시간이 아닙니다.", "INVALID_ATTENDANCE_TIME"),
+    ALREADY_ATTENDED(HttpStatus.BAD_REQUEST, "오늘은 이미 출석을 완료했습니다.", "ALREADY_ATTENDED");
 
     private final HttpStatus httpStatusCode;
     private final String errorMessage;

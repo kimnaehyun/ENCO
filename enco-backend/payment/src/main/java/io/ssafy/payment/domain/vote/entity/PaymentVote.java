@@ -26,7 +26,7 @@ public class PaymentVote {
     @Column(length = 50, nullable = false)
     private String title;
 
-    @Column(name = "TEXT")
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.STRING)

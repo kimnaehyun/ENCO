@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 
 @FeignClient(name = "auth-service", url = "${service.auth.url}")
 public interface UserServiceClient {
-
     @GetMapping("/internal/groups/{groupId}/vote-criteria")
     CommonResponse<Integer> getVoteCriteria(@PathVariable Long groupId);
 
