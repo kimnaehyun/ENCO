@@ -9,7 +9,7 @@ public record PaymentVoteListResponseDto(
         String title,
         VoteStatus status,
         String expiredAt,
-        int totalMembers,
+        Integer totalMembers,
         int votedCount
 ) {
     public static PaymentVoteListResponseDto of(PaymentVote vote, int votedCount) {
