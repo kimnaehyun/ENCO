@@ -23,7 +23,9 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
-
+  mvc:
+    async:
+      request-timeout: -1
 
 server:
   port: ${CHAT_SERVICE_PORT}
