@@ -147,7 +147,6 @@ export async function selectedDuesPayment(
 }
 
 
-
 export type GetUnpaidDuesResponse = {
   message: string;
   result: {
@@ -260,4 +259,3 @@ export async function getGroupCards(groupId: number | string) {
   return response.data;
 }
 
-// 납부
