@@ -29,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -54,30 +55,39 @@ public class PaymentVoteService {
         if (!passwordEncoder.matches(request.password(), account.getPassword())) {
             throw new CustomException(ErrorCode.INVALID_PASSWORD);
         }
-        log.info("계좌 객체 생성 완료");
 
         Card card = cardRepository.findById(request.cardId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CARD));
-        log.info("카드 객체 생성 완료");
 
         PaymentVote vote = PaymentVote.builder()
                 .groupId(request.groupId())
                 .title(request.title())
                 .description(request.description())
+                .status(VoteStatus.VOTING)
                 .expiredAt(LocalDateTime.now().plusHours(1))
                 .build();
-
         PaymentVote savedVote = voteRepository.saveAndFlush(vote);
-        log.info("결제 투표 생성 완료");
+
+        BigDecimal totalAmount = request.amount();
+        BigDecimal usedPoint = BigDecimal.ZERO;
+
+//        try {
+////            usedPoint = userServiceClient.useGroupPoint(request.groupId(), totalAmount, savedVote.getId()).result();
+////            if (usedPoint == null) usedPoint = BigDecimal.ZERO;
+//        } catch (Exception e) {
+//            log.warn("[PaymentVote] 포인트 차감 실패 (Auth 서버 통신 오류). 전액 현금 청구됨.", e);
+//        }
+
+        BigDecimal finalCashAmount = totalAmount.subtract(usedPoint);
 
         TransactionHistory pendingTransaction = TransactionHistory.builder()
                 .accountId(account.getId())
                 .cardId(card.getId())
                 .voteId(savedVote.getId())
-                .counterpartyBankAccountNumber(request.counterpartyBankAccountNumber()) // 상대 계좌번호
-                .counterpartyBankName(request.counterpartyBankName()) //상대 은행명
-                .counterpartyName(request.counterpartyName()) //상대방명
-                .amount(request.amount())
+                .counterpartyBankAccountNumber(request.counterpartyBankAccountNumber())
+                .counterpartyBankName(request.counterpartyBankName())
+                .counterpartyName(request.counterpartyName())
+                .amount(finalCashAmount)
                 .displayName(request.counterpartyName())
                 .type(Type.CARD_PAYMENT)
                 .direction(Direction.OUT)
@@ -85,18 +95,26 @@ public class PaymentVoteService {
                 .idempotencyKey(idempotencyKey)
                 .build();
         transactionHistoryRepository.save(pendingTransaction);
-        log.info("거래내역 생성 완료");
 
+        log.info("[PaymentVote] 투표 생성 완료: 총금액={}, 사용포인트={}, 청구현금={}", totalAmount, usedPoint, finalCashAmount);
         return PaymentVoteCreateResponseDto.from(savedVote);
     }
 
     public List<PaymentVoteListResponseDto> getVoteList(Long groupId) {
-        return voteRepository.findByGroupIdAndStatusAndExpiredAtAfter(groupId, VoteStatus.VOTING, LocalDateTime.now())
+
+        return voteRepository.findByGroupId(groupId)
                 .stream()
-                .map(vote -> PaymentVoteListResponseDto.of(
-                        vote,
-                        historyRepository.findByVote(vote).size()
-                ))
+                .map(vote -> {
+                    if (vote.getStatus() == VoteStatus.VOTING && LocalDateTime.now().isAfter(vote.getExpiredAt())) {
+                        vote.expire();
+                        voteRepository.save(vote);
+                    }
+
+                    return PaymentVoteListResponseDto.of(
+                            vote,
+                            historyRepository.findByVote(vote).size()
+                    );
+                })
                 .toList();
     }
 
@@ -139,6 +157,7 @@ public class PaymentVoteService {
 
     /**
      * 찬성 반대 투표
+     *
      * @param voteId
      * @param userId
      * @param request
@@ -205,15 +224,13 @@ public class PaymentVoteService {
 
         if (account.getAmount().compareTo(transaction.getAmount()) < 0) {
             log.warn("[PaymentVote] 결제 실패 (잔액 부족): voteId={}", vote.getId());
-
             throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
         }
 
-        account.deductAmount(transaction.getAmount()); // 실제 돈 차감
-        transaction.updateStatus(Status.APPROVED); // 거래내역 상태 업데이트
-        transaction.updateBalance(account.getAmount()); // 거래내역 잔액 업데이트
+        account.deductAmount(transaction.getAmount());
+        transaction.updateStatus(Status.APPROVED);
+        transaction.updateBalance(account.getAmount());
 
-        log.info("[PaymentVote] 결제 실행 및 승인 완료: voteId={}, 차감금액={}", vote.getId(), transaction.getAmount());
-
+        log.info("[PaymentVote] 결제 실행 및 승인 완료: voteId={}, 차감현금={}", vote.getId(), transaction.getAmount());
     }
 }

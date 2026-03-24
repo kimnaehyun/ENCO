@@ -9,5 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface AttendanceEventRepository extends JpaRepository<AttendanceEvent, Long> {
-    Optional<AttendanceEvent> findByGroupIdAndStatus(Long groupId, EventStatus status);
+    Optional<AttendanceEvent> findByStatus(EventStatus status);
 }
