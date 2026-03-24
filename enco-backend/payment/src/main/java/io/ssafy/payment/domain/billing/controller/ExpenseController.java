@@ -3,6 +3,8 @@ package io.ssafy.payment.domain.billing.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ssafy.payment.domain.billing.dto.request.CreateExpenseRequestDto;
 import io.ssafy.payment.domain.billing.dto.response.ExpenseResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.SettlementDefaultersResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.SettlementDetailResponseDto;
 import io.ssafy.payment.domain.billing.service.ExpenseService;
 import io.ssafy.payment.global.common.error.CustomException;
 import io.ssafy.payment.global.common.error.ErrorCode;
@@ -41,5 +43,32 @@ public class ExpenseController {
             log.error("Failed to parse expense request data", e);
             throw new CustomException(ErrorCode.BAD_REQUEST);
         }
+    }
+
+    @GetMapping("/{groupId}/settlements/{expenseId}")
+    public ResponseEntity<CommonResponse<SettlementDetailResponseDto>> getSettlementDetail(
+            @PathVariable Long groupId,
+            @PathVariable Long expenseId
+    ) {
+        SettlementDetailResponseDto result = expenseService.getSettlementDetail(groupId, expenseId);
+        return ResponseEntity.ok(CommonResponse.success(result));
+    }
+
+    @DeleteMapping("/{groupId}/settlements/{expenseId}")
+    public ResponseEntity<CommonResponse<Void>> deleteSettlement(
+            @PathVariable Long groupId,
+            @PathVariable Long expenseId
+    ) {
+        expenseService.deleteSettlement(groupId, expenseId);
+        return ResponseEntity.ok(CommonResponse.success(null));
+    }
+
+    @GetMapping("/{groupId}/settlements/{expenseId}/defaulters")
+    public ResponseEntity<CommonResponse<SettlementDefaultersResponseDto>> getSettlementDefaulters(
+            @PathVariable Long groupId,
+            @PathVariable Long expenseId
+    ) {
+        SettlementDefaultersResponseDto result = expenseService.getSettlementDefaulters(groupId, expenseId);
+        return ResponseEntity.ok(CommonResponse.success(result));
     }
 }
