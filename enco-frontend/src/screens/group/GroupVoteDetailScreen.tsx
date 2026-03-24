@@ -1,29 +1,41 @@
-import React, { useMemo } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
+import React, { useEffect, useMemo, useState } from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useVotes, VoteChoice } from '../../contexts/VotesContext';
+import { VoteDetail } from '../../types/vote';
 import { GroupStackParamList } from '../../types/navigation';
+import { voteApi } from '@/services/payment/vote';
 
 type Props = NativeStackScreenProps<GroupStackParamList, 'GroupVoteDetail'>;
 
 const formatKRW = (n: number) => n.toLocaleString();
 
 export default function GroupVoteDetailScreen({ route, navigation }: Props) {
-  const { voteId } = route.params;
-  const { getVoteById, vote } = useVotes();
+  const { voteId, groupId } = route.params;
 
-  const data = getVoteById(voteId);
+  const [data, setData] = useState<VoteDetail | null>(null);
+
+  useEffect(() => {
+    const fetchVoteDetail = async () => {
+      try {
+        const response = await voteApi.detail(Number(voteId), Number(groupId));
+        setData(response.data.result);
+      } catch (e) {
+        console.log(e);
+      }
+    };
+    fetchVoteDetail();
+  }, [voteId, groupId]);
 
   const remainText = useMemo(() => {
-    if (!data?.endsAt) return '표시 예정';
-    const diff = new Date(data.endsAt).getTime() - Date.now();
+    if (!data?.expiredAt) return '표시 예정';
+    const diff = new Date(data.expiredAt).getTime() - Date.now();
     if (diff <= 0) return '마감';
     const mins = Math.floor(diff / 60000);
     const h = Math.floor(mins / 60);
     const m = mins % 60;
     return `${h}시간 ${m}분`;
-  }, [data?.endsAt]);
+  }, [data?.expiredAt]);
 
   if (!data) {
     return (
@@ -31,32 +43,28 @@ export default function GroupVoteDetailScreen({ route, navigation }: Props) {
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>투표 상세</Text>
         </View>
-
         <View style={styles.card}>
-          <Text style={styles.emptyText}>투표 정보를 찾을 수 없습니다.</Text>
-
-          <Pressable onPress={() => navigation.goBack()} style={styles.backButton}>
-            <Text style={styles.backButtonText}>뒤로가기</Text>
-          </Pressable>
+          <Text style={styles.emptyText}>로딩 중...</Text>
         </View>
       </View>
     );
   }
 
-  const onVote = (choice: VoteChoice) => {
-    vote(voteId, choice);
-    navigation.goBack();
-  };
+  const isOngoing = data.status === 'VOTING';
 
-  const isAgree = data.myChoice === 'agree';
-  const isDisagree = data.myChoice === 'disagree';
-  const isOngoing = !data.endsAt || new Date(data.endsAt) > new Date();
+  const handleVote = async (choice: 'agree' | 'disagree') => {
+    try {
+      // TODO: 찬성/반대 API 연결
+      navigation.goBack();
+    } catch (e) {
+      console.log(e);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.headerRow}>
         <Text style={styles.headerTitle}>투표 상세</Text>
-
         <Pressable onPress={() => navigation.goBack()}>
           <Text style={styles.closeText}>닫기</Text>
         </Pressable>
@@ -64,7 +72,6 @@ export default function GroupVoteDetailScreen({ route, navigation }: Props) {
 
       <View style={styles.card}>
         <Text style={styles.title}>{data.title}</Text>
-        <Text style={styles.subTitle}>{data.subTitle}</Text>
 
         <View style={styles.divider} />
 
@@ -81,7 +88,14 @@ export default function GroupVoteDetailScreen({ route, navigation }: Props) {
         <View style={styles.infoRow}>
           <Text style={styles.infoLabel}>참여 인원</Text>
           <Text style={styles.infoValue}>
-            {data.currentParticipants} / {data.totalParticipants}
+            {data.votedCount} / {data.totalMembers}
+          </Text>
+        </View>
+
+        <View style={styles.infoRow}>
+          <Text style={styles.infoLabel}>찬성 / 반대</Text>
+          <Text style={styles.infoValue}>
+            {data.approveCount} / {data.rejectCount}
           </Text>
         </View>
 
@@ -90,32 +104,18 @@ export default function GroupVoteDetailScreen({ route, navigation }: Props) {
         <Text style={styles.sectionTitle}>설명</Text>
         <Text style={styles.description}>{data.description}</Text>
 
-        <View style={styles.myChoiceBox}>
-          <Text style={styles.myChoiceText}>
-            내 선택: {isAgree ? '찬성' : isDisagree ? '반대' : '미투표'}
-          </Text>
-        </View>
-
         {isOngoing && (
           <View style={styles.buttonRow}>
             <Pressable
-              onPress={() => onVote('agree')}
-              style={[
-                styles.voteButton,
-                styles.agreeButton,
-                isAgree && styles.selectedButton,
-              ]}
+              onPress={() => handleVote('agree')}
+              style={[styles.voteButton, styles.agreeButton]}
             >
               <Text style={styles.voteButtonText}>찬성</Text>
             </Pressable>
 
             <Pressable
-              onPress={() => onVote('disagree')}
-              style={[
-                styles.voteButton,
-                styles.disagreeButton,
-                isDisagree && styles.selectedButton,
-              ]}
+              onPress={() => handleVote('disagree')}
+              style={[styles.voteButton, styles.disagreeButton]}
             >
               <Text style={styles.voteButtonText}>반대</Text>
             </Pressable>

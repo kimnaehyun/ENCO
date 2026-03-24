@@ -8,4 +8,6 @@ export const voteApi = {
       },
     }),
   list: (groupId: number) => paymentApi.get(`/votes/groups/${groupId}`),
+  detail: (voteId: number, groupId: number) =>
+    paymentApi.get(`/votes/${voteId}/groups/${groupId}`),
 };

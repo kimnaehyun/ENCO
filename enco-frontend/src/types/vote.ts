@@ -9,3 +9,18 @@ export type Vote = {
   totalMembers: number | null;
   votedCount: number;
 };
+
+export type VoteDetail = {
+  voteId: number;
+  transactionId: number;
+  title: string;
+  description: string;
+  amount: number;
+  status: 'VOTING' | 'CLOSED';
+  expiredAt: string;
+  totalMembers: number;
+  votedCount: number;
+  approveCount: number;
+  rejectCount: number;
+  histories: any[];
+};
