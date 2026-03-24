@@ -172,4 +172,22 @@ public class ExpenseService {
 
         return SettlementDefaultersResponseDto.of(targets);
     }
+
+    @Transactional
+    public void deleteSettlement(Long groupId, Long expenseId) {
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+
+        if (!expense.getGroupId().equals(groupId)) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        expense.softDelete();
+
+        chargeRepository.findByExpenseId(expenseId).ifPresent(charge -> {
+            chargeTargetRepository.findByCharge_IdAndIsDeletedFalse(charge.getId())
+                    .forEach(ChargeTarget::softDelete);
+            charge.softDelete();
+        });
+    }
 }

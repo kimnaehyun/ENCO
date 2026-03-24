@@ -54,6 +54,15 @@ public class ExpenseController {
         return ResponseEntity.ok(CommonResponse.success(result));
     }
 
+    @DeleteMapping("/{groupId}/settlements/{expenseId}")
+    public ResponseEntity<CommonResponse<Void>> deleteSettlement(
+            @PathVariable Long groupId,
+            @PathVariable Long expenseId
+    ) {
+        expenseService.deleteSettlement(groupId, expenseId);
+        return ResponseEntity.ok(CommonResponse.success(null));
+    }
+
     @GetMapping("/{groupId}/settlements/{expenseId}/defaulters")
     public ResponseEntity<CommonResponse<SettlementDefaultersResponseDto>> getSettlementDefaulters(
             @PathVariable Long groupId,
