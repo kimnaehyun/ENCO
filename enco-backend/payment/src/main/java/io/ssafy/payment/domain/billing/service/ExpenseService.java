@@ -3,10 +3,12 @@ package io.ssafy.payment.domain.billing.service;
 import io.ssafy.payment.domain.billing.dto.request.CreateExpenseRequestDto;
 import io.ssafy.payment.domain.billing.dto.request.CreateExpenseRequestDto.PaymentInfoDto;
 import io.ssafy.payment.domain.billing.dto.response.ExpenseResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.ReminderResponseDto;
 import io.ssafy.payment.domain.billing.dto.response.SettlementDefaultersResponseDto;
 import io.ssafy.payment.domain.billing.dto.response.SettlementDetailResponseDto;
 import io.ssafy.payment.domain.billing.entity.Charge;
 import io.ssafy.payment.domain.billing.entity.ChargeTarget;
+import io.ssafy.payment.domain.billing.entity.ChargeTargetStatus;
 import io.ssafy.payment.domain.billing.entity.ChargeType;
 import io.ssafy.payment.domain.billing.entity.Expense;
 import io.ssafy.payment.domain.billing.entity.Receipt;
@@ -19,6 +21,8 @@ import io.ssafy.payment.domain.billing.repository.ReceiptRepository;
 import io.ssafy.payment.global.common.BankCode;
 import io.ssafy.payment.global.common.error.CustomException;
 import io.ssafy.payment.global.common.error.ErrorCode;
+import io.ssafy.payment.infra.messaging.producer.KafkaProducerService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -26,7 +30,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -38,6 +44,8 @@ public class ExpenseService {
     private final ChargeTargetRepository chargeTargetRepository;
     private final ReceiptRepository receiptRepository;
     private final ReceiptService receiptService;
+    private final KafkaProducerService kafkaProducerService;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public ExpenseResponseDto createExpense(Long groupId, Long userId, MultipartFile file, CreateExpenseRequestDto request) {
@@ -171,6 +179,50 @@ public class ExpenseService {
         List<ChargeTarget> targets = chargeTargetRepository.findByCharge_IdAndIsDeletedFalse(charge.getId());
 
         return SettlementDefaultersResponseDto.of(targets);
+    }
+
+    @Transactional(readOnly = true)
+    public ReminderResponseDto sendReminder(Long groupId, Long expenseId) {
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+
+        if (!expense.getGroupId().equals(groupId)) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        Charge charge = chargeRepository.findByExpenseId(expenseId)
+                .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+
+        List<Map<String, Object>> unpaidTargets = chargeTargetRepository
+                .findByCharge_IdAndIsDeletedFalse(charge.getId()).stream()
+                .filter(t -> t.getStatus() != ChargeTargetStatus.PAID)
+                .map(t -> Map.of(
+                        "userId", (Object) t.getUserId(),
+                        "chargeTargetId", (Object) t.getId(),
+                        "amount", (Object) t.getRemainingAmount()
+                ))
+                .toList();
+
+        int requestedCount = unpaidTargets.size();
+        LocalDateTime sentAt = LocalDateTime.now();
+
+        if (requestedCount == 0) {
+            return new ReminderResponseDto(charge.getId(), 0, 0, 0, sentAt);
+        }
+
+        try {
+            String payload = objectMapper.writeValueAsString(Map.of(
+                    "groupId", groupId,
+                    "expenseId", expenseId,
+                    "merchantName", expense.getMerchantName() != null ? expense.getMerchantName() : "",
+                    "unpaidTargets", unpaidTargets
+            ));
+            kafkaProducerService.send("settlement-reminder", payload);
+            return new ReminderResponseDto(charge.getId(), requestedCount, requestedCount, 0, sentAt);
+        } catch (Exception e) {
+            log.error("settlement-reminder Kafka 전송 실패", e);
+            return new ReminderResponseDto(charge.getId(), requestedCount, 0, requestedCount, sentAt);
+        }
     }
 
     @Transactional

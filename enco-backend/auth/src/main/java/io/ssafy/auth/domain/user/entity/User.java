@@ -53,6 +53,8 @@ public class User {
     @Column(nullable = false)
     private String deviceToken;
 
+    private String fcmToken;
+
     private Integer profileUrl;
 
     private String address;
@@ -80,4 +82,7 @@ public class User {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupUser> groupList = new ArrayList<>();
 
+    public void updateFcmToken(String fcmToken) {
+        this.fcmToken = fcmToken;
+    }
 }

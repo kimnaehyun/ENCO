@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.UUID;
 
@@ -58,5 +59,19 @@ public class UserServiceImpl{
 
     public boolean validateDuplicateEmail(String email){
         return userRepository.existsByEmail(email);
+    }
+
+    @Transactional
+    public void updateFcmToken(Long userId, String fcmToken) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+        user.updateFcmToken(fcmToken);
+    }
+
+    @Transactional(readOnly = true)
+    public String getFcmToken(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER))
+                .getFcmToken();
     }
 }

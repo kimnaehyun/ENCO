@@ -23,7 +23,9 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
-
+  mvc:
+    async:
+      request-timeout: -1
 
 server:
   port: ${CHAT_SERVICE_PORT}
@@ -45,6 +47,15 @@ info:
     name: chat-service
     description: authentication service
     version: 0.0.1
+
+service:
+  auth:
+    url: http://${AUTH_SERVICE_HOST}:${AUTH_SERVICE_PORT}
+  chat:
+    url: http://${CHAT_SERVICE_HOST}:${CHAT_SERVICE_PORT}
+
+firebase:
+  service-account-path: ${FIREBASE_SERVICE_ACCOUNT_PATH}
 
 gms:
   api:
