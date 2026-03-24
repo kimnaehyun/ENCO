@@ -1,23 +1,26 @@
 // src/screens/group/GroupVoteCreateScreen.tsx
 import { useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import Header from '../../components/internet/Header';
 import KeyValueRow from '../../components/common/KeyValueRow';
-import { ROUTES } from '../../constants/routes';
 
 export default function VoteCreateScreen() {
+  const [title, setTitle] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
   const navigation = useNavigation<any>();
-  const [description, setDescription] = useState('');
-
+  const route = useRoute();
+  const params = route.params as { groupId: number; cardId: number };
   const onPressDone = () => {
-    Alert.alert('완료', '투표가 생성되었습니다.', [
-      {
-        text: '확인',
-        onPress: () => navigation.getParent()?.navigate(ROUTES.TAB_HOME),
-      },
-    ]);
+    if (!title) return Alert.alert('확인', '제목을 입력해주세요');
+
+    return navigation.navigate('PaymentPinScreen', {
+      groupId: params.groupId,
+      cardId: params.cardId,
+      title: title,
+      description: description,
+    });
   };
 
   return (
@@ -30,7 +33,13 @@ export default function VoteCreateScreen() {
         {/* 투표 제목 */}
         <View className="bg-white rounded-[20px] px-5 py-4">
           <KeyValueRow title="투표 제목">
-            <Text className="text-[20px]">다낭 여행 숙소</Text>
+            <TextInput
+              placeholder="제목을 입력해주세요"
+              value={title}
+              onChangeText={setTitle}
+              className="flex-1 text-right text-xl ml-10 p-0 "
+              maxLength={20}
+            />
           </KeyValueRow>
         </View>
 
@@ -55,10 +64,7 @@ export default function VoteCreateScreen() {
             onChangeText={setDescription}
             placeholder="설명"
             placeholderTextColor="#9CA3AF"
-            className="text-[#111827] h-[120px] align-text-top"
-            style={{
-              textAlignVertical: 'top',
-            }}
+            className="text-[#111827] h-[120px] align-top"
             multiline
           />
         </View>
