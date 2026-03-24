@@ -304,3 +304,50 @@ export async function getGroupTransactions(
   );
   return response.data;
 }
+
+// ── 거래내역 상세 조회 ──
+
+export type GroupTransactionDetailResponse = {
+  message: string;
+  result: {
+    displayName: string;
+    amount: number;
+    transactionDate: string;
+    type: 'TRANSFER' | 'CARD_PAYMENT';
+    cardName: string | null;
+    balanceAfter: number;
+    memo: string | null;
+    receipt: {
+      receiptImageUrl: string | null;
+      receiptContent: {
+        merchantName: string;
+        address: string;
+        paidAt: string;
+        items: {
+          name: string;
+          unitPrice: number | null;
+          quantity: number | null;
+          amount: number | null;
+          options: {
+            name: string;
+            unitPrice: number | null;
+            quantity: number | null;
+            amount: number | null;
+          }[];
+        }[];
+        totalAmount: number | null;
+        businessNumber: string | null;
+      } | null;
+    } | null;
+  };
+};
+
+export async function getGroupTransactionDetail(
+  groupId: number,
+  transactionId: number,
+): Promise<GroupTransactionDetailResponse> {
+  const response = await paymentApi.get<GroupTransactionDetailResponse>(
+    `/groups/${groupId}/transactions/${transactionId}`,
+  );
+  return response.data;
+}

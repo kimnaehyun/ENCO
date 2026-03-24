@@ -130,10 +130,11 @@ export type GroupStackParamList = {
   };
   UserNotifications: CommonParams | undefined;
   GroupLedgerDetail: {
-    item: any; // LedgerItem import 후 교체
-    balance: number;
-    isAdmin: boolean;
-    groupName: string;
+    groupId?: string;
+    groupName?: string;
+    isAdmin?: boolean;
+    transactionId: number;
+    referenceType?: 'TRANSACTION' | 'EXPENSE' | 'POINT';
   };
   OcrTest:
     | { imageUri?: string; groupName?: string; groupId?: string }
@@ -213,10 +214,11 @@ export type HomeStackParamList = {
     | { imageUri?: string; groupName?: string; groupId?: string }
     | undefined;
   GroupLedgerDetail: {
-    item: any;
-    balance: number;
-    isAdmin: boolean;
-    groupName: string;
+    groupId?: string;
+    groupName?: string;
+    isAdmin?: boolean;
+    transactionId: number;
+    referenceType?: 'TRANSACTION' | 'EXPENSE' | 'POINT';
   };
   SettleDetail: {
     amount: number;

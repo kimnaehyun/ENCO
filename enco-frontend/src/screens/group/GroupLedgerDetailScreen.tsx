@@ -1,26 +1,40 @@
 // src/screens/group/GroupLedgerDetailScreen.tsx
-import React, { useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
+import React, { useState, useEffect } from 'react';
+import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { LedgerItem, SettleMember } from '../../types/group';
+import {
+  getGroupTransactionDetail,
+  GroupTransactionDetailResponse,
+} from '../../services/paymentService';
 
 type RouteParams = {
-  item: LedgerItem;
-  balance: number;
-  isAdmin: boolean;
-  groupName: string;
+  groupId?: string;
+  groupName?: string;
+  isAdmin?: boolean;
+  transactionId: number;
+  referenceType?: 'TRANSACTION' | 'EXPENSE' | 'POINT';
 };
+
+type DetailResult = GroupTransactionDetailResponse['result'];
 
 function formatMoney(n: number) {
   const sign = n >= 0 ? '+' : '-';
   return `${sign}${Math.abs(n).toLocaleString()}원`;
 }
 
+function formatDateTime(dateStr: string) {
+  // '2026-03-24T16:04:14.780828' → '2026.03.24 16:04:14'
+  const [datePart, timePart] = dateStr.split('T');
+  if (!datePart) return dateStr;
+  const time = timePart ? timePart.slice(0, 8) : '';
+  return time ? `${datePart.replace(/-/g, '.')} ${time}` : datePart.replace(/-/g, '.');
+}
+
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <View className="flex-row items-center justify-between py-3 border-b border-gray-100">
+    <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>
       <View style={styles.infoValueWrap}>{children}</View>
     </View>
@@ -30,239 +44,245 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 export default function GroupLedgerDetailScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const { item, balance, isAdmin, groupName } = (route.params ?? {}) as RouteParams;
+  const { groupId, isAdmin, transactionId } =
+    (route.params ?? {}) as RouteParams;
 
-  const isPositive = item.amount >= 0;
+  const [detail, setDetail] = useState<DetailResult | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [localReceiptUri, setLocalReceiptUri] = useState<string | null>(null);
 
-  const [receiptUri, setReceiptUri] = useState<string | null>(null);
+  useEffect(() => {
+    const numericGroupId = groupId ? Number(groupId) : NaN;
 
-  // 정산 멤버 데이터 — LedgerItem에서 가져옴
-  const settleMembers: SettleMember[] = item.settleMembers ?? [];
-  const paidCount = settleMembers.filter(m => m.isPaid).length;
-  const totalCount = settleMembers.length;
-  const unpaidCount = totalCount - paidCount;
-  const isSettled = item.isSettled ?? (totalCount === 0 || paidCount === totalCount);
+    console.log('[TransactionDetail] groupId:', numericGroupId);
+    console.log('[TransactionDetail] transactionId:', transactionId);
 
-  // 카메라 촬영
-  const handleCamera = async () => {
-    navigation.navigate('OcrTest');
-  };
+    if (!Number.isFinite(numericGroupId) || !transactionId) {
+      setError('거래 상세 내역이 없습니다.');
+      return;
+    }
 
-  // 갤러리 첨부
-  const handleGallery = async () => {
-    navigation.navigate('OcrTest');
-  };
+    const fetchDetail = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const result = await getGroupTransactionDetail(numericGroupId, transactionId);
+        console.log('[TransactionDetail] success:', result);
+        setDetail(result.result);
+      } catch (err: any) {
+        console.error('[TransactionDetail] failed:', err);
+        console.error('[TransactionDetail] status:', err?.response?.status);
+        console.error('[TransactionDetail] data:', err?.response?.data);
+        setError('거래 상세 내역을 불러오지 못했습니다.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  // 영수증 삭제
+    fetchDetail();
+  }, [groupId, transactionId]);
+
+  const handleCamera = () => navigation.navigate('OcrTest');
+  const handleGallery = () => navigation.navigate('OcrTest');
   const handleDeleteReceipt = () => {
     Alert.alert('삭제', '영수증을 삭제할까요?', [
       { text: '취소', style: 'cancel' },
-      { text: '삭제', style: 'destructive', onPress: () => { setReceiptUri(null); } },
+      { text: '삭제', style: 'destructive', onPress: () => setLocalReceiptUri(null) },
     ]);
   };
 
-  // 미납자 알림 보내기 (빠른 동작)
-  const handleQuickNotify = () => {
-    const unpaidNames = settleMembers
-      .filter(m => !m.isPaid)
-      .map(m => m.name)
-      .join(', ');
+  // 영수증 이미지: 로컬 촬영 > API 응답 순서로 우선
+  const receiptImageUrl = localReceiptUri ?? detail?.receipt?.receiptImageUrl ?? null;
+  const receiptContent = detail?.receipt?.receiptContent ?? null;
 
-    if (unpaidCount === 0) return;
-
-    const perPerson = totalCount > 0 ? Math.ceil(Math.abs(item.amount) / totalCount) : 0;
-
-    Alert.alert(
-      '미납자 알림 보내기',
-      `${unpaidNames}에게 ${perPerson.toLocaleString()}원 입금 요청 알림을 보냅니다.`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '보내기',
-          onPress: () => {
-            Alert.alert('완료', `미납자 ${unpaidCount}명에게 알림을 보냈습니다.`);
-          },
-        },
-      ]
-    );
-  };
+  const isDeposit = detail ? detail.amount >= 0 : false;
 
   return (
     <ScreenLayout>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* 헤더 */}
-        <View className="flex-row items-center justify-between mb-5">
-          <Text style={styles.headerTitle}>모임 장부</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.headerTitle}>거래 상세</Text>
           <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
             <Text style={styles.closeText}>닫기</Text>
           </Pressable>
         </View>
 
-        {/* 금액 + 잔액 */}
-        <View
-          className="bg-white rounded-3xl px-6 py-5 mb-4"
-          style={styles.shadowCard}
-        >
-          <Text style={[styles.amountText, { color: isPositive ? '#1428A0' : '#EF4444' }]}>
-            {formatMoney(item.amount)}
-          </Text>
-          <Text style={styles.balanceText}>잔액 {balance.toLocaleString()}원</Text>
+        {/* 로딩 */}
+        {isLoading && (
+          <View style={styles.statusCard}>
+            <Text style={styles.statusText}>거래 상세 내역을 불러오는 중...</Text>
+          </View>
+        )}
 
-          <View className="h-px bg-gray-100 mb-1" />
+        {/* 에러 */}
+        {!isLoading && error && (
+          <View style={styles.statusCard}>
+            <Text style={styles.statusText}>{error}</Text>
+          </View>
+        )}
 
-          <InfoRow label="사용카드">
-            <Text style={styles.infoValueText}>회식주의자카드</Text>
-          </InfoRow>
+        {/* 데이터 없음 */}
+        {!isLoading && !error && !detail && (
+          <View style={styles.statusCard}>
+            <Text style={styles.statusText}>거래 상세 내역이 없습니다.</Text>
+          </View>
+        )}
 
-          {/* 상태 — 정산완료 / 정산미완료 (정산 필요한 출금만 표시) */}
-          {item.needsSettle && (
-            <InfoRow label="상태">
-              <View style={[styles.statusBadge, { backgroundColor: isSettled ? '#22C55E' : '#EF4444' }]}>
-                <Text style={styles.statusBadgeText}>
-                  {isSettled ? '정산완료' : `정산미완료 (${paidCount}/${totalCount}명)`}
+        {/* 본문 */}
+        {!isLoading && detail && (
+          <>
+            {/* 금액 + 기본 정보 카드 */}
+            <View style={[styles.card, styles.shadowCard]}>
+              <Text
+                style={[
+                  styles.amountText,
+                  { color: isDeposit ? '#1428A0' : '#EF4444' },
+                ]}
+              >
+                {formatMoney(detail.amount)}
+              </Text>
+              <Text style={styles.balanceText}>
+                잔액 {detail.balanceAfter.toLocaleString()}원
+              </Text>
+
+              <View style={styles.divider} />
+
+              <InfoRow label="표시명">
+                <Text style={styles.infoValueText}>{detail.displayName}</Text>
+              </InfoRow>
+              <InfoRow label="거래일시">
+                <Text style={styles.infoValueText}>{formatDateTime(detail.transactionDate)}</Text>
+              </InfoRow>
+              <InfoRow label="거래유형">
+                <Text style={styles.infoValueText}>
+                  {detail.type === 'CARD_PAYMENT' ? '카드 결제' : '이체'}
                 </Text>
-              </View>
-            </InfoRow>
-          )}
+              </InfoRow>
+              {detail.cardName && (
+                <InfoRow label="사용카드">
+                  <Text style={styles.infoValueText}>{detail.cardName}</Text>
+                </InfoRow>
+              )}
+              <InfoRow label="거래 후 잔액">
+                <Text style={styles.infoValueText}>
+                  {detail.balanceAfter.toLocaleString()}원
+                </Text>
+              </InfoRow>
+              <InfoRow label="메모">
+                <Text
+                  style={[
+                    styles.infoValueText,
+                    { color: detail.memo ? COLORS.dark : '#D1D5DB' },
+                  ]}
+                >
+                  {detail.memo || '없음'}
+                </Text>
+              </InfoRow>
 
-          <InfoRow label="잔액">
-            <Text style={styles.infoValueText}>{balance.toLocaleString()}원</Text>
-          </InfoRow>
-          <InfoRow label="거래구분">
-            <Text style={[
-              styles.tradTypeText,
-              { color: isPositive ? '#1428A0' : (item.needsSettle ? '#F59E0B' : '#EF4444') },
-            ]}>
-              {isPositive ? '입금' : (item.needsSettle ? '출금 (정산 필요)' : '출금')}
-            </Text>
-          </InfoRow>
-          <InfoRow label="메모">
-            <Text style={[styles.infoValueText, { color: item.memo ? '#111827' : '#D1D5DB' }]}>
-              {item.memo || '내용을 입력하세요'}
-            </Text>
-          </InfoRow>
-
-          {/* 영수증 행 */}
-          <View className="flex-row items-start justify-between pt-3">
-            <Text style={styles.infoLabel}>영수증</Text>
-            <View style={styles.infoValueWrap}>
-              {receiptUri ? (
-                <View>
-                  <Image
-                    source={{ uri: receiptUri }}
-                    style={styles.receiptImage}
-                    resizeMode="cover"
-                  />
-                  {isAdmin && (
-                    <Pressable onPress={handleDeleteReceipt}>
-                      <Text style={styles.deleteReceiptText}>삭제</Text>
-                    </Pressable>
+              {/* 영수증 */}
+              <View style={styles.receiptRow}>
+                <Text style={styles.infoLabel}>영수증</Text>
+                <View style={styles.infoValueWrap}>
+                  {receiptImageUrl ? (
+                    <View>
+                      <Image
+                        source={{ uri: receiptImageUrl }}
+                        style={styles.receiptImage}
+                        resizeMode="cover"
+                      />
+                      {isAdmin && (
+                        <Pressable onPress={handleDeleteReceipt}>
+                          <Text style={styles.deleteReceiptText}>삭제</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  ) : (
+                    <Text style={styles.noReceiptText}>
+                      {isAdmin ? '영수증을 등록하세요' : '등록된 영수증 없습니다'}
+                    </Text>
                   )}
                 </View>
-              ) : (
-                <Text style={styles.noReceiptText}>
-                  {isAdmin ? '영수증을 등록하세요' : '등록된 영수증 없습니다'}
-                </Text>
-              )}
-            </View>
-          </View>
-        </View>
-
-        {/* 관리자 전용 — 영수증 촬영/첨부 버튼 */}
-        {isAdmin && (
-          <View className="flex-row gap-3">
-            <Pressable
-              onPress={handleCamera}
-              className="flex-1 items-center justify-center rounded-2xl py-5 bg-white gap-2"
-              style={styles.actionButtonShadow}
-            >
-              <Text style={styles.actionEmoji}>📷</Text>
-              <Text style={styles.actionLabel}>영수증 촬영하기</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={handleGallery}
-              className="flex-1 items-center justify-center rounded-2xl py-5 bg-white gap-2"
-              style={styles.actionButtonShadow}
-            >
-              <Text style={styles.actionEmoji}>🖼️</Text>
-              <Text style={styles.actionLabel}>사진 첨부하기</Text>
-            </Pressable>
-          </View>
-        )}
-
-        {/* ── 처리 미완료 시: 미납자 요약 + 알림 바로 보내기 ── */}
-        {!isSettled && totalCount > 0 && (
-          <View
-            className="bg-white rounded-3xl px-6 py-5 mt-4"
-            style={styles.unpaidCard}
-          >
-            <View className="flex-row items-center justify-between mb-3">
-              <Text style={styles.unpaidTitle}>미납자 현황</Text>
-              <View style={styles.unpaidBadge}>
-                <Text style={styles.unpaidBadgeText}>{unpaidCount}명 미납</Text>
               </View>
             </View>
 
-            {/* 미납자 목록 (간략) */}
-            <View style={styles.memberList}>
-              {settleMembers.filter(m => !m.isPaid).map(m => (
-                <View key={m.id} className="flex-row items-center" style={styles.memberRow}>
-                  <View style={styles.memberAvatar}>
-                    <Text style={styles.memberEmoji}>🐹</Text>
+            {/* 영수증 내용 (receiptContent가 있을 때) */}
+            {receiptContent && (
+              <View style={[styles.card, styles.shadowCard, { marginTop: 12 }]}>
+                <Text style={styles.sectionTitle}>영수증 내용</Text>
+                <InfoRow label="가맹점">
+                  <Text style={styles.infoValueText}>{receiptContent.merchantName}</Text>
+                </InfoRow>
+                {receiptContent.address ? (
+                  <InfoRow label="주소">
+                    <Text style={styles.infoValueText}>{receiptContent.address}</Text>
+                  </InfoRow>
+                ) : null}
+                <InfoRow label="결제일시">
+                  <Text style={styles.infoValueText}>{receiptContent.paidAt}</Text>
+                </InfoRow>
+                {receiptContent.totalAmount != null && (
+                  <InfoRow label="합계">
+                    <Text style={styles.infoValueText}>
+                      {receiptContent.totalAmount.toLocaleString()}원
+                    </Text>
+                  </InfoRow>
+                )}
+                {receiptContent.businessNumber && (
+                  <InfoRow label="사업자번호">
+                    <Text style={styles.infoValueText}>
+                      {receiptContent.businessNumber}
+                    </Text>
+                  </InfoRow>
+                )}
+                {receiptContent.items.length > 0 && (
+                  <View style={{ marginTop: 8 }}>
+                    <Text style={[styles.infoLabel, { marginBottom: 6 }]}>구매 항목</Text>
+                    {receiptContent.items.map((item, idx) => (
+                      <View key={idx} style={styles.receiptItem}>
+                        <Text style={styles.receiptItemName}>{item.name}</Text>
+                        {item.amount != null && (
+                          <Text style={styles.receiptItemAmount}>
+                            {item.amount.toLocaleString()}원
+                          </Text>
+                        )}
+                      </View>
+                    ))}
                   </View>
-                  <Text style={styles.memberName}>{m.name}</Text>
-                  <Text style={styles.unpaidLabel}>미납</Text>
-                </View>
-              ))}
-            </View>
-
-            {/* 미납자 알림 보내기 (빠른 버튼) */}
-            {isAdmin && (
-              <Pressable
-                onPress={handleQuickNotify}
-                className="rounded-2xl py-3 items-center justify-center"
-                style={styles.notifyButton}
-              >
-                <Text style={styles.notifyButtonText}>미납자에게 알림 보내기</Text>
-              </Pressable>
+                )}
+              </View>
             )}
-          </View>
-        )}
 
-        {/* 처리완료 시 완료 메시지 */}
-        {isSettled && totalCount > 0 && (
-          <View
-            className="bg-white rounded-3xl px-6 py-5 mt-4 items-center"
-            style={styles.settledCard}
-          >
-            <Text style={styles.settledEmoji}>✅</Text>
-            <Text style={styles.settledTitle}>정산이 완료되었습니다</Text>
-            <Text style={styles.settledSubtitle}>{totalCount}명 전원 납부 완료</Text>
-          </View>
-        )}
+            {/* 관리자 전용 — 영수증 촬영/첨부 */}
+            {isAdmin && (
+              <View style={styles.actionRow}>
+                <Pressable
+                  onPress={handleCamera}
+                  style={[styles.actionButton, styles.actionButtonShadow]}
+                >
+                  <Text style={styles.actionEmoji}>📷</Text>
+                  <Text style={styles.actionLabel}>영수증 촬영하기</Text>
+                </Pressable>
+                <Pressable
+                  onPress={handleGallery}
+                  style={[styles.actionButton, styles.actionButtonShadow]}
+                >
+                  <Text style={styles.actionEmoji}>🖼️</Text>
+                  <Text style={styles.actionLabel}>사진 첨부하기</Text>
+                </Pressable>
+              </View>
+            )}
 
-        {/* 정산인원 상세 보기 버튼 */}
-        {totalCount > 0 && (
-          <Pressable
-            onPress={() => navigation.navigate('SettleMemberSelect', {
-              amount: Math.abs(item.amount),
-              storeName: item.title,
-              date: item.date,
-              memo: item.memo,
-              receiptUri,
-              groupName,
-              settleMembers,
-              isNewSettle: false,
-            })}
-            className="rounded-2xl py-4 items-center justify-center mt-3"
-            style={styles.detailButton}
-          >
-            <Text style={styles.detailButtonText}>정산인원 상세 보기</Text>
-          </Pressable>
+            {/* TODO: 정산 관련 UI (settleMembers, 미납자 알림 등)
+                정산 상세 API가 준비되면 이 위치에 다시 붙일 것
+                필요 데이터: settleMembers, paidCount, isSettled
+                예상 endpoint: GET /groups/{groupId}/settlements/{settlementId} */}
+          </>
         )}
-
       </ScrollView>
     </ScreenLayout>
   );
@@ -273,7 +293,12 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
 
-  // ── 헤더 ──────────────────────────────────
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
   headerTitle: {
     fontSize: 20,
     fontFamily: FONT_FAMILY.bold,
@@ -285,7 +310,26 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.medium,
   },
 
-  // ── 공통 카드 그림자 ─────────────────────
+  statusCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 28,
+    alignItems: 'center',
+  },
+  statusText: {
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+  },
+
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingTop: 28,
+    paddingBottom: 20,
+  },
   shadowCard: {
     shadowColor: '#1428A0',
     shadowOpacity: 0.06,
@@ -293,9 +337,9 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
-  // ── 금액 / 잔액 ───────────────────────────
   amountText: {
     fontSize: 32,
+    lineHeight: 42,
     fontFamily: FONT_FAMILY.bold,
     textAlign: 'right',
     marginBottom: 4,
@@ -307,8 +351,20 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     marginBottom: 16,
   },
+  divider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginBottom: 4,
+  },
 
-  // ── InfoRow ────────────────────────────────
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
   infoLabel: {
     fontSize: 13,
     color: COLORS.placeholder,
@@ -322,47 +378,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.dark,
     fontFamily: FONT_FAMILY.medium,
-  },
-  statusBadge: {
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  statusBadgeText: {
-    fontSize: 12,
-    color: COLORS.white,
-    fontFamily: FONT_FAMILY.bold,
-  },
-  tradTypeText: {
-    fontSize: 14,
-    fontFamily: FONT_FAMILY.bold,
+    textAlign: 'right',
+    flexShrink: 1,
   },
 
-  // ── 영수증 ────────────────────────────────
+  receiptRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    paddingTop: 12,
+  },
   receiptImage: {
     width: 200,
     height: 260,
     borderRadius: 12,
     marginBottom: 8,
-  },
-  ocrLoadingText: {
-    fontSize: 12,
-    color: COLORS.placeholder,
-    fontFamily: FONT_FAMILY.medium,
-    textAlign: 'center',
-  },
-  ocrTextBox: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 8,
-    maxWidth: 200,
-  },
-  ocrText: {
-    fontSize: 11,
-    color: COLORS.subtle,
-    fontFamily: FONT_FAMILY.medium,
-    lineHeight: 18,
   },
   deleteReceiptText: {
     fontSize: 12,
@@ -376,7 +406,45 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.medium,
   },
 
-  // ── 촬영/첨부 버튼 ────────────────────────
+  sectionTitle: {
+    fontSize: 15,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+    marginBottom: 8,
+  },
+  receiptItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  receiptItemName: {
+    fontSize: 13,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
+    flex: 1,
+  },
+  receiptItemAmount: {
+    fontSize: 13,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
+  },
+
+  actionRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 12,
+  },
+  actionButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 20,
+    paddingVertical: 20,
+    backgroundColor: '#FFFFFF',
+    gap: 8,
+  },
   actionButtonShadow: {
     shadowColor: '#1428A0',
     shadowOpacity: 0.06,
@@ -389,102 +457,6 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: 14,
     color: COLORS.subtle,
-    fontFamily: FONT_FAMILY.bold,
-  },
-
-  // ── 미납자 카드 ───────────────────────────
-  unpaidCard: {
-    shadowColor: '#EF4444',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  unpaidTitle: {
-    fontSize: 15,
-    fontFamily: FONT_FAMILY.bold,
-    color: COLORS.dark,
-  },
-  unpaidBadge: {
-    backgroundColor: '#FEF2F2',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  unpaidBadgeText: {
-    fontSize: 12,
-    color: COLORS.error,
-    fontFamily: FONT_FAMILY.bold,
-  },
-  memberList: {
-    gap: 8,
-    marginBottom: 12,
-  },
-  memberRow: {
-    gap: 10,
-  },
-  memberAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1.5,
-    borderColor: '#EF4444',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  memberEmoji: {
-    fontSize: 18,
-  },
-  memberName: {
-    fontSize: 14,
-    fontFamily: FONT_FAMILY.bold,
-    color: COLORS.dark,
-    flex: 1,
-  },
-  unpaidLabel: {
-    fontSize: 13,
-    color: COLORS.error,
-    fontFamily: FONT_FAMILY.bold,
-  },
-  notifyButton: {
-    backgroundColor: '#EF4444',
-  },
-  notifyButtonText: {
-    fontSize: 14,
-    color: COLORS.white,
-    fontFamily: FONT_FAMILY.bold,
-  },
-
-  // ── 정산완료 카드 ─────────────────────────
-  settledCard: {
-    shadowColor: '#22C55E',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 2,
-  },
-  settledEmoji: {
-    fontSize: 40,
-    marginBottom: 8,
-  },
-  settledTitle: {
-    fontSize: 16,
-    fontFamily: FONT_FAMILY.bold,
-    color: COLORS.success,
-  },
-  settledSubtitle: {
-    fontSize: 13,
-    color: COLORS.placeholder,
-    fontFamily: FONT_FAMILY.medium,
-    marginTop: 4,
-  },
-
-  // ── 상세 보기 버튼 ────────────────────────
-  detailButton: {
-    backgroundColor: '#1428A0',
-  },
-  detailButtonText: {
-    fontSize: 16,
-    color: COLORS.white,
     fontFamily: FONT_FAMILY.bold,
   },
 });
