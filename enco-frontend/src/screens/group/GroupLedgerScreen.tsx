@@ -5,8 +5,11 @@ import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
-import { LedgerItem } from '../../types/group';
-import { getGroupDashboardReport } from '../../services/paymentService';
+import {
+  getGroupDashboardReport,
+  getGroupTransactions,
+  GroupTransactionItem,
+} from '../../services/paymentService';
 import { generatePDF } from 'react-native-html-to-pdf';
 import RNFS from 'react-native-fs';
 
@@ -159,19 +162,12 @@ export default function GroupLedgerScreen() {
     fetchLedgerSummary();
   }, [groupId]);
 
-  // ── mock 데이터 ──
-  const items: LedgerItem[] = useMemo(() => [
-    { id: 'l1', date: '2026-03-09', amount: +10, title: '모임원출석', memo: '김채아', hasReceipt: false, needsSettle: false, isSettled: true, settleMembers: [] },
-    { id: 'l2', date: '2026-03-08', amount: +10000, title: '김싸피 모임비 납입', memo: '', hasReceipt: false, needsSettle: false, isSettled: true, settleMembers: [] },
-    { id: 'l3', date: '2026-03-08', amount: +10000, title: '이싸피 모임비 납입', memo: '', hasReceipt: false, needsSettle: false, isSettled: true, settleMembers: [] },
-    { id: 'l4', date: '2026-03-07', amount: +10000, title: '최싸피 모임비 납입', memo: '', hasReceipt: false, needsSettle: false, isSettled: true, settleMembers: [] },
-    { id: 'l5', date: '2026-03-05', amount: -50000, title: '3월 정기모임', memo: '', hasReceipt: true, needsSettle: true, isSettled: false,
-      settleMembers: [
-        { id: 'm1', name: '김싸피', isPaid: true }, { id: 'm2', name: '고싸피', isPaid: false },
-        { id: 'm3', name: '장싸피', isPaid: true }, { id: 'm4', name: '정싸피', isPaid: false },
-      ],
-    },
-  ], []);
+  // ── 거래내역 API state ──
+  const [transactions, setTransactions] = useState<GroupTransactionItem[]>([]);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
+  const [hasNext, setHasNext] = useState(false);
+  const [isLoadingTransactions, setIsLoadingTransactions] = useState(false);
+  const [transactionError, setTransactionError] = useState<string | null>(null);
 
   // ── 필터 상태 ──
   const today = useMemo(() => new Date(), []);
@@ -210,36 +206,42 @@ export default function GroupLedgerScreen() {
     setTmpTx('all');
   };
 
-  // ── 필터 적용된 아이템 ──
-  const filteredItems = useMemo(() => {
-    let result = [...items];
+  // ── 거래내역 최초 조회 ──
+  useEffect(() => {
+    const numericGroupId = groupId ? Number(groupId) : NaN;
+    if (!Number.isFinite(numericGroupId)) return;
 
-    if (appliedFilter) {
-      const startStr = fmtDate(appliedFilter.start);
-      const endStr = fmtDate(appliedFilter.end);
-      result = result.filter(it => it.date >= startStr && it.date <= endStr);
+    const fetchTransactions = async () => {
+      const params = { sort: 'LATEST' as const, type: 'ALL' as const, size: 20 };
 
-      if (appliedFilter.tx === 'deposit') result = result.filter(it => it.amount >= 0);
-      else if (appliedFilter.tx === 'withdraw') result = result.filter(it => it.amount < 0);
+      console.log('[GroupTransactions] groupId:', numericGroupId);
+      console.log('[GroupTransactions] params:', params);
 
-      result.sort((a, b) =>
-        appliedFilter.sort === 'latest' ? b.date.localeCompare(a.date) : a.date.localeCompare(b.date)
-      );
-    } else {
-      result.sort((a, b) => b.date.localeCompare(a.date));
-    }
+      setIsLoadingTransactions(true);
+      setTransactionError(null);
 
-    return result;
-  }, [items, appliedFilter]);
+      try {
+        const result = await getGroupTransactions(numericGroupId, params);
+        console.log('[GroupTransactions] success:', result);
+        console.log('[GroupTransactions] items:', result.result.items);
+        console.log('[GroupTransactions] nextCursor:', result.result.nextCursor);
+        console.log('[GroupTransactions] hasNext:', result.result.hasNext);
 
-  // 누적 잔액
-  const runningBalances = useMemo(() => {
-    const result: Record<string, number> = {};
-    let running = balance;
-    const sorted = [...items].sort((a, b) => b.date.localeCompare(a.date));
-    sorted.forEach(it => { result[it.id] = running; running -= it.amount; });
-    return result;
-  }, [items, balance]);
+        setTransactions(result.result.items);
+        setNextCursor(result.result.nextCursor);
+        setHasNext(result.result.hasNext);
+      } catch (error: any) {
+        console.error('[GroupTransactions] failed:', error);
+        console.error('[GroupTransactions] status:', error?.response?.status);
+        console.error('[GroupTransactions] data:', error?.response?.data);
+        setTransactionError('거래내역을 불러오지 못했습니다.');
+      } finally {
+        setIsLoadingTransactions(false);
+      }
+    };
+
+    fetchTransactions();
+  }, [groupId]);
 
   // ── PDF 생성 및 저장 ──
   const handleExportPDF = useCallback(async () => {
@@ -270,20 +272,25 @@ export default function GroupLedgerScreen() {
     const filterLabel = appliedFilter.tx === 'all' ? '전체' : appliedFilter.tx === 'deposit' ? '입금' : '출금';
     const sortLabel = appliedFilter.sort === 'latest' ? '최신순' : '과거순';
 
-    const totalDeposit = filteredItems.filter(it => it.amount >= 0).reduce((sum, it) => sum + it.amount, 0);
-    const totalWithdraw = filteredItems.filter(it => it.amount < 0).reduce((sum, it) => sum + Math.abs(it.amount), 0);
+    const totalDeposit = transactions
+      .filter(it => it.type === 'DEPOSIT')
+      .reduce((sum, it) => sum + it.amount, 0);
+    const totalWithdraw = transactions
+      .filter(it => it.type === 'WITHDRAW')
+      .reduce((sum, it) => sum + it.amount, 0);
 
-    const rows = filteredItems.map(it => {
-      const isPositive = it.amount >= 0;
+    const rows = transactions.map(it => {
+      const isDeposit = it.type === 'DEPOSIT';
+      const signedAmount = isDeposit ? it.amount : -it.amount;
       return `
         <tr>
-          <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#6B7280;">${it.date}</td>
+          <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#6B7280;">${it.transactionDate.slice(0, 10)}</td>
           <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#111827; font-weight:600;">${it.title}</td>
-          <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:${isPositive ? '#1428A0' : '#EF4444'}; text-align:right; font-weight:700;">
-            ${formatMoney(it.amount)}
+          <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:${isDeposit ? '#1428A0' : '#EF4444'}; text-align:right; font-weight:700;">
+            ${formatMoney(signedAmount)}
           </td>
           <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#6B7280; text-align:right;">
-            ${(runningBalances[it.id] ?? 0).toLocaleString()}원
+            ${it.balanceAfter.toLocaleString()}원
           </td>
         </tr>`;
     }).join('');
@@ -331,7 +338,7 @@ export default function GroupLedgerScreen() {
             </div>
           </div>
 
-          <p class="filter-info">필터: ${filterLabel} · ${sortLabel} · ${filteredItems.length}건</p>
+          <p class="filter-info">필터: ${filterLabel} · ${sortLabel} · ${transactions.length}건</p>
 
           <table>
             <thead>
@@ -379,7 +386,7 @@ export default function GroupLedgerScreen() {
       console.error('PDF 생성 실패:', err);
       Alert.alert('오류', 'PDF 생성에 실패했습니다. 다시 시도해주세요.');
     }
-  }, [appliedFilter, filteredItems, runningBalances, groupName, balance]);
+  }, [appliedFilter, transactions, groupName, balance]);
 
   return (
     <ScreenLayout>
@@ -453,53 +460,67 @@ export default function GroupLedgerScreen() {
 
         {/* 거래 내역 리스트 */}
         <View style={styles.ledgerList}>
-          {filteredItems.length === 0 ? (
+          {isLoadingTransactions ? (
             <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>조회 결과가 없습니다.</Text>
+              <Text style={styles.emptyText}>거래내역 불러오는 중...</Text>
+            </View>
+          ) : transactionError ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>거래내역을 불러오지 못했습니다.</Text>
+            </View>
+          ) : transactions.length === 0 ? (
+            <View style={styles.emptyCard}>
+              <Text style={styles.emptyText}>거래내역이 없습니다.</Text>
             </View>
           ) : (
-            filteredItems.map((it) => {
-              const isPositive = it.amount >= 0;
-              const members = it.settleMembers ?? [];
-              const paidCount = members.filter(m => m.isPaid).length;
-              const totalCount = members.length;
-              const settled = it.isSettled ?? true;
+            transactions.map(it => {
+              const isDeposit = it.type === 'DEPOSIT';
+              const signedAmount = isDeposit ? it.amount : -it.amount;
 
               return (
                 <Pressable
-                  key={it.id}
-                  onPress={() => navigation.navigate('GroupLedgerDetail', { item: it, balance: runningBalances[it.id], isAdmin, groupName })}
+                  key={`${it.referenceType}-${it.referenceId}-${it.transactionDate}`}
                   style={styles.ledgerItem}
+                  onPress={() => {
+                    if (it.referenceType === 'TRANSACTION') {
+                      navigation.navigate('GroupLedgerDetail', {
+                        groupId: params.groupId,
+                        groupName: params.groupName ?? groupName,
+                        transactionId: it.referenceId,
+                        referenceType: it.referenceType,
+                        isAdmin,
+                      });
+                    } else {
+                      Alert.alert('준비 중', '해당 거래 유형의 상세 내역은 준비 중입니다.');
+                    }
+                  }}
                 >
                   <View style={styles.ledgerItemInner}>
                     <View style={styles.ledgerItemLeft}>
                       <View style={styles.ledgerItemTopRow}>
-                        <Text style={styles.ledgerItemDate}>{shortDate(it.date)}</Text>
-                        {it.needsSettle && (
-                          <View style={[
-                            styles.settleBadge,
-                            { backgroundColor: settled ? '#22C55E' : '#EF4444' },
-                          ]}>
-                            <Text style={styles.settleBadgeText}>
-                              {settled ? '정산완료' : `정산미완료 ${paidCount}/${totalCount}`}
-                            </Text>
-                          </View>
-                        )}
+                        <Text style={styles.ledgerItemDate}>
+                          {shortDate(it.transactionDate.slice(0, 10))}
+                        </Text>
+                        <View style={[
+                          styles.settleBadge,
+                          { backgroundColor: isDeposit ? '#1428A0' : '#EF4444' },
+                        ]}>
+                          <Text style={styles.settleBadgeText}>
+                            {isDeposit ? '입금' : '출금'}
+                          </Text>
+                        </View>
                       </View>
                       <Text style={styles.ledgerItemTitle}>{it.title}</Text>
-                      {it.memo ? (
-                        <Text style={styles.ledgerItemMemo}>{it.memo}</Text>
-                      ) : null}
                     </View>
                     <View style={styles.ledgerItemRight}>
                       <Text style={[
                         styles.ledgerItemAmount,
-                        { color: isPositive ? '#1428A0' : '#EF4444' },
+                        { color: isDeposit ? '#1428A0' : '#EF4444' },
                       ]}>
-                        {formatMoney(it.amount)}
+                        {formatMoney(signedAmount)}
                       </Text>
                       <Text style={styles.ledgerItemBalance}>
-                        {(runningBalances[it.id] ?? 0).toLocaleString()}원
+                        {it.balanceAfter.toLocaleString()}원
                       </Text>
                     </View>
                   </View>

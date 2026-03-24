@@ -56,6 +56,17 @@ public class Group {
 
     private Long accountId;
 
+    @Column(nullable = false)
+    private boolean isPointEnabled = true;
+
+    public void addPoint(BigDecimal amount) {
+        this.point = this.point.add(amount);
+    }
+
+    public void togglePoint(boolean status) {
+        this.isPointEnabled = status;
+    }
+
     @Builder.Default
     @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<GroupType> groupTypeList = new ArrayList<>();

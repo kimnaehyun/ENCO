@@ -104,6 +104,8 @@ export type DuesPaymentResponse = {
   };
 };
 
+// 자유납부
+
 export async function duesPayment(
   groupId: number,
   payload: DuesPaymentRequest,
@@ -120,6 +122,7 @@ export async function duesPayment(
   return response.data;
 }
 
+// 선택 납부
 export type SelectedDuesPaymentRequest = {
   amount: number;
   targetChargeTargetIds: number[];
@@ -143,6 +146,7 @@ export async function selectedDuesPayment(
   );
   return response.data;
 }
+
 
 export type GetUnpaidDuesResponse = {
   message: string;
@@ -253,5 +257,98 @@ export async function getGroupCards(groupId: number | string) {
     },
   );
 
+  return response.data;
+}
+
+// 모임 장부 조회
+export type GroupTransactionSort = 'LATEST' | 'OLDEST';
+export type GroupTransactionType = 'ALL' | 'DEPOSIT' | 'WITHDRAW';
+export type GroupTransactionReferenceType = 'TRANSACTION' | 'EXPENSE' | 'POINT';
+
+export type GroupTransactionItem = {
+  referenceType: GroupTransactionReferenceType;
+  referenceId: number;
+  transactionDate: string;
+  title: string;
+  type: 'DEPOSIT' | 'WITHDRAW';
+  amount: number;
+  balanceAfter: number;
+};
+
+export type GetGroupTransactionsParams = {
+  startDate?: string;
+  endDate?: string;
+  sort?: GroupTransactionSort;
+  type?: GroupTransactionType;
+  cursor?: number;
+  size?: number;
+};
+
+export type GetGroupTransactionsResponse = {
+  message: string;
+  result: {
+    items: GroupTransactionItem[];
+    nextCursor: number | null;
+    hasNext: boolean;
+  };
+};
+
+export async function getGroupTransactions(
+  groupId: number,
+  params: GetGroupTransactionsParams,
+): Promise<GetGroupTransactionsResponse> {
+  const response = await paymentApi.get<GetGroupTransactionsResponse>(
+    `/groups/${groupId}/transactions`,
+    {
+      params,
+    },
+  );
+  return response.data;
+}
+
+// ── 거래내역 상세 조회 ──
+
+export type GroupTransactionDetailResponse = {
+  message: string;
+  result: {
+    displayName: string;
+    amount: number;
+    transactionDate: string;
+    type: 'TRANSFER' | 'CARD_PAYMENT';
+    cardName: string | null;
+    balanceAfter: number;
+    memo: string | null;
+    receipt: {
+      receiptImageUrl: string | null;
+      receiptContent: {
+        merchantName: string;
+        address: string;
+        paidAt: string;
+        items: {
+          name: string;
+          unitPrice: number | null;
+          quantity: number | null;
+          amount: number | null;
+          options: {
+            name: string;
+            unitPrice: number | null;
+            quantity: number | null;
+            amount: number | null;
+          }[];
+        }[];
+        totalAmount: number | null;
+        businessNumber: string | null;
+      } | null;
+    } | null;
+  };
+};
+
+export async function getGroupTransactionDetail(
+  groupId: number,
+  transactionId: number,
+): Promise<GroupTransactionDetailResponse> {
+  const response = await paymentApi.get<GroupTransactionDetailResponse>(
+    `/groups/${groupId}/transactions/${transactionId}`,
+  );
   return response.data;
 }

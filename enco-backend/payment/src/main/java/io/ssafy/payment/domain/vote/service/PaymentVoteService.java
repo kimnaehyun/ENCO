@@ -67,7 +67,7 @@ public class PaymentVoteService {
                 .expiredAt(LocalDateTime.now().plusHours(1))
                 .build();
 
-        PaymentVote savedVote = voteRepository.save(vote);
+        PaymentVote savedVote = voteRepository.saveAndFlush(vote);
         log.info("결제 투표 생성 완료");
 
         TransactionHistory pendingTransaction = TransactionHistory.builder()
@@ -206,9 +206,7 @@ public class PaymentVoteService {
         if (account.getAmount().compareTo(transaction.getAmount()) < 0) {
             log.warn("[PaymentVote] 결제 실패 (잔액 부족): voteId={}", vote.getId());
 
-            transaction.updateStatus(Status.REJECTED);
-            vote.reject();
-            return;
+            throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
         }
 
         account.deductAmount(transaction.getAmount()); // 실제 돈 차감
