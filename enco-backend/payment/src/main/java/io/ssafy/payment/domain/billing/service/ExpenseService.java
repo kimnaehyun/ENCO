@@ -3,6 +3,7 @@ package io.ssafy.payment.domain.billing.service;
 import io.ssafy.payment.domain.billing.dto.request.CreateExpenseRequestDto;
 import io.ssafy.payment.domain.billing.dto.request.CreateExpenseRequestDto.PaymentInfoDto;
 import io.ssafy.payment.domain.billing.dto.response.ExpenseResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.SettlementDefaultersResponseDto;
 import io.ssafy.payment.domain.billing.dto.response.SettlementDetailResponseDto;
 import io.ssafy.payment.domain.billing.entity.Charge;
 import io.ssafy.payment.domain.billing.entity.ChargeTarget;
@@ -153,5 +154,22 @@ public class ExpenseService {
         Receipt receipt = receiptRepository.findByExpenseIdWithItems(expenseId).orElse(null);
 
         return SettlementDetailResponseDto.of(expense, targets, receipt);
+    }
+
+    @Transactional(readOnly = true)
+    public SettlementDefaultersResponseDto getSettlementDefaulters(Long groupId, Long expenseId) {
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+
+        if (!expense.getGroupId().equals(groupId)) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        Charge charge = chargeRepository.findByExpenseId(expenseId)
+                .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+
+        List<ChargeTarget> targets = chargeTargetRepository.findByCharge_IdAndIsDeletedFalse(charge.getId());
+
+        return SettlementDefaultersResponseDto.of(targets);
     }
 }

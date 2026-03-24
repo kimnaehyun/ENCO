@@ -3,6 +3,7 @@ package io.ssafy.payment.domain.billing.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ssafy.payment.domain.billing.dto.request.CreateExpenseRequestDto;
 import io.ssafy.payment.domain.billing.dto.response.ExpenseResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.SettlementDefaultersResponseDto;
 import io.ssafy.payment.domain.billing.dto.response.SettlementDetailResponseDto;
 import io.ssafy.payment.domain.billing.service.ExpenseService;
 import io.ssafy.payment.global.common.error.CustomException;
@@ -50,6 +51,15 @@ public class ExpenseController {
             @PathVariable Long expenseId
     ) {
         SettlementDetailResponseDto result = expenseService.getSettlementDetail(groupId, expenseId);
+        return ResponseEntity.ok(CommonResponse.success(result));
+    }
+
+    @GetMapping("/{groupId}/settlements/{expenseId}/defaulters")
+    public ResponseEntity<CommonResponse<SettlementDefaultersResponseDto>> getSettlementDefaulters(
+            @PathVariable Long groupId,
+            @PathVariable Long expenseId
+    ) {
+        SettlementDefaultersResponseDto result = expenseService.getSettlementDefaulters(groupId, expenseId);
         return ResponseEntity.ok(CommonResponse.success(result));
     }
 }
