@@ -13,4 +13,6 @@ public interface ReceiptRepository extends JpaRepository<Receipt, Long> {
 
     @Query("SELECT r FROM Receipt r LEFT JOIN FETCH r.items WHERE r.expenseId = :expenseId")
     Optional<Receipt> findByExpenseIdWithItems(@Param("expenseId") Long expenseId);
+
+    Optional<Receipt> findTopByTransactionIdOrderByIdDesc(Long transactionId);
 }
