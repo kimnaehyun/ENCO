@@ -122,7 +122,9 @@ public class TransactionService {
                     .orElse(null);
         }
 
-        return TransactionDetailResponseDto.of(th, cardName);
+        Receipt receipt = receiptRepository.findTopByTransactionIdOrderByIdDesc(transactionId).orElse(null);
+
+        return TransactionDetailResponseDto.of(th, cardName, receipt);
     }
 
     @Transactional
