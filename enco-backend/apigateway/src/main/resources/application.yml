@@ -33,6 +33,13 @@ spring:
                 - StripPrefix=1
                 - AuthorizationHeaderFilter
 
+            - id: auth-service-internal
+              uri: http://${AUTH_SERVICE_HOST}:${AUTH_SERVICE_PORT}
+              predicates:
+                - Path=/auth-service/internal/**
+              filters:
+                - StripPrefix=1
+
             - id: payment-service-public
               uri: http://${PAYMENT_SERVICE_HOST}:${PAYMENT_SERVICE_PORT}
               predicates:
