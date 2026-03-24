@@ -8,10 +8,11 @@ import java.util.List;
 
 public record CreateExpenseRequestDto(
         BigDecimal amount,
+        String receiverAccountNumber,
+        String receiverBankName,
         PaymentInfoDto paymentInfo,
         String displayName,
         String memo,
-        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
         List<Long> participants
 ) {
     public record PaymentInfoDto(

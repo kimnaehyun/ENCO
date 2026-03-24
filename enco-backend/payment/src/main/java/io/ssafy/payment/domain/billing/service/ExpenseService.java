@@ -14,6 +14,7 @@ import io.ssafy.payment.domain.billing.repository.ChargeRepository;
 import io.ssafy.payment.domain.billing.repository.ChargeTargetRepository;
 import io.ssafy.payment.domain.billing.repository.ExpenseRepository;
 import io.ssafy.payment.domain.billing.repository.ReceiptRepository;
+import io.ssafy.payment.global.common.BankCode;
 import io.ssafy.payment.global.common.error.CustomException;
 import io.ssafy.payment.global.common.error.ErrorCode;
 import lombok.RequiredArgsConstructor;
@@ -115,6 +116,9 @@ public class ExpenseService {
                 .displayName(request.displayName())
                 .totalAmount(totalChargeAmount)
                 .chargeType(ChargeType.SETTLEMENT)
+                .receiverAccountNumber(request.receiverAccountNumber())
+                .receiverBankCode(BankCode.codeOf(request.receiverBankName()))
+                .receiverBankName(request.receiverBankName())
                 .build();
         chargeRepository.save(charge);
 
@@ -128,6 +132,6 @@ public class ExpenseService {
                 .toList();
         chargeTargetRepository.saveAll(targets);
 
-        return ExpenseResponseDto.of(expense, charge, targets, receiptImageUrl);
+        return ExpenseResponseDto.of(expense, charge, targets, receiptImageUrl, request);
     }
 }
