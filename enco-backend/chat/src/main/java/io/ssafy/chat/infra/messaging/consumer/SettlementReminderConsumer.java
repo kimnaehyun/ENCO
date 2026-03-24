@@ -6,6 +6,8 @@ import io.ssafy.chat.common.enums.NotificationType;
 import io.ssafy.chat.notification.document.Notification;
 import io.ssafy.chat.notification.dto.SettlementReminderEventDto;
 import io.ssafy.chat.notification.repository.NotificationRepository;
+import io.ssafy.chat.infra.client.AuthServiceClient;
+import io.ssafy.chat.notification.service.FcmService;
 import io.ssafy.chat.notification.service.SseEmitterService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,8 @@ public class SettlementReminderConsumer {
     private final SseEmitterService sseEmitterService;
     private final NotificationRepository notificationRepository;
     private final ObjectMapper objectMapper;
+    private final FcmService fcmService;
+    private final AuthServiceClient authServiceClient;
 
     @KafkaListener(topics = "settlement-reminder", groupId = "chat-service")
     public void consume(String message) {
@@ -46,7 +50,7 @@ public class SettlementReminderConsumer {
                         .userId(userId)
                         .type(NotificationType.SETTLEMENT_REMINDER)
                         .title(title)
-                        .message("정산이 아직 미납입니다. 확인 후 납부해주세요.")
+                        .message("미납된 정산이 있습니다. 확인 후 납부해주세요.")
                         .data(Map.of(
                                 "groupId", groupId,
                                 "expenseId", expenseId,
@@ -68,7 +72,25 @@ public class SettlementReminderConsumer {
                         saved.getCreatedAt()
                 );
 
-                sseEmitterService.sendToUser(userId, event);
+                // SSE (앱 켜져 있을 때)
+//                sseEmitterService.sendToUser(userId, event);
+
+                // FCM (앱 꺼져 있을 때)
+                try {
+                    String fcmToken = authServiceClient.getFcmToken(userId).result();
+                    Map<String, String> data = Map.of(
+                            "notificationId", saved.getId(),
+                            "type", "SETTLEMENT_REMINDER",
+                            "groupId", String.valueOf(groupId),
+                            "chargeTargetId", String.valueOf(chargeTargetId),
+                            "amount", amount.toPlainString(),
+                            "createdAt", saved.getCreatedAt().toString()
+                    );
+                    fcmService.sendPushNotification(fcmToken, saved.getTitle(), saved.getMessage(), data);
+                } catch (Exception e) {
+                    log.warn("FCM 토큰 조회 실패 - userId: {}", userId);
+                }
+
                 log.info("정산 미납 알림 전송 - userId: {}, chargeTargetId: {}", userId, chargeTargetId);
             }
         } catch (Exception e) {

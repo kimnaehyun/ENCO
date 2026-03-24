@@ -11,7 +11,7 @@ travel_mysql_data/
 mongo_data/
 redis_data/
 minio_data/
-
+**/resources/firebase/
 dev-log/
 
 CLAUDE.md
