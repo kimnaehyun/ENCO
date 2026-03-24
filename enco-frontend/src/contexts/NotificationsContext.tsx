@@ -12,7 +12,10 @@ export type NotificationItem = {
   isRead: boolean;
   groupId?: string;
   groupName?: string;
-  voteId?: string; // VOTE일 때
+  voteId?: string;       // VOTE일 때
+  amount?: number;       // DUE/SETTLEMENT 금액
+  memo?: string;         // DUE/SETTLEMENT 메모
+  unpaidItemId?: string; // DUE 미납 항목 ID
 };
 
 type NotificationsContextValue = {
@@ -46,6 +49,9 @@ const seed: NotificationItem[] = [
     isRead: false,
     groupId: 'g1',
     groupName: '회식주의자',
+    amount: 10000,
+    memo: '3월 회비',
+    unpaidItemId: 'u1',
   },
   {
     id: 'n2',

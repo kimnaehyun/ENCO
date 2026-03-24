@@ -3,6 +3,8 @@ package io.ssafy.payment.domain.billing.service;
 import io.ssafy.payment.domain.billing.dto.request.CreateExpenseRequestDto;
 import io.ssafy.payment.domain.billing.dto.request.CreateExpenseRequestDto.PaymentInfoDto;
 import io.ssafy.payment.domain.billing.dto.response.ExpenseResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.SettlementDefaultersResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.SettlementDetailResponseDto;
 import io.ssafy.payment.domain.billing.entity.Charge;
 import io.ssafy.payment.domain.billing.entity.ChargeTarget;
 import io.ssafy.payment.domain.billing.entity.ChargeType;
@@ -133,5 +135,59 @@ public class ExpenseService {
         chargeTargetRepository.saveAll(targets);
 
         return ExpenseResponseDto.of(expense, charge, targets, receiptImageUrl, request);
+    }
+
+    @Transactional(readOnly = true)
+    public SettlementDetailResponseDto getSettlementDetail(Long groupId, Long expenseId) {
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+
+        if (!expense.getGroupId().equals(groupId)) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        Charge charge = chargeRepository.findByExpenseId(expenseId)
+                .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+
+        List<ChargeTarget> targets = chargeTargetRepository.findByCharge_IdAndIsDeletedFalse(charge.getId());
+
+        Receipt receipt = receiptRepository.findByExpenseIdWithItems(expenseId).orElse(null);
+
+        return SettlementDetailResponseDto.of(expense, targets, receipt);
+    }
+
+    @Transactional(readOnly = true)
+    public SettlementDefaultersResponseDto getSettlementDefaulters(Long groupId, Long expenseId) {
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+
+        if (!expense.getGroupId().equals(groupId)) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        Charge charge = chargeRepository.findByExpenseId(expenseId)
+                .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+
+        List<ChargeTarget> targets = chargeTargetRepository.findByCharge_IdAndIsDeletedFalse(charge.getId());
+
+        return SettlementDefaultersResponseDto.of(targets);
+    }
+
+    @Transactional
+    public void deleteSettlement(Long groupId, Long expenseId) {
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new CustomException(ErrorCode.BAD_REQUEST));
+
+        if (!expense.getGroupId().equals(groupId)) {
+            throw new CustomException(ErrorCode.BAD_REQUEST);
+        }
+
+        expense.softDelete();
+
+        chargeRepository.findByExpenseId(expenseId).ifPresent(charge -> {
+            chargeTargetRepository.findByCharge_IdAndIsDeletedFalse(charge.getId())
+                    .forEach(ChargeTarget::softDelete);
+            charge.softDelete();
+        });
     }
 }

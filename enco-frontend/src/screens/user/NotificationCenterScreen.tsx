@@ -27,6 +27,10 @@ export default function NotificationCenterScreen() {
       navigation.navigate('GroupPay', {
         groupId: n.groupId,
         groupName: n.groupName,
+        presetAmount: n.amount,
+        presetMemo: n.memo,
+        presetUnpaidId: n.unpaidItemId,
+        paySource: 'due' as const,
       });
       return;
     }
@@ -37,7 +41,7 @@ export default function NotificationCenterScreen() {
         groupName: n.groupName,
         presetAmount: 18000,
         presetMemo: '감튀정모 후불 정산',
-        paySource: 'settlement',
+        paySource: 'settlement' as const,
       });
       return;
     }

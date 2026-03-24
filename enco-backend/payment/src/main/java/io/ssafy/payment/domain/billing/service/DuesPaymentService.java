@@ -5,13 +5,17 @@ import io.ssafy.payment.domain.account.repository.AccountRepository;
 import io.ssafy.payment.domain.billing.dto.request.CreateFreePaymentRequestDto;
 import io.ssafy.payment.domain.billing.dto.request.CreateSelectedPaymentRequestDto;
 import io.ssafy.payment.domain.billing.dto.response.DuesPaymentResponseDto;
+import io.ssafy.payment.domain.billing.entity.Charge;
 import io.ssafy.payment.domain.billing.entity.ChargeTarget;
 import io.ssafy.payment.domain.billing.entity.ChargeTargetStatus;
+import io.ssafy.payment.domain.billing.entity.ChargeType;
 import io.ssafy.payment.domain.billing.entity.DuePayment;
 import io.ssafy.payment.domain.billing.entity.DuesPaymentStatus;
+import io.ssafy.payment.domain.billing.entity.Expense;
 import io.ssafy.payment.domain.billing.entity.UserPrepayment;
 import io.ssafy.payment.domain.billing.repository.ChargeTargetRepository;
 import io.ssafy.payment.domain.billing.repository.DuePaymentRepository;
+import io.ssafy.payment.domain.billing.repository.ExpenseRepository;
 import io.ssafy.payment.domain.billing.repository.UserPrepaymentRepository;
 import io.ssafy.payment.domain.transaction.entity.Direction;
 import io.ssafy.payment.domain.transaction.entity.Status;
@@ -40,6 +44,7 @@ public class DuesPaymentService {
     private final AccountRepository accountRepository;
     private final TransactionHistoryRepository transactionHistoryRepository;
     private final UserPrepaymentRepository userPrepaymentRepository;
+    private final ExpenseRepository expenseRepository;
 
     @Transactional
     public DuesPaymentResponseDto payFree(Long groupId, Long userId, String idempotencyKey, CreateFreePaymentRequestDto request) {
@@ -86,6 +91,9 @@ public class DuesPaymentService {
             allocations.add(new DuesPaymentResponseDto.AllocationDto(
                     target.getId(), payAmount, target.getStatus().name(), target.getRemainingAmount()));
         }
+
+        // 정산 완료 체크
+        completeSettlementIfAllPaid(targets);
 
         // 초과 납부액 prepayment에 저장
         if (remaining.compareTo(BigDecimal.ZERO) > 0) {
@@ -167,6 +175,9 @@ public class DuesPaymentService {
                     target.getId(), payAmount, target.getStatus().name(), target.getRemainingAmount()));
         }
 
+        // 정산 완료 체크
+        completeSettlementIfAllPaid(targets);
+
         if (totalPaid.compareTo(BigDecimal.ZERO) > 0) {
             accountRepository.depositByGroupId(groupId, totalPaid);
         }
@@ -191,5 +202,25 @@ public class DuesPaymentService {
                 .build());
 
         return new DuesPaymentResponseDto(firstPaymentId, groupId, userId, totalPaid, paidAt, allocations);
+    }
+
+    private void completeSettlementIfAllPaid(List<ChargeTarget> targets) {
+        targets.stream()
+                .map(ChargeTarget::getCharge)
+                .collect(java.util.stream.Collectors.toMap(Charge::getId, c -> c, (a, b) -> a))
+                .values()
+                .forEach(charge -> {
+                    boolean hasUnpaid = chargeTargetRepository
+                            .existsByCharge_IdAndStatusNotAndIsDeletedFalse(charge.getId(), ChargeTargetStatus.PAID);
+                    if (hasUnpaid) return;
+
+                    if (charge.getChargeType() == ChargeType.SETTLEMENT && charge.getExpenseId() != null) {
+                        // 정산: Expense 완료 처리
+                        expenseRepository.findById(charge.getExpenseId())
+                                .ifPresent(Expense::completeSettlement);
+                    }
+                    // 정기회비 등: Charge 닫기
+                    charge.closeCharge();
+                });
     }
 }

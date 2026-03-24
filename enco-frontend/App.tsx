@@ -19,6 +19,7 @@ const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ['enco://app'],
   config: {
     screens: {
+      // 결제 딥링크 (기존)
       InternetPayFlow: {
         screens: {
           CreateInternetPaymentRequest: 'pay',
@@ -34,21 +35,119 @@ const linking: LinkingOptions<RootStackParamList> = {
           },
         },
       },
+
+      // 초대 딥링크 (추가)
+      // enco://app/invite?token=fb510545-d6d7-...
+      App: {
+        screens: {
+          HomeTab: {
+            screens: {
+              GroupInviteEntry: {
+                path: 'invite',
+                parse: {
+                  inviteToken: (token: string) => token,
+                },
+              },
+            },
+          },
+        },
+      },
     },
   },
 };
 
 function App() {
-  useEffect(() => {
-    Linking.getInitialURL().then(url => {});
+  const navigationRef = useNavigationContainerRef<RootStackParamList>();
+  const backPressedOnce = useRef(false);
 
-    const sub = Linking.addEventListener('url', ({ url }) => {});
+  // ── 딥링크에서 초대 토큰 파싱 ──
+  const handleDeepLink = (url: string | null) => {
+    console.log('[DeepLink] handleDeepLink called with:', url);
+    if (!url) return;
+
+    try {
+      // enco://app/invite?token=xxx&groupName=xxx 형태 파싱
+      const tokenMatch = url.match(/invite\?token=([^&]+)/);
+      const nameMatch = url.match(/groupName=([^&]+)/);
+      console.log('[DeepLink] tokenMatch:', tokenMatch);
+
+      if (tokenMatch && tokenMatch[1]) {
+        const inviteToken = tokenMatch[1];
+        const groupName = nameMatch
+          ? decodeURIComponent(nameMatch[1])
+          : undefined;
+        console.log(
+          '[DeepLink] inviteToken:',
+          inviteToken,
+          'groupName:',
+          groupName,
+        );
+        console.log(
+          '[DeepLink] navigationRef.isReady():',
+          navigationRef.isReady(),
+        );
+
+        const doNavigate = () => {
+          if (navigationRef.isReady()) {
+            console.log('[DeepLink] Navigating to GroupInviteEntry');
+            navigationRef.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: 'App',
+                    state: {
+                      routes: [
+                        {
+                          name: 'HomeTab',
+                          state: {
+                            routes: [
+                              { name: 'Home' },
+                              {
+                                name: 'GroupInviteEntry',
+                                params: { inviteToken, groupName },
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                  },
+                ],
+              }),
+            );
+          } else {
+            console.log(
+              '[DeepLink] Navigation not ready, retrying in 500ms...',
+            );
+            setTimeout(doNavigate, 500);
+          }
+        };
+
+        // 약간의 딜레이 후 시도, 준비 안 되면 재시도
+        setTimeout(doNavigate, 300);
+      }
+    } catch (e) {
+      console.warn('[DeepLink] 파싱 실패:', e);
+    }
+  };
+
+  // ── 딥링크 리스너 ──
+  useEffect(() => {
+    // 앱이 종료 상태에서 딥링크로 열린 경우
+    Linking.getInitialURL().then(url => {
+      console.log('[DeepLink] getInitialURL:', url);
+      handleDeepLink(url);
+    });
+
+    // 앱이 이미 실행 중일 때 딥링크가 들어온 경우
+    const sub = Linking.addEventListener('url', ({ url }) => {
+      console.log('[DeepLink] addEventListener url:', url);
+      handleDeepLink(url);
+    });
 
     return () => sub.remove();
   }, []);
-
-  const navigationRef = useNavigationContainerRef<RootStackParamList>();
-  const backPressedOnce = useRef(false);
 
   useEffect(() => {
     const onBackPress = () => {
@@ -119,22 +218,3 @@ function App() {
 }
 
 export default App;
-
-// 에러페이지 테스트용 코드
-// import 'react-native-gesture-handler';
-// import React from 'react';
-// import { GestureHandlerRootView } from 'react-native-gesture-handler';
-// import { SafeAreaProvider } from 'react-native-safe-area-context';
-// import NetworkErrorTestScreen from './src/screens/test/NetworkErrorTestScreen';
-
-// function App() {
-//   return (
-//     <GestureHandlerRootView style={{ flex: 1 }}>
-//       <SafeAreaProvider>
-//         <NetworkErrorTestScreen />
-//       </SafeAreaProvider>
-//     </GestureHandlerRootView>
-//   );
-// }
-
-// export default App;

@@ -1,3 +1,7 @@
+// src/navigation/RootNavigator.tsx
+//
+// ※ 변경 사항: NavigationContainer에 linking prop 추가
+//
 import React, { useEffect, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
@@ -23,6 +27,15 @@ export default function RootNavigator() {
     const t = setTimeout(() => setIsBooting(false), 800);
     return () => clearTimeout(t);
   }, []);
+
+  // ※ 참고: NavigationContainer는 App.tsx에 있을 가능성이 높습니다.
+  // 거기에 linking prop을 추가해야 합니다:
+  //
+  //   import linking from './navigation/linking';
+  //
+  //   <NavigationContainer linking={linking}>
+  //     <RootNavigator />
+  //   </NavigationContainer>
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>

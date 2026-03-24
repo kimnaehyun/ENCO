@@ -1,37 +1,83 @@
 // src/screens/admin/AdminMembersScreen.tsx
-import React, { useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, View, Image } from 'react-native'
+import React, { useEffect, useMemo, useState } from 'react';
+import { Alert, Modal, Pressable, ScrollView, StyleSheet, View, Image, ActivityIndicator } from 'react-native'
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
 import { AdminMember } from '../../types/admin';
+import { getGroupMembers, type GroupMember } from '../../services/groupService';
+import { createInviteToken } from '../../services/inviteService';
+
+// 딥링크 스킴
+const DEEP_LINK_BASE = 'enco://app/invite';
 
 export default function AdminMembersScreen() {
   const route = useRoute();
   const params = (route.params ?? {}) as CommonParams;
 
+  const groupId = params.groupId;
   const groupName = params.groupName ?? '모임명';
 
-  const members: AdminMember[] = useMemo(
-    () => [
-      { id: 'm1', name: '고싸피', joinedAt: '2026-02-17', memo: '총무(임시)' },
-      { id: 'm2', name: '김싸피', joinedAt: '2026-02-18', memo: '회계 담당(임시)' },
-      { id: 'm3', name: '정싸피', joinedAt: '2026-02-19', memo: '지출 잦음(임시)' },
-      { id: 'm4', name: '장싸피', joinedAt: '2026-02-20', memo: '신규(임시)' },
-    ],
-    []
-  );
+  // ── 멤버 목록 (API 연동) ──
+  const [members, setMembers] = useState<GroupMember[]>([]);
+  const [loadingMembers, setLoadingMembers] = useState(true);
+
+  useEffect(() => {
+    const fetchMembers = async () => {
+      try {
+        setLoadingMembers(true);
+        const data = await getGroupMembers(groupId!);
+        setMembers(data.result);
+      } catch (error: any) {
+        console.error('멤버 목록 조회 실패:', error?.response?.data ?? error.message);
+      } finally {
+        setLoadingMembers(false);
+      }
+    };
+    if (groupId) {
+      fetchMembers();
+    }
+  }, [groupId]);
 
   const [kickMode, setKickMode] = useState(false);
-  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
+  const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
+  const [inviteLoading, setInviteLoading] = useState(false);
 
-  const onPressInvite = () => {
-    const inviteUrl = `https://en.co/i?code=TEMP-${params.groupId ?? 'G1'}`;
-    Clipboard.setString(inviteUrl);
-    setInviteModalVisible(true);
+  // ── 초대 링크 생성 (API 호출) ──
+  const onPressInvite = async () => {
+    if (!groupId) {
+      Alert.alert('오류', 'groupId가 없습니다.');
+      return;
+    }
+
+    try {
+      setInviteLoading(true);
+
+      // 1) API 호출 → 초대 토큰 발급
+      const response = await createInviteToken(groupId!);
+      const token = response.result.token;
+
+      // 2) 딥링크 URL 생성 (커스텀 스킴)
+      const encodedName = encodeURIComponent(groupName);
+      const inviteUrl = `${DEEP_LINK_BASE}?token=${token}&groupName=${encodedName}`;
+
+      // 3) 클립보드에 복사
+      Clipboard.setString(inviteUrl);
+
+      // 4) 모달 표시
+      setInviteModalVisible(true);
+    } catch (error: any) {
+      console.error('초대 토큰 생성 실패:', error?.response?.data ?? error.message);
+
+      const errorMessage =
+        error?.response?.data?.message ?? '초대 링크 생성 중 오류가 발생했습니다.';
+      Alert.alert('오류', errorMessage);
+    } finally {
+      setInviteLoading(false);
+    }
   };
 
   const closeInviteModal = () => {
@@ -46,7 +92,7 @@ export default function AdminMembersScreen() {
     });
   };
 
-  const onSelectMemberForKick = (id: string) => {
+  const onSelectMemberForKick = (id: number) => {
     if (!kickMode) return;
     setSelectedMemberId(prev => (prev === id ? null : id));
   };
@@ -54,18 +100,18 @@ export default function AdminMembersScreen() {
   const onConfirmKick = () => {
     if (!selectedMemberId) return;
 
-    const target = members.find(m => m.id === selectedMemberId);
+    const target = members.find(m => m.userId === selectedMemberId);
 
     Alert.alert(
       '추방 확인',
-      `${target?.name ?? '선택한 멤버'} 님을 추방할까요? (임시)`,
+      `${target?.name ?? '선택한 멤버'} 님을 추방할까요?`,
       [
         { text: '취소', style: 'cancel' },
         {
           text: '추방',
           style: 'destructive',
           onPress: () => {
-            Alert.alert('완료', '추방 처리(임시 완료)');
+            Alert.alert('완료', '추방 처리 완료');
             setSelectedMemberId(null);
             setKickMode(false);
           },
@@ -83,14 +129,10 @@ export default function AdminMembersScreen() {
         {/* 헤더 */}
         <View className="flex-row items-center justify-between mb-5">
           <View>
-            <Text variant="bodyLg" weight="bold" color="dark"
-              
-            >
+            <Text variant="bodyLg" weight="bold" color="dark">
               멤버 관리
             </Text>
-            <Text variant="caption" color="muted"
-              
-             style={{ marginTop: 6 }}>
+            <Text variant="caption" color="muted" style={{ marginTop: 6 }}>
               {groupName} 멤버를 관리할 수 있어요
             </Text>
           </View>
@@ -98,14 +140,20 @@ export default function AdminMembersScreen() {
           <View className="flex-row items-center gap-2">
             <Pressable
               onPress={onPressInvite}
+              disabled={inviteLoading}
               className="rounded-2xl px-4 py-2"
-              style={{ backgroundColor: '#1428A0' }}
+              style={[
+                { backgroundColor: '#1428A0' },
+                inviteLoading && { opacity: 0.6 },
+              ]}
             >
-              <Text variant="bodySm" weight="bold" color="white"
-                
-              >
-                초대
-              </Text>
+              {inviteLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text variant="bodySm" weight="bold" color="white">
+                  초대
+                </Text>
+              )}
             </Pressable>
 
             <Pressable
@@ -113,9 +161,7 @@ export default function AdminMembersScreen() {
               className="rounded-2xl px-4 py-2"
               style={{ backgroundColor: kickMode ? '#9CA3AF' : '#FF3B30' }}
             >
-              <Text variant="bodySm" weight="bold" color="white"
-                
-              >
+              <Text variant="bodySm" weight="bold" color="white">
                 {kickMode ? '취소' : '방출'}
               </Text>
             </Pressable>
@@ -132,51 +178,64 @@ export default function AdminMembersScreen() {
             elevation: 2,
           }}
         >
-          <Text variant="bodyMd" weight="bold" color="dark"
-            
-           style={{ marginBottom: 16 }}>
+          <Text variant="bodyMd" weight="bold" color="dark" style={{ marginBottom: 16 }}>
             전체 멤버
           </Text>
 
-          {members.map((member, index) => {
-            const selected = selectedMemberId === member.id;
+          {loadingMembers ? (
+            <ActivityIndicator size="large" color="#1428A0" style={{ paddingVertical: 40 }} />
+          ) : members.length === 0 ? (
+            <Text style={styles.emptyText}>모임원이 없습니다.</Text>
+          ) : (
+            members.map((member, index) => {
+              const selected = selectedMemberId === member.userId;
 
-            return (
-              <Pressable
-                key={member.id}
-                onPress={() => onSelectMemberForKick(member.id)}
-                style={[
-                  styles.memberCard,
-                  index !== members.length - 1 && styles.memberCardSpacing,
-                  kickMode && styles.memberCardKickMode,
-                  selected && styles.memberCardSelected,
-                ]}
-              >
-                <View style={styles.avatarWrap}>
-                  <Image
-                    source={require('../../assets/icons/nomal_hamco.png')}
-                    style={styles.avatarImage}
-                    resizeMode="contain"
-                  />
-                </View>
+              return (
+                <Pressable
+                  key={member.userId}
+                  onPress={() => onSelectMemberForKick(member.userId)}
+                  style={[
+                    styles.memberCard,
+                    index !== members.length - 1 && styles.memberCardSpacing,
+                    kickMode && styles.memberCardKickMode,
+                    selected && styles.memberCardSelected,
+                  ]}
+                >
+                  <View style={styles.avatarWrap}>
+                    <Image
+                      source={require('../../assets/icons/nomal_hamco.png')}
+                      style={styles.avatarImage}
+                      resizeMode="contain"
+                    />
+                  </View>
 
-                <View style={styles.memberInfo}>
-                  <Text style={styles.memberName}>{member.name}</Text>
-                  <Text style={styles.memberJoinedAt}>
-                    가입일 {member.joinedAt.replace(/-/g, '.')}
-                  </Text>
-                </View>
-
-                {kickMode && (
-                  <View style={styles.selectionBadge}>
-                    <Text style={styles.selectionBadgeText}>
-                      {selected ? '선택됨' : '선택'}
+                  <View style={styles.memberInfo}>
+                    <Text style={styles.memberName}>
+                      {member.name ?? `유저 ${member.userId}`}
+                    </Text>
+                    <Text style={styles.memberJoinedAt}>
+                      {member.role === 'ADMIN'
+                        ? '관리자'
+                        : member.role === 'TREASURER'
+                        ? '총무'
+                        : '멤버'}
+                      {member.joinedAt || member.joined_at
+                        ? ` · 가입일 ${(member.joinedAt ?? member.joined_at ?? '').replace(/-/g, '.').slice(0, 10)}`
+                        : ''}
                     </Text>
                   </View>
-                )}
-              </Pressable>
-            );
-          })}
+
+                  {kickMode && (
+                    <View style={styles.selectionBadge}>
+                      <Text style={styles.selectionBadgeText}>
+                        {selected ? '선택됨' : '선택'}
+                      </Text>
+                    </View>
+                  )}
+                </Pressable>
+              );
+            })
+          )}
         </View>
 
         {/* 방출 모드 안내 */}
@@ -190,9 +249,7 @@ export default function AdminMembersScreen() {
               elevation: 2,
             }}
           >
-            <Text variant="bodySm" color="muted"
-              
-            >
+            <Text variant="bodySm" color="muted">
               방출할 멤버를 선택한 뒤 아래 버튼을 눌러주세요.
             </Text>
           </View>
@@ -217,9 +274,15 @@ export default function AdminMembersScreen() {
                 <Text style={styles.modalCloseText}>✕</Text>
               </Pressable>
 
+              <Image
+                source={require('../../assets/icons/invite_hamco.png')}
+                style={styles.modalImage}
+                resizeMode="contain"
+              />
+
               <Text style={styles.modalTitle}>초대링크가 복사되었습니다!</Text>
               <Text style={styles.modalDescription}>
-                원하는 곳에 붙여넣어 멤버를 초대해보세요.
+                원하는 곳에 붙여넣어{'\n'}멤버를 초대해보세요.
               </Text>
             </Pressable>
           </Pressable>
@@ -246,6 +309,13 @@ export default function AdminMembersScreen() {
 }
 
 const styles = StyleSheet.create({
+  emptyText: {
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+    textAlign: 'center',
+    paddingVertical: 40,
+  },
   memberCard: {
     minHeight: 84,
     backgroundColor: '#F9FAFB',
@@ -373,6 +443,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: COLORS.muted,
     fontFamily: FONT_FAMILY.bold,
+  },
+  modalImage: {
+    width: 120,
+    height: 120,
+    marginBottom: 14,
   },
   modalTitle: {
     marginTop: 6,
