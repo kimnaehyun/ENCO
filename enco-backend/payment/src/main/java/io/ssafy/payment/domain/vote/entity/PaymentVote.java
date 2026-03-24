@@ -1,18 +1,15 @@
 package io.ssafy.payment.domain.vote.entity;
 
-import io.ssafy.payment.domain.account.entity.Account;
-import io.ssafy.payment.domain.card.entity.Card;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "votes")
+@Table(name = "votes", indexes = {
+        @Index(name = "idx_status_expired", columnList = "status, expired_at")
+})
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Builder
@@ -23,23 +20,14 @@ public class PaymentVote {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String transactionId;
-
+    @Column(nullable = false)
     private Long groupId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "card_id")
-    private Card card;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "account_id")
-    private Account account;
-
+    @Column(length = 50, nullable = false)
     private String title;
-    private String description;
 
-    @Column(nullable = false, precision = 12, scale = 2)
-    private BigDecimal amount;
+    @Column(name = "TEXT")
+    private String description;
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
@@ -51,12 +39,11 @@ public class PaymentVote {
     @Column(updatable = false)
     private LocalDateTime createdAt;
 
-    @LastModifiedDate
-    private LocalDateTime updatedAt;
+    private LocalDateTime deletedAt;
 
     private Integer voteCriteria;
 
-    private int totalMembers;
+    private Integer totalMembers;
 
     public void approve() { this.status = VoteStatus.APPROVED; }
     public void reject()  { this.status = VoteStatus.REJECTED; }

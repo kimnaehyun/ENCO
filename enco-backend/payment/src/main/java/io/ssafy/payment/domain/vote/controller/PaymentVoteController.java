@@ -23,9 +23,9 @@ public class PaymentVoteController {
     // 투표 생성
     @PostMapping
     public ResponseEntity<CommonResponse<PaymentVoteCreateResponseDto>> createVote(
-            @RequestHeader("X-User-Id") Long userId,
+            @RequestHeader("Idempotency-Key") String idempotencyKey,
             @RequestBody PaymentVoteCreateRequestDto request) {
-        return ResponseEntity.ok(CommonResponse.success(voteService.createVote(userId, request)));
+        return ResponseEntity.ok(CommonResponse.success(voteService.createVote(request, idempotencyKey)));
     }
 
     @GetMapping("/groups/{groupId}")

@@ -25,6 +25,8 @@ public class TransactionHistory {
     private Long accountId;
 
     private Long cardId;
+
+    @Column(unique = true)
     private Long voteId;
 
     private String displayName;
@@ -46,7 +48,7 @@ public class TransactionHistory {
     @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal amount;
 
-    @Column(precision = 12, scale = 2)
+    @Column(nullable = false, precision = 12, scale = 2)
     private BigDecimal balance;
 
     @Column(columnDefinition = "TEXT")
@@ -86,4 +88,12 @@ public class TransactionHistory {
 
     @Column(unique = true, length = 64)
     private String idempotencyKey;
+
+    public void updateStatus(Status newStatus) {
+        this.status = newStatus;
+    }
+
+    public void updateBalance(BigDecimal currentBalance) {
+        this.balance = currentBalance;
+    }
 }
