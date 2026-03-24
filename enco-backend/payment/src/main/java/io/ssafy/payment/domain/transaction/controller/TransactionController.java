@@ -46,9 +46,10 @@ public class TransactionController {
         return ResponseEntity.ok(CommonResponse.success(result));
     }
 
-    @PostMapping(value = "/api/v1/transactions/{transactionId}/receipts/contents",
+    @PostMapping(value = "/api/v1/groups/{groupId}/transactions/{transactionId}/receipts/contents",
             consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<CommonResponse<String>> attachReceiptContent(
+            @PathVariable Long groupId,
             @PathVariable Long transactionId,
             @RequestPart(value = "file", required = false) MultipartFile file,
             @RequestPart("data") String data
