@@ -19,6 +19,7 @@ import io.ssafy.payment.domain.transaction.entity.TransactionHistory;
 import io.ssafy.payment.domain.transaction.repository.TransactionHistoryRepository;
 import io.ssafy.payment.global.common.error.CustomException;
 import io.ssafy.payment.global.common.error.ErrorCode;
+import io.ssafy.payment.infra.client.AuthServiceClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,6 +44,7 @@ public class TransactionService {
     private final CardRepository cardRepository;
     private final ReceiptRepository receiptRepository;
     private final ReceiptService receiptService;
+    private final AuthServiceClient authServiceClient;
 
     @Transactional(readOnly = true)
     public TransactionListResponseDto getTransactions(
@@ -81,11 +83,18 @@ public class TransactionService {
                     ? expenseRepository.findOldestWithCursor(groupId, startDate, endDate, cursor, fetchSize)
                     : expenseRepository.findLatestWithCursor(groupId, startDate, endDate, cursor, fetchSize));
 
-        // TODO: POINT는 auth 서비스 pointHistory 구현 후 Feign으로 추가
+        String pointDirection = switch (type) {
+            case "DEPOSIT" -> "IN";
+            case "WITHDRAW" -> "OUT";
+            default -> null; // ALL
+        };
+        List<AuthServiceClient.PointHistoryResponse> pointHistories =
+                authServiceClient.getPointHistories(groupId, cursorEpochMilli, fetchSize, sort, pointDirection);
 
         List<ItemDto> merged = new ArrayList<>();
         transactions.forEach(t -> merged.add(ItemDto.fromTransaction(t)));
         expenses.forEach(e -> merged.add(ItemDto.fromExpense(e, account.getAmount())));
+        pointHistories.forEach(p -> merged.add(ItemDto.fromPointHistory(p)));
 
         Comparator<ItemDto> comparator = isOldest
                 ? Comparator.comparing(ItemDto::transactionDate)

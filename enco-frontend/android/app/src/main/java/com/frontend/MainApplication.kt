@@ -8,6 +8,7 @@ import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.frontend.docScan.DocumentScannerPackage
 import com.frontend.image.ImageCompressionPackage
+import com.rnfs.RNFSPackage
 
 class MainApplication : Application(), ReactApplication {
 
@@ -20,6 +21,7 @@ class MainApplication : Application(), ReactApplication {
           // add(MyReactNativePackage())
           add(DocumentScannerPackage())
           add(ImageCompressionPackage())
+          add(RNFSPackage())
         },
     )
   }

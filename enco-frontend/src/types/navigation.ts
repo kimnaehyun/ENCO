@@ -127,10 +127,14 @@ export type GroupStackParamList = {
     isAdmin: boolean;
     groupName: string;
   };
-  OcrTest:
+  SettlementReceiptOcr:
     | { imageUri?: string; groupName?: string; groupId?: string }
     | undefined;
+  TransactionReceiptOcr:
+    | { imageUri?: string; groupName?: string; groupId?: string; transactionId: number }
+    | undefined;
   SettleDetail: {
+    expenseId?: number;
     amount: number;
     storeName: string;
     date: string;
@@ -201,8 +205,11 @@ export type HomeStackParamList = {
   GroupInviteEntry: { inviteToken?: string; groupName?: string } | undefined;
   GroupInviteDecision: { inviteToken?: string; groupName?: string } | undefined;
   GroupInviteSuccess: { groupId?: number | string; groupName?: string } | undefined;
-  OcrTest:
+  SettlementReceiptOcr:
     | { imageUri?: string; groupName?: string; groupId?: string }
+    | undefined;
+  TransactionReceiptOcr:
+    | { imageUri?: string; groupName?: string; groupId?: string; transactionId: number }
     | undefined;
   GroupLedgerDetail: {
     item: any;
@@ -211,6 +218,7 @@ export type HomeStackParamList = {
     groupName: string;
   };
   SettleDetail: {
+    expenseId?: number;
     amount: number;
     storeName: string;
     date: string;

@@ -3,10 +3,8 @@ import {compressReceiptImage} from './imageCompressionService';
 import {getCachedAccessToken} from '../utils/tokenStorage';
 import {
   createEmptyReceiptDraft,
-  type ReceiptContentSubmitRequestDto,
-  type ReceiptContentSubmitResponse,
+  resolveReceiptTotalAmount,
   type ReceiptDraft,
-  type ReceiptEvidenceUploadResponse,
   type ReceiptItemDto,
   type ReceiptOcrCandidateMap,
   type ReceiptOcrMeta,
@@ -14,14 +12,18 @@ import {
   type ReceiptOptionDto,
   type ReceiptOcrResult,
   type ReceiptOptionDraft,
-  type ReceiptDto,
+  type ReceiptSubmissionDto,
+  type DeleteSettlementResponse,
+  type SettlementDefaultersResponse,
+  type SettlementDetailResponse,
+  type SettlementCreateResponse,
+  type SettlementReminderResponse,
+  type TransactionReceiptContentResponse,
 } from '../types/receipt';
 
 const RECEIPT_BASE_URL = 'https://api.ssafywte.site/payment-service/api/v1';
 
 export const RECEIPT_OCR_ENDPOINT = '/receipts/ocr';
-export const RECEIPT_EVIDENCE_ENDPOINT = '/receipts/evidence';
-export const RECEIPT_CONTENT_ENDPOINT = '/receipts/content';
 
 const receiptApi = axios.create({
   baseURL: RECEIPT_BASE_URL,
@@ -46,35 +48,26 @@ type UploadReceiptOcrRequest = {
   mimeType?: string;
 };
 
-export type SubmitVerifiedReceiptRequest = {
-  receipt: ReceiptDraft;
+type ReceiptMultipartUploadRequest = {
   imageUri: string;
-  groupId?: number | string;
+  groupId: number | string;
   fileName?: string;
   mimeType?: string;
 };
 
-export type UploadReceiptEvidenceRequest = {
-  imageUri: string;
-  groupId?: number | string;
-  fileName?: string;
-  mimeType?: string;
-};
-
-export type UploadReceiptEvidenceResult = ReceiptEvidenceUploadResponse & {
-  evidenceId: string | null;
-  rawResponse: unknown;
-};
-
-export type SubmitReceiptContentRequest = {
+export type SubmitTransactionReceiptRequest = ReceiptMultipartUploadRequest & {
+  transactionId: number | string;
   receipt: ReceiptDraft;
-  groupId?: number | string;
-  evidenceId?: string | null;
 };
 
-export type SubmitVerifiedReceiptResult = {
-  evidence: UploadReceiptEvidenceResult;
-  content: ReceiptContentSubmitResponse;
+export type CreateSettlementRequest = ReceiptMultipartUploadRequest & {
+  amount: number;
+  receiverBankName: string;
+  receiverAccountNumber: string;
+  displayName: string;
+  memo: string;
+  participants: number[];
+  receipt: ReceiptDraft;
 };
 
 const createClientId = (prefix: string) =>
@@ -196,7 +189,7 @@ const serializeOptions = (options: ReceiptOptionDraft[]): ReceiptOptionDto[] =>
   options.map(option => ({
     name: option.name,
     unitPrice: option.unitPrice,
-    quantity: option.quantity,
+    quantity: option.quantity ?? 1,
     amount: option.amount,
   }));
 
@@ -204,20 +197,18 @@ const serializeItems = (items: ReceiptItemDraft[]): ReceiptItemDto[] =>
   items.map(item => ({
     name: item.name,
     unitPrice: item.unitPrice,
-    quantity: item.quantity,
+    quantity: item.quantity ?? 1,
     amount: item.amount,
     options: serializeOptions(item.options),
   }));
 
-const serializeReceiptDraft = (receipt: ReceiptDraft): ReceiptDto => ({
+const serializeReceiptDraft = (receipt: ReceiptDraft): ReceiptSubmissionDto => ({
   merchantName: receipt.merchantName,
   address: receipt.address,
   paidAt: receipt.paidAt,
   businessNumber: receipt.businessNumber,
   totalAmount: receipt.totalAmount,
   items: serializeItems(receipt.items),
-  candidates: receipt.candidates,
-  ocrMeta: receipt.ocrMeta,
 });
 
 const normalizeReceipt = (payload: unknown): ReceiptDraft => {
@@ -226,12 +217,13 @@ const normalizeReceipt = (payload: unknown): ReceiptDraft => {
   }
 
   const source = payload as Record<string, unknown>;
+  const items = toItems(source.items);
   return {
     merchantName: toText(source.merchantName),
     address: toText(source.address),
     paidAt: toText(source.paidAt),
-    items: toItems(source.items),
-    totalAmount: toNumber(source.totalAmount),
+    items,
+    totalAmount: resolveReceiptTotalAmount(toNumber(source.totalAmount), items),
     businessNumber: toText(source.businessNumber),
     candidates: toCandidates(source.candidates),
     ocrMeta: toOcrMeta(source.ocrMeta),
@@ -285,65 +277,14 @@ const extractResultObject = (responseData: unknown): Record<string, unknown> | n
   return source;
 };
 
-const extractEvidenceId = (responseData: unknown): string | null => {
-  if (!responseData || typeof responseData !== 'object') {
-    return null;
+const toNumberArray = (value: unknown): number[] => {
+  if (!Array.isArray(value)) {
+    return [];
   }
 
-  const source = responseData as Record<string, unknown>;
-  const candidates = [
-    source.evidenceId,
-    source.receiptEvidenceId,
-    source.fileId,
-    source.receiptFileId,
-    source.id,
-  ];
-
-  const result = source.result;
-  if (result && typeof result === 'object') {
-    const nested = result as Record<string, unknown>;
-    candidates.push(
-      nested.evidenceId,
-      nested.receiptEvidenceId,
-      nested.fileId,
-      nested.receiptFileId,
-      nested.id,
-    );
-  }
-
-  const matched = candidates.find(
-    candidate => typeof candidate === 'string' || typeof candidate === 'number',
-  );
-
-  return (matched as string | number | undefined) ?? null;
-};
-
-const normalizeEvidenceUploadResponse = (
-  responseData: unknown,
-): UploadReceiptEvidenceResult => {
-  const result = extractResultObject(responseData);
-
-  return {
-    evidenceId: extractEvidenceId(responseData),
-    receiptImageUrl: toText(result?.receiptImageUrl),
-    source: toText(result?.source),
-    groupId: toNumber(result?.groupId),
-    rawResponse: responseData,
-  };
-};
-
-const normalizeContentSubmitResponse = (
-  responseData: unknown,
-): ReceiptContentSubmitResponse => {
-  const result = extractResultObject(responseData);
-
-  return {
-    groupId: toNumber(result?.groupId),
-    evidenceId: toText(result?.evidenceId),
-    receipt: normalizeReceipt(result?.receipt),
-    accepted: toBoolean(result?.accepted),
-    rawResponse: responseData,
-  };
+  return value
+    .map(entry => toNumber(entry))
+    .filter((entry): entry is number => entry !== null);
 };
 
 const buildReceiptFilePart = (
@@ -367,6 +308,160 @@ const prepareReceiptImageForUpload = async (
     imageUri: compressed.uri,
     fileName: compressed.fileName ?? fileName,
     mimeType: compressed.mimeType ?? mimeType ?? 'image/jpeg',
+  };
+};
+
+const appendMultipartData = (formData: FormData, key: string, value: unknown) => {
+  formData.append(key, JSON.stringify(value));
+};
+
+const getResponseMessage = (responseData: unknown, fallback: string) => {
+  if (!responseData || typeof responseData !== 'object') {
+    return fallback;
+  }
+
+  return toText((responseData as Record<string, unknown>).message) || fallback;
+};
+
+const normalizeTransactionReceiptSubmitResponse = (
+  responseData: unknown,
+): TransactionReceiptContentResponse => {
+  const result = extractResultObject(responseData);
+
+  return {
+    message: getResponseMessage(responseData, '영수증 증빙이 등록되었습니다.'),
+    receiptImageUrl: toText(result) || toText((responseData as Record<string, unknown> | null)?.result),
+    rawResponse: responseData,
+  };
+};
+
+const normalizeSettlementCreateResponse = (
+  responseData: unknown,
+): SettlementCreateResponse => {
+  const result = extractResultObject(responseData);
+  const paymentInfo = (result?.paymentInfo ?? result?.receipt ?? null) as unknown;
+
+  return {
+    expenseId: toNumber(result?.expenseId) ?? 0,
+    chargeId: toNumber(result?.chargeId) ?? 0,
+    groupId: toNumber(result?.groupId) ?? 0,
+    amount: toNumber(result?.amount) ?? 0,
+    useCard: toText(result?.useCard),
+    paidCount: toNumber(result?.paidCount) ?? 0,
+    totalCount: toNumber(result?.totalCount) ?? 0,
+    displayName: toText(result?.displayName),
+    transactionType: toText(result?.transactionType),
+    memo: toText(result?.memo),
+    paidAt: toText(result?.paidAt),
+    receiptImageUrl: toText(result?.receiptImageUrl),
+    receiverAccountNumber: toText(result?.receiverAccountNumber),
+    receiverBankCode: toText(result?.receiverBankCode),
+    receiverBankName: toText(result?.receiverBankName),
+    paymentInfo: {
+      merchantName: toText((paymentInfo as Record<string, unknown> | null)?.merchantName),
+      address: toText((paymentInfo as Record<string, unknown> | null)?.address),
+      paidAt: toText((paymentInfo as Record<string, unknown> | null)?.paidAt),
+      businessNumber: toText((paymentInfo as Record<string, unknown> | null)?.businessNumber),
+      totalAmount: toNumber((paymentInfo as Record<string, unknown> | null)?.totalAmount),
+      items: serializeItems(normalizeReceipt(paymentInfo).items),
+    },
+    participants: Array.isArray(result?.participants)
+      ? result.participants.map(participant => {
+          const source = participant as Record<string, unknown>;
+          return {
+            chargeTargetId: toNumber(source.chargeTargetId) ?? 0,
+            userId: toNumber(source.userId) ?? 0,
+            amount: toNumber(source.amount) ?? 0,
+            remainingAmount: toNumber(source.remainingAmount) ?? 0,
+            status: toText(source.status),
+          };
+        })
+      : [],
+    rawResponse: responseData,
+  };
+};
+
+const normalizeSettlementDetailResponse = (
+  responseData: unknown,
+): SettlementDetailResponse => {
+  const result = extractResultObject(responseData);
+  const paymentInfo = (result?.paymentInfo ?? null) as unknown;
+
+  return {
+    amount: toNumber(result?.amount) ?? 0,
+    useCard: toText(result?.useCard),
+    paidCount: toNumber(result?.paidCount) ?? 0,
+    totalCount: toNumber(result?.totalCount) ?? 0,
+    status: toText(result?.status),
+    displayName: toText(result?.displayName),
+    transactionType: toText(result?.transactionType),
+    memo: toText(result?.memo),
+    paidAt: toText(result?.paidAt),
+    receiptImageUrl: toText(result?.receiptImageUrl),
+    paymentInfo:
+      paymentInfo && typeof paymentInfo === 'object'
+        ? {
+            merchantName: toText((paymentInfo as Record<string, unknown>).merchantName),
+            address: toText((paymentInfo as Record<string, unknown>).address),
+            paidAt: toText((paymentInfo as Record<string, unknown>).paidAt),
+            businessNumber: toText((paymentInfo as Record<string, unknown>).businessNumber),
+            totalAmount: toNumber((paymentInfo as Record<string, unknown>).totalAmount),
+            items: serializeItems(normalizeReceipt(paymentInfo).items),
+          }
+        : null,
+    rawResponse: responseData,
+  };
+};
+
+const normalizeSettlementDefaultersResponse = (
+  responseData: unknown,
+): SettlementDefaultersResponse => {
+  const result = extractResultObject(responseData);
+
+  return {
+    paidCount: toNumber(result?.paidCount) ?? 0,
+    totalCount: toNumber(result?.totalCount) ?? 0,
+    participants: Array.isArray(result?.participants)
+      ? result.participants.map(participant => {
+          const source = participant as Record<string, unknown>;
+          return {
+            chargeTargetId: toNumber(source.chargeTargetId) ?? 0,
+            userId: toNumber(source.userId) ?? 0,
+            amount: toNumber(source.amount) ?? 0,
+            remainingAmount: toNumber(source.remainingAmount) ?? 0,
+            status: toText(source.status),
+          };
+        })
+      : [],
+    rawResponse: responseData,
+  };
+};
+
+const buildGroupTransactionReceiptEndpoint = (
+  groupId: number,
+  transactionId: number,
+) => `/groups/${groupId}/transactions/${transactionId}/receipts/contents`;
+
+const buildSettlementEndpoint = (groupId: number) => `/groups/${groupId}/settlements`;
+const buildSettlementDetailEndpoint = (groupId: number, expenseId: number) =>
+  `/groups/${groupId}/settlements/${expenseId}`;
+const buildSettlementDefaultersEndpoint = (groupId: number, expenseId: number) =>
+  `/groups/${groupId}/settlements/${expenseId}/defaulters`;
+const buildSettlementReminderEndpoint = (groupId: number, expenseId: number) =>
+  `/groups/${groupId}/settlements/${expenseId}/reminder`;
+
+const normalizeSettlementReminderResponse = (
+  responseData: unknown,
+): SettlementReminderResponse => {
+  const result = extractResultObject(responseData);
+
+  return {
+    chargeId: toNumber(result?.chargeId) ?? 0,
+    requestedCount: toNumber(result?.requestedCount) ?? 0,
+    sentCount: toNumber(result?.sentCount) ?? 0,
+    failedCount: toNumber(result?.failedCount) ?? 0,
+    sentAt: toText(result?.sentAt),
+    rawResponse: responseData,
   };
 };
 
@@ -409,9 +504,9 @@ export async function requestReceiptOcr(
   };
 }
 
-export async function uploadReceiptEvidence(
-  payload: UploadReceiptEvidenceRequest,
-): Promise<UploadReceiptEvidenceResult> {
+export async function submitTransactionReceipt(
+  payload: SubmitTransactionReceiptRequest,
+): Promise<TransactionReceiptContentResponse> {
   const preparedImage = await prepareReceiptImageForUpload(
     payload.imageUri,
     payload.fileName,
@@ -429,62 +524,145 @@ export async function uploadReceiptEvidence(
   );
 
   const groupId = toGroupId(payload.groupId);
-  if (groupId !== undefined) {
-    formData.append('groupId', String(groupId));
+  const transactionId = toGroupId(payload.transactionId);
+
+  if (groupId === undefined || transactionId === undefined) {
+    throw new Error('유효한 모임 또는 거래 ID가 없습니다.');
   }
 
-  const response = await receiptApi.post(RECEIPT_EVIDENCE_ENDPOINT, formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
-  });
+  appendMultipartData(formData, 'data', serializeReceiptDraft(payload.receipt));
 
-  return normalizeEvidenceUploadResponse(response.data);
+  const response = await receiptApi.post(
+    buildGroupTransactionReceiptEndpoint(groupId, transactionId),
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  );
+
+  return normalizeTransactionReceiptSubmitResponse(response.data);
 }
 
-export async function submitReceiptContent(
-  payload: SubmitReceiptContentRequest,
-) : Promise<ReceiptContentSubmitResponse> {
-  const requestBody: ReceiptContentSubmitRequestDto = {
-    receipt: serializeReceiptDraft(payload.receipt),
-  };
+export async function createSettlement(
+  payload: CreateSettlementRequest,
+): Promise<SettlementCreateResponse> {
+  const preparedImage = await prepareReceiptImageForUpload(
+    payload.imageUri,
+    payload.fileName,
+    payload.mimeType,
+  );
 
   const groupId = toGroupId(payload.groupId);
-  if (groupId !== undefined) {
-    requestBody.groupId = groupId;
+  if (groupId === undefined) {
+    throw new Error('유효한 모임 ID가 없습니다.');
   }
 
-  if (payload.evidenceId !== undefined && payload.evidenceId !== null) {
-    requestBody.evidenceId = payload.evidenceId;
-  }
+  const formData = new FormData();
+  formData.append(
+    'file',
+    buildReceiptFilePart(
+      preparedImage.imageUri,
+      preparedImage.fileName,
+      preparedImage.mimeType,
+    ) as any,
+  );
 
-  const response = await receiptApi.post(RECEIPT_CONTENT_ENDPOINT, requestBody, {
-    headers: {
-      'Content-Type': 'application/json',
-    },
+  appendMultipartData(formData, 'data', {
+    amount: payload.amount,
+    receiverBankName: payload.receiverBankName,
+    receiverAccountNumber: payload.receiverAccountNumber,
+    paymentInfo: serializeReceiptDraft(payload.receipt),
+    displayName: payload.displayName,
+    memo: payload.memo,
+    participants: toNumberArray(payload.participants),
   });
 
-  return normalizeContentSubmitResponse(response.data);
+  const response = await receiptApi.post(
+    buildSettlementEndpoint(groupId),
+    formData,
+    {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    },
+  );
+
+  return normalizeSettlementCreateResponse(response.data);
 }
 
-export async function submitVerifiedReceipt(
-  payload: SubmitVerifiedReceiptRequest,
-) : Promise<SubmitVerifiedReceiptResult> {
-  const evidence = await uploadReceiptEvidence({
-    imageUri: payload.imageUri,
-    groupId: payload.groupId,
-    fileName: payload.fileName,
-    mimeType: payload.mimeType,
-  });
+export async function getSettlementDetail(
+  groupId: number | string,
+  expenseId: number | string,
+): Promise<SettlementDetailResponse> {
+  const normalizedGroupId = toGroupId(groupId);
+  const normalizedExpenseId = toGroupId(expenseId);
 
-  const content = await submitReceiptContent({
-    receipt: payload.receipt,
-    groupId: payload.groupId,
-    evidenceId: evidence.evidenceId,
-  });
+  if (normalizedGroupId === undefined || normalizedExpenseId === undefined) {
+    throw new Error('유효한 모임 또는 정산 ID가 없습니다.');
+  }
+
+  const response = await receiptApi.get(
+    buildSettlementDetailEndpoint(normalizedGroupId, normalizedExpenseId),
+  );
+
+  return normalizeSettlementDetailResponse(response.data);
+}
+
+export async function deleteSettlement(
+  groupId: number | string,
+  expenseId: number | string,
+): Promise<DeleteSettlementResponse> {
+  const normalizedGroupId = toGroupId(groupId);
+  const normalizedExpenseId = toGroupId(expenseId);
+
+  if (normalizedGroupId === undefined || normalizedExpenseId === undefined) {
+    throw new Error('유효한 모임 또는 정산 ID가 없습니다.');
+  }
+
+  const response = await receiptApi.delete(
+    buildSettlementDetailEndpoint(normalizedGroupId, normalizedExpenseId),
+  );
 
   return {
-    evidence,
-    content,
+    message: getResponseMessage(response.data, '요청에 성공했습니다.'),
+    result: null,
   };
+}
+
+export async function getSettlementDefaulters(
+  groupId: number | string,
+  expenseId: number | string,
+): Promise<SettlementDefaultersResponse> {
+  const normalizedGroupId = toGroupId(groupId);
+  const normalizedExpenseId = toGroupId(expenseId);
+
+  if (normalizedGroupId === undefined || normalizedExpenseId === undefined) {
+    throw new Error('유효한 모임 또는 정산 ID가 없습니다.');
+  }
+
+  const response = await receiptApi.get(
+    buildSettlementDefaultersEndpoint(normalizedGroupId, normalizedExpenseId),
+  );
+
+  return normalizeSettlementDefaultersResponse(response.data);
+}
+
+export async function sendSettlementReminder(
+  groupId: number | string,
+  expenseId: number | string,
+): Promise<SettlementReminderResponse> {
+  const normalizedGroupId = toGroupId(groupId);
+  const normalizedExpenseId = toGroupId(expenseId);
+
+  if (normalizedGroupId === undefined || normalizedExpenseId === undefined) {
+    throw new Error('유효한 모임 또는 정산 ID가 없습니다.');
+  }
+
+  const response = await receiptApi.post(
+    buildSettlementReminderEndpoint(normalizedGroupId, normalizedExpenseId),
+  );
+
+  return normalizeSettlementReminderResponse(response.data);
 }
