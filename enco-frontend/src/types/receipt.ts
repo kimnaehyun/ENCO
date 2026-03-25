@@ -137,6 +137,15 @@ export type SettlementDefaultersResponse = {
   rawResponse: unknown;
 };
 
+export type SettlementReminderResponse = {
+  chargeId: number;
+  requestedCount: number;
+  sentCount: number;
+  failedCount: number;
+  sentAt: string;
+  rawResponse: unknown;
+};
+
 export type SettlementCreateResponse = {
   expenseId: number;
   chargeId: number;

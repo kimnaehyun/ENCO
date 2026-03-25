@@ -3,6 +3,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,17 +15,20 @@ import {CommonActions, useNavigation, useRoute} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import ScreenLayout from '../../components/ScreenLayout';
 import {getGroupMembers} from '../../services/groupService';
-import {createSettlement} from '../../services/receiptService';
+import {createSettlement, sendSettlementReminder} from '../../services/receiptService';
 import type {ReceiptDraft} from '../../types/receipt';
+import {getProfileImage} from '../../types/images';
 
 type SettleMember = {
   id: string;
   userId: number;
   name: string;
+  profileUrl?: string | number | null;
   isPaid: boolean;
 };
 
 type RouteParams = {
+  expenseId?: number;
   amount: number;
   storeName: string;
   date: string;
@@ -64,6 +68,7 @@ export default function SettleMemberSelectScreen() {
   const [memo, setMemo] = useState(isNewSettle ? '' : params.memo || '');
   const [receiverBankName, setReceiverBankName] = useState('');
   const [receiverAccountNumber, setReceiverAccountNumber] = useState('');
+  const [sendingReminder, setSendingReminder] = useState(false);
   const handleReceiverAccountNumberChange = (value: string) => {
     setReceiverAccountNumber(value.replace(/\D/g, ''));
   };
@@ -92,6 +97,7 @@ export default function SettleMemberSelectScreen() {
           id: String(member.userId),
           userId: member.userId,
           name: member.name?.trim() || `멤버 ${member.userId}`,
+          profileUrl: member.profileUrl ?? member.profileImg ?? null,
           isPaid: false,
         }));
 
@@ -308,8 +314,35 @@ export default function SettleMemberSelectScreen() {
         {text: '취소', style: 'cancel'},
         {
           text: '보내기',
-          onPress: () => {
-            Alert.alert('완료', `미납자 ${unpaidCount}명에게 알림을 보냈습니다.`);
+          onPress: async () => {
+            const numericExpenseId = typeof params.expenseId === 'number' ? params.expenseId : NaN;
+
+            if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
+              Alert.alert('안내', '알림 전송에 필요한 정산 정보가 없습니다.');
+              return;
+            }
+
+            try {
+              setSendingReminder(true);
+              const response = await sendSettlementReminder(
+                numericGroupId,
+                numericExpenseId,
+              );
+              Alert.alert(
+                '완료',
+                `알림 요청 ${response.requestedCount}건 중 ${response.sentCount}건을 전송했습니다.` +
+                  (response.failedCount > 0 ? ` 실패 ${response.failedCount}건` : ''),
+              );
+            } catch (error: any) {
+              Alert.alert(
+                '알림 전송 실패',
+                error?.response?.data?.message ||
+                  error?.message ||
+                  '미납자 알림 전송 중 오류가 발생했습니다.',
+              );
+            } finally {
+              setSendingReminder(false);
+            }
           },
         },
       ],
@@ -466,7 +499,11 @@ export default function SettleMemberSelectScreen() {
                           styles.newMemberAvatar,
                           isSelected && styles.newMemberAvatarSelected,
                         ]}>
-                        <Text style={styles.memberEmoji}>🐹</Text>
+                        <Image
+                          source={getProfileImage(member.profileUrl)}
+                          style={styles.memberAvatarImage}
+                          resizeMode="cover"
+                        />
                       </View>
 
                       <View style={styles.memberTextWrap}>
@@ -586,7 +623,11 @@ export default function SettleMemberSelectScreen() {
                       borderColor: member.isPaid ? '#22C55E' : '#EF4444',
                     },
                   ]}>
-                  <Text style={styles.existingMemberEmoji}>🐹</Text>
+                  <Image
+                    source={getProfileImage(member.profileUrl)}
+                    style={styles.memberAvatarImage}
+                    resizeMode="cover"
+                  />
                 </View>
 
                 <View style={styles.existingMemberInfo}>
@@ -612,11 +653,17 @@ export default function SettleMemberSelectScreen() {
         <View style={[styles.bottomBar, {paddingBottom: bottomInset}]}>
           <Pressable
             onPress={onSendNotification}
+            disabled={unpaidCount === 0 || sendingReminder}
             className="rounded-2xl py-4 items-center justify-center"
-            style={[styles.notifyButton, unpaidCount === 0 && styles.notifyButtonDone]}
+            style={[
+              styles.notifyButton,
+              (unpaidCount === 0 || sendingReminder) && styles.notifyButtonDone,
+            ]}
           >
             <Text style={styles.notifyButtonText}>
-              {unpaidCount > 0
+              {sendingReminder
+                ? '알림 전송 중...'
+                : unpaidCount > 0
                 ? `미납자 ${unpaidCount}명에게 알림 보내기`
                 : '전원 납부 완료'}
             </Text>
@@ -888,13 +935,15 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   newMemberAvatarSelected: {
     backgroundColor: '#EEF2FF',
     borderColor: '#1428A0',
   },
-  memberEmoji: {
-    fontSize: 22,
+  memberAvatarImage: {
+    width: '100%',
+    height: '100%',
   },
   newMemberName: {
     fontSize: 16,
@@ -930,9 +979,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  existingMemberEmoji: {
-    fontSize: 28,
+    overflow: 'hidden',
   },
   existingMemberInfo: {
     flex: 1,

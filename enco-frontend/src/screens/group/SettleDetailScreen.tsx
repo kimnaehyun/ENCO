@@ -17,14 +17,17 @@ import {
   deleteSettlement,
   getSettlementDefaulters,
   getSettlementDetail,
+  sendSettlementReminder,
 } from '../../services/receiptService';
 import {getGroupMembers} from '../../services/groupService';
 import type {SettlementDetailResponse} from '../../types/receipt';
+import {getProfileImage} from '../../types/images';
 
 type SettleMember = {
   id: string;
   userId: number;
   name: string;
+  profileUrl?: string | number | null;
   isPaid: boolean;
   amount?: number;
   remainingAmount?: number;
@@ -93,6 +96,7 @@ export default function SettleDetailScreen() {
     params.settleMembers ?? [],
   );
   const [loadingParticipants, setLoadingParticipants] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState(false);
 
   useEffect(() => {
     if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
@@ -154,14 +158,20 @@ export default function SettleDetailScreen() {
         const memberNameMap = new Map(
           membersResponse.result.map(member => [
             member.userId,
-            member.name?.trim() || `멤버 ${member.userId}`,
+            {
+              name: member.name?.trim() || `멤버 ${member.userId}`,
+              profileUrl: member.profileUrl ?? member.profileImg ?? null,
+            },
           ]),
         );
 
         const nextMembers = defaultersResponse.participants.map(participant => ({
           id: String(participant.chargeTargetId || participant.userId),
           userId: participant.userId,
-          name: memberNameMap.get(participant.userId) || `멤버 ${participant.userId}`,
+          name:
+            memberNameMap.get(participant.userId)?.name ||
+            `멤버 ${participant.userId}`,
+          profileUrl: memberNameMap.get(participant.userId)?.profileUrl ?? null,
           isPaid:
             participant.status === 'PAID' || participant.remainingAmount <= 0,
           amount: participant.amount,
@@ -232,8 +242,33 @@ export default function SettleDetailScreen() {
         { text: '취소', style: 'cancel' },
         {
           text: '보내기',
-          onPress: () => {
-            Alert.alert('완료', `미납자 ${unpaidCount}명에게 알림을 보냈습니다.`);
+          onPress: async () => {
+            if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
+              Alert.alert('안내', '알림 전송에 필요한 정산 정보가 없습니다.');
+              return;
+            }
+
+            try {
+              setSendingReminder(true);
+              const response = await sendSettlementReminder(
+                numericGroupId,
+                numericExpenseId,
+              );
+              Alert.alert(
+                '완료',
+                `알림 요청 ${response.requestedCount}건 중 ${response.sentCount}건을 전송했습니다.` +
+                  (response.failedCount > 0 ? ` 실패 ${response.failedCount}건` : ''),
+              );
+            } catch (error: any) {
+              Alert.alert(
+                '알림 전송 실패',
+                error?.response?.data?.message ||
+                  error?.message ||
+                  '미납자 알림 전송 중 오류가 발생했습니다.',
+              );
+            } finally {
+              setSendingReminder(false);
+            }
           },
         },
       ]
@@ -397,7 +432,11 @@ export default function SettleDetailScreen() {
             {unpaidMembers.length > 0 ? unpaidMembers.map(m => (
               <View key={m.id} className="flex-row items-center mb-2" style={styles.memberRow}>
                 <View style={styles.memberAvatar}>
-                  <Text style={styles.memberEmoji}>🐹</Text>
+                  <Image
+                    source={getProfileImage(m.profileUrl)}
+                    style={styles.memberAvatarImage}
+                    resizeMode="cover"
+                  />
                 </View>
                 <Text style={styles.memberName}>{m.name}</Text>
                 <Text style={styles.memberAmount}>
@@ -413,10 +452,13 @@ export default function SettleDetailScreen() {
             {unpaidMembers.length > 0 ? (
               <Pressable
                 onPress={handleNotify}
+                disabled={sendingReminder}
                 className="rounded-2xl py-3 items-center justify-center mt-2"
-                style={styles.notifyButton}
+                style={[styles.notifyButton, sendingReminder && styles.notifyButtonDisabled]}
               >
-                <Text style={styles.notifyButtonText}>미납자에게 알림 보내기</Text>
+                <Text style={styles.notifyButtonText}>
+                  {sendingReminder ? '알림 전송 중...' : '미납자에게 알림 보내기'}
+                </Text>
               </Pressable>
             ) : null}
           </View>
@@ -430,6 +472,7 @@ export default function SettleDetailScreen() {
               date: effectiveDate,
               memo: memoText,
               receiptUri: effectiveReceiptUri,
+              expenseId: numericExpenseId,
               groupName,
               groupId,
               settleMembers,
@@ -623,9 +666,11 @@ const styles = StyleSheet.create({
     borderColor: '#EF4444',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  memberEmoji: {
-    fontSize: 18,
+  memberAvatarImage: {
+    width: '100%',
+    height: '100%',
   },
   memberName: {
     fontSize: 14,
@@ -640,6 +685,9 @@ const styles = StyleSheet.create({
   },
   notifyButton: {
     backgroundColor: '#EF4444',
+  },
+  notifyButtonDisabled: {
+    opacity: 0.7,
   },
   notifyButtonText: {
     fontSize: 14,

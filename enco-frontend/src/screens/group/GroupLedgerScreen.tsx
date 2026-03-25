@@ -533,7 +533,9 @@ export default function GroupLedgerScreen() {
                           </Text>
                         </View>
                       </View>
-                      <Text style={styles.ledgerItemTitle}>{it.title}</Text>
+                      <Text style={styles.ledgerItemTitle} numberOfLines={1} ellipsizeMode="tail">
+                        {it.title}
+                      </Text>
                     </View>
                     <View style={styles.ledgerItemRight}>
                       <Text style={[
@@ -918,6 +920,7 @@ const styles = StyleSheet.create({
   },
   ledgerItemLeft: {
     flex: 1,
+    minWidth: 0,
     marginRight: 12,
   },
   ledgerItemTopRow: {
@@ -945,6 +948,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.dark,
     fontFamily: FONT_FAMILY.bold,
+    flexShrink: 1,
   },
   ledgerItemMemo: {
     fontSize: 12,
@@ -953,11 +957,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   ledgerItemRight: {
+    minWidth: 124,
     alignItems: 'flex-end',
+    flexShrink: 0,
   },
   ledgerItemAmount: {
     fontSize: 18,
     fontFamily: FONT_FAMILY.bold,
+    textAlign: 'right',
   },
   ledgerItemBalance: {
     fontSize: 12,

@@ -17,6 +17,7 @@ import {
   type SettlementDefaultersResponse,
   type SettlementDetailResponse,
   type SettlementCreateResponse,
+  type SettlementReminderResponse,
   type TransactionReceiptContentResponse,
 } from '../types/receipt';
 
@@ -446,6 +447,23 @@ const buildSettlementDetailEndpoint = (groupId: number, expenseId: number) =>
   `/groups/${groupId}/settlements/${expenseId}`;
 const buildSettlementDefaultersEndpoint = (groupId: number, expenseId: number) =>
   `/groups/${groupId}/settlements/${expenseId}/defaulters`;
+const buildSettlementReminderEndpoint = (groupId: number, expenseId: number) =>
+  `/groups/${groupId}/settlements/${expenseId}/reminder`;
+
+const normalizeSettlementReminderResponse = (
+  responseData: unknown,
+): SettlementReminderResponse => {
+  const result = extractResultObject(responseData);
+
+  return {
+    chargeId: toNumber(result?.chargeId) ?? 0,
+    requestedCount: toNumber(result?.requestedCount) ?? 0,
+    sentCount: toNumber(result?.sentCount) ?? 0,
+    failedCount: toNumber(result?.failedCount) ?? 0,
+    sentAt: toText(result?.sentAt),
+    rawResponse: responseData,
+  };
+};
 
 export async function requestReceiptOcr(
   payload: UploadReceiptOcrRequest,
@@ -629,4 +647,22 @@ export async function getSettlementDefaulters(
   );
 
   return normalizeSettlementDefaultersResponse(response.data);
+}
+
+export async function sendSettlementReminder(
+  groupId: number | string,
+  expenseId: number | string,
+): Promise<SettlementReminderResponse> {
+  const normalizedGroupId = toGroupId(groupId);
+  const normalizedExpenseId = toGroupId(expenseId);
+
+  if (normalizedGroupId === undefined || normalizedExpenseId === undefined) {
+    throw new Error('유효한 모임 또는 정산 ID가 없습니다.');
+  }
+
+  const response = await receiptApi.post(
+    buildSettlementReminderEndpoint(normalizedGroupId, normalizedExpenseId),
+  );
+
+  return normalizeSettlementReminderResponse(response.data);
 }

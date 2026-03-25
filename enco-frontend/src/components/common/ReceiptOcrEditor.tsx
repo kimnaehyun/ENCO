@@ -373,13 +373,36 @@ export default function ReceiptOcrEditor({
   };
 
   const handleStartDocumentScan = async () => {
-    await startDocumentScan('스캔이 완료되었습니다. OCR을 실행해 주세요.');
+    await startDocumentScan('스캔이 완료되어 OCR 분석을 시작합니다.');
+  };
+
+  const handleReceiptEntryPress = () => {
+    if (Platform.OS === 'android') {
+      void handleStartDocumentScan();
+      return;
+    }
+
+    Alert.alert('영수증 가져오기', '원하는 방식을 선택하세요.', [
+      {
+        text: '문서 스캔',
+        onPress: () => {
+          void handleStartDocumentScan();
+        },
+      },
+      {
+        text: '사진 첨부',
+        onPress: () => {
+          void handlePickImageFromGallery();
+        },
+      },
+      {text: '취소', style: 'cancel'},
+    ]);
   };
 
   const handlePickImageFromGallery = async () => {
     if (Platform.OS === 'android') {
       await startDocumentScan(
-        '문서 스캐너에서 이미지를 불러왔습니다. 자동 영역 보정 후 OCR을 실행해 주세요.',
+        '문서 스캐너에서 이미지를 불러와 자동 영역 보정 후 OCR 분석을 시작합니다.',
       );
       return;
     }
@@ -629,31 +652,20 @@ export default function ReceiptOcrEditor({
 
           <Text style={styles.cardHelper}>
             {usesUnifiedScannerEntry
-              ? '문서 스캐너 안에서 촬영 또는 갤러리 선택을 진행할 수 있습니다.'
-              : '촬영 또는 갤러리에서 영수증 이미지를 선택한 뒤 자동 분석됩니다.'}
+              ? '한 번의 진입으로 촬영 또는 사진 첨부를 진행할 수 있습니다.'
+              : '버튼을 누르면 문서 스캔 또는 사진 첨부 방식을 선택할 수 있습니다.'}
           </Text>
 
           <Pressable
             style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleStartDocumentScan}
+            onPress={handleReceiptEntryPress}
             disabled={loading}>
             <Text style={styles.buttonText}>
               {loading && !imageUri
-                ? '문서 스캔 준비 중...'
-                : usesUnifiedScannerEntry
-                ? '영수증 스캔 / 선택'
-                : '문서 스캔 시작'}
+                ? '영수증 준비 중...'
+                : '영수증 스캔 / 사진 첨부'}
             </Text>
           </Pressable>
-
-          {!usesUnifiedScannerEntry ? (
-            <Pressable
-              style={[styles.secondaryButton, loading && styles.buttonDisabled]}
-              onPress={handlePickImageFromGallery}
-              disabled={loading}>
-              <Text style={styles.secondaryButtonText}>갤러리에서 영수증 선택</Text>
-            </Pressable>
-          ) : null}
 
           {imageUri ? (
             <Image source={{uri: imageUri}} style={styles.image} />
