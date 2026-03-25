@@ -39,7 +39,7 @@ public class OnsitePaymentController {
 
     @PostMapping("/pay")
     public ResponseEntity<CommonResponse<Void>> executePayment(
-            @RequestBody BarcodePaymentRequestDto request) {
+            @RequestBody BarcodePaymentRequestDto request, @RequestHeader("Idempotency-Key") String idempotencyKey) {
 
         log.info("[현장결제 요청] 바코드={}, 가맹점={}, 금액={}",
                 request.barcodeNumber(), request.merchantName(), request.amount());
@@ -48,7 +48,8 @@ public class OnsitePaymentController {
                 request.barcodeNumber(),
                 request.amount(),
                 request.merchantName(),
-                request.cardId()
+                request.cardId(),
+                idempotencyKey
         );
 
         return ResponseEntity.ok(CommonResponse.success());
