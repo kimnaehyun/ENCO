@@ -1,8 +1,10 @@
 package io.ssafy.chat.infra.messaging.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.ssafy.chat.common.enums.NotificationType;
 import io.ssafy.chat.infra.client.AuthServiceClient;
 import io.ssafy.chat.notification.service.FcmService;
+import io.ssafy.chat.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -18,6 +20,7 @@ public class OnsitePaymentRequestConsumer {
     private final FcmService fcmService;
     private final AuthServiceClient authServiceClient;
     private final ObjectMapper objectMapper;
+    private final NotificationService notificationService;
 
     @KafkaListener(topics = "onsite-payment-request", groupId = "chat-service")
     public void consume(String message) {
@@ -46,6 +49,14 @@ public class OnsitePaymentRequestConsumer {
             for (Long memberId : memberIds) {
                 if (!memberId.equals(event.leaderId)) {
                     try {
+                        notificationService.sendNotification(
+                                memberId,
+                                NotificationType.ONSITE_PAYMENT_REQUEST, // Enum에 추가 필요
+                                title,
+                                body,
+                                (Map<String, Object>)(Map) data // Map 타입 캐스팅 주의
+                        );
+
                         String fcmToken = authServiceClient.getFcmToken(memberId).result();
                         if (fcmToken != null && !fcmToken.isBlank()) {
                             fcmService.sendPushNotification(fcmToken, title, body, data);
