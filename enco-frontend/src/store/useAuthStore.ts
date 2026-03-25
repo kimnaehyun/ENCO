@@ -13,21 +13,24 @@ export interface UserProfile {
 interface AuthState {
   /** 로그인 여부 판단 (기존 호환) */
   user: string | null;
+  /** 서버에서 발급한 유저 ID */
+  userId: number | null;
   /** 상세 프로필 */
   profile: UserProfile | null;
 
   login: (name: string) => void;
   setProfile: (profile: UserProfile) => void;
-  loginWithProfile: (name: string, profile: UserProfile) => void;
+  loginWithProfile: (name: string, profile: UserProfile, userId?: number) => void;
   logout: () => void;
 }
 
 export const useAuthStore = create<AuthState>(set => ({
   user: null,
+  userId: null,
   profile: null,
 
   login: name => set({ user: name }),
   setProfile: profile => set({ profile }),
-  loginWithProfile: (name, profile) => set({ user: name, profile }),
-  logout: () => set({ user: null, profile: null }),
+  loginWithProfile: (name, profile, userId) => set({ user: name, profile, userId: userId ?? null }),
+  logout: () => set({ user: null, profile: null, userId: null }),
 }));

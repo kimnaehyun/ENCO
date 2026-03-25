@@ -48,7 +48,7 @@ export default function LoginScreen({
         gender: 'M',
         address: '',
         profileUrl: r.profileImg ?? 0,
-      });
+      }, r.id);
     } catch (err: any) {
       const message =
         err?.response?.data?.message || "로그인에 실패했습니다. 다시 시도해주세요.";
