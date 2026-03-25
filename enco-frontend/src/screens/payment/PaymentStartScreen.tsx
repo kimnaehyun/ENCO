@@ -5,7 +5,7 @@ import { images } from '../../types/images';
 import { useNavigation } from '@react-navigation/native';
 import PayButton from '../../components/internet/PayButton';
 
-export default function InternetPaymentStartScreen() {
+export default function PaymentStartScreen() {
   const navigation = useNavigation<any>();
   return (
     <View className="flex-1 pt-48 px-4 bg-[#F0F4FF]">
