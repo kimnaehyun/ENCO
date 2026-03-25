@@ -3,6 +3,7 @@ package io.ssafy.payment.domain.billing.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ssafy.payment.domain.billing.dto.request.CreateExpenseRequestDto;
 import io.ssafy.payment.domain.billing.dto.response.ExpenseResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.ReminderResponseDto;
 import io.ssafy.payment.domain.billing.dto.response.SettlementDefaultersResponseDto;
 import io.ssafy.payment.domain.billing.dto.response.SettlementDetailResponseDto;
 import io.ssafy.payment.domain.billing.service.ExpenseService;
@@ -61,6 +62,15 @@ public class ExpenseController {
     ) {
         expenseService.deleteSettlement(groupId, expenseId);
         return ResponseEntity.ok(CommonResponse.success(null));
+    }
+
+    @PostMapping("/{groupId}/settlements/{expenseId}/reminder")
+    public ResponseEntity<CommonResponse<ReminderResponseDto>> sendReminder(
+            @PathVariable Long groupId,
+            @PathVariable Long expenseId
+    ) {
+        ReminderResponseDto result = expenseService.sendReminder(groupId, expenseId);
+        return ResponseEntity.ok(CommonResponse.success(result));
     }
 
     @GetMapping("/{groupId}/settlements/{expenseId}/defaulters")

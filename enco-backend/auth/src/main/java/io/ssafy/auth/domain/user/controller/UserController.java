@@ -2,21 +2,22 @@ package io.ssafy.auth.domain.user.controller;
 
 import io.ssafy.auth.domain.group.dto.response.MyGroupResponseDto;
 import io.ssafy.auth.domain.group.service.GroupInfoService;
+import io.ssafy.auth.domain.user.service.UserServiceImpl;
 import io.ssafy.auth.global.common.response.CommonResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
+
 @RestController
 @AllArgsConstructor
 @RequestMapping("/api/v1/users")
 public class UserController {
 
     private GroupInfoService groupInfoService;
+    private UserServiceImpl userService;
 
     /**
      * 내 모임(대표카드) 전체 목록 조회
@@ -27,5 +28,18 @@ public class UserController {
     public ResponseEntity<CommonResponse<List<MyGroupResponseDto>>> getMyGroups(
             @RequestHeader("X-User-Id") Long userId) {
         return ResponseEntity.ok(CommonResponse.success(groupInfoService.getMyGroups(userId)));
+    }
+
+    @PutMapping("/fcm-token")
+    public ResponseEntity<CommonResponse<Void>> updateFcmToken(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestBody Map<String, String> body) {
+        userService.updateFcmToken(userId, body.get("fcmToken"));
+        return ResponseEntity.ok(CommonResponse.success(null));
+    }
+
+    @GetMapping("/internal/{userId}/fcm-token")
+    public ResponseEntity<CommonResponse<String>> getFcmToken(@PathVariable Long userId) {
+        return ResponseEntity.ok(CommonResponse.success(userService.getFcmToken(userId)));
     }
 }
