@@ -3,6 +3,7 @@ import {compressReceiptImage} from './imageCompressionService';
 import {getCachedAccessToken} from '../utils/tokenStorage';
 import {
   createEmptyReceiptDraft,
+  resolveReceiptTotalAmount,
   type ReceiptDraft,
   type ReceiptItemDto,
   type ReceiptOcrCandidateMap,
@@ -12,6 +13,9 @@ import {
   type ReceiptOcrResult,
   type ReceiptOptionDraft,
   type ReceiptSubmissionDto,
+  type DeleteSettlementResponse,
+  type SettlementDefaultersResponse,
+  type SettlementDetailResponse,
   type SettlementCreateResponse,
   type TransactionReceiptContentResponse,
 } from '../types/receipt';
@@ -184,7 +188,7 @@ const serializeOptions = (options: ReceiptOptionDraft[]): ReceiptOptionDto[] =>
   options.map(option => ({
     name: option.name,
     unitPrice: option.unitPrice,
-    quantity: option.quantity,
+    quantity: option.quantity ?? 1,
     amount: option.amount,
   }));
 
@@ -192,7 +196,7 @@ const serializeItems = (items: ReceiptItemDraft[]): ReceiptItemDto[] =>
   items.map(item => ({
     name: item.name,
     unitPrice: item.unitPrice,
-    quantity: item.quantity,
+    quantity: item.quantity ?? 1,
     amount: item.amount,
     options: serializeOptions(item.options),
   }));
@@ -212,12 +216,13 @@ const normalizeReceipt = (payload: unknown): ReceiptDraft => {
   }
 
   const source = payload as Record<string, unknown>;
+  const items = toItems(source.items);
   return {
     merchantName: toText(source.merchantName),
     address: toText(source.address),
     paidAt: toText(source.paidAt),
-    items: toItems(source.items),
-    totalAmount: toNumber(source.totalAmount),
+    items,
+    totalAmount: resolveReceiptTotalAmount(toNumber(source.totalAmount), items),
     businessNumber: toText(source.businessNumber),
     candidates: toCandidates(source.candidates),
     ocrMeta: toOcrMeta(source.ocrMeta),
@@ -375,12 +380,72 @@ const normalizeSettlementCreateResponse = (
   };
 };
 
+const normalizeSettlementDetailResponse = (
+  responseData: unknown,
+): SettlementDetailResponse => {
+  const result = extractResultObject(responseData);
+  const paymentInfo = (result?.paymentInfo ?? null) as unknown;
+
+  return {
+    amount: toNumber(result?.amount) ?? 0,
+    useCard: toText(result?.useCard),
+    paidCount: toNumber(result?.paidCount) ?? 0,
+    totalCount: toNumber(result?.totalCount) ?? 0,
+    status: toText(result?.status),
+    displayName: toText(result?.displayName),
+    transactionType: toText(result?.transactionType),
+    memo: toText(result?.memo),
+    paidAt: toText(result?.paidAt),
+    receiptImageUrl: toText(result?.receiptImageUrl),
+    paymentInfo:
+      paymentInfo && typeof paymentInfo === 'object'
+        ? {
+            merchantName: toText((paymentInfo as Record<string, unknown>).merchantName),
+            address: toText((paymentInfo as Record<string, unknown>).address),
+            paidAt: toText((paymentInfo as Record<string, unknown>).paidAt),
+            businessNumber: toText((paymentInfo as Record<string, unknown>).businessNumber),
+            totalAmount: toNumber((paymentInfo as Record<string, unknown>).totalAmount),
+            items: serializeItems(normalizeReceipt(paymentInfo).items),
+          }
+        : null,
+    rawResponse: responseData,
+  };
+};
+
+const normalizeSettlementDefaultersResponse = (
+  responseData: unknown,
+): SettlementDefaultersResponse => {
+  const result = extractResultObject(responseData);
+
+  return {
+    paidCount: toNumber(result?.paidCount) ?? 0,
+    totalCount: toNumber(result?.totalCount) ?? 0,
+    participants: Array.isArray(result?.participants)
+      ? result.participants.map(participant => {
+          const source = participant as Record<string, unknown>;
+          return {
+            chargeTargetId: toNumber(source.chargeTargetId) ?? 0,
+            userId: toNumber(source.userId) ?? 0,
+            amount: toNumber(source.amount) ?? 0,
+            remainingAmount: toNumber(source.remainingAmount) ?? 0,
+            status: toText(source.status),
+          };
+        })
+      : [],
+    rawResponse: responseData,
+  };
+};
+
 const buildGroupTransactionReceiptEndpoint = (
   groupId: number,
   transactionId: number,
 ) => `/groups/${groupId}/transactions/${transactionId}/receipts/contents`;
 
 const buildSettlementEndpoint = (groupId: number) => `/groups/${groupId}/settlements`;
+const buildSettlementDetailEndpoint = (groupId: number, expenseId: number) =>
+  `/groups/${groupId}/settlements/${expenseId}`;
+const buildSettlementDefaultersEndpoint = (groupId: number, expenseId: number) =>
+  `/groups/${groupId}/settlements/${expenseId}/defaulters`;
 
 export async function requestReceiptOcr(
   payload: UploadReceiptOcrRequest,
@@ -507,4 +572,61 @@ export async function createSettlement(
   );
 
   return normalizeSettlementCreateResponse(response.data);
+}
+
+export async function getSettlementDetail(
+  groupId: number | string,
+  expenseId: number | string,
+): Promise<SettlementDetailResponse> {
+  const normalizedGroupId = toGroupId(groupId);
+  const normalizedExpenseId = toGroupId(expenseId);
+
+  if (normalizedGroupId === undefined || normalizedExpenseId === undefined) {
+    throw new Error('유효한 모임 또는 정산 ID가 없습니다.');
+  }
+
+  const response = await receiptApi.get(
+    buildSettlementDetailEndpoint(normalizedGroupId, normalizedExpenseId),
+  );
+
+  return normalizeSettlementDetailResponse(response.data);
+}
+
+export async function deleteSettlement(
+  groupId: number | string,
+  expenseId: number | string,
+): Promise<DeleteSettlementResponse> {
+  const normalizedGroupId = toGroupId(groupId);
+  const normalizedExpenseId = toGroupId(expenseId);
+
+  if (normalizedGroupId === undefined || normalizedExpenseId === undefined) {
+    throw new Error('유효한 모임 또는 정산 ID가 없습니다.');
+  }
+
+  const response = await receiptApi.delete(
+    buildSettlementDetailEndpoint(normalizedGroupId, normalizedExpenseId),
+  );
+
+  return {
+    message: getResponseMessage(response.data, '요청에 성공했습니다.'),
+    result: null,
+  };
+}
+
+export async function getSettlementDefaulters(
+  groupId: number | string,
+  expenseId: number | string,
+): Promise<SettlementDefaultersResponse> {
+  const normalizedGroupId = toGroupId(groupId);
+  const normalizedExpenseId = toGroupId(expenseId);
+
+  if (normalizedGroupId === undefined || normalizedExpenseId === undefined) {
+    throw new Error('유효한 모임 또는 정산 ID가 없습니다.');
+  }
+
+  const response = await receiptApi.get(
+    buildSettlementDefaultersEndpoint(normalizedGroupId, normalizedExpenseId),
+  );
+
+  return normalizeSettlementDefaultersResponse(response.data);
 }
