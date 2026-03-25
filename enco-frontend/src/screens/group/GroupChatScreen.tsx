@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Image, Pressable, View } from 'react-native'
-import Text from '@/components/typography';;
+import { Image, Pressable, View } from 'react-native';
+import Text from '@/components/typography';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CommonParams } from '../../types/common';
@@ -10,7 +10,6 @@ import { useChatbot } from '@/hooks/useChatbot';
 import ChatInput from '@/components/groupChat/ChatInput';
 import ChatMessageList from '@/components/groupChat/ChatMessageList';
 
-const ROOM_ID = '1001';
 const TEMP_IS_ADMIN = true;
 
 export default function GroupChatScreen() {
@@ -19,6 +18,7 @@ export default function GroupChatScreen() {
   const params = (route.params ?? {}) as CommonParams;
 
   const groupName = params.groupName ?? '회식주의자';
+  const groupId = params.groupId;
   const isAdmin = TEMP_IS_ADMIN;
   const [userId] = useState(1);
   const [msg, setMsg] = useState('');
@@ -31,12 +31,12 @@ export default function GroupChatScreen() {
     sendMessage,
     retryMessage,
     cancelMessage,
-  } = useChat(ROOM_ID, userId);
+  } = useChat(String(groupId), userId);
 
   const { handleHamcoTrigger, handleActionPress } = useChatbot({
     isAdmin,
     userId,
-    groupId: params.groupId,
+    groupId: groupId,
     groupName,
     navigation,
     appendChatItem,
@@ -60,10 +60,7 @@ export default function GroupChatScreen() {
         <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
           <Image source={images.left_arrow} className="mr-3" />
         </Pressable>
-        <Text weight="bold"
-          className="flex-1 text-lg text-[#1428A0]"
-          
-        >
+        <Text weight="bold" className="flex-1 text-lg text-[#1428A0]">
           {groupName}
         </Text>
       </View>
@@ -78,11 +75,7 @@ export default function GroupChatScreen() {
         onLoadMore={loadMoreMessages}
       />
 
-      <ChatInput
-        msg={msg}
-        onChangeMsg={setMsg}
-        onSend={handleSend}
-      />
+      <ChatInput msg={msg} onChangeMsg={setMsg} onSend={handleSend} />
     </SafeAreaView>
   );
 }
