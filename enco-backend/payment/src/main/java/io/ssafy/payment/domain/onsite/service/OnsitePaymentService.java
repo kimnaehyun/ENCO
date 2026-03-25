@@ -58,11 +58,11 @@ public class OnsitePaymentService {
         }
 
         GeoResults<RedisGeoCommands.GeoLocation<String>> results = stringRedisTemplate.opsForGeo()
-                .radius(geoKey, "LEADER", new Distance(50, RedisGeoCommands.DistanceUnit.METERS));
+                .radius(geoKey, "LEADER", new Distance(15, RedisGeoCommands.DistanceUnit.METERS));
 
         int nearbyMembersCount = (results != null) ? results.getContent().size() : 0;
 
-        log.info("[현장결제] groupId={}, 방장 반경 50m 이내 인원: {}/{}명", groupId, nearbyMembersCount, targetMemberCount);
+        log.info("[현장결제] groupId={}, 방장 반경 15m 이내 인원: {}/{}명", groupId, nearbyMembersCount, targetMemberCount);
 
         if (nearbyMembersCount >= targetMemberCount) {
             BarcodeResponseDto newBarcode = generateBarcode();

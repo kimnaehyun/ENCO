@@ -3,6 +3,7 @@ package io.ssafy.payment.domain.onsite.service;
 
 import io.ssafy.payment.domain.account.entity.Account;
 import io.ssafy.payment.domain.account.repository.AccountRepository;
+import io.ssafy.payment.domain.card.entity.Card;
 import io.ssafy.payment.domain.card.repository.CardRepository;
 import io.ssafy.payment.domain.transaction.entity.Direction;
 import io.ssafy.payment.domain.transaction.entity.Status;
@@ -32,7 +33,16 @@ public class OnsitePaymentExecuteService {
     private static final String BARCODE_AUTH_PREFIX = "onsite:auth:";
 
     @Transactional
-    public void executeBarcodePayment(String barcodeNumber, BigDecimal amount, String merchantName, Long cardId) {
+    public void executeBarcodePayment(String barcodeNumber, BigDecimal amount, String merchantName, Long cardId, String idempotencyKey) {
+        if (idempotencyKey != null && transactionHistoryRepository.existsByIdempotencyKey(idempotencyKey)) {
+            log.warn("[현장결제] 이미 처리된 중복 결제 요청입니다. 무시합니다. 멱등키={}", idempotencyKey);
+            throw new CustomException(ErrorCode.DUPLICATE_PAYMENT);
+        }
+        if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+            log.warn("[현장결제] 유효하지 않은 결제 금액 요청: {}", amount);
+            throw new CustomException(ErrorCode.INVALID_PAYMENT_AMOUNT);
+        }
+
         String redisKey = BARCODE_AUTH_PREFIX + barcodeNumber;
         Integer groupIdObj = (Integer) redisTemplate.opsForValue().get(redisKey);
 
@@ -41,6 +51,9 @@ public class OnsitePaymentExecuteService {
             throw new CustomException(ErrorCode.INVALID_OR_EXPIRED_BARCODE);
         }
         Long groupId = Long.valueOf(groupIdObj);
+
+        Card card = cardRepository.findById(cardId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CARD));
 
         Account account = accountRepository.findByGroupId(groupId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ACCOUNT));
@@ -55,15 +68,17 @@ public class OnsitePaymentExecuteService {
         TransactionHistory history = TransactionHistory.builder()
                 .accountId(account.getId())
                 .amount(amount)
+                .balance(account.getAmount())
                 .counterpartyName(merchantName)
                 .displayName(merchantName)
                 .type(Type.CARD_PAYMENT)
+                .cardId(card.getId())
                 .direction(Direction.OUT)
                 .status(Status.APPROVED)
+                .idempotencyKey(idempotencyKey)
                 .build();
 
         transactionHistoryRepository.save(history);
-
         redisTemplate.delete(redisKey);
 
         log.info("[현장결제 완료] 가맹점={}, 금액={}, groupId={}", merchantName, amount, groupId);
