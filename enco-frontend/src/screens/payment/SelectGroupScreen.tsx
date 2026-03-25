@@ -1,6 +1,6 @@
 import { View } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import GroupSelectItem from '../../components/internet/GroupSelectItem';
+import GroupSelectItem from '../../components/payment/GroupSelectItem';
 import Header from '../../components/internet/Header';
 import ScreenLayout from '../../components/ScreenLayout';
 import { authApi } from '@/services/authService';
