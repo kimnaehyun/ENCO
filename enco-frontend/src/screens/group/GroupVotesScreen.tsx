@@ -31,8 +31,10 @@ export default function GroupVotesScreen({
     const fetchVote = async () => {
       try {
         const response = await voteApi.list(Number(groupId));
-        setVotes(response.data.result);
-        console.log(response.data.result);
+        const sorted = [...response.data.result].sort(
+          (a, b) => b.voteId - a.voteId,
+        );
+        setVotes(sorted);
       } catch (e) {
         console.log(e);
       }
