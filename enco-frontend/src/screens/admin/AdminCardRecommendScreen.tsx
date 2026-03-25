@@ -1,112 +1,143 @@
 // src/screens/admin/AdminCardRecommendScreen.tsx
-// 카드 추가 발급 > 카드 추천/전체목록 — GroupCardRecommendScreen 디자인 기반
-import React, { useMemo, useState } from 'react';
-import { Alert, Image, TouchableOpacity, View, FlatList } from 'react-native'
-import Text from '@/components/typography';;
+// 카드 추가 발급 > 카드 추천/전체목록 — API 연동 버전
+import React, { useState, useEffect } from 'react';
+import { ActivityIndicator, Alert, Image, StyleSheet, TouchableOpacity, View, FlatList } from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { GroupCardItem } from '../../types/group';
+import { getCardList, getCardDetail } from '../../services/paymentService';
+
+type DisplayCard = {
+  id: number;
+  name: string;
+  brand: string;
+  imageUrl: string;
+  backImageUrl: string;
+  summary: string;
+  detail: string;
+  benefits: { categoryName: string; discountRate: number }[];
+};
 
 export default function AdminCardRecommendScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
 
-  const { groupId, groupName, tags } = route.params;
+  const { groupId, groupName, accountId, tags } = route.params;
   const isRecommendMode = tags && tags.length > 0;
 
-  const allCards = useMemo<GroupCardItem[]>(
-    () => [
-      {
-        id: 'card-samsung-1',
-        name: '삼성카드 A',
-        brand: '삼성카드',
-        imageUrl:
-          'https://static11.samsungcard.com/wcms/svc/__icsFiles/artimage/2025/09/02/ccom02_1/dm_AAP1870_02.png',
-        summary: '삼성카드 시리즈 A',
-        detail: '일상 결제에 무난하게 어울리는 카드입니다.',
-      },
-      {
-        id: 'card-samsung-2',
-        name: '삼성카드 B',
-        brand: '삼성카드',
-        imageUrl:
-          'https://static11.samsungcard.com/wcms/svc/__icsFiles/artimage/2025/09/02/ccom02_1/dm_AAP1870.png',
-        summary: '삼성카드 시리즈 B',
-        detail: '심플한 스타일의 카드입니다.',
-      },
-      {
-        id: 'card-samsung-3',
-        name: '삼성카드 C',
-        brand: '삼성카드',
-        imageUrl:
-          'https://static11.samsungcard.com/wcms/svc/__icsFiles/artimage/2025/09/02/ccom02_1/dm_AAP1870_03.png',
-        summary: '삼성카드 시리즈 C',
-        detail: '포인트 컬러가 있는 카드입니다.',
-      },
-    ],
-    []
-  );
+  // ── API에서 카드 목록 로딩 ──
+  const [allCards, setAllCards] = useState<DisplayCard[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchCards = async () => {
+      try {
+        const res = await getCardList();
+        console.log('[AdminCardRecommend] GET /cards 응답:', JSON.stringify(res, null, 2));
+
+        const list = res?.result ?? [];
+        const cards: DisplayCard[] = (Array.isArray(list) ? list : []).map(card => ({
+          id: card.id,
+          name: card.name,
+          brand: '삼성카드',
+          imageUrl: card.frontImageUrl,
+          backImageUrl: card.backImageUrl,
+          summary: card.name,
+          detail: (card.benefits ?? [])
+            .map(b => `${b.categoryName} ${b.discountRate}%`)
+            .join(', '),
+          benefits: card.benefits ?? [],
+        }));
+
+        console.log('[AdminCardRecommend] 변환된 카드 수:', cards.length);
+        setAllCards(cards);
+      } catch (err) {
+        console.warn('[AdminCardRecommend] 카드 목록 조회 실패:', err);
+        Alert.alert('오류', '카드 목록을 불러오지 못했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCards();
+  }, []);
 
   const INITIAL_COUNT = 4;
   const [showAll, setShowAll] = useState(false);
-  const recommendedCards = allCards.slice(0, 2);
   const displayCards = isRecommendMode
-    ? recommendedCards
+    ? allCards
     : showAll
     ? allCards
     : allCards.slice(0, INITIAL_COUNT);
 
-  const [selectedCardId, setSelectedCardId] = useState<string | null>(null);
-  const [detailCard, setDetailCard] = useState<GroupCardItem | null>(null);
+  const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
+  const [detailCard, setDetailCard] = useState<DisplayCard | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
+
+  // 카드 탭 → 상세 정보 API 호출
+  const handleCardPress = async (card: DisplayCard) => {
+    setDetailLoading(true);
+    setDetailCard(card);
+    try {
+      const res = await getCardDetail(card.id);
+      console.log(`[AdminCardRecommend] GET /cards/${card.id} 응답:`, JSON.stringify(res, null, 2));
+      const d = res.result;
+      setDetailCard({
+        ...card,
+        name: d.name,
+        summary: d.description,
+        detail: `기본 실적 ${Number(d.baseSpending).toLocaleString()}원 · 월 최대 혜택 ${Number(d.maxBenefitLimit).toLocaleString()}원 · 한도 ${Number(d.maxLimit).toLocaleString()}원`,
+        imageUrl: d.frontImageUrl || card.imageUrl,
+        backImageUrl: d.backImageUrl || card.backImageUrl,
+      });
+    } catch (err) {
+      console.warn(`[AdminCardRecommend] 카드 상세 조회 실패 (id=${card.id}):`, err);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
 
   const handleComplete = () => {
     if (!selectedCardId) {
       Alert.alert('안내', '카드를 하나 선택해주세요.');
       return;
     }
+    const selected = allCards.find(c => c.id === selectedCardId);
+    console.log('[AdminCardRecommend] 카드 선택 완료:', { selectedCardId, name: selected?.name });
     navigation.navigate('AdminCard', {
       groupId,
       groupName,
-      selectedCardId,
-      selectedCardImage: allCards.find((c) => c.id === selectedCardId)
-        ?.imageUrl,
-      selectedCardName: allCards.find((c) => c.id === selectedCardId)?.name,
+      accountId,
+      selectedCardId: String(selectedCardId),
+      selectedCardImage: selected?.imageUrl,
+      selectedCardName: selected?.name,
       selectedTags: route.params?.prevTags ?? [],
       recommendPressed: route.params?.prevRecommendPressed ?? false,
       viewAllPressed: route.params?.prevViewAllPressed ?? false,
     });
   };
 
-  const renderItem = ({ item }: { item: GroupCardItem }) => {
+  const renderItem = ({ item }: { item: DisplayCard }) => {
     const selected = selectedCardId === item.id;
     return (
       <TouchableOpacity
         activeOpacity={0.7}
-        onPress={() => setDetailCard(item)}
-        style={{
-          borderRadius: 16,
-          borderWidth: 2,
-          borderColor: selected ? '#1428A0' : 'transparent',
-          marginBottom: 14,
-          shadowColor: selected ? '#1428A0' : '#000',
-          shadowOffset: { width: 0, height: selected ? 4 : 1 },
-          shadowOpacity: selected ? 0.2 : 0.06,
-          shadowRadius: selected ? 8 : 4,
-          elevation: selected ? 4 : 1,
-        }}
+        onPress={() => handleCardPress(item)}
+        style={[styles.cardItem, selected && styles.cardItemSelected]}
       >
-        <View
-          style={{
-            borderRadius: 14,
-            overflow: 'hidden',
-            backgroundColor: '#F9FAFB',
-          }}
-        >
-          <Image
-            source={{ uri: item.imageUrl }}
-            style={{ width: '100%', aspectRatio: 2 }}
-            resizeMode="contain"
-          />
+        <View style={styles.cardImageWrap}>
+          <View style={styles.cardImageRow}>
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.cardImageHalf}
+              resizeMode="contain"
+            />
+            <Image
+              source={{ uri: item.backImageUrl }}
+              style={styles.cardImageHalf}
+              resizeMode="contain"
+            />
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -114,22 +145,10 @@ export default function AdminCardRecommendScreen() {
 
   const ListHeader = () => (
     <>
-      <Text variant="h2" color="dark"
-        
-       style={{ marginBottom: 6 }}>
-        카드 추가 발급
-      </Text>
-      <Text variant="caption" color="placeholder"
-        
-       style={{ marginBottom: 24 }}>
-        {groupName}
-      </Text>
-      <Text variant="bodySm" color="muted"
-        
-       style={{ marginBottom: 16 }}>
-        {isRecommendMode
-          ? `"${tags.join(', ')}" 태그 기반 추천 카드`
-          : '전체 카드 목록'}
+      <Text style={styles.pageTitle}>카드 추가 발급</Text>
+      <Text style={styles.pageCaption}>{groupName}</Text>
+      <Text style={styles.pageSubtitle}>
+        {isRecommendMode ? `"${tags.join(', ')}" 태그 기반 추천 카드` : '전체 카드 목록'}
       </Text>
     </>
   );
@@ -140,132 +159,88 @@ export default function AdminCardRecommendScreen() {
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => setShowAll(true)}
-          style={{
-            marginTop: 4,
-            height: 48,
-            borderRadius: 14,
-            backgroundColor: '#FFFFFF',
-            borderWidth: 1,
-            borderColor: '#E5E7EB',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
+          style={styles.showMoreButton}
         >
-          <Text variant="bodySm" color="subtle"
-            
-          >
-            더보기
-          </Text>
+          <Text style={styles.showMoreText}>더보기</Text>
         </TouchableOpacity>
       )}
-
-      <TouchableOpacity
-        activeOpacity={0.8}
-        onPress={handleComplete}
-        disabled={!selectedCardId}
-        style={{
-          marginTop: 24,
-          height: 54,
-          borderRadius: 16,
-          backgroundColor: '#1428A0',
-          justifyContent: 'center',
-          alignItems: 'center',
-          opacity: selectedCardId ? 1 : 0.4,
-          marginBottom: 16,
-        }}
-      >
-        <Text weight="bold" color="white"
-          
-        >
-          완료
-        </Text>
-      </TouchableOpacity>
+      <View style={{ height: 90 }} />
     </>
   );
 
+  if (loading) {
+    return (
+      <ScreenLayout>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#1428A0" />
+          <Text style={styles.loadingText}>카드 목록을 불러오는 중...</Text>
+        </View>
+      </ScreenLayout>
+    );
+  }
+
   return (
-    <View style={{ flex: 1 }}>
+    <View style={styles.container}>
       <ScreenLayout>
         <FlatList
           data={displayCards}
-          keyExtractor={(item) => item.id}
+          keyExtractor={(item) => String(item.id)}
           renderItem={renderItem}
           ListHeaderComponent={ListHeader}
           ListFooterComponent={ListFooter}
           showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>조회된 카드가 없습니다.</Text>
+            </View>
+          }
         />
       </ScreenLayout>
 
+      {/* 하단 고정 완료 버튼 */}
+      <View style={styles.fixedBottomContainer}>
+        <TouchableOpacity
+          activeOpacity={0.8}
+          onPress={handleComplete}
+          disabled={!selectedCardId}
+          style={[styles.completeButton, !selectedCardId && styles.completeButtonDisabled]}
+        >
+          <Text style={styles.completeButtonText}>완료</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* 카드 상세 모달 */}
       {detailCard && (
-        <View
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(17,24,39,0.5)',
-            justifyContent: 'center',
-            alignItems: 'center',
-            padding: 24,
-            zIndex: 999,
-          }}
-        >
-          <View
-            style={{
-              width: '100%',
-              borderRadius: 24,
-              backgroundColor: '#FFFFFF',
-              padding: 22,
-            }}
-          >
-            <Text weight="bold" color="dark"
-              
-             style={{ marginBottom: 16, fontSize: 18 }}>
-              {detailCard.name}
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalCardName}>{detailCard.name}</Text>
+
+            <View style={styles.cardImageRow}>
+              <Image
+                source={{ uri: detailCard.imageUrl }}
+                style={styles.modalCardImageHalf}
+                resizeMode="contain"
+              />
+              <Image
+                source={{ uri: detailCard.backImageUrl }}
+                style={styles.modalCardImageHalf}
+                resizeMode="contain"
+              />
+            </View>
+
+            <Text style={styles.modalBrand}>{detailCard.brand}</Text>
+            <Text style={styles.modalSummary}>{detailCard.summary}</Text>
+            <Text style={styles.modalDetail}>
+              {detailLoading ? '상세 정보를 불러오는 중...' : detailCard.detail}
             </Text>
 
-            <Image
-              source={{ uri: detailCard.imageUrl }}
-              style={{ width: '100%', aspectRatio: 2, borderRadius: 14 }}
-              resizeMode="contain"
-            />
-
-            <Text variant="caption" color="placeholder"
-              
-             style={{ marginTop: 14 }}>
-              {detailCard.brand}
-            </Text>
-            <Text variant="bodyMd" weight="bold" color="dark"
-              
-             style={{ marginTop: 4 }}>
-              {detailCard.summary}
-            </Text>
-            <Text variant="bodySm" color="muted"
-              
-             style={{ marginTop: 8 }}>
-              {detailCard.detail}
-            </Text>
-
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 20 }}>
+            <View style={styles.modalButtonRow}>
               <TouchableOpacity
                 activeOpacity={0.7}
                 onPress={() => setDetailCard(null)}
-                style={{
-                  flex: 1,
-                  height: 50,
-                  borderRadius: 14,
-                  backgroundColor: '#F3F4F6',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
+                style={styles.modalCloseButton}
               >
-                <Text variant="bodyMd" color="subtle"
-                  
-                >
-                  닫기
-                </Text>
+                <Text style={styles.modalCloseText}>닫기</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
@@ -274,20 +249,9 @@ export default function AdminCardRecommendScreen() {
                   setSelectedCardId(detailCard.id);
                   setDetailCard(null);
                 }}
-                style={{
-                  flex: 1,
-                  height: 50,
-                  borderRadius: 14,
-                  backgroundColor: '#1428A0',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                }}
+                style={styles.modalSelectButton}
               >
-                <Text variant="bodyMd" weight="bold" color="white"
-                  
-                >
-                  이 카드 선택
-                </Text>
+                <Text style={styles.modalSelectText}>이 카드 선택</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -296,3 +260,37 @@ export default function AdminCardRecommendScreen() {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  loadingText: { marginTop: 16, fontSize: 14, color: COLORS.muted, fontFamily: FONT_FAMILY.medium },
+  pageTitle: { fontSize: 22, color: COLORS.dark, fontFamily: FONT_FAMILY.bold, marginBottom: 6 },
+  pageCaption: { fontSize: 13, color: COLORS.placeholder, fontFamily: FONT_FAMILY.medium, marginBottom: 24 },
+  pageSubtitle: { fontSize: 14, color: COLORS.muted, fontFamily: FONT_FAMILY.medium, marginBottom: 16 },
+  cardItem: { borderRadius: 16, borderWidth: 2, borderColor: 'transparent', marginBottom: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 1 },
+  cardItemSelected: { borderColor: '#1428A0', shadowColor: '#1428A0', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
+  cardImageWrap: { borderRadius: 14, overflow: 'hidden', backgroundColor: '#F9FAFB', padding: 8 },
+  cardImageRow: { flexDirection: 'row', gap: 8 },
+  cardImageHalf: { flex: 1, aspectRatio: 0.63 },
+  emptyContainer: { alignItems: 'center', paddingVertical: 40 },
+  emptyText: { fontSize: 14, color: COLORS.placeholder, fontFamily: FONT_FAMILY.medium },
+  showMoreButton: { marginTop: 4, height: 48, borderRadius: 14, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center' },
+  showMoreText: { fontSize: 14, color: COLORS.subtle, fontFamily: FONT_FAMILY.medium },
+  fixedBottomContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#F0F4FF', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 24 },
+  completeButton: { height: 54, borderRadius: 16, backgroundColor: '#1428A0', justifyContent: 'center', alignItems: 'center' },
+  completeButtonDisabled: { opacity: 0.4 },
+  completeButtonText: { color: COLORS.white, fontSize: 16, fontFamily: FONT_FAMILY.bold },
+  modalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(17,24,39,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24, zIndex: 999 },
+  modalCard: { width: '100%', borderRadius: 24, backgroundColor: '#FFFFFF', padding: 22 },
+  modalCardName: { fontSize: 18, color: COLORS.dark, fontFamily: FONT_FAMILY.bold, marginBottom: 16 },
+  modalCardImageHalf: { flex: 1, aspectRatio: 0.63, borderRadius: 14 },
+  modalBrand: { marginTop: 14, fontSize: 13, color: COLORS.placeholder, fontFamily: FONT_FAMILY.medium },
+  modalSummary: { marginTop: 4, fontSize: 15, color: COLORS.dark, fontFamily: FONT_FAMILY.bold },
+  modalDetail: { marginTop: 8, fontSize: 14, color: COLORS.muted, fontFamily: FONT_FAMILY.medium, lineHeight: 22 },
+  modalButtonRow: { flexDirection: 'row', gap: 10, marginTop: 20 },
+  modalCloseButton: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' },
+  modalCloseText: { fontSize: 15, color: COLORS.subtle, fontFamily: FONT_FAMILY.medium },
+  modalSelectButton: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#1428A0', justifyContent: 'center', alignItems: 'center' },
+  modalSelectText: { fontSize: 15, color: COLORS.white, fontFamily: FONT_FAMILY.bold },
+});

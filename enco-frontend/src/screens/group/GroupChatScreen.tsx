@@ -33,7 +33,7 @@ export default function GroupChatScreen() {
     cancelMessage,
   } = useChat(String(groupId), userId);
 
-  const { handleHamcoTrigger, handleActionPress } = useChatbot({
+  const { pickMode, handleHamcoTrigger, handleActionPress, sendPickMessage, exitPickMode } = useChatbot({
     isAdmin,
     userId,
     groupId: groupId,
@@ -45,6 +45,14 @@ export default function GroupChatScreen() {
   const handleSend = () => {
     const trimmed = msg.trim();
     if (!trimmed) return;
+
+    // pick 모드에서는 chatbot API로 전송
+    if (pickMode) {
+      sendPickMessage(trimmed);
+      setMsg('');
+      return;
+    }
+
     if (trimmed === '@햄코') {
       handleHamcoTrigger();
       setMsg('');
@@ -75,7 +83,23 @@ export default function GroupChatScreen() {
         onLoadMore={loadMoreMessages}
       />
 
-      <ChatInput msg={msg} onChangeMsg={setMsg} onSend={handleSend} />
+      {pickMode && (
+        <View className="flex-row items-center justify-between px-4 py-2 bg-[#EEF2FF] border-t border-[#C7D2FE]">
+          <Text weight="bold" className="text-sm text-[#1428A0]">
+            🐹 햄코 PICK 모드
+          </Text>
+          <Pressable onPress={exitPickMode} hitSlop={12}>
+            <Text className="text-sm text-[#6B7280]">✕ 종료</Text>
+          </Pressable>
+        </View>
+      )}
+
+      <ChatInput
+        msg={msg}
+        onChangeMsg={setMsg}
+        onSend={handleSend}
+        placeholder={pickMode ? '추천받고 싶은 내용을 입력하세요' : undefined}
+      />
     </SafeAreaView>
   );
 }

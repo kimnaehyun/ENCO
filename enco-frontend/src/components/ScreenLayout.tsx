@@ -6,10 +6,11 @@ export default function ScreenLayout({
   children,
   style,
   className,
-}: ScreenLayoutProps) {
+  noBottomSafe,
+}: ScreenLayoutProps & { noBottomSafe?: boolean }) {
   return (
     <SafeAreaView
-      edges={['top', 'left', 'right']}
+      edges={noBottomSafe ? ['top', 'left', 'right'] : ['top', 'left', 'right', 'bottom']}
       style={{ flex: 1, backgroundColor: '#F0F4FF' }}
     >
       <View

@@ -32,6 +32,7 @@ type IssuedCardUI = {
   id: string;
   name: string;
   image: { uri: string };
+  backImage: { uri: string };
   isBasic: boolean;
 };
 
@@ -125,6 +126,9 @@ export default function GroupInfoScreen() {
           name: card.cardName,
           image: {
             uri: `https://api.ssafywte.site${card.frontCardImageUrl}`,
+          },
+          backImage: {
+            uri: `https://api.ssafywte.site${card.backCardImageUrl}`,
           },
           isBasic: card.isBasic,
         }));
@@ -447,11 +451,18 @@ export default function GroupInfoScreen() {
                         isRep && styles.cardItemSelected,
                       ]}
                     >
-                      <Image
-                        source={card.image}
-                        style={styles.cardImage}
-                        resizeMode="cover"
-                      />
+                      <View style={styles.cardImageRow}>
+                        <Image
+                          source={card.image}
+                          style={styles.cardImageHalf}
+                          resizeMode="contain"
+                        />
+                        <Image
+                          source={card.backImage}
+                          style={styles.cardImageHalf}
+                          resizeMode="contain"
+                        />
+                      </View>
                       {isRep && (
                         <View style={styles.repBadge}>
                           <Text style={styles.repBadgeText}>대표 카드 ✓</Text>
@@ -464,11 +475,18 @@ export default function GroupInfoScreen() {
             )
           ) : (
             representativeCard ? (
-              <Image
-                source={representativeCard.image}
-                style={styles.repCardImage}
-                resizeMode="cover"
-              />
+              <View style={styles.cardImageRow}>
+                <Image
+                  source={representativeCard.image}
+                  style={styles.repCardImageHalf}
+                  resizeMode="contain"
+                />
+                <Image
+                  source={representativeCard.backImage}
+                  style={styles.repCardImageHalf}
+                  resizeMode="contain"
+                />
+              </View>
             ) : (
               <Text style={styles.groundRulesText}>발급된 카드가 없습니다.</Text>
             )
@@ -548,9 +566,10 @@ const styles = StyleSheet.create({
   // 카드 섹션
   cardSectionTitle: { fontSize: 15, fontFamily: FONT_FAMILY.bold, color: COLORS.dark },
   cardHintText: { fontSize: 12, color: COLORS.brand, fontFamily: FONT_FAMILY.medium },
-  cardItem: { borderRadius: 16, borderWidth: 2, overflow: 'hidden' },
-  cardImage: { width: '100%', height: 180 },
+  cardItem: { borderRadius: 16, borderWidth: 2, overflow: 'hidden', padding: 8, backgroundColor: '#F9FAFB' },
+  cardImageRow: { flexDirection: 'row', gap: 8 },
+  cardImageHalf: { flex: 1, aspectRatio: 0.63, borderRadius: 12 },
   repBadge: { position: 'absolute', top: 10, right: 10, backgroundColor: '#1428A0', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
   repBadgeText: { fontSize: 11, color: COLORS.white, fontFamily: FONT_FAMILY.medium },
-  repCardImage: { width: '100%', height: 200, borderRadius: 16 },
+  repCardImageHalf: { flex: 1, aspectRatio: 0.63, borderRadius: 16 },
 });

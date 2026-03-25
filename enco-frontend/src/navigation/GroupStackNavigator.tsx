@@ -20,7 +20,6 @@ import AdminSendAlertScreen from '../screens/admin/AdminSendAlertScreen';
 import AdminSettleScreen from '../screens/admin/AdminSettleScreen';
 import AdminCardScreen from '../screens/admin/AdminCardScreen';
 import AdminCardRecommendScreen from '../screens/admin/AdminCardRecommendScreen';
-import AdminCardPinScreen from '../screens/admin/AdminCardPinScreen';
 import AdminCardDoneScreen from '../screens/admin/AdminCardDoneScreen';
 import GroupCreateScreen from '../screens/group/GroupCreateScreen';
 import GroupCardRecommendScreen from '../screens/group/GroupCardRecommendScreen';
@@ -81,7 +80,6 @@ export default function GroupStackNavigator() {
       <Stack.Screen name="AdminSendAlert" component={AdminSendAlertScreen} />
       <Stack.Screen name="AdminCard" component={AdminCardScreen} />
       <Stack.Screen name="AdminCardRecommend" component={AdminCardRecommendScreen} />
-      <Stack.Screen name="AdminCardPin" component={AdminCardPinScreen} />
       <Stack.Screen name="AdminCardDone" component={AdminCardDoneScreen} />
       <Stack.Screen name="AdminSettle" component={AdminSettleScreen} />
       <Stack.Screen name="GroupCreate" component={GroupCreateScreen} />

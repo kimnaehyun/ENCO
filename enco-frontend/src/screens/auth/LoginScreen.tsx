@@ -13,7 +13,7 @@ export default function LoginScreen({
   const [resetKey, setResetKey] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const login = useAuthStore((s) => s.login);
+  const loginWithProfile = useAuthStore((s) => s.loginWithProfile);
 
   const handlePinComplete = async (pin: string) => {
     setLoading(true);
@@ -37,8 +37,18 @@ export default function LoginScreen({
         await saveTokens(response.result.accessToken, "");
       }
 
-      // zustand에 사용자 이름 저장 → RootNavigator가 App으로 전환
-      login(response.result.name);
+      // 로그인 + 프로필을 한 번에 저장 (타이밍 이슈 방지)
+      const r = response.result;
+      console.log('[Login] profileImg:', r.profileImg);
+      loginWithProfile(r.name, {
+        name: r.name,
+        email: r.email ?? '',
+        phoneNumber: r.phoneNumber ?? '',
+        birthDay: '',
+        gender: 'M',
+        address: '',
+        profileUrl: r.profileImg ?? 0,
+      });
     } catch (err: any) {
       const message =
         err?.response?.data?.message || "로그인에 실패했습니다. 다시 시도해주세요.";
