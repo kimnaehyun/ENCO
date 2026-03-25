@@ -7,6 +7,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+// 이벤트
 @Entity
 @Table(name = "events")
 @Getter
