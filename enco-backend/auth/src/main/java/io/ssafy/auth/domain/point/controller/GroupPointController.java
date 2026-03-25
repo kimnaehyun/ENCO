@@ -40,7 +40,7 @@ public class GroupPointController {
 
     @PostMapping("/{groupId}/attend")
     public ResponseEntity<CommonResponse<AttendanceCheckResponseDto>> attendEvent(
-            @RequestHeader("X-User-Id") Long userId, // 게이트웨이가 파싱해준 유저 ID
+            @RequestHeader("X-User-Id") Long userId,
             @PathVariable Long groupId) {
 
         AttendanceCheckResponseDto responseDto = pointService.attend(userId, groupId);
