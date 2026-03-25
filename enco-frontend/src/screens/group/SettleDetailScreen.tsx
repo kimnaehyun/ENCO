@@ -529,7 +529,9 @@ const styles = StyleSheet.create({
   },
   amountText: {
     fontSize: 32,
+    lineHeight: 42,
     fontFamily: FONT_FAMILY.bold,
+    paddingVertical: 2,
     color: COLORS.error,
     marginBottom: 16,
   },

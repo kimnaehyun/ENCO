@@ -710,7 +710,9 @@ const styles = StyleSheet.create({
   },
   summaryAmount: {
     fontSize: 28,
+    lineHeight: 36,
     fontFamily: FONT_FAMILY.bold,
+    paddingVertical: 2,
     color: COLORS.error,
     textAlign: 'right',
   },
@@ -792,7 +794,9 @@ const styles = StyleSheet.create({
   },
   summaryTotalAmount: {
     fontSize: 22,
+    lineHeight: 30,
     fontFamily: FONT_FAMILY.bold,
+    paddingVertical: 1,
     color: COLORS.dark,
   },
   summaryPerPersonBlue: {
