@@ -59,10 +59,19 @@ public class PaymentVoteService {
         Card card = cardRepository.findById(request.cardId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_CARD));
 
+        Integer totalMembersResult = null;
+        try {
+            totalMembersResult = userServiceClient.getGroupMemberCount(request.groupId()).result();
+        } catch (Exception e) {
+            log.warn("[PaymentVote] Auth 서버 통신 오류로 모임원 수를 가져오지 못했습니다.", e);
+        }
+        int totalMembers = (totalMembersResult != null) ? totalMembersResult : 0;
+
         PaymentVote vote = PaymentVote.builder()
                 .groupId(request.groupId())
                 .title(request.title())
                 .description(request.description())
+                .totalMembers(totalMembers)
                 .status(VoteStatus.VOTING)
                 .expiredAt(LocalDateTime.now().plusHours(1))
                 .build();
@@ -100,12 +109,20 @@ public class PaymentVoteService {
         return PaymentVoteCreateResponseDto.from(savedVote);
     }
 
+    /**
+     * 투표 리스트 조회
+     *
+     * @param groupId
+     * @return
+     */
     public List<PaymentVoteListResponseDto> getVoteList(Long groupId) {
-
         return voteRepository.findByGroupId(groupId)
                 .stream()
                 .map(vote -> {
-                    if (vote.getStatus() == VoteStatus.VOTING && LocalDateTime.now().isAfter(vote.getExpiredAt())) {
+                    if (vote.getStatus() == VoteStatus.VOTING
+                            && vote.getExpiredAt() != null
+                            && LocalDateTime.now().isAfter(vote.getExpiredAt())) {
+
                         vote.expire();
                         voteRepository.save(vote);
                     }
@@ -113,11 +130,19 @@ public class PaymentVoteService {
                     return PaymentVoteListResponseDto.of(
                             vote,
                             historyRepository.findByVote(vote).size()
+                            // totalMembers  // <- 프론트가 필요로 한다면 DTO 수정 후 주석 해제!
                     );
                 })
                 .toList();
     }
 
+    /**
+     * 투표 조회
+     *
+     * @param voteId
+     * @param groupId
+     * @return
+     */
     public PaymentVoteDetailResponseDto getVoteDetail(Long voteId, Long groupId) {
         PaymentVote vote = voteRepository.findById(voteId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_VOTE));
@@ -127,7 +152,7 @@ public class PaymentVoteService {
         TransactionHistory transaction = transactionHistoryRepository.findByVoteId(vote.getId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_TRANSACTION));
 
-        int totalMembers = userServiceClient.getGroupMemberCount(groupId).result();
+//        int totalMembers = userServiceClient.getGroupMemberCount(groupId).result();
 
         int approveCount = (int) histories.stream()
                 .filter(h -> h.getChoice() == VoteChoice.APPROVE).count();
@@ -147,7 +172,7 @@ public class PaymentVoteService {
                 transaction.getAmount(),
                 vote.getStatus(),
                 vote.getExpiredAt().toString(),
-                totalMembers,
+                vote.getTotalMembers(),
                 histories.size(),
                 approveCount,
                 rejectCount,
