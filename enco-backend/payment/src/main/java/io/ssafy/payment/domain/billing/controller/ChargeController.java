@@ -3,6 +3,7 @@ package io.ssafy.payment.domain.billing.controller;
 import io.ssafy.payment.domain.billing.dto.request.CreateChargeRequestDto;
 import io.ssafy.payment.domain.billing.dto.request.CreateRegularChargeRequestDto;
 import io.ssafy.payment.domain.billing.dto.response.ChargeResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.ReminderResponseDto;
 import io.ssafy.payment.domain.billing.dto.response.UnpaidChargeResponseDto;
 import io.ssafy.payment.domain.billing.service.ChargeService;
 import io.ssafy.payment.global.common.response.CommonResponse;
@@ -43,6 +44,13 @@ public class ChargeController {
     ) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(CommonResponse.success(chargeService.createRegularCharge(groupId, createdByUserId, request)));
+    }
+
+    @PostMapping("/{groupId}/dues/reminder")
+    public ResponseEntity<CommonResponse<ReminderResponseDto>> sendDuesReminder(
+            @PathVariable Long groupId
+    ) {
+        return ResponseEntity.ok(CommonResponse.success(chargeService.sendDuesReminder(groupId)));
     }
 
     /*

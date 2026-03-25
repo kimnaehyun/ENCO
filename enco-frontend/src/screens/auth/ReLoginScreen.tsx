@@ -17,7 +17,7 @@ export default function ReLoginScreen({
   const [loading, setLoading] = useState(false);
   const [pinResetKey, setPinResetKey] = useState(0);
 
-  const login = useAuthStore((s) => s.login);
+  const loginWithProfile = useAuthStore((s) => s.loginWithProfile);
 
   const handleEmailNext = () => {
     if (!email.trim()) {
@@ -42,8 +42,17 @@ export default function ReLoginScreen({
         await saveDeviceToken(response.result.deviceToken);
       }
 
-      // zustand에 사용자 이름 저장 → RootNavigator가 App으로 전환
-      login(response.result.name);
+      // 로그인 + 프로필을 한 번에 저장 (타이밍 이슈 방지)
+      const r = response.result;
+      loginWithProfile(r.name, {
+        name: r.name,
+        email: r.email ?? '',
+        phoneNumber: r.phoneNumber ?? '',
+        birthDay: '',
+        gender: 'M',
+        address: '',
+        profileUrl: r.profileImg ?? 0,
+      });
     } catch (err: any) {
       const message =
         err?.response?.data?.message ||

@@ -31,6 +31,9 @@ export type LoginResponse = {
   result: {
     id: number;
     name: string;
+    email: string;
+    phoneNumber: string;
+    profileImg: number;
     deviceToken: string;
     accessToken: string;
     expiresIn: number;
@@ -56,6 +59,9 @@ export type ReLoginResponse = {
   result: {
     id: number;
     name: string;
+    email: string;
+    phoneNumber: string;
+    profileImg: number;
     deviceToken: string;
     accessToken: string;
     expiresIn: number;

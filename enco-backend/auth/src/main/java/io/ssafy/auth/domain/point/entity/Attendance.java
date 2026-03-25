@@ -20,6 +20,9 @@ public class Attendance {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(nullable = false)
+    private Long groupId;
+
     @Column(nullable = false) private Long userId;
 
     @ManyToOne(fetch = FetchType.LAZY)

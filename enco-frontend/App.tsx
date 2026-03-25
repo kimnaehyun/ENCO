@@ -4,7 +4,6 @@ import {
   CommonActions,
   NavigationContainer,
   useNavigationContainerRef,
-  type LinkingOptions,
 } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -14,47 +13,7 @@ import './global.css';
 import type { RootStackParamList } from './src/types/navigation';
 import { BackHandler, Linking, ToastAndroid } from 'react-native';
 import { ROUTES } from './src/constants/routes';
-
-const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: ['enco://app'],
-  config: {
-    screens: {
-      // 결제 딥링크 (기존)
-      InternetPayFlow: {
-        screens: {
-          CreateInternetPaymentRequest: 'pay',
-          PaymentApprovalPending: 'pay/pending',
-          InternetPaymentPin: 'pay/pin',
-          PaymentSuccess: {
-            path: 'pay/success',
-            parse: {
-              amount: (value: string) => Number(value),
-              callbackUrl: (value: string) => value,
-              orderId: (value: string) => value,
-            },
-          },
-        },
-      },
-
-      // 초대 딥링크 (추가)
-      // enco://app/invite?token=fb510545-d6d7-...
-      App: {
-        screens: {
-          HomeTab: {
-            screens: {
-              GroupInviteEntry: {
-                path: 'invite',
-                parse: {
-                  inviteToken: (token: string) => token,
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-};
+import { linking } from '@/config/linking';
 
 function App() {
   const navigationRef = useNavigationContainerRef<RootStackParamList>();

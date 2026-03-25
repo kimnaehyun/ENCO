@@ -78,6 +78,36 @@ export async function getCardList(): Promise<GetCardListResponse> {
   return response.data;
 }
 
+// ── 카드 추가 발급 (POST /accounts/card-add) ──
+// 요청: { accountId, cardProductId }
+// 응답: { message, result: { cardId, cardNumber, frontImageUrl } }
+
+export type CardAddRequest = {
+  accountId: number;
+  cardProductId: number;
+};
+
+export type CardAddResult = {
+  cardId: number;
+  cardNumber: string;
+  frontImageUrl: string;
+};
+
+export type CardAddResponse = {
+  message: string;
+  result: CardAddResult;
+};
+
+export async function cardAdd(
+  payload: CardAddRequest,
+): Promise<CardAddResponse> {
+  const response = await paymentApi.post<CardAddResponse>(
+    '/accounts/card-add',
+    payload,
+  );
+  return response.data;
+}
+
 export type DuesPaymentRequest = {
   withdrawAccountBankName: string;
   withdrawAccountNumber: string;

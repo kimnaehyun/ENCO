@@ -14,7 +14,7 @@ import java.math.BigDecimal;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/groups") // API Gateway 설정에 맞게 경로 확인!
+@RequestMapping("/api/v1/users")
 @RequiredArgsConstructor
 public class GroupPointController {
 
@@ -37,15 +37,16 @@ public class GroupPointController {
 
         return ResponseEntity.ok(CommonResponse.success(updatedStatus));
     }
+
     @PostMapping("/{groupId}/attend")
     public ResponseEntity<CommonResponse<AttendanceCheckResponseDto>> attendEvent(
             @RequestHeader("X-User-Id") Long userId, // 게이트웨이가 파싱해준 유저 ID
             @PathVariable Long groupId) {
 
-        pointService.attend(userId, groupId);
+        AttendanceCheckResponseDto responseDto = pointService.attend(userId, groupId);
         log.info("[Attendance] 출석 완료: groupId={}, userId={}", groupId, userId);
 
-        return ResponseEntity.ok(CommonResponse.success(null));
+        return ResponseEntity.ok(CommonResponse.success(responseDto));
     }
 
     @GetMapping("/{groupId}/attendances")

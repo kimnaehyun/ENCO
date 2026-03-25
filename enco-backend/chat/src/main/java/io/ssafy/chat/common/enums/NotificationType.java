@@ -3,5 +3,7 @@ package io.ssafy.chat.common.enums;
 public enum NotificationType {
     CHAT_MESSAGE,
     SYSTEM,
-    SETTLEMENT_REMINDER
+    SETTLEMENT_REMINDER,
+    DUES_REMINDER,
+    DUES_CREATED
 }

@@ -25,7 +25,8 @@ public enum ErrorCode {
     NOT_FOUND_GROUP(HttpStatus.NOT_FOUND, "해당 모임을 찾을 수 없습니다.", "NOT_FOUND_GROUP"),
     NO_ACTIVE_EVENT(HttpStatus.NOT_FOUND, "현재 진행 중인 출석 이벤트가 없습니다.", "NO_ACTIVE_EVENT"),
     INVALID_ATTENDANCE_TIME(HttpStatus.BAD_REQUEST, "출석 가능한 기간 또는 시간이 아닙니다.", "INVALID_ATTENDANCE_TIME"),
-    ALREADY_ATTENDED(HttpStatus.BAD_REQUEST, "오늘은 이미 출석을 완료했습니다.", "ALREADY_ATTENDED");
+    ALREADY_ATTENDED(HttpStatus.BAD_REQUEST, "오늘은 이미 출석을 완료했습니다.", "ALREADY_ATTENDED"),
+    MIN_MEMBER_LIMIT_NOT_MET(HttpStatus.BAD_REQUEST, "최소 2명 이상인 모임만 참여 가능합니다.", "MIN_MEMBER_LIMIT_NOT_MET");
 
     private final HttpStatus httpStatusCode;
     private final String errorMessage;

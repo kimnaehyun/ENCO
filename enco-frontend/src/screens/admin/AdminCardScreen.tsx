@@ -1,11 +1,14 @@
 // src/screens/admin/AdminCardScreen.tsx
-// 카드 추가 발급 — GroupCreateScreen 디자인 기반
+// 카드 추가 발급 — API 연동, PIN 제거, card-add 직접 호출
 import React, { useMemo, useState, useEffect } from 'react';
-import { Alert, Image, Pressable, ScrollView, View } from 'react-native'
-import Text from '@/components/typography';;
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, View } from 'react-native';
+import Text from '@/components/typography';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
+import { getMyGroups } from '../../services/groupService';
+import { cardAdd } from '../../services/paymentService';
+import { useAuthStore } from '../../store/useAuthStore';
 
 const TAG_OPTIONS = ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'];
 
@@ -13,6 +16,7 @@ export default function AdminCardScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const params = (route.params ?? {}) as CommonParams & {
+    accountId?: number;
     selectedCardId?: string;
     selectedCardImage?: string;
     selectedCardName?: string;
@@ -24,15 +28,47 @@ export default function AdminCardScreen() {
   const groupName = params.groupName ?? '모임명';
   const groupId = params.groupId;
 
-  // 총무 정보 (자동 입력)
+  // 총무 정보 (store에서 가져오기)
+  const user = useAuthStore(s => s.user);
+  const profile = useAuthStore(s => s.profile);
+
   const treasurer = useMemo(
     () => ({
-      name: '나기',
-      email: 'test@test.com',
-      phone: '010-1234-5678',
+      name: profile?.name ?? user ?? '',
+      email: profile?.email ?? '',
+      phone: profile?.phoneNumber ?? '',
     }),
-    []
+    [profile, user]
   );
+
+  // accountId: params로 받거나 API에서 조회
+  const [accountId, setAccountId] = useState<number | null>(
+    params.accountId ?? null
+  );
+  const [accountLoading, setAccountLoading] = useState(!params.accountId);
+
+  useEffect(() => {
+    if (accountId) return;
+    const fetchAccountId = async () => {
+      try {
+        const res = await getMyGroups();
+        const group = res.result.find(
+          (g) => String(g.groupId) === String(groupId)
+        );
+        if (group) {
+          setAccountId(group.account.accountId);
+          console.log('[AdminCard] accountId 조회 성공:', group.account.accountId);
+        } else {
+          console.warn('[AdminCard] 해당 groupId에 대한 모임을 찾을 수 없음:', groupId);
+        }
+      } catch (err) {
+        console.warn('[AdminCard] accountId 조회 실패:', err);
+      } finally {
+        setAccountLoading(false);
+      }
+    };
+    fetchAccountId();
+  }, [groupId, accountId]);
 
   // 상태 관리
   const [selectedTags, setSelectedTags] = useState<string[]>(
@@ -53,6 +89,7 @@ export default function AdminCardScreen() {
   const [viewAllPressed, setViewAllPressed] = useState(
     params.viewAllPressed ?? false
   );
+  const [submitting, setSubmitting] = useState(false);
 
   // 카드 선택 후 돌아왔을 때 params 동기화
   useEffect(() => {
@@ -66,6 +103,9 @@ export default function AdminCardScreen() {
     if (route.params?.selectedTags) {
       setSelectedTags(route.params.selectedTags);
     }
+    if (route.params?.accountId) {
+      setAccountId(route.params.accountId);
+    }
   }, [
     route.params?.selectedCardId,
     route.params?.selectedCardImage,
@@ -73,6 +113,7 @@ export default function AdminCardScreen() {
     route.params?.recommendPressed,
     route.params?.viewAllPressed,
     route.params?.selectedTags,
+    route.params?.accountId,
   ]);
 
   const toggleTag = (tag: string) => {
@@ -89,6 +130,7 @@ export default function AdminCardScreen() {
     navigation.navigate('AdminCardRecommend', {
       groupId,
       groupName,
+      accountId,
       tags: selectedTags,
       prevTags: selectedTags,
       prevRecommendPressed: true,
@@ -100,6 +142,7 @@ export default function AdminCardScreen() {
     navigation.navigate('AdminCardRecommend', {
       groupId,
       groupName,
+      accountId,
       tags: [],
       prevTags: selectedTags,
       prevRecommendPressed: recommendPressed,
@@ -107,22 +150,43 @@ export default function AdminCardScreen() {
     });
   };
 
-  const handleSubmit = () => {
-    if (selectedTags.length === 0) {
-      Alert.alert('안내', '모임 성향을 1개 이상 선택해주세요.');
-      return;
-    }
+  // 카드 발급 신청 — PIN 없이 바로 card-add API 호출
+  const handleSubmit = async () => {
     if (!selectedCardId) {
       Alert.alert('안내', '카드를 선택해주세요.');
       return;
     }
-    navigation.navigate('AdminCardPin', {
-      groupId,
-      groupName,
-      tags: selectedTags,
-      selectedCardId,
-      selectedCardName,
-    });
+    if (!accountId) {
+      Alert.alert('오류', '모임 계좌 정보를 불러오지 못했습니다. 다시 시도해주세요.');
+      return;
+    }
+
+    const cardProductId = Number(selectedCardId);
+    if (isNaN(cardProductId)) {
+      Alert.alert('오류', '카드 정보가 올바르지 않습니다.');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      console.log('[AdminCard] card-add 요청:', { accountId, cardProductId });
+      const res = await cardAdd({ accountId, cardProductId });
+      console.log('[AdminCard] card-add 응답:', JSON.stringify(res, null, 2));
+
+      navigation.navigate('AdminCardDone', {
+        groupId,
+        groupName,
+        cardId: res.result.cardId,
+        cardNumber: res.result.cardNumber,
+        frontImageUrl: res.result.frontImageUrl,
+      });
+    } catch (err: any) {
+      console.error('[AdminCard] card-add 실패:', err?.response?.data ?? err);
+      const errorMsg = err?.response?.data?.message ?? '카드 발급에 실패했습니다. 다시 시도해주세요.';
+      Alert.alert('발급 실패', errorMsg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -132,21 +196,15 @@ export default function AdminCardScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* 헤더 */}
-        <Text variant="h2" color="dark"
-          
-         style={{ marginBottom: 6 }}>
+        <Text variant="h2" color="dark" style={{ marginBottom: 6 }}>
           카드 추가 발급
         </Text>
-        <Text variant="caption" color="placeholder"
-          
-         style={{ marginBottom: 28 }}>
+        <Text variant="caption" color="placeholder" style={{ marginBottom: 28 }}>
           {groupName}
         </Text>
 
         {/* 총무 정보(자동 입력) */}
-        <Text variant="bodySm" color="muted"
-          
-         style={{ marginBottom: 8 }}>
+        <Text variant="bodySm" color="muted" style={{ marginBottom: 8 }}>
           총무 정보(자동 입력)
         </Text>
         <View
@@ -178,14 +236,10 @@ export default function AdminCardScreen() {
                 borderBottomColor: '#F3F4F6',
               }}
             >
-              <Text variant="bodySm" color="placeholder"
-                
-              >
+              <Text variant="bodySm" color="placeholder">
                 {item.label}
               </Text>
-              <Text variant="bodySm" color="dark"
-                
-              >
+              <Text variant="bodySm" color="dark">
                 {item.value}
               </Text>
             </View>
@@ -193,9 +247,7 @@ export default function AdminCardScreen() {
         </View>
 
         {/* 모임 성향 태그 */}
-        <Text variant="bodySm" color="muted"
-          
-         style={{ marginBottom: 12 }}>
+        <Text variant="bodySm" color="muted" style={{ marginBottom: 12 }}>
           모임 성향(옵션 태그)
         </Text>
         <View
@@ -226,18 +278,14 @@ export default function AdminCardScreen() {
                   elevation: selected ? 4 : 1,
                 }}
               >
-                <Text variant="bodyMd" weight="bold" color="white"
-                  
-                >
+                <Text variant="bodyMd" weight="bold" color="white">
                   {tag}
                 </Text>
               </Pressable>
             );
           })}
         </View>
-        <Text variant="tiny" color="placeholder" align="center"
-          
-         style={{ marginBottom: 28 }}>
+        <Text variant="tiny" color="placeholder" align="center" style={{ marginBottom: 28 }}>
           중복 선택 가능
         </Text>
 
@@ -257,9 +305,7 @@ export default function AdminCardScreen() {
               elevation: 1,
             }}
           >
-            <Text variant="caption" color="placeholder"
-              
-             style={{ marginBottom: 12 }}>
+            <Text variant="caption" color="placeholder" style={{ marginBottom: 12 }}>
               선택한 카드
             </Text>
             <Image
@@ -267,10 +313,18 @@ export default function AdminCardScreen() {
               style={{ width: '60%', aspectRatio: 2, borderRadius: 12 }}
               resizeMode="contain"
             />
-            <Text variant="bodySm" weight="bold" color="dark"
-              
-             style={{ marginTop: 10 }}>
+            <Text variant="bodySm" weight="bold" color="dark" style={{ marginTop: 10 }}>
               {selectedCardName}
+            </Text>
+          </View>
+        )}
+
+        {/* accountId 로딩 표시 */}
+        {accountLoading && (
+          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+            <ActivityIndicator size="small" color="#1428A0" />
+            <Text variant="caption" color="placeholder" style={{ marginTop: 6 }}>
+              계좌 정보 확인 중...
             </Text>
           </View>
         )}
@@ -292,9 +346,7 @@ export default function AdminCardScreen() {
                 alignItems: 'center',
               }}
             >
-              <Text variant="bodySm" weight="bold" color="white"
-                
-              >
+              <Text variant="bodySm" weight="bold" color="white">
                 카드 추천 받기
               </Text>
             </Pressable>
@@ -313,31 +365,33 @@ export default function AdminCardScreen() {
                 alignItems: 'center',
               }}
             >
-              <Text variant="bodySm" weight="bold" color="white"
-                
-              >
+              <Text variant="bodySm" weight="bold" color="white">
                 전체 카드 보기
               </Text>
             </Pressable>
           </View>
 
-          {/* 발급 신청 — 카드 선택 후에만 표시 */}
+          {/* 발급 신청 — 카드 선택 후에만 표시, PIN 없이 바로 API 호출 */}
           {selectedCardId && (
             <Pressable
               onPress={handleSubmit}
+              disabled={submitting || accountLoading}
               style={{
                 height: 54,
                 borderRadius: 16,
                 backgroundColor: '#1428A0',
                 justifyContent: 'center',
                 alignItems: 'center',
+                opacity: submitting || accountLoading ? 0.5 : 1,
               }}
             >
-              <Text weight="bold" color="white"
-                
-              >
-                카드 발급 신청하기
-              </Text>
+              {submitting ? (
+                <ActivityIndicator color="#FFFFFF" />
+              ) : (
+                <Text weight="bold" color="white">
+                  카드 발급 신청하기
+                </Text>
+              )}
             </Pressable>
           )}
         </View>
