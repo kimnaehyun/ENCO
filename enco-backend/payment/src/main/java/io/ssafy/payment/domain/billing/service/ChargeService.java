@@ -130,6 +130,8 @@ public class ChargeService {
                     });
         }
 
+        sendDuesCreatedNotification(groupId, targets);
+
         return ChargeResponseDto.of(charge, targets);
     }
 
@@ -186,6 +188,32 @@ public class ChargeService {
                         prepayment.deduct(payAmount);
                         userPrepaymentRepository.save(prepayment);
                     });
+        }
+
+        sendDuesCreatedNotification(groupId, targets);
+    }
+
+    private void sendDuesCreatedNotification(Long groupId, List<ChargeTarget> targets) {
+        try {
+            List<Map<String, Object>> targetInfos = targets.stream()
+                    .map(t -> Map.of(
+                            "userId", (Object) t.getUserId(),
+                            "chargeId", (Object) t.getCharge().getId(),
+                            "chargeTargetId", (Object) t.getId(),
+                            "amount", (Object) t.getAmount()
+                    ))
+                    .toList();
+
+            String displayName = targets.get(0).getCharge().getDisplayName();
+
+            String payload = objectMapper.writeValueAsString(Map.of(
+                    "groupId", groupId,
+                    "displayName", displayName != null ? displayName : "",
+                    "targets", targetInfos
+            ));
+            kafkaProducerService.send("dues-created", payload);
+        } catch (Exception e) {
+            log.error("dues-created Kafka 전송 실패 - groupId: {}", groupId, e);
         }
     }
 

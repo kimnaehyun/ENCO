@@ -4,5 +4,6 @@ public enum NotificationType {
     CHAT_MESSAGE,
     SYSTEM,
     SETTLEMENT_REMINDER,
-    DUES_REMINDER
+    DUES_REMINDER,
+    DUES_CREATED
 }
