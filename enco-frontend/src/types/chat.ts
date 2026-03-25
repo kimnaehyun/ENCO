@@ -76,18 +76,21 @@ type ChatItem =
     };
 
 // API 응답의 단일 메시지 형태
+// 서버는 messageType/id를 사용하지만, 일부 레거시 응답은 type/messageId를 사용
 type ApiMessage = {
-  messageId: string;
-  type: 'CHAT' | 'CHATBOT_RESPONSE' | string;
-  roomId: number;
-  senderName: string;
-  senderImageUrl: string;
-  content: string;
-  createdAt: string;
-  // CHAT 타입에만 존재할 수 있는 필드
+  // 서버 실제 필드
+  id?: string;
+  messageType?: 'CHAT' | 'BOT_QUESTION' | 'BOT_ANSWER' | 'SYSTEM' | string;
+  roomId: number | string;
   senderId?: number;
-  metadata?: null;
-  messageType?: string;
+  content: string;
+  metadata?: null | Record<string, any>;
+  createdAt: string;
+  // 레거시 호환 필드
+  messageId?: string;
+  type?: 'CHAT' | 'CHATBOT_RESPONSE' | string;
+  senderName?: string;
+  senderImageUrl?: string;
 };
 
 export interface ChatMessageListProps {

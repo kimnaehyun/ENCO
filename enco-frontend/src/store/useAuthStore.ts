@@ -7,7 +7,7 @@ export interface UserProfile {
   birthDay: string;
   gender: 'M' | 'W';
   address: string;
-  profileUrl: string;
+  profileUrl: string | number;
 }
 
 interface AuthState {

@@ -13,16 +13,16 @@ export default function MyPageScreen({ navigation }: any) {
 
   const [loading, setLoading] = useState(false);
 
-  // 프로필이 store에 없으면 API 호출
+  // 프로필이 store에 없으면 API 호출 (로그인 응답에서 이미 저장된 경우 스킵)
   useEffect(() => {
     if (!profile) {
       setLoading(true);
       fetchMyPage()
         .then(data => setProfile(data))
-        .catch(err => console.warn('마이페이지 조회 실패:', err))
+        .catch(() => {}) // 마이페이지 API 미지원 시 무시
         .finally(() => setLoading(false));
     }
-  }, []);
+  }, [profile]);
 
   const handleLogout = () => {
     Alert.alert('로그아웃', '정말 로그아웃 하시겠어요?', [

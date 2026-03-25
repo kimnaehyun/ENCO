@@ -19,3 +19,25 @@ chatService.interceptors.request.use(
   },
   error => Promise.reject(error),
 );
+
+// ── 햄코 PICK 챗봇 질문 (POST /api/v1/chatbot/ask) ──
+export type AskChatbotRequest = {
+  roomId: string;
+  senderId: number;
+  message: string;
+};
+
+export type AskChatbotResponse = {
+  message: string;
+  result?: any;
+};
+
+export async function askChatbot(
+  payload: AskChatbotRequest,
+): Promise<AskChatbotResponse> {
+  const response = await chatService.post<AskChatbotResponse>(
+    'api/v1/chatbot/ask',
+    payload,
+  );
+  return response.data;
+}

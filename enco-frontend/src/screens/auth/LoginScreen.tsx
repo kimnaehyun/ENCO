@@ -14,6 +14,7 @@ export default function LoginScreen({
   const [loading, setLoading] = useState(false);
 
   const login = useAuthStore((s) => s.login);
+  const setProfile = useAuthStore((s) => s.setProfile);
 
   const handlePinComplete = async (pin: string) => {
     setLoading(true);
@@ -36,6 +37,18 @@ export default function LoginScreen({
         console.log('[Login] accessToken:', response.result.accessToken);
         await saveTokens(response.result.accessToken, "");
       }
+
+      // 로그인 응답에서 프로필 정보 바로 저장
+      const r = response.result;
+      setProfile({
+        name: r.name,
+        email: r.email ?? '',
+        phoneNumber: r.phoneNumber ?? '',
+        birthDay: '',
+        gender: 'M',
+        address: '',
+        profileUrl: r.profileImg ?? 0,
+      });
 
       // zustand에 사용자 이름 저장 → RootNavigator가 App으로 전환
       login(response.result.name);
