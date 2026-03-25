@@ -66,7 +66,7 @@ export default function AccommodationDetailPage() {
       <Header />
       <div className="page detail-page">
         <img
-          src={"https://ssafywte.site/" + accommodation.imageUrl || DEFAULT_IMAGE}
+          src={accommodation.imageUrl || DEFAULT_IMAGE}
           alt={accommodation.name}
           className="detail-image"
         />

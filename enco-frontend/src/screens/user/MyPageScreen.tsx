@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, View } from 'react-native'
 import Text from '@/components/typography';;
-import { images } from '../../types/images';
+import { images, getProfileImage } from '../../types/images';
 import { useAuthStore } from '../../store/useAuthStore';
 import { fetchMyPage } from '../../services/userService';
 import { clearTokens, clearDeviceToken } from '../../utils/tokenStorage';
@@ -91,7 +91,7 @@ export default function MyPageScreen({ navigation }: any) {
             }}
           >
             <Image
-              source={images.user}
+              source={getProfileImage(profile?.profileUrl)}
               style={{ width: '100%', height: '100%' }}
               resizeMode="cover"
             />
