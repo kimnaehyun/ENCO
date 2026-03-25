@@ -3,6 +3,7 @@ import React, {useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,21 +11,24 @@ import {
   View,
 } from 'react-native';
 import Text, {FONT_FAMILY, COLORS} from '@/components/typography';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import {CommonActions, useNavigation, useRoute} from '@react-navigation/native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import ScreenLayout from '../../components/ScreenLayout';
 import {getGroupMembers} from '../../services/groupService';
-import {createSettlement} from '../../services/receiptService';
+import {createSettlement, sendSettlementReminder} from '../../services/receiptService';
 import type {ReceiptDraft} from '../../types/receipt';
+import {getProfileImage} from '../../types/images';
 
 type SettleMember = {
   id: string;
   userId: number;
   name: string;
+  profileUrl?: string | number | null;
   isPaid: boolean;
 };
 
 type RouteParams = {
+  expenseId?: number;
   amount: number;
   storeName: string;
   date: string;
@@ -61,9 +65,13 @@ export default function SettleMemberSelectScreen() {
   const [displayName, setDisplayName] = useState(
     params.receiptDraft?.merchantName || params.storeName || '',
   );
-  const [memo, setMemo] = useState(params.memo || '');
+  const [memo, setMemo] = useState(isNewSettle ? '' : params.memo || '');
   const [receiverBankName, setReceiverBankName] = useState('');
   const [receiverAccountNumber, setReceiverAccountNumber] = useState('');
+  const [sendingReminder, setSendingReminder] = useState(false);
+  const handleReceiverAccountNumberChange = (value: string) => {
+    setReceiverAccountNumber(value.replace(/\D/g, ''));
+  };
 
   useEffect(() => {
     if (!isNewSettle) {
@@ -89,6 +97,7 @@ export default function SettleMemberSelectScreen() {
           id: String(member.userId),
           userId: member.userId,
           name: member.name?.trim() || `멤버 ${member.userId}`,
+          profileUrl: member.profileUrl ?? member.profileImg ?? null,
           isPaid: false,
         }));
 
@@ -151,10 +160,49 @@ export default function SettleMemberSelectScreen() {
       ? Math.ceil(amount / selectedParticipantIds.length)
       : 0;
   const bottomInset = Math.max(insets.bottom, 12);
-  const memberListContentStyle = useMemo(
-    () => [styles.memberListContent, {paddingBottom: 100 + bottomInset}],
+  const pageScrollContentStyle = useMemo(
+    () => [styles.pageScrollContent, {paddingBottom: bottomInset + 24}],
     [bottomInset],
   );
+
+  const navigateToCreatedSettlementDetail = (expenseId: number, receiptImageUrl?: string | null) => {
+    const detailParams = {
+      expenseId,
+      amount,
+      storeName: displayName.trim(),
+      date: params.date,
+      memo: memo.trim(),
+      receiptUri: receiptImageUrl || (params.receiptUri as string | null),
+      groupId: params.groupId,
+      groupName,
+    };
+
+    const state = navigation.getState?.();
+    const existingRoutes = Array.isArray(state?.routes) ? state.routes : [];
+    const preservedRoutes = existingRoutes.filter(
+      (route: {name?: string}) =>
+        route.name !== 'SettlementReceiptOcr' && route.name !== 'SettleMemberSelect',
+    );
+
+    if (preservedRoutes.length === 0) {
+      navigation.replace('SettleDetail', detailParams);
+      return;
+    }
+
+    navigation.dispatch(
+      CommonActions.reset({
+        ...state,
+        routes: [
+          ...preservedRoutes,
+          {
+            name: 'SettleDetail',
+            params: detailParams,
+          },
+        ],
+        index: preservedRoutes.length,
+      }),
+    );
+  };
 
   const handleRegister = () => {
     if (selectedParticipantIds.length === 0) {
@@ -182,11 +230,6 @@ export default function SettleMemberSelectScreen() {
       return;
     }
 
-    if (!memo.trim()) {
-      Alert.alert('안내', '메모를 입력하세요.');
-      return;
-    }
-
     if (!receiverBankName.trim()) {
       Alert.alert('안내', '수취 은행명을 입력하세요.');
       return;
@@ -208,11 +251,11 @@ export default function SettleMemberSelectScreen() {
             try {
               setSubmitting(true);
 
-              await createSettlement({
+              const response = await createSettlement({
                 groupId: numericGroupId,
                 imageUri: params.receiptUri as string,
                 receipt: params.receiptDraft as ReceiptDraft,
-                amount,
+                amount: perPerson,
                 receiverBankName: receiverBankName.trim(),
                 receiverAccountNumber: receiverAccountNumber.trim(),
                 displayName: displayName.trim(),
@@ -224,11 +267,10 @@ export default function SettleMemberSelectScreen() {
                 {
                   text: '확인',
                   onPress: () => {
-                    navigation.popToTop();
-                    navigation.navigate('GroupLedger', {
-                      groupId: params.groupId,
-                      groupName,
-                    });
+                    navigateToCreatedSettlementDetail(
+                      response.expenseId,
+                      response.receiptImageUrl,
+                    );
                   },
                 },
               ]);
@@ -272,8 +314,35 @@ export default function SettleMemberSelectScreen() {
         {text: '취소', style: 'cancel'},
         {
           text: '보내기',
-          onPress: () => {
-            Alert.alert('완료', `미납자 ${unpaidCount}명에게 알림을 보냈습니다.`);
+          onPress: async () => {
+            const numericExpenseId = typeof params.expenseId === 'number' ? params.expenseId : NaN;
+
+            if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
+              Alert.alert('안내', '알림 전송에 필요한 정산 정보가 없습니다.');
+              return;
+            }
+
+            try {
+              setSendingReminder(true);
+              const response = await sendSettlementReminder(
+                numericGroupId,
+                numericExpenseId,
+              );
+              Alert.alert(
+                '완료',
+                `알림 요청 ${response.requestedCount}건 중 ${response.sentCount}건을 전송했습니다.` +
+                  (response.failedCount > 0 ? ` 실패 ${response.failedCount}건` : ''),
+              );
+            } catch (error: any) {
+              Alert.alert(
+                '알림 전송 실패',
+                error?.response?.data?.message ||
+                  error?.message ||
+                  '미납자 알림 전송 중 오류가 발생했습니다.',
+              );
+            } finally {
+              setSendingReminder(false);
+            }
           },
         },
       ],
@@ -286,7 +355,12 @@ export default function SettleMemberSelectScreen() {
   if (isNewSettle) {
     return (
       <ScreenLayout>
-        <View style={styles.container}>
+        <ScrollView
+          style={styles.container}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={pageScrollContentStyle}
+          keyboardShouldPersistTaps="handled"
+        >
           <View className="flex-row items-center justify-between mb-5">
             <Text style={styles.headerTitle}>정산 인원 선택</Text>
             <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
@@ -305,6 +379,14 @@ export default function SettleMemberSelectScreen() {
                 1인당 {perPerson.toLocaleString()}원 · {selectedParticipantIds.length}명
               </Text>
             )}
+          </View>
+
+          <View style={styles.guideCard}>
+            <Text style={styles.guideTitle}>정산 등록 안내</Text>
+            <Text style={styles.guideText}>
+              영수증 검수값을 바탕으로 표시명만 기본 입력했습니다. 메모와 입금 계좌를 확인한 뒤,
+              정산을 요청할 인원을 선택하세요.
+            </Text>
           </View>
 
           <View style={styles.formCard}>
@@ -348,85 +430,106 @@ export default function SettleMemberSelectScreen() {
               <Text style={styles.formLabel}>수취 계좌번호</Text>
               <TextInput
                 value={receiverAccountNumber}
-                onChangeText={setReceiverAccountNumber}
+                onChangeText={handleReceiverAccountNumberChange}
                 placeholder="예: 111-11111111-11"
                 placeholderTextColor="#9CA3AF"
                 autoCapitalize="none"
+                keyboardType="number-pad"
+                maxLength={20}
                 style={styles.input}
               />
             </View>
           </View>
 
-          <Pressable onPress={selectAll} className="flex-row items-center mb-4" style={styles.selectAllRow}>
-            <View style={[
-              styles.checkbox,
-              selectableMembers.length > 0 &&
-                selectedIds.size === selectableMembers.length &&
-                styles.checkboxSelected,
-            ]}>
-              <Text style={styles.checkMark}>✓</Text>
+          <View style={styles.memberSectionCard}>
+            <View style={styles.memberSectionHeader}>
+              <View>
+                <Text style={styles.memberSectionTitle}>정산 인원 선택</Text>
+                <Text style={styles.memberSectionHelper}>
+                  선택한 인원에게 1인당 {perPerson.toLocaleString()}원이 청구됩니다.
+                </Text>
+              </View>
+              <View style={styles.selectionBadge}>
+                <Text style={styles.selectionBadgeText}>{selectedParticipantIds.length}명 선택</Text>
+              </View>
             </View>
-            <Text style={styles.selectAllText}>전체 선택</Text>
-          </Pressable>
 
-          <ScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={memberListContentStyle}
-            style={styles.memberListScroll}
-          >
-            {loadingMembers ? (
-              <View style={styles.statusCard}>
-                <ActivityIndicator color="#1428A0" />
-                <Text style={styles.statusText}>정산 대상자를 불러오는 중...</Text>
+            <Pressable onPress={selectAll} className="flex-row items-center mb-4" style={styles.selectAllRow}>
+              <View style={[
+                styles.checkbox,
+                selectableMembers.length > 0 &&
+                  selectedIds.size === selectableMembers.length &&
+                  styles.checkboxSelected,
+              ]}>
+                <Text style={styles.checkMark}>✓</Text>
               </View>
-            ) : memberLoadError ? (
-              <View style={styles.statusCard}>
-                <Text style={styles.statusText}>{memberLoadError}</Text>
-              </View>
-            ) : selectableMembers.length === 0 ? (
-              <View style={styles.statusCard}>
-                <Text style={styles.statusText}>선택할 수 있는 정산 대상자가 없습니다.</Text>
-              </View>
-            ) : (
-              selectableMembers.map(member => {
-                const isSelected = selectedIds.has(member.id);
-                return (
-                  <Pressable
-                    key={member.id}
-                    onPress={() => toggleMember(member.id)}
-                    className="flex-row items-center"
-                    style={styles.newMemberRow}
-                  >
-                    <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                      <Text style={styles.checkMark}>✓</Text>
-                    </View>
+              <Text style={styles.selectAllText}>전체 선택</Text>
+            </Pressable>
 
-                    <View
-                      style={[
-                        styles.newMemberAvatar,
-                        isSelected && styles.newMemberAvatarSelected,
-                      ]}>
-                      <Text style={styles.memberEmoji}>🐹</Text>
-                    </View>
+            <View style={styles.memberListSection}>
+              {loadingMembers ? (
+                <View style={styles.statusCard}>
+                  <ActivityIndicator color="#1428A0" />
+                  <Text style={styles.statusText}>정산 대상자를 불러오는 중...</Text>
+                </View>
+              ) : memberLoadError ? (
+                <View style={styles.statusCard}>
+                  <Text style={styles.statusText}>{memberLoadError}</Text>
+                </View>
+              ) : selectableMembers.length === 0 ? (
+                <View style={styles.statusCard}>
+                  <Text style={styles.statusText}>선택할 수 있는 정산 대상자가 없습니다.</Text>
+                </View>
+              ) : (
+                selectableMembers.map(member => {
+                  const isSelected = selectedIds.has(member.id);
+                  return (
+                    <Pressable
+                      key={member.id}
+                      onPress={() => toggleMember(member.id)}
+                      className="flex-row items-center"
+                      style={[styles.newMemberRow, isSelected && styles.newMemberRowSelected]}
+                    >
+                      <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                        <Text style={styles.checkMark}>✓</Text>
+                      </View>
 
-                    <Text
-                      style={[
-                        styles.newMemberName,
-                        !isSelected && styles.newMemberNameInactive,
-                      ]}>
-                      {member.name}
-                    </Text>
+                      <View
+                        style={[
+                          styles.newMemberAvatar,
+                          isSelected && styles.newMemberAvatarSelected,
+                        ]}>
+                        <Image
+                          source={getProfileImage(member.profileUrl)}
+                          style={styles.memberAvatarImage}
+                          resizeMode="cover"
+                        />
+                      </View>
 
-                    {isSelected && selectedParticipantIds.length > 0 ? (
-                      <Text style={styles.perPersonAmount}>
-                        {perPerson.toLocaleString()}원
-                      </Text>
-                    ) : null}
-                  </Pressable>
-                );
-              })
-            )}
-          </ScrollView>
+                      <View style={styles.memberTextWrap}>
+                        <Text
+                          style={[
+                            styles.newMemberName,
+                            !isSelected && styles.newMemberNameInactive,
+                          ]}>
+                          {member.name}
+                        </Text>
+                        <Text style={styles.newMemberCaption}>
+                          {isSelected ? '정산 요청 대상에 포함됨' : '탭해서 정산 요청 대상에 추가'}
+                        </Text>
+                      </View>
+
+                      {isSelected && selectedParticipantIds.length > 0 ? (
+                        <Text style={styles.perPersonAmount}>
+                          {perPerson.toLocaleString()}원
+                        </Text>
+                      ) : null}
+                    </Pressable>
+                  );
+                })
+              )}
+            </View>
+          </View>
 
           <View style={[styles.bottomBar, {paddingBottom: bottomInset}]}>
             <Pressable
@@ -457,7 +560,7 @@ export default function SettleMemberSelectScreen() {
               </Text>
             </Pressable>
           </View>
-        </View>
+        </ScrollView>
       </ScreenLayout>
     );
   }
@@ -467,7 +570,11 @@ export default function SettleMemberSelectScreen() {
   // ═══════════════════════════════════════
   return (
     <ScreenLayout>
-      <View style={styles.container}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={pageScrollContentStyle}
+      >
         <View className="flex-row items-center justify-between mb-5">
           <Text style={styles.headerTitle}>정산 현황</Text>
           <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
@@ -500,11 +607,7 @@ export default function SettleMemberSelectScreen() {
           </View>
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={memberListContentStyle}
-          style={styles.memberListScroll}
-        >
+        <View style={styles.memberListSection}>
           {[...members]
             .sort((a, b) => (a.isPaid === b.isPaid ? 0 : a.isPaid ? 1 : -1))
             .map(member => (
@@ -520,7 +623,11 @@ export default function SettleMemberSelectScreen() {
                       borderColor: member.isPaid ? '#22C55E' : '#EF4444',
                     },
                   ]}>
-                  <Text style={styles.existingMemberEmoji}>🐹</Text>
+                  <Image
+                    source={getProfileImage(member.profileUrl)}
+                    style={styles.memberAvatarImage}
+                    resizeMode="cover"
+                  />
                 </View>
 
                 <View style={styles.existingMemberInfo}>
@@ -541,23 +648,29 @@ export default function SettleMemberSelectScreen() {
                 </View>
               </View>
             ))}
-        </ScrollView>
+        </View>
 
         <View style={[styles.bottomBar, {paddingBottom: bottomInset}]}>
           <Pressable
             onPress={onSendNotification}
+            disabled={unpaidCount === 0 || sendingReminder}
             className="rounded-2xl py-4 items-center justify-center"
-            style={[styles.notifyButton, unpaidCount === 0 && styles.notifyButtonDone]}
+            style={[
+              styles.notifyButton,
+              (unpaidCount === 0 || sendingReminder) && styles.notifyButtonDone,
+            ]}
           >
             <Text style={styles.notifyButtonText}>
-              {unpaidCount > 0
+              {sendingReminder
+                ? '알림 전송 중...'
+                : unpaidCount > 0
                 ? `미납자 ${unpaidCount}명에게 알림 보내기`
                 : '전원 납부 완료'}
             </Text>
           </Pressable>
         </View>
 
-      </View>
+      </ScrollView>
     </ScreenLayout>
   );
 }
@@ -565,6 +678,9 @@ export default function SettleMemberSelectScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  pageScrollContent: {
+    paddingBottom: 24,
   },
 
   // ── 헤더 ──────────────────────────────────
@@ -594,7 +710,9 @@ const styles = StyleSheet.create({
   },
   summaryAmount: {
     fontSize: 28,
+    lineHeight: 36,
     fontFamily: FONT_FAMILY.bold,
+    paddingVertical: 2,
     color: COLORS.error,
     textAlign: 'right',
   },
@@ -604,6 +722,27 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.medium,
     textAlign: 'right',
     marginTop: 4,
+  },
+  guideCard: {
+    backgroundColor: '#EEF2FF',
+    borderRadius: 20,
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  guideTitle: {
+    fontSize: 15,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.brand,
+    marginBottom: 6,
+  },
+  guideText: {
+    fontSize: 13,
+    lineHeight: 20,
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
   },
   formCard: {
     backgroundColor: COLORS.white,
@@ -655,7 +794,9 @@ const styles = StyleSheet.create({
   },
   summaryTotalAmount: {
     fontSize: 22,
+    lineHeight: 30,
     fontFamily: FONT_FAMILY.bold,
+    paddingVertical: 1,
     color: COLORS.dark,
   },
   summaryPerPersonBlue: {
@@ -691,6 +832,47 @@ const styles = StyleSheet.create({
   selectAllRow: {
     gap: 8,
   },
+  memberSectionCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    marginBottom: 16,
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  memberSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 14,
+    gap: 12,
+  },
+  memberSectionTitle: {
+    fontSize: 16,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
+    marginBottom: 4,
+  },
+  memberSectionHelper: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  selectionBadge: {
+    backgroundColor: '#EEF2FF',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+  },
+  selectionBadgeText: {
+    fontSize: 12,
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.bold,
+  },
   checkbox: {
     width: 24,
     height: 24,
@@ -714,12 +896,9 @@ const styles = StyleSheet.create({
   },
 
   // ── 멤버 리스트 (공통) ────────────────────
-  memberListScroll: {
-    flex: 1,
-  },
-  memberListContent: {
-    paddingBottom: 100,
+  memberListSection: {
     gap: 12,
+    marginBottom: 16,
   },
   statusCard: {
     backgroundColor: COLORS.white,
@@ -740,6 +919,16 @@ const styles = StyleSheet.create({
   // ── 새 정산 멤버 행 ───────────────────────
   newMemberRow: {
     gap: 12,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  newMemberRowSelected: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#C7D2FE',
   },
   newMemberAvatar: {
     width: 48,
@@ -750,22 +939,32 @@ const styles = StyleSheet.create({
     borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
   newMemberAvatarSelected: {
     backgroundColor: '#EEF2FF',
     borderColor: '#1428A0',
   },
-  memberEmoji: {
-    fontSize: 22,
+  memberAvatarImage: {
+    width: '100%',
+    height: '100%',
   },
   newMemberName: {
     fontSize: 16,
     fontFamily: FONT_FAMILY.bold,
     color: COLORS.dark,
+  },
+  memberTextWrap: {
     flex: 1,
   },
   newMemberNameInactive: {
     color: COLORS.placeholder,
+  },
+  newMemberCaption: {
+    fontSize: 12,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+    marginTop: 3,
   },
   perPersonAmount: {
     fontSize: 14,
@@ -784,9 +983,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  existingMemberEmoji: {
-    fontSize: 28,
+    overflow: 'hidden',
   },
   existingMemberInfo: {
     flex: 1,
@@ -817,6 +1014,13 @@ const styles = StyleSheet.create({
   bottomBar: {
     paddingTop: 12,
     paddingBottom: 8,
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    paddingHorizontal: 16,
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
   },
   registerButton: {
     backgroundColor: '#1428A0',

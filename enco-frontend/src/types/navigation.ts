@@ -134,6 +134,7 @@ export type GroupStackParamList = {
     | { imageUri?: string; groupName?: string; groupId?: string; transactionId: number }
     | undefined;
   SettleDetail: {
+    expenseId?: number;
     amount: number;
     storeName: string;
     date: string;
@@ -217,6 +218,7 @@ export type HomeStackParamList = {
     groupName: string;
   };
   SettleDetail: {
+    expenseId?: number;
     amount: number;
     storeName: string;
     date: string;

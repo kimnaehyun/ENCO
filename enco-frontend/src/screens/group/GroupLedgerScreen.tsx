@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, View, Platform, PermissionsAndroid } from 'react-native'
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
 import {
@@ -139,28 +139,60 @@ export default function GroupLedgerScreen() {
   const [paidAmount, setPaidAmount] = useState(0);
   const [pointAmount, setPointAmount] = useState(0);
 
-  useEffect(() => {
-    const fetchLedgerSummary = async () => {
-      try {
-        console.log('ledger groupId 확인:', groupId);
+  const fetchLedgerSummary = useCallback(async () => {
+    try {
+      console.log('ledger groupId 확인:', groupId);
 
-        const reportData = await getGroupDashboardReport(groupId);
-        console.log('모임비 대시보드 조회 성공:', reportData);
-        console.log('모임비 대시보드 result:', reportData.result);
+      const reportData = await getGroupDashboardReport(groupId);
+      console.log('모임비 대시보드 조회 성공:', reportData);
+      console.log('모임비 대시보드 result:', reportData.result);
 
-        const result = reportData.result;
-        setBalance(result.balance ?? 0);
-        setPaidAmount(result.paidAmount ?? 0);
-        setPointAmount(result.pointAmount ?? 0);
-      } catch (error: any) {
-        console.error('모임비 대시보드 조회 실패:', error);
-        console.error('error.response?.status:', error?.response?.status);
-        console.error('error.response?.data:', error?.response?.data);
-      }
-    };
-
-    fetchLedgerSummary();
+      const result = reportData.result;
+      setBalance(result.balance ?? 0);
+      setPaidAmount(result.paidAmount ?? 0);
+      setPointAmount(result.pointAmount ?? 0);
+    } catch (error: any) {
+      console.error('모임비 대시보드 조회 실패:', error);
+      console.error('error.response?.status:', error?.response?.status);
+      console.error('error.response?.data:', error?.response?.data);
+    }
   }, [groupId]);
+
+  const fetchTransactions = useCallback(async () => {
+    const numericGroupId = groupId ? Number(groupId) : NaN;
+    if (!Number.isFinite(numericGroupId)) return;
+
+    const params = { sort: 'LATEST' as const, type: 'ALL' as const, size: 20 };
+
+    console.log('[GroupTransactions] groupId:', numericGroupId);
+    console.log('[GroupTransactions] params:', params);
+
+    setIsLoadingTransactions(true);
+    setTransactionError(null);
+
+    try {
+      const result = await getGroupTransactions(numericGroupId, params);
+      console.log('[GroupTransactions] success:', result);
+      console.log('[GroupTransactions] items:', result.result.items);
+      console.log('[GroupTransactions] nextCursor:', result.result.nextCursor);
+      console.log('[GroupTransactions] hasNext:', result.result.hasNext);
+
+      setTransactions(result.result.items);
+      setNextCursor(result.result.nextCursor);
+      setHasNext(result.result.hasNext);
+    } catch (error: any) {
+      console.error('[GroupTransactions] failed:', error);
+      console.error('[GroupTransactions] status:', error?.response?.status);
+      console.error('[GroupTransactions] data:', error?.response?.data);
+      setTransactionError('거래내역을 불러오지 못했습니다.');
+    } finally {
+      setIsLoadingTransactions(false);
+    }
+  }, [groupId]);
+
+  useEffect(() => {
+    fetchLedgerSummary();
+  }, [fetchLedgerSummary]);
 
   // ── 거래내역 API state ──
   const [transactions, setTransactions] = useState<GroupTransactionItem[]>([]);
@@ -208,40 +240,15 @@ export default function GroupLedgerScreen() {
 
   // ── 거래내역 최초 조회 ──
   useEffect(() => {
-    const numericGroupId = groupId ? Number(groupId) : NaN;
-    if (!Number.isFinite(numericGroupId)) return;
-
-    const fetchTransactions = async () => {
-      const params = { sort: 'LATEST' as const, type: 'ALL' as const, size: 20 };
-
-      console.log('[GroupTransactions] groupId:', numericGroupId);
-      console.log('[GroupTransactions] params:', params);
-
-      setIsLoadingTransactions(true);
-      setTransactionError(null);
-
-      try {
-        const result = await getGroupTransactions(numericGroupId, params);
-        console.log('[GroupTransactions] success:', result);
-        console.log('[GroupTransactions] items:', result.result.items);
-        console.log('[GroupTransactions] nextCursor:', result.result.nextCursor);
-        console.log('[GroupTransactions] hasNext:', result.result.hasNext);
-
-        setTransactions(result.result.items);
-        setNextCursor(result.result.nextCursor);
-        setHasNext(result.result.hasNext);
-      } catch (error: any) {
-        console.error('[GroupTransactions] failed:', error);
-        console.error('[GroupTransactions] status:', error?.response?.status);
-        console.error('[GroupTransactions] data:', error?.response?.data);
-        setTransactionError('거래내역을 불러오지 못했습니다.');
-      } finally {
-        setIsLoadingTransactions(false);
-      }
-    };
-
     fetchTransactions();
-  }, [groupId]);
+  }, [fetchTransactions]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchLedgerSummary();
+      fetchTransactions();
+    }, [fetchLedgerSummary, fetchTransactions]),
+  );
 
   // ── PDF 생성 및 저장 ──
   const handleExportPDF = useCallback(async () => {
@@ -495,6 +502,17 @@ export default function GroupLedgerScreen() {
                         referenceType: it.referenceType,
                         isAdmin,
                       });
+                    } else if (it.referenceType === 'EXPENSE') {
+                      navigation.navigate('SettleDetail', {
+                        expenseId: it.referenceId,
+                        amount: it.amount,
+                        storeName: it.title,
+                        date: it.transactionDate.slice(0, 10),
+                        memo: '',
+                        receiptUri: null,
+                        groupName: params.groupName ?? groupName,
+                        groupId: params.groupId,
+                      });
                     } else {
                       Alert.alert('준비 중', '해당 거래 유형의 상세 내역은 준비 중입니다.');
                     }
@@ -515,7 +533,9 @@ export default function GroupLedgerScreen() {
                           </Text>
                         </View>
                       </View>
-                      <Text style={styles.ledgerItemTitle}>{it.title}</Text>
+                      <Text style={styles.ledgerItemTitle} numberOfLines={1} ellipsizeMode="tail">
+                        {it.title}
+                      </Text>
                     </View>
                     <View style={styles.ledgerItemRight}>
                       <Text style={[
@@ -900,6 +920,7 @@ const styles = StyleSheet.create({
   },
   ledgerItemLeft: {
     flex: 1,
+    minWidth: 0,
     marginRight: 12,
   },
   ledgerItemTopRow: {
@@ -927,6 +948,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.dark,
     fontFamily: FONT_FAMILY.bold,
+    flexShrink: 1,
   },
   ledgerItemMemo: {
     fontSize: 12,
@@ -935,11 +957,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   ledgerItemRight: {
+    minWidth: 124,
     alignItems: 'flex-end',
+    flexShrink: 0,
   },
   ledgerItemAmount: {
     fontSize: 18,
     fontFamily: FONT_FAMILY.bold,
+    textAlign: 'right',
   },
   ledgerItemBalance: {
     fontSize: 12,

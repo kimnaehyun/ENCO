@@ -13,9 +13,6 @@ import io.ssafy.payment.domain.card.entity.Card;
 import io.ssafy.payment.domain.card.entity.CardType;
 import io.ssafy.payment.domain.card.repository.CardProductRepository;
 import io.ssafy.payment.domain.card.repository.CardRepository;
-import io.ssafy.payment.domain.transaction.entity.TransactionHistory;
-import io.ssafy.payment.domain.transaction.entity.Type;
-import io.ssafy.payment.domain.transaction.entity.Direction;
 import io.ssafy.payment.domain.transaction.repository.TransactionHistoryRepository;
 import io.ssafy.payment.global.common.error.CustomException;
 import io.ssafy.payment.global.common.error.ErrorCode;
@@ -57,17 +54,6 @@ public class AccountService {
                     .build();
             Account savedAccount = accountRepository.save(account);
             log.info("[AccountService] Account created: accountId={}, groupId={}", savedAccount.getId(), request.groupId());
-
-            TransactionHistory history = TransactionHistory.builder()
-                    .accountId(savedAccount.getId())
-                    .amount(BigDecimal.ZERO)
-                    .balance(BigDecimal.ZERO)
-                    .type(Type.TRANSFER)
-                    .direction(Direction.IN)
-                    .category("ACCOUNT_OPEN")
-                    .memo("모임 통장 개설")
-                    .build();
-            transactionHistoryRepository.save(history);
 
             var cardProduct = cardProductRepository.findById(request.cardProductId())
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 카드 상품입니다."));
