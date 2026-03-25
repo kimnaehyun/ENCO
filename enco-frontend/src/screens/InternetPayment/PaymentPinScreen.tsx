@@ -33,6 +33,7 @@ export default function PaymentPinScreen() {
       console.log(body);
 
       await voteApi.create(body);
+      console.log('handlePinComplete 호출됨');
       Alert.alert('완료', '투표가 생성되었습니다.', [
         {
           text: '확인',

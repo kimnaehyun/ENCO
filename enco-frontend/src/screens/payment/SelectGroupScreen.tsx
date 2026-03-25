@@ -1,12 +1,13 @@
 import { View } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import GroupSelectItem from '../../components/internet/GroupSelectItem';
+import GroupSelectItem from '../../components/payment/GroupSelectItem';
 import Header from '../../components/internet/Header';
 import ScreenLayout from '../../components/ScreenLayout';
 import { authApi } from '@/services/authService';
 import { Group } from '@/types/payment';
 
-export default function SelectGroupScreen() {
+export default function SelectGroupScreen({ route }: any) {
+  const { paymentType } = route.params;
   const [groups, setGroups] = useState<Group[]>([]);
 
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function SelectGroupScreen() {
             key={item.groupId}
             selectedGroupId={Number(item.groupId)}
             title={item.groupName}
+            paymentType={paymentType}
           />
         ))}
       </View>

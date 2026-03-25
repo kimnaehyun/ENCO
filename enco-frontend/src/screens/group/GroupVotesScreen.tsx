@@ -31,8 +31,10 @@ export default function GroupVotesScreen({
     const fetchVote = async () => {
       try {
         const response = await voteApi.list(Number(groupId));
-        setVotes(response.data.result);
-        console.log(response.data.result);
+        const sorted = [...response.data.result].sort(
+          (a, b) => b.voteId - a.voteId,
+        );
+        setVotes(sorted);
       } catch (e) {
         console.log(e);
       }
@@ -56,7 +58,7 @@ export default function GroupVotesScreen({
 
   const renderExpandedContent = (item: Vote) => {
     const ongoing = item.status === 'VOTING';
-    const handleVote = async (choice: 'APPROVE' | 'REJECTED') => {
+    const handleVote = async (choice: 'APPROVE' | 'REJECT') => {
       try {
         await castVote(choice, item.voteId);
         const response = await voteApi.list(Number(groupId));
@@ -94,7 +96,7 @@ export default function GroupVotesScreen({
             </Pressable>
 
             <Pressable
-              onPress={() => handleVote('REJECTED')}
+              onPress={() => handleVote('REJECT')}
               className="flex-1 rounded-2xl py-3 items-center justify-center"
               style={styles.disagreeButton}
             >

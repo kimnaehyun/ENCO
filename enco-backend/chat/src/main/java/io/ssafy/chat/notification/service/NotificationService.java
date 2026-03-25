@@ -2,13 +2,20 @@ package io.ssafy.chat.notification.service;
 
 import io.ssafy.chat.common.enums.NotificationType;
 import io.ssafy.chat.notification.document.Notification;
+import io.ssafy.chat.notification.dto.NotificationPageResponse;
 import io.ssafy.chat.notification.dto.NotificationResponse;
 import io.ssafy.chat.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
@@ -53,6 +60,32 @@ public class NotificationService {
     }
 
     /**
+     * 그룹별 알림 목록 조회 (cursor 기반 페이징)
+     */
+    public NotificationPageResponse getNotificationsByGroup(Long userId, Long groupId, Long cursor, int size) {
+        Pageable pageable = PageRequest.of(0, size + 1, Sort.by(Sort.Direction.DESC, "createdAt"));
+        List<Notification> notifications;
+        if (cursor == null) {
+            notifications = notificationRepository.findByUserIdAndGroupIdOrderByCreatedAtDesc(userId, groupId, pageable);
+        } else {
+            LocalDateTime cursorTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(cursor), ZoneOffset.UTC);
+            notifications = notificationRepository.findByUserIdAndGroupIdBeforeCursor(userId, groupId, cursorTime, pageable);
+        }
+
+        boolean hasNext = notifications.size() > size;
+        List<Notification> page = hasNext ? notifications.subList(0, size) : notifications;
+        Long nextCursor = hasNext
+                ? page.get(page.size() - 1).getCreatedAt().toInstant(ZoneOffset.UTC).toEpochMilli()
+                : null;
+
+        return new NotificationPageResponse(
+                page.stream().map(NotificationResponse::from).toList(),
+                nextCursor,
+                hasNext
+        );
+    }
+
+    /**
      * 읽지 않은 알림 목록 조회
      */
     public List<NotificationResponse> getUnreadNotifications(Long userId) {
@@ -66,6 +99,15 @@ public class NotificationService {
      */
     public long getUnreadCount(Long userId) {
         return notificationRepository.countByUserIdAndIsReadFalse(userId);
+    }
+
+    /**
+     * 알림 목록 읽음 처리
+     */
+    public void markAsReadBulk(List<String> notificationIds) {
+        List<Notification> notifications = notificationRepository.findByIdIn(notificationIds);
+        notifications.forEach(Notification::markAsRead);
+        notificationRepository.saveAll(notifications);
     }
 
     /**

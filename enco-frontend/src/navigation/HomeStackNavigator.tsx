@@ -18,7 +18,6 @@ import AdminMembersScreen from '../screens/admin/AdminMembersScreen';
 import AdminSendAlertScreen from '../screens/admin/AdminSendAlertScreen';
 import AdminCardScreen from '../screens/admin/AdminCardScreen';
 import AdminCardRecommendScreen from '../screens/admin/AdminCardRecommendScreen';
-import AdminCardPinScreen from '../screens/admin/AdminCardPinScreen';
 import AdminCardDoneScreen from '../screens/admin/AdminCardDoneScreen';
 import AdminSettleScreen from '../screens/admin/AdminSettleScreen';
 import SettlementReceiptOcrScreen from '../screens/receipt/SettlementReceiptOcrScreen';
@@ -61,7 +60,6 @@ export default function HomeStackNavigator() {
       <Stack.Screen name="AdminSendAlert" component={AdminSendAlertScreen} />
       <Stack.Screen name="AdminCard" component={AdminCardScreen} />
       <Stack.Screen name="AdminCardRecommend" component={AdminCardRecommendScreen} />
-      <Stack.Screen name="AdminCardPin" component={AdminCardPinScreen} />
       <Stack.Screen name="AdminCardDone" component={AdminCardDoneScreen} />
       <Stack.Screen name="AdminSettle" component={AdminSettleScreen} />
 

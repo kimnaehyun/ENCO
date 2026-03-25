@@ -1,7 +1,7 @@
 import { voteApi } from '@/services/payment/vote';
 
 export const castVote = async (
-  choice: 'APPROVE' | 'REJECTED',
+  choice: 'APPROVE' | 'REJECT',
   voteId: number,
 ) => {
   try {

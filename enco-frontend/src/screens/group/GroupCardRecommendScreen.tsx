@@ -10,6 +10,7 @@ type DisplayCard = {
   name: string;
   brand: string;
   imageUrl: string;
+  backImageUrl: string;
   summary: string;
   detail: string;
   benefits: { categoryName: string; discountRate: number }[];
@@ -39,6 +40,7 @@ export default function GroupCardRecommendScreen() {
           name: card.name,
           brand: '삼성카드',
           imageUrl: card.frontImageUrl,
+          backImageUrl: card.backImageUrl,
           summary: card.name,
           detail: (card.benefits ?? [])
             .map(b => `${b.categoryName} ${b.discountRate}%`)
@@ -86,6 +88,7 @@ export default function GroupCardRecommendScreen() {
         summary: d.description,
         detail: `기본 실적 ${Number(d.baseSpending).toLocaleString()}원 · 월 최대 혜택 ${Number(d.maxBenefitLimit).toLocaleString()}원 · 한도 ${Number(d.maxLimit).toLocaleString()}원`,
         imageUrl: d.frontImageUrl || card.imageUrl,
+        backImageUrl: d.backImageUrl || card.backImageUrl,
       });
     } catch (err) {
       console.warn(`[GroupCardRecommend] 카드 상세 조회 실패 (id=${card.id}):`, err);
@@ -121,11 +124,18 @@ export default function GroupCardRecommendScreen() {
         style={[styles.cardItem, selected && styles.cardItemSelected]}
       >
         <View style={styles.cardImageWrap}>
-          <Image
-            source={{ uri: item.imageUrl }}
-            style={styles.cardImage}
-            resizeMode="contain"
-          />
+          <View style={styles.cardImageRow}>
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.cardImageHalf}
+              resizeMode="contain"
+            />
+            <Image
+              source={{ uri: item.backImageUrl }}
+              style={styles.cardImageHalf}
+              resizeMode="contain"
+            />
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -203,11 +213,18 @@ export default function GroupCardRecommendScreen() {
           <View style={styles.modalCard}>
             <Text style={styles.modalCardName}>{detailCard.name}</Text>
 
-            <Image
-              source={{ uri: detailCard.imageUrl }}
-              style={styles.modalCardImage}
-              resizeMode="contain"
-            />
+            <View style={styles.cardImageRow}>
+              <Image
+                source={{ uri: detailCard.imageUrl }}
+                style={styles.modalCardImageHalf}
+                resizeMode="contain"
+              />
+              <Image
+                source={{ uri: detailCard.backImageUrl }}
+                style={styles.modalCardImageHalf}
+                resizeMode="contain"
+              />
+            </View>
 
             <Text style={styles.modalBrand}>{detailCard.brand}</Text>
             <Text style={styles.modalSummary}>{detailCard.summary}</Text>
@@ -298,10 +315,15 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     backgroundColor: '#F9FAFB',
+    padding: 8,
   },
-  cardImage: {
-    width: '100%',
-    aspectRatio: 2,
+  cardImageRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  cardImageHalf: {
+    flex: 1,
+    aspectRatio: 0.63,
   },
 
   // ── 빈 목록 ───────────────────────────────
@@ -383,9 +405,9 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.bold,
     marginBottom: 16,
   },
-  modalCardImage: {
-    width: '100%',
-    aspectRatio: 2,
+  modalCardImageHalf: {
+    flex: 1,
+    aspectRatio: 0.63,
     borderRadius: 14,
   },
   modalBrand: {

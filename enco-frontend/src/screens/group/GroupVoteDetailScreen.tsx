@@ -53,7 +53,7 @@ export default function GroupVoteDetailScreen({ route, navigation }: Props) {
 
   const isOngoing = data.status === 'VOTING';
 
-  const handleVote = async (choice: 'APPROVE' | 'REJECTED') => {
+  const handleVote = async (choice: 'APPROVE' | 'REJECT') => {
     castVote(choice, Number(voteId));
     navigation.goBack();
   };
@@ -111,7 +111,7 @@ export default function GroupVoteDetailScreen({ route, navigation }: Props) {
             </Pressable>
 
             <Pressable
-              onPress={() => handleVote('REJECTED')}
+              onPress={() => handleVote('REJECT')}
               style={[styles.voteButton, styles.disagreeButton]}
             >
               <Text style={styles.voteButtonText}>반대</Text>
