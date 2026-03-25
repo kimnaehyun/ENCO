@@ -25,6 +25,8 @@ public enum ErrorCode {
     ALREADY_VOTED(HttpStatus.BAD_REQUEST, "이미 투표에 참여했습니다.", "ALREADY_VOTED"),
     NOT_FOUND_TRANSACTION(HttpStatus.NOT_FOUND, "거래내역을 찾을 수 없습니다.", "NOT_FOUND_TRANSACTION"),
     DUPLICATE_PAYMENT(HttpStatus.CONFLICT, "이미 처리된 결제 요청입니다.", "DUPLICATE_PAYMENT"),
+    VOTE_ALREADY_APPROVED(HttpStatus.BAD_REQUEST, "이미 승인 완료되어 결제가 진행된 투표입니다.", "VOTE_ALREADY_APPROVED"),
+    VOTE_ALREADY_REJECTED(HttpStatus.BAD_REQUEST, "이미 부결되어 취소된 투표입니다.", "VOTE_ALREADY_REJECTED"),
     
     OCR_INVALID_FILE(HttpStatus.BAD_REQUEST, "OCR 처리 가능한 영수증 파일이 아닙니다.", "OCR_INVALID_FILE"),
     OCR_PROVIDER_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "OCR 제공자 응답이 지연되고 있습니다.", "OCR_PROVIDER_TIMEOUT"),
