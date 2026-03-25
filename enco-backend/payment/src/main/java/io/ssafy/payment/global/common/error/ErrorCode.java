@@ -30,8 +30,11 @@ public enum ErrorCode {
     OCR_PROVIDER_TIMEOUT(HttpStatus.GATEWAY_TIMEOUT, "OCR 제공자 응답이 지연되고 있습니다.", "OCR_PROVIDER_TIMEOUT"),
     OCR_PROVIDER_ERROR(HttpStatus.BAD_GATEWAY, "OCR 제공자 호출에 실패했습니다.", "OCR_PROVIDER_ERROR"),
     OCR_PARSE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "OCR 응답 파싱에 실패했습니다.", "OCR_PARSE_FAILED"),
-    OCR_LOW_CONFIDENCE(HttpStatus.UNPROCESSABLE_ENTITY, "OCR 결과의 신뢰도가 낮아 사용자 검수가 필요합니다.", "OCR_LOW_CONFIDENCE");
-    
+    OCR_LOW_CONFIDENCE(HttpStatus.UNPROCESSABLE_ENTITY, "OCR 결과의 신뢰도가 낮아 사용자 검수가 필요합니다.", "OCR_LOW_CONFIDENCE"),
+
+    NOT_FOUND_GROUP_INFO(HttpStatus.NOT_FOUND, "주변에 그룹원이 존재하지 않습니다." ,"NOT_FOUND_GROUP_INFO"),
+    INVALID_OR_EXPIRED_BARCODE(HttpStatus.NOT_FOUND, "유효하지 않거나 만료된 바코드입니다.", "INVALID_OR_EXPIRED_BARCODE");
+
     private final HttpStatus httpStatusCode;
     private final String errorMessage;
     private final String errorName;

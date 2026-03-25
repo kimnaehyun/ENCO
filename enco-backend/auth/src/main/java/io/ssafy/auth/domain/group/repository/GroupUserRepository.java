@@ -19,4 +19,6 @@ public interface GroupUserRepository extends JpaRepository<GroupUser, Long> {
 
     List<GroupUser> findByUserIdAndIsDeletedFalse(Long userId);
     int countByGroup_IdAndIsDeletedFalse(Long groupId);
+
+    int countByGroupId(Long groupId);
 }
