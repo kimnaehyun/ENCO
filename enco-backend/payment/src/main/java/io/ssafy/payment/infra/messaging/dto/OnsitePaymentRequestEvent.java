@@ -1,4 +1,4 @@
-package io.ssafy.payment.infra.messaging.event;
+package io.ssafy.payment.infra.messaging.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
