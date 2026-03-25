@@ -37,7 +37,7 @@ public class ChromaClient {
     private String getCollectionId() {
         try {
             String response = webClient.get()
-                    .uri("/api/v1/collections/{name}", collectionName)
+                    .uri("/api/v2/collections/{name}", collectionName)
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
