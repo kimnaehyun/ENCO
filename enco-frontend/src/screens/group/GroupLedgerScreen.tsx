@@ -416,7 +416,12 @@ export default function GroupLedgerScreen() {
         <View style={styles.filterButtonRow}>
           {isAdmin && (
             <Pressable
-              onPress={() => navigation.navigate('OcrTest', { groupName, groupId: params.groupId })}
+              onPress={() =>
+                navigation.navigate('SettlementReceiptOcr', {
+                  groupName,
+                  groupId: params.groupId,
+                })
+              }
               style={styles.settleButton}
             >
               <Text style={styles.settleButtonText}>정산하기</Text>

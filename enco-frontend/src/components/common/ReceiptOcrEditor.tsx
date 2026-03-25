@@ -11,15 +11,17 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import {useNavigation, useRoute} from '@react-navigation/native';
 import {launchImageLibrary} from 'react-native-image-picker';
-import {requestReceiptOcr} from '../services/receiptService';
+import {
+  requestReceiptOcr,
+  submitTransactionReceipt,
+} from '../../services/receiptService';
 import {
   createEmptyReceiptDraft,
   type ReceiptDraft,
   type ReceiptItemDraft,
   type ReceiptOptionDraft,
-} from '../types/receipt';
+} from '../../types/receipt';
 
 const {DocumentScanner} = NativeModules;
 
@@ -30,17 +32,26 @@ type DocumentScanResult = {
   pdfUri?: string | null;
 };
 
-type RouteParams = {
+export type ReceiptOcrEditorParams = {
   imageUri?: string;
   groupName?: string;
   groupId?: string;
+  transactionId?: number;
 };
 
-export default function OcrTestScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const params = (route.params ?? {}) as RouteParams;
+type ReceiptOcrEditorProps = {
+  mode: 'settlement' | 'transaction';
+  navigation: any;
+  params: ReceiptOcrEditorParams;
+};
 
+export default function ReceiptOcrEditor({
+  mode,
+  navigation,
+  params,
+}: ReceiptOcrEditorProps) {
+  const numericTransactionId =
+    typeof params.transactionId === 'number' ? params.transactionId : NaN;
   const [imageUri, setImageUri] = useState<string | null>(params.imageUri ?? null);
   const [receiptDraft, setReceiptDraft] = useState<ReceiptDraft | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
@@ -53,7 +64,35 @@ export default function OcrTestScreen() {
     }
   }, [params.imageUri]);
 
+  const isTransactionMode = mode === 'transaction';
   const hasVerifiedDraft = receiptDraft !== null;
+
+  const screenTitle = isTransactionMode ? '거래 영수증 증빙' : '정산 영수증 검수';
+  const screenDescription = isTransactionMode
+    ? '영수증 이미지를 압축 후 백엔드 OCR로 분석하고, 거래 증빙용 내용으로 검수한 뒤 제출합니다.'
+    : '영수증 이미지를 압축 후 백엔드 OCR로 분석하고, 사후 정산용 내용으로 검수한 뒤 다음 단계로 진행합니다.';
+  const completeButtonText = isTransactionMode
+    ? '검증 완료 후 영수증 증빙 등록'
+    : '검증 완료 후 정산 정보 입력';
+
+  const validateVerifiedDraft = () => {
+    if (!receiptDraft) {
+      Alert.alert('안내', '먼저 영수증을 분석하고 내용을 검증하세요.');
+      return false;
+    }
+
+    if (!receiptDraft.merchantName.trim()) {
+      Alert.alert('안내', '가맹점명을 확인해 주세요.');
+      return false;
+    }
+
+    if (!receiptDraft.totalAmount || receiptDraft.totalAmount <= 0) {
+      Alert.alert('안내', '총 결제 금액을 확인해 주세요.');
+      return false;
+    }
+
+    return true;
+  };
 
   const lineItemSummary = useMemo(() => {
     if (!receiptDraft?.items.length) {
@@ -341,27 +380,15 @@ export default function OcrTestScreen() {
     }
   };
 
-  // 정산 인원 선택으로 이동하는 공통 함수
   const goToSettleMemberSelect = () => {
-    if (!receiptDraft) {
-      Alert.alert('안내', '먼저 영수증을 분석하고 내용을 검증하세요.');
-      return;
-    }
-
-    if (!receiptDraft.merchantName.trim()) {
-      Alert.alert('안내', '가맹점명을 확인해 주세요.');
-      return;
-    }
-
-    if (!receiptDraft.totalAmount || receiptDraft.totalAmount <= 0) {
-      Alert.alert('안내', '총 결제 금액을 확인해 주세요.');
+    if (!validateVerifiedDraft()) {
       return;
     }
 
     navigation.navigate('SettleMemberSelect', {
-      amount: receiptDraft.totalAmount,
-      storeName: receiptDraft.merchantName,
-      date: formatSettlementDate(receiptDraft.paidAt),
+      amount: receiptDraft!.totalAmount,
+      storeName: receiptDraft!.merchantName,
+      date: formatSettlementDate(receiptDraft!.paidAt),
       memo: lineItemSummary || statusMessage || '영수증 검증 완료',
       receiptUri: imageUri,
       receiptDraft,
@@ -369,6 +396,49 @@ export default function OcrTestScreen() {
       groupId: params.groupId,
       isNewSettle: true,
     });
+  };
+
+  const handleSubmitTransactionReceipt = async () => {
+    if (!validateVerifiedDraft()) {
+      return;
+    }
+
+    if (!imageUri) {
+      Alert.alert('안내', '영수증 이미지를 먼저 선택하세요.');
+      return;
+    }
+
+    const numericGroupId = params.groupId ? Number(params.groupId) : NaN;
+    if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericTransactionId)) {
+      Alert.alert('안내', '거래 증빙에 필요한 모임 또는 거래 ID가 없습니다.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const response = await submitTransactionReceipt({
+        groupId: numericGroupId,
+        transactionId: numericTransactionId,
+        imageUri,
+        receipt: receiptDraft as ReceiptDraft,
+      });
+
+      Alert.alert('완료', response.message, [
+        {
+          text: '확인',
+          onPress: () => navigation.goBack(),
+        },
+      ]);
+    } catch (error: any) {
+      Alert.alert(
+        '등록 실패',
+        error?.response?.data?.message ||
+          error?.message ||
+          '영수증 증빙 등록 중 오류가 발생했습니다.',
+      );
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSkipNext = () => {
@@ -499,11 +569,8 @@ export default function OcrTestScreen() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>영수증 OCR 검증</Text>
-      <Text style={styles.description}>
-        ML Kit 스캔 결과 이미지를 백엔드로 올리고, Clova 영수증 OCR 결과를 우리
-        정산 JSON으로 검증하는 단계입니다.
-      </Text>
+      <Text style={styles.title}>{screenTitle}</Text>
+      <Text style={styles.description}>{screenDescription}</Text>
 
       <Pressable
         style={[styles.button, loading && styles.buttonDisabled]}
@@ -525,7 +592,7 @@ export default function OcrTestScreen() {
         <Image source={{uri: imageUri}} style={styles.image} />
       ) : (
         <View style={styles.placeholder}>
-          <Text style={styles.placeholderText}>스캔된 영수증 없음</Text>
+          <Text style={styles.placeholderText}>선택된 영수증 없음</Text>
         </View>
       )}
 
@@ -627,13 +694,15 @@ export default function OcrTestScreen() {
       <Pressable
         style={[styles.completeButton, !hasVerifiedDraft && styles.buttonDisabled]}
         disabled={!hasVerifiedDraft}
-        onPress={goToSettleMemberSelect}>
-        <Text style={styles.buttonText}>검증 완료 후 정산 인원 선택</Text>
+        onPress={isTransactionMode ? handleSubmitTransactionReceipt : goToSettleMemberSelect}>
+        <Text style={styles.buttonText}>{completeButtonText}</Text>
       </Pressable>
 
-      <Pressable style={styles.skipButton} onPress={handleSkipNext}>
-        <Text style={styles.skipButtonText}>임시) 검증 없이 다음 단계</Text>
-      </Pressable>
+      {!isTransactionMode ? (
+        <Pressable style={styles.skipButton} onPress={handleSkipNext}>
+          <Text style={styles.skipButtonText}>임시) 검증 없이 다음 단계</Text>
+        </Pressable>
+      ) : null}
     </ScrollView>
   );
 }
@@ -698,39 +767,42 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 16,
     backgroundColor: '#f1f3f5',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   placeholderText: {
-    color: '#777',
+    color: '#6B7280',
+    fontSize: 14,
   },
   loader: {
-    marginTop: 4,
-    marginBottom: 4,
+    marginBottom: 16,
   },
   resultBox: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#F9FAFB',
     borderRadius: 12,
     padding: 16,
-    marginTop: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
   resultTitle: {
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: '700',
-    marginBottom: 12,
+    color: '#111827',
+    marginBottom: 6,
   },
   resultText: {
     fontSize: 14,
-    lineHeight: 22,
-    color: '#222',
+    lineHeight: 20,
+    color: '#374151',
   },
   resultJson: {
     fontSize: 12,
     lineHeight: 18,
-    color: '#1F2937',
+    color: '#374151',
   },
   editorSection: {
-    marginTop: 8,
+    marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 18,
@@ -741,17 +813,17 @@ const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: '#D1D5DB',
-    backgroundColor: '#fff',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 14,
     color: '#111827',
     marginBottom: 12,
+    backgroundColor: '#fff',
   },
   inlineRow: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 12,
   },
   inlineInput: {
     flex: 1,
@@ -760,95 +832,92 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 8,
     marginTop: 8,
-    marginBottom: 4,
+  },
+  subtleButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: '#EFF6FF',
+  },
+  subtleButtonText: {
+    color: '#1D4ED8',
+    fontSize: 13,
+    fontWeight: '600',
   },
   itemCard: {
-    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     borderRadius: 14,
     padding: 14,
     marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
+    backgroundColor: '#FFF',
   },
   itemHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   itemTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '700',
     color: '#111827',
-  },
-  optionCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  optionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  optionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#374151',
   },
   deleteText: {
     color: '#DC2626',
     fontSize: 13,
     fontWeight: '600',
   },
-  subtleButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#E8EEF9',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  subtleButtonText: {
-    color: '#1428A0',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  emptyCard: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    padding: 16,
+  optionCard: {
     borderWidth: 1,
     borderColor: '#E5E7EB',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+    backgroundColor: '#F9FAFB',
+  },
+  optionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  optionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  emptyCard: {
+    borderRadius: 14,
+    padding: 16,
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 12,
   },
   emptyText: {
-    fontSize: 14,
     color: '#6B7280',
+    fontSize: 14,
     lineHeight: 20,
   },
   completeButton: {
-    backgroundColor: '#1428A0',
-    paddingVertical: 16,
+    backgroundColor: '#111827',
+    paddingVertical: 15,
     borderRadius: 12,
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 8,
+    marginBottom: 12,
   },
   skipButton: {
-    paddingVertical: 14,
-    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 10,
-    borderWidth: 1.5,
-    borderColor: '#D1D5DB',
-    borderStyle: 'dashed',
+    paddingVertical: 12,
+    marginBottom: 24,
   },
   skipButtonText: {
-    color: '#9CA3AF',
+    color: '#6B7280',
     fontSize: 14,
-    fontWeight: '600',
+    textDecorationLine: 'underline',
   },
 });
