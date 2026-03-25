@@ -39,7 +39,8 @@ public class OnsitePaymentController {
 
     @PostMapping("/pay")
     public ResponseEntity<CommonResponse<Void>> executePayment(
-            @RequestBody BarcodePaymentRequestDto request, @RequestHeader("Idempotency-Key") String idempotencyKey) {
+            @RequestBody BarcodePaymentRequestDto request,
+            @RequestHeader("Idempotency-Key") String idempotencyKey) {
 
         log.info("[현장결제 요청] 바코드={}, 가맹점={}, 금액={}",
                 request.barcodeNumber(), request.merchantName(), request.amount());

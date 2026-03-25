@@ -51,19 +51,21 @@ public class OnsitePaymentRequestConsumer {
                     try {
                         notificationService.sendNotification(
                                 memberId,
-                                NotificationType.ONSITE_PAYMENT_REQUEST, // Enum에 추가 필요
+                                NotificationType.ONSITE_PAYMENT_REQUEST,
                                 title,
                                 body,
-                                (Map<String, Object>)(Map) data // Map 타입 캐스팅 주의
+                                (Map<String, Object>) (Map) data
                         );
-
+                    } catch (Exception dbEx) {
+                        log.error("[현장결제] 채팅 DB 저장 실패 (FCM은 계속 진행) - memberId: {}", memberId, dbEx);
+                    }
+                    try {
                         String fcmToken = authServiceClient.getFcmToken(memberId).result();
                         if (fcmToken != null && !fcmToken.isBlank()) {
                             fcmService.sendPushNotification(fcmToken, title, body, data);
-                            log.info("[현장결제] FCM 전송 - groupId: {}, memberId: {}", groupId, memberId);
                         }
-                    } catch (Exception e) {
-                        log.warn("[현장결제] FCM 토큰 조회 실패 - memberId: {}", memberId, e);
+                    } catch (Exception fcmEx) {
+                        log.error("[현장결제] FCM 발송 실패 - memberId: {}", memberId, fcmEx);
                     }
                 }
             }
@@ -81,7 +83,8 @@ public class OnsitePaymentRequestConsumer {
         public String leaderName;
         public Long timestamp;
 
-        public OnsitePaymentRequestEvent() {}
+        public OnsitePaymentRequestEvent() {
+        }
 
         public OnsitePaymentRequestEvent(Long groupId, Long leaderId, String leaderName, Long timestamp) {
             this.groupId = groupId;
