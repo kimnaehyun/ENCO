@@ -10,22 +10,19 @@ import {
 } from 'react-native';
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { Vote } from '../../types/vote';
-import { ROUTES } from '../../constants/routes';
 import { GroupScreenProps } from '../../types/group';
 import { voteApi } from '@/services/payment/vote';
-import { castVote } from '@/services/payment/voteHelpers';
+import GroupVoteDetail from '@/components/vote/GroupVoteDetail';
 
-const formatKRW = (n: number) => n.toLocaleString();
 
 export default function GroupVotesScreen({
-  navigation,
   route,
 }: GroupScreenProps<'GroupVotes'>) {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const groupId = route.params?.groupId;
-  const groupName = route.params?.groupName;
+
 
   useEffect(() => {
     const fetchVote = async () => {
@@ -34,6 +31,8 @@ export default function GroupVotesScreen({
         const sorted = [...response.data.result].sort(
           (a, b) => b.voteId - a.voteId,
         );
+        console.log(response.data);
+        
         setVotes(sorted);
       } catch (e) {
         console.log(e);
@@ -56,101 +55,43 @@ export default function GroupVotesScreen({
     setExpandedId(prev => (prev === id ? null : id));
   };
 
-  const renderExpandedContent = (item: Vote) => {
-    const ongoing = item.status === 'VOTING';
-    const handleVote = async (choice: 'APPROVE' | 'REJECT') => {
-      try {
-        await castVote(choice, item.voteId);
-        const response = await voteApi.list(Number(groupId));
-        setVotes(response.data.result);
-        setExpandedId(null);
-      } catch (e) {
-        console.log(e);
-      }
-    };
-    return (
-      <View
-        className="bg-white rounded-2xl px-5 py-4 mt-1"
-        style={styles.expandedCard}
+const renderItem = ({ item }: { item: Vote }) => {
+  const ongoing = item.status === 'VOTING';
+  const isExpanded = expandedId === item.voteId;
+
+  return (
+    <View>
+      <Pressable
+        onPress={() => toggleExpand(item.voteId)}
+        className="bg-white rounded-2xl px-5 py-4 flex-row items-center justify-between"
+        style={styles.cardShadow}
       >
-        {item.amount != null && (
-          <Text style={styles.expandedMeta}>{formatKRW(item.amount)}원</Text>
-        )}
-
-        <Text style={styles.expandedMetaTop}>
-          마감 시간 {item.expiredAt.replace('T', ' ').slice(0, 16)}
+        <View
+          className="w-2.5 h-2.5 rounded-full mr-3"
+          style={{ backgroundColor: ongoing ? '#EF4444' : '#818CF8' }}
+        />
+        <Text numberOfLines={1} style={styles.itemTitle}>
+          {item.title}
         </Text>
-
-        <Text style={styles.expandedMeta}>
-          참여 현황: {item.votedCount} / {item.totalMembers ?? '?'}명
+        <Text style={styles.itemCount}>
+          {item.votedCount} / {item.totalMembers ?? '?'}
         </Text>
+      </Pressable>
 
-        {ongoing && (
-          <View className="flex-row gap-3 mt-3 mb-3">
-            <Pressable
-              onPress={() => handleVote('APPROVE')}
-              className="flex-1 rounded-2xl py-3 items-center justify-center"
-              style={styles.agreeButton}
-            >
-              <Text style={styles.voteButtonText}>찬성</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={() => handleVote('REJECT')}
-              className="flex-1 rounded-2xl py-3 items-center justify-center"
-              style={styles.disagreeButton}
-            >
-              <Text style={styles.voteButtonText}>반대</Text>
-            </Pressable>
-          </View>
-        )}
-
-        <View className={ongoing ? 'mt-1' : 'mt-2'}>
-          <Pressable
-            onPress={() =>
-              navigation.navigate(ROUTES.GROUP_VOTE_DETAIL as any, {
-                voteId: item.voteId,
-                groupId,
-                groupName,
-              })
-            }
-            className="self-end rounded-xl px-4 py-2"
-            style={styles.detailButton}
-          >
-            <Text style={styles.detailButtonText}>상세보기</Text>
-          </Pressable>
-        </View>
-      </View>
-    );
-  };
-
-  const renderItem = ({ item }: { item: Vote }) => {
-    const ongoing = item.status === 'VOTING';
-    const isExpanded = expandedId === item.voteId;
-
-    return (
-      <View>
-        <Pressable
-          onPress={() => toggleExpand(item.voteId)}
-          className="bg-white rounded-2xl px-5 py-4 flex-row items-center justify-between"
-          style={styles.cardShadow}
-        >
-          <View
-            className="w-2.5 h-2.5 rounded-full mr-3"
-            style={{ backgroundColor: ongoing ? '#EF4444' : '#818CF8' }}
-          />
-          <Text numberOfLines={1} style={styles.itemTitle}>
-            {item.title}
-          </Text>
-          <Text style={styles.itemCount}>
-            {item.votedCount} / {item.totalMembers ?? '?'}
-          </Text>
-        </Pressable>
-
-        {isExpanded && renderExpandedContent(item)}
-      </View>
-    );
-  };
+      {isExpanded && (
+        <GroupVoteDetail
+          voteId={item.voteId}
+          groupId={Number(groupId)}
+          onVoteDone={async () => {
+            const response = await voteApi.list(Number(groupId));
+            setVotes([...response.data.result].sort((a, b) => b.voteId - a.voteId));
+            setExpandedId(null);
+          }}
+        />
+      )}
+    </View>
+  );
+};
 
   return (
     <View className="flex-1 bg-[#F0F4FF]">

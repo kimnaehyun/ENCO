@@ -8,7 +8,6 @@ import GroupVotesScreen from '../screens/group/GroupVotesScreen';
 import GroupPayScreen from '../screens/group/GroupPayScreen';
 import GroupChatScreen from '../screens/group/GroupChatScreen';
 import GroupLedgerScreen from '../screens/group/GroupLedgerScreen';
-import GroupVoteDetailScreen from '../screens/group/GroupVoteDetailScreen';
 import VoteCreateScreen from '../screens/InternetPayment/VoteCreateScreen.tsx';
 import GroupInviteEntryScreen from '../screens/group/GroupInviteEntryScreen.tsx';
 import GroupInviteDecisionScreen from '../screens/group/GroupInviteDecisionScreen';
@@ -55,7 +54,6 @@ export default function GroupStackNavigator() {
       <Stack.Screen name="GroupVotes" component={GroupVotesScreen} />
       <Stack.Screen name="GroupPay" component={GroupPayScreen} />
       <Stack.Screen name="GroupChat" component={GroupChatScreen} />
-      <Stack.Screen name="GroupVoteDetail" component={GroupVoteDetailScreen} />
       <Stack.Screen name="VoteCreate" component={VoteCreateScreen} />
       <Stack.Screen name="GroupAnalytics" component={GroupAnalyticsScreen} />
       <Stack.Screen name="GroupAttendance" component={GroupAttendanceScreen} />

@@ -15,6 +15,7 @@ interface AuthState {
   user: string | null;
   /** 상세 프로필 */
   profile: UserProfile | null;
+  userId: number | null;
 
   login: (name: string) => void;
   setProfile: (profile: UserProfile) => void;
@@ -25,6 +26,7 @@ interface AuthState {
 export const useAuthStore = create<AuthState>(set => ({
   user: null,
   profile: null,
+  userId: null,
 
   login: name => set({ user: name }),
   setProfile: profile => set({ profile }),

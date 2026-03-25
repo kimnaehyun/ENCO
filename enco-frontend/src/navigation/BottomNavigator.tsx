@@ -31,7 +31,7 @@ export default function BottomNavigator() {
     >
       <Tab.Screen
         name={ROUTES.TAB_PAYMENT}
-        component={OnsitePaymentNavigator}
+        component={InternetPayNavigator}
         options={{
           popToTopOnBlur: true,
           tabBarIcon: ({ focused, size }) => (
