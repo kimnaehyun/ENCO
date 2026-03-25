@@ -7,9 +7,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
 import java.util.*;
 
+/**
+ * Chroma DB 클라이언트 — v1/v2 API 자동 감지
+ *
+ * Chroma 1.x는 /api/v1 이 deprecated (410 Gone)이므로
+ * 먼저 /api/v2를 시도하고, 실패하면 /api/v1으로 폴백합니다.
+ */
 @Slf4j
 @Component
 public class ChromaClient {
@@ -19,6 +26,9 @@ public class ChromaClient {
 
     @Value("${chroma.collection-name:lodgings}")
     private String collectionName;
+
+    /** 감지된 API 버전 prefix (null이면 아직 감지 전) */
+    private volatile String apiPrefix = null;
 
     public ChromaClient(
             @Value("${chroma.url:http://localhost:8000}") String chromaUrl,
@@ -32,12 +42,46 @@ public class ChromaClient {
     }
 
     /**
+     * API 버전 자동 감지: /api/v2 → /api/v1 순서로 시도
+     */
+    private String getApiPrefix() {
+        if (apiPrefix != null) return apiPrefix;
+
+        // v2 먼저 시도
+        for (String prefix : List.of("/api/v2", "/api/v1")) {
+            try {
+                String response = webClient.get()
+                        .uri(prefix + "/collections/" + collectionName)
+                        .retrieve()
+                        .bodyToMono(String.class)
+                        .block();
+
+                if (response != null) {
+                    apiPrefix = prefix;
+                    log.info("Chroma API 버전 감지: {}", prefix);
+                    return apiPrefix;
+                }
+            } catch (WebClientResponseException e) {
+                log.debug("Chroma {} 시도 실패: {} {}", prefix, e.getStatusCode(), e.getMessage());
+            } catch (Exception e) {
+                log.debug("Chroma {} 시도 실패: {}", prefix, e.getMessage());
+            }
+        }
+
+        // 둘 다 실패하면 v1으로 폴백
+        apiPrefix = "/api/v1";
+        log.warn("Chroma API 버전 감지 실패, 기본값 사용: {}", apiPrefix);
+        return apiPrefix;
+    }
+
+    /**
      * 컬렉션 ID 조회
      */
     private String getCollectionId() {
+        String prefix = getApiPrefix();
         try {
             String response = webClient.get()
-                    .uri("/api/v2/collections/{name}", collectionName)
+                    .uri(prefix + "/collections/{name}", collectionName)
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
@@ -45,7 +89,7 @@ public class ChromaClient {
             JsonNode node = objectMapper.readTree(response);
             return node.get("id").asText();
         } catch (Exception e) {
-            log.error("Chroma 컬렉션 조회 실패: {}", e.getMessage(), e);
+            log.error("Chroma 컬렉션 조회 실패 (prefix={}): {}", prefix, e.getMessage(), e);
             throw new RuntimeException("Chroma 컬렉션 조회 실패", e);
         }
     }
@@ -55,6 +99,7 @@ public class ChromaClient {
      */
     public List<LodgingResult> query(List<Double> queryEmbedding, int nResults) {
         String collectionId = getCollectionId();
+        String prefix = getApiPrefix();
 
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("query_embeddings", List.of(queryEmbedding));
@@ -63,7 +108,7 @@ public class ChromaClient {
 
         try {
             String response = webClient.post()
-                    .uri("/api/v1/collections/{id}/query", collectionId)
+                    .uri(prefix + "/collections/{id}/query", collectionId)
                     .bodyValue(body)
                     .retrieve()
                     .bodyToMono(String.class)
