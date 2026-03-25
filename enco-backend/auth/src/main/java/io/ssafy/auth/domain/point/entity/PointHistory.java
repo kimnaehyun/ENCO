@@ -3,12 +3,16 @@ package io.ssafy.auth.domain.point.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "point_histories")
+@EntityListeners(AuditingEntityListener.class)
 @Getter
 public class PointHistory {
     @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -35,7 +39,11 @@ public class PointHistory {
     @Column(nullable = false)
     private Long referenceId;
 
+    @CreatedDate
     private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    private LocalDateTime updatedAt;
 
     @Builder
     public PointHistory(Long groupId, Long eventId, BigDecimal amount, BigDecimal balance, Direction direction, String description, Long referenceId) {
@@ -46,7 +54,6 @@ public class PointHistory {
         this.direction = direction;
         this.description = description;
         this.referenceId = referenceId;
-        this.createdAt = LocalDateTime.now();
     }
 
     public PointHistory() {
