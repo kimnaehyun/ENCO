@@ -8,14 +8,13 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Entity
-@Table(name = "attendance_events")
+@Table(name = "events")
 @Getter
 public class AttendanceEvent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long groupId;
     private String eventName;
     private String description;
     private LocalDate startDate;
