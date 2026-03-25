@@ -1,14 +1,25 @@
 // src/screens/group/SettleMemberSelectScreen.tsx
-import React, { useMemo, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
-import { useNavigation, useRoute } from '@react-navigation/native';
+import React, {useEffect, useMemo, useState} from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
+import Text, {FONT_FAMILY, COLORS} from '@/components/typography';
+import {useNavigation, useRoute} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import ScreenLayout from '../../components/ScreenLayout';
+import {getGroupMembers} from '../../services/groupService';
+import {createSettlement} from '../../services/receiptService';
 import type {ReceiptDraft} from '../../types/receipt';
-import {submitVerifiedReceipt} from '../../services/receiptService';
 
 type SettleMember = {
   id: string;
+  userId: number;
   name: string;
   isPaid: boolean;
 };
@@ -23,50 +34,130 @@ type RouteParams = {
   groupName: string;
   groupId?: string;
   settleMembers?: SettleMember[];
-  isNewSettle?: boolean; // true: OCR → 새 정산 등록 모드
+  isNewSettle?: boolean;
 };
 
-// 그룹 전체 멤버 (임시 데이터)
-const ALL_GROUP_MEMBERS: SettleMember[] = [
-  { id: 'm1', name: '김싸피', isPaid: false },
-  { id: 'm2', name: '고싸피', isPaid: false },
-  { id: 'm3', name: '장싸피', isPaid: false },
-  { id: 'm4', name: '정싸피', isPaid: false },
-  { id: 'm5', name: '이싸피', isPaid: false },
+const FALLBACK_SETTLE_MEMBERS: SettleMember[] = [
+  {id: 'm1', userId: 1, name: '김싸피', isPaid: true},
+  {id: 'm2', userId: 2, name: '고싸피', isPaid: false},
+  {id: 'm3', userId: 3, name: '장싸피', isPaid: true},
+  {id: 'm4', userId: 4, name: '정싸피', isPaid: false},
 ];
 
 export default function SettleMemberSelectScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
+  const insets = useSafeAreaInsets();
   const params = (route.params ?? {}) as RouteParams;
 
-  const { amount = 10000, groupName = '', isNewSettle = false } = params;
-  const [submitting, setSubmitting] = useState(false);
+  const {amount = 10000, groupName = '', isNewSettle = false} = params;
+  const numericGroupId = params.groupId ? Number(params.groupId) : NaN;
 
-  // ── 새 정산 등록 모드 ──
+  const [submitting, setSubmitting] = useState(false);
+  const [loadingMembers, setLoadingMembers] = useState(false);
+  const [memberLoadError, setMemberLoadError] = useState('');
+  const [settlementMembers, setSettlementMembers] = useState<SettleMember[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [displayName, setDisplayName] = useState(
+    params.receiptDraft?.merchantName || params.storeName || '',
+  );
+  const [memo, setMemo] = useState(params.memo || '');
+  const [receiverBankName, setReceiverBankName] = useState('');
+  const [receiverAccountNumber, setReceiverAccountNumber] = useState('');
+
+  useEffect(() => {
+    if (!isNewSettle) {
+      return;
+    }
+
+    if (!Number.isFinite(numericGroupId)) {
+      setMemberLoadError('유효한 모임 ID가 없어 정산 대상자를 불러올 수 없습니다.');
+      return;
+    }
+
+    let mounted = true;
+    setLoadingMembers(true);
+    setMemberLoadError('');
+
+    getGroupMembers(numericGroupId)
+      .then(response => {
+        if (!mounted) {
+          return;
+        }
+
+        const nextMembers = response.result.map(member => ({
+          id: String(member.userId),
+          userId: member.userId,
+          name: member.name?.trim() || `멤버 ${member.userId}`,
+          isPaid: false,
+        }));
+
+        setSettlementMembers(nextMembers);
+      })
+      .catch((error: any) => {
+        if (!mounted) {
+          return;
+        }
+
+        setMemberLoadError(
+          error?.response?.data?.message ||
+            error?.message ||
+            '정산 대상자 목록을 불러오지 못했습니다.',
+        );
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoadingMembers(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [isNewSettle, numericGroupId]);
+
+  const selectableMembers = settlementMembers;
+  const selectedParticipantIds = useMemo(
+    () =>
+      selectableMembers
+        .filter(member => selectedIds.has(member.id))
+        .map(member => member.userId),
+    [selectableMembers, selectedIds],
+  );
 
   const toggleMember = (id: string) => {
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
       return next;
     });
   };
 
   const selectAll = () => {
-    if (selectedIds.size === ALL_GROUP_MEMBERS.length) {
+    if (selectedIds.size === selectableMembers.length) {
       setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(ALL_GROUP_MEMBERS.map(m => m.id)));
+      return;
     }
+
+    setSelectedIds(new Set(selectableMembers.map(member => member.id)));
   };
 
-  const perPerson = selectedIds.size > 0 ? Math.ceil(amount / selectedIds.size) : 0;
+  const perPerson =
+    selectedParticipantIds.length > 0
+      ? Math.ceil(amount / selectedParticipantIds.length)
+      : 0;
+  const bottomInset = Math.max(insets.bottom, 12);
+  const memberListContentStyle = useMemo(
+    () => [styles.memberListContent, {paddingBottom: 100 + bottomInset}],
+    [bottomInset],
+  );
 
   const handleRegister = () => {
-    if (selectedIds.size === 0) {
+    if (selectedParticipantIds.length === 0) {
       Alert.alert('안내', '정산할 인원을 선택하세요.');
       return;
     }
@@ -81,68 +172,92 @@ export default function SettleMemberSelectScreen() {
       return;
     }
 
-    const selectedMembers = ALL_GROUP_MEMBERS
-      .filter(m => selectedIds.has(m.id))
-      .map(m => ({ ...m, isPaid: false }));
+    if (!Number.isFinite(numericGroupId)) {
+      Alert.alert('안내', '유효한 모임 ID가 없습니다.');
+      return;
+    }
+
+    if (!displayName.trim()) {
+      Alert.alert('안내', '표시명을 입력하세요.');
+      return;
+    }
+
+    if (!memo.trim()) {
+      Alert.alert('안내', '메모를 입력하세요.');
+      return;
+    }
+
+    if (!receiverBankName.trim()) {
+      Alert.alert('안내', '수취 은행명을 입력하세요.');
+      return;
+    }
+
+    if (!receiverAccountNumber.trim()) {
+      Alert.alert('안내', '수취 계좌번호를 입력하세요.');
+      return;
+    }
 
     Alert.alert(
       '정산 등록',
-      `${params.storeName}\n금액: ${amount.toLocaleString()}원\n인원: ${selectedIds.size}명 (1인당 ${perPerson.toLocaleString()}원)\n\n등록하시겠습니까?`,
+      `${displayName.trim()}\n금액: ${amount.toLocaleString()}원\n인원: ${selectedParticipantIds.length}명 (1인당 ${perPerson.toLocaleString()}원)\n\n등록하시겠습니까?`,
       [
-        { text: '취소', style: 'cancel' },
+        {text: '취소', style: 'cancel'},
         {
           text: '등록',
           onPress: async () => {
             try {
               setSubmitting(true);
 
-              await submitVerifiedReceipt({
-                receipt: params.receiptDraft as ReceiptDraft,
+              await createSettlement({
+                groupId: numericGroupId,
                 imageUri: params.receiptUri as string,
-                groupId: params.groupId,
+                receipt: params.receiptDraft as ReceiptDraft,
+                amount,
+                receiverBankName: receiverBankName.trim(),
+                receiverAccountNumber: receiverAccountNumber.trim(),
+                displayName: displayName.trim(),
+                memo: memo.trim(),
+                participants: selectedParticipantIds,
               });
 
-              Alert.alert('완료', '영수증 증빙과 영수증 내용이 등록되었습니다.', [
+              Alert.alert('완료', '사후 정산이 등록되었습니다.', [
                 {
                   text: '확인',
                   onPress: () => {
                     navigation.popToTop();
-                    navigation.navigate('GroupLedger', { groupName });
+                    navigation.navigate('GroupLedger', {
+                      groupId: params.groupId,
+                      groupName,
+                    });
                   },
                 },
               ]);
             } catch (error: any) {
               Alert.alert(
                 '등록 실패',
-                error?.response?.data?.message || error?.message || '영수증 등록 중 오류가 발생했습니다.',
+                error?.response?.data?.message ||
+                  error?.message ||
+                  '정산 등록 중 오류가 발생했습니다.',
               );
             } finally {
               setSubmitting(false);
             }
           },
         },
-      ]
+      ],
     );
   };
 
-  // ── 기존 정산 조회 모드 (미납자 확인) ──
-  const [members, setMembers] = useState<SettleMember[]>(
-    params.settleMembers ?? [
-      { id: 'm1', name: '김싸피', isPaid: true },
-      { id: 'm2', name: '고싸피', isPaid: false },
-      { id: 'm3', name: '장싸피', isPaid: true },
-      { id: 'm4', name: '정싸피', isPaid: false },
-    ]
-  );
+  const [members] = useState<SettleMember[]>(params.settleMembers ?? FALLBACK_SETTLE_MEMBERS);
 
-  const paidCount = members.filter(m => m.isPaid).length;
-  const unpaidCount = members.filter(m => !m.isPaid).length;
+  const paidCount = members.filter(member => member.isPaid).length;
+  const unpaidCount = members.filter(member => !member.isPaid).length;
   const existingPerPerson = members.length > 0 ? Math.ceil(amount / members.length) : 0;
 
   const onSendNotification = () => {
     const unpaidNames = members
-      .filter(m => !m.isPaid)
-      .map(m => m.name)
+      .filter(member => !member.isPaid)
+      .map(member => member.name)
       .join(', ');
 
     if (unpaidCount === 0) {
@@ -154,14 +269,14 @@ export default function SettleMemberSelectScreen() {
       '미납자 알림 보내기',
       `${unpaidNames}에게 ${existingPerPerson.toLocaleString()}원 입금 요청 알림을 보냅니다.`,
       [
-        { text: '취소', style: 'cancel' },
+        {text: '취소', style: 'cancel'},
         {
           text: '보내기',
           onPress: () => {
             Alert.alert('완료', `미납자 ${unpaidCount}명에게 알림을 보냈습니다.`);
           },
         },
-      ]
+      ],
     );
   };
 
@@ -172,8 +287,6 @@ export default function SettleMemberSelectScreen() {
     return (
       <ScreenLayout>
         <View style={styles.container}>
-
-          {/* 헤더 */}
           <View className="flex-row items-center justify-between mb-5">
             <Text style={styles.headerTitle}>정산 인원 선택</Text>
             <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
@@ -181,88 +294,169 @@ export default function SettleMemberSelectScreen() {
             </Pressable>
           </View>
 
-          {/* 정산 정보 요약 카드 */}
           <View
             className="bg-white rounded-3xl px-6 py-5 mb-5"
             style={styles.summaryCard}
           >
             <Text style={styles.summaryDate}>{params.date} · {params.storeName}</Text>
             <Text style={styles.summaryAmount}>-{amount.toLocaleString()}원</Text>
-            {selectedIds.size > 0 && (
+            {selectedParticipantIds.length > 0 && (
               <Text style={styles.summaryPerPerson}>
-                1인당 {perPerson.toLocaleString()}원 · {selectedIds.size}명
+                1인당 {perPerson.toLocaleString()}원 · {selectedParticipantIds.length}명
               </Text>
             )}
           </View>
 
-          {/* 전체 선택 */}
+          <View style={styles.formCard}>
+            <Text style={styles.formTitle}>정산 정보</Text>
+
+            <View style={styles.formField}>
+              <Text style={styles.formLabel}>표시명</Text>
+              <TextInput
+                value={displayName}
+                onChangeText={setDisplayName}
+                placeholder="표시명"
+                placeholderTextColor="#9CA3AF"
+                style={styles.input}
+              />
+              <Text style={styles.helperText}>기본값은 영수증 매장명입니다.</Text>
+            </View>
+
+            <View style={styles.formField}>
+              <Text style={styles.formLabel}>메모</Text>
+              <TextInput
+                value={memo}
+                onChangeText={setMemo}
+                placeholder="정산 메모"
+                placeholderTextColor="#9CA3AF"
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <Text style={styles.formLabel}>수취 은행명</Text>
+              <TextInput
+                value={receiverBankName}
+                onChangeText={setReceiverBankName}
+                placeholder="예: 부산은행"
+                placeholderTextColor="#9CA3AF"
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.formField}>
+              <Text style={styles.formLabel}>수취 계좌번호</Text>
+              <TextInput
+                value={receiverAccountNumber}
+                onChangeText={setReceiverAccountNumber}
+                placeholder="예: 111-11111111-11"
+                placeholderTextColor="#9CA3AF"
+                autoCapitalize="none"
+                style={styles.input}
+              />
+            </View>
+          </View>
+
           <Pressable onPress={selectAll} className="flex-row items-center mb-4" style={styles.selectAllRow}>
             <View style={[
               styles.checkbox,
-              selectedIds.size === ALL_GROUP_MEMBERS.length && styles.checkboxSelected,
+              selectableMembers.length > 0 &&
+                selectedIds.size === selectableMembers.length &&
+                styles.checkboxSelected,
             ]}>
               <Text style={styles.checkMark}>✓</Text>
             </View>
             <Text style={styles.selectAllText}>전체 선택</Text>
           </Pressable>
 
-          {/* 멤버 리스트 */}
           <ScrollView
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={styles.memberListContent}
+            contentContainerStyle={memberListContentStyle}
             style={styles.memberListScroll}
           >
-            {ALL_GROUP_MEMBERS.map(m => {
-              const isSelected = selectedIds.has(m.id);
-              return (
-                <Pressable
-                  key={m.id}
-                  onPress={() => toggleMember(m.id)}
-                  className="flex-row items-center"
-                  style={styles.newMemberRow}
-                >
-                  {/* 체크박스 */}
-                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                    <Text style={styles.checkMark}>✓</Text>
-                  </View>
+            {loadingMembers ? (
+              <View style={styles.statusCard}>
+                <ActivityIndicator color="#1428A0" />
+                <Text style={styles.statusText}>정산 대상자를 불러오는 중...</Text>
+              </View>
+            ) : memberLoadError ? (
+              <View style={styles.statusCard}>
+                <Text style={styles.statusText}>{memberLoadError}</Text>
+              </View>
+            ) : selectableMembers.length === 0 ? (
+              <View style={styles.statusCard}>
+                <Text style={styles.statusText}>선택할 수 있는 정산 대상자가 없습니다.</Text>
+              </View>
+            ) : (
+              selectableMembers.map(member => {
+                const isSelected = selectedIds.has(member.id);
+                return (
+                  <Pressable
+                    key={member.id}
+                    onPress={() => toggleMember(member.id)}
+                    className="flex-row items-center"
+                    style={styles.newMemberRow}
+                  >
+                    <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                      <Text style={styles.checkMark}>✓</Text>
+                    </View>
 
-                  {/* 아바타 */}
-                  <View style={[styles.newMemberAvatar, isSelected && styles.newMemberAvatarSelected]}>
-                    <Text style={styles.memberEmoji}>🐹</Text>
-                  </View>
+                    <View
+                      style={[
+                        styles.newMemberAvatar,
+                        isSelected && styles.newMemberAvatarSelected,
+                      ]}>
+                      <Text style={styles.memberEmoji}>🐹</Text>
+                    </View>
 
-                  {/* 이름 */}
-                  <Text style={[styles.newMemberName, !isSelected && styles.newMemberNameInactive]}>
-                    {m.name}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.newMemberName,
+                        !isSelected && styles.newMemberNameInactive,
+                      ]}>
+                      {member.name}
+                    </Text>
 
-                  {/* 1인당 금액 표시 */}
-                  {isSelected && selectedIds.size > 0 && (
-                    <Text style={styles.perPersonAmount}>{perPerson.toLocaleString()}원</Text>
-                  )}
-                </Pressable>
-              );
-            })}
+                    {isSelected && selectedParticipantIds.length > 0 ? (
+                      <Text style={styles.perPersonAmount}>
+                        {perPerson.toLocaleString()}원
+                      </Text>
+                    ) : null}
+                  </Pressable>
+                );
+              })
+            )}
           </ScrollView>
 
-          {/* 하단 등록 버튼 */}
-          <View style={styles.bottomBar}>
+          <View style={[styles.bottomBar, {paddingBottom: bottomInset}]}>
             <Pressable
               onPress={handleRegister}
-              disabled={selectedIds.size === 0 || submitting}
+              disabled={
+                selectedParticipantIds.length === 0 ||
+                submitting ||
+                loadingMembers ||
+                !!memberLoadError
+              }
               className="rounded-2xl py-4 items-center justify-center"
-              style={[styles.registerButton, (selectedIds.size === 0 || submitting) && styles.registerButtonDisabled]}
+              style={[
+                styles.registerButton,
+                (selectedParticipantIds.length === 0 ||
+                  submitting ||
+                  loadingMembers ||
+                  !!memberLoadError) && styles.registerButtonDisabled,
+              ]}
             >
               <Text style={styles.registerButtonText}>
                 {submitting
-                  ? '영수증 등록 중...'
-                  : selectedIds.size > 0
-                  ? `정산 등록하기 (${selectedIds.size}명)`
+                  ? '정산 등록 중...'
+                  : loadingMembers
+                  ? '정산 대상자 불러오는 중...'
+                  : selectedParticipantIds.length > 0
+                  ? `정산 등록하기 (${selectedParticipantIds.length}명)`
                   : '인원을 선택하세요'}
               </Text>
             </Pressable>
           </View>
-
         </View>
       </ScreenLayout>
     );
@@ -274,8 +468,6 @@ export default function SettleMemberSelectScreen() {
   return (
     <ScreenLayout>
       <View style={styles.container}>
-
-        {/* 헤더 */}
         <View className="flex-row items-center justify-between mb-5">
           <Text style={styles.headerTitle}>정산 현황</Text>
           <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
@@ -283,7 +475,6 @@ export default function SettleMemberSelectScreen() {
           </Pressable>
         </View>
 
-        {/* 상태 요약 */}
         <View
           className="bg-white rounded-3xl px-6 py-5 mb-5"
           style={styles.summaryCard}
@@ -309,39 +500,50 @@ export default function SettleMemberSelectScreen() {
           </View>
         </View>
 
-        {/* 멤버 리스트 */}
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.memberListContent}
+          contentContainerStyle={memberListContentStyle}
           style={styles.memberListScroll}
         >
-          {/* 미납자 먼저 표시 */}
-          {[...members].sort((a, b) => (a.isPaid === b.isPaid ? 0 : a.isPaid ? 1 : -1)).map(m => (
-            <View key={m.id} className="flex-row items-center" style={styles.existingMemberRow}>
-              {/* 아바타 */}
-              <View style={[
-                styles.existingMemberAvatar,
-                { backgroundColor: m.isPaid ? '#F0FDF4' : '#FEF2F2', borderColor: m.isPaid ? '#22C55E' : '#EF4444' },
-              ]}>
-                <Text style={styles.existingMemberEmoji}>🐹</Text>
-              </View>
+          {[...members]
+            .sort((a, b) => (a.isPaid === b.isPaid ? 0 : a.isPaid ? 1 : -1))
+            .map(member => (
+              <View
+                key={member.id}
+                className="flex-row items-center"
+                style={styles.existingMemberRow}>
+                <View
+                  style={[
+                    styles.existingMemberAvatar,
+                    {
+                      backgroundColor: member.isPaid ? '#F0FDF4' : '#FEF2F2',
+                      borderColor: member.isPaid ? '#22C55E' : '#EF4444',
+                    },
+                  ]}>
+                  <Text style={styles.existingMemberEmoji}>🐹</Text>
+                </View>
 
-              {/* 이름 */}
-              <View style={styles.existingMemberInfo}>
-                <Text style={styles.existingMemberName}>{m.name}</Text>
-                <Text style={styles.existingMemberAmount}>{existingPerPerson.toLocaleString()}원</Text>
-              </View>
+                <View style={styles.existingMemberInfo}>
+                  <Text style={styles.existingMemberName}>{member.name}</Text>
+                  <Text style={styles.existingMemberAmount}>
+                    {existingPerPerson.toLocaleString()}원
+                  </Text>
+                </View>
 
-              {/* 상태 배지 */}
-              <View style={[styles.statusBadge, { backgroundColor: m.isPaid ? '#22C55E' : '#EF4444' }]}>
-                <Text style={styles.statusBadgeText}>{m.isPaid ? '완료' : '미납'}</Text>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    {backgroundColor: member.isPaid ? '#22C55E' : '#EF4444'},
+                  ]}>
+                  <Text style={styles.statusBadgeText}>
+                    {member.isPaid ? '완료' : '미납'}
+                  </Text>
+                </View>
               </View>
-            </View>
-          ))}
+            ))}
         </ScrollView>
 
-        {/* 하단 미납자 알림 보내기 버튼 */}
-        <View style={styles.bottomBar}>
+        <View style={[styles.bottomBar, {paddingBottom: bottomInset}]}>
           <Pressable
             onPress={onSendNotification}
             className="rounded-2xl py-4 items-center justify-center"
@@ -402,6 +604,49 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.medium,
     textAlign: 'right',
     marginTop: 4,
+  },
+  formCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    marginBottom: 16,
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  formTitle: {
+    fontSize: 16,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+    marginBottom: 12,
+  },
+  formField: {
+    marginBottom: 12,
+  },
+  formLabel: {
+    fontSize: 13,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+    marginBottom: 6,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    color: COLORS.dark,
+    fontSize: 15,
+    fontFamily: FONT_FAMILY.medium,
+    backgroundColor: '#F9FAFB',
+  },
+  helperText: {
+    fontSize: 12,
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
+    marginTop: 6,
   },
   summaryRowLabel: {
     fontSize: 14,
@@ -475,6 +720,21 @@ const styles = StyleSheet.create({
   memberListContent: {
     paddingBottom: 100,
     gap: 12,
+  },
+  statusCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+  },
+  statusText: {
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+    textAlign: 'center',
   },
 
   // ── 새 정산 멤버 행 ───────────────────────

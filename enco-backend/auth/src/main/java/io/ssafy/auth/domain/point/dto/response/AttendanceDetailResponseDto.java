@@ -1,5 +1,6 @@
 package io.ssafy.auth.domain.point.dto.response;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 
@@ -18,6 +19,7 @@ public record AttendanceDetailResponseDto(
             String endDate,
             String startTime,
             String endTime,
+            BigDecimal rewardPoint,
             long totalDays,
 
             Integer targetMemberCount,

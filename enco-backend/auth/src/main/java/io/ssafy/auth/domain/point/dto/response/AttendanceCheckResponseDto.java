@@ -4,5 +4,6 @@ public record AttendanceCheckResponseDto(
         Long attendanceId,
         String attendedAt,
         int totalAttendanceInEvent,
-        int streakDays
+        int streakDays,
+        boolean isRewardGranted
 ) {}

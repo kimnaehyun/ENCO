@@ -1,8 +1,8 @@
 // src/screens/group/GroupLedgerDetailScreen.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import {
   getGroupTransactionDetail,
@@ -44,7 +44,7 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 export default function GroupLedgerDetailScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const { groupId, isAdmin, transactionId } =
+  const { groupId, groupName, isAdmin, transactionId } =
     (route.params ?? {}) as RouteParams;
 
   const [detail, setDetail] = useState<DetailResult | null>(null);
@@ -52,7 +52,7 @@ export default function GroupLedgerDetailScreen() {
   const [error, setError] = useState<string | null>(null);
   const [localReceiptUri, setLocalReceiptUri] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchDetail = useCallback(async () => {
     const numericGroupId = groupId ? Number(groupId) : NaN;
 
     console.log('[TransactionDetail] groupId:', numericGroupId);
@@ -63,28 +63,40 @@ export default function GroupLedgerDetailScreen() {
       return;
     }
 
-    const fetchDetail = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const result = await getGroupTransactionDetail(numericGroupId, transactionId);
-        console.log('[TransactionDetail] success:', result);
-        setDetail(result.result);
-      } catch (err: any) {
-        console.error('[TransactionDetail] failed:', err);
-        console.error('[TransactionDetail] status:', err?.response?.status);
-        console.error('[TransactionDetail] data:', err?.response?.data);
-        setError('거래 상세 내역을 불러오지 못했습니다.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDetail();
+    setIsLoading(true);
+    setError(null);
+    try {
+      const result = await getGroupTransactionDetail(numericGroupId, transactionId);
+      console.log('[TransactionDetail] success:', result);
+      setDetail(result.result);
+    } catch (err: any) {
+      console.error('[TransactionDetail] failed:', err);
+      console.error('[TransactionDetail] status:', err?.response?.status);
+      console.error('[TransactionDetail] data:', err?.response?.data);
+      setError('거래 상세 내역을 불러오지 못했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   }, [groupId, transactionId]);
 
-  const handleCamera = () => navigation.navigate('OcrTest');
-  const handleGallery = () => navigation.navigate('OcrTest');
+  useFocusEffect(
+    useCallback(() => {
+      fetchDetail();
+    }, [fetchDetail]),
+  );
+
+  const handleCamera = () =>
+    navigation.navigate('TransactionReceiptOcr', {
+      groupId,
+      groupName,
+      transactionId,
+    });
+  const handleGallery = () =>
+    navigation.navigate('TransactionReceiptOcr', {
+      groupId,
+      groupName,
+      transactionId,
+    });
   const handleDeleteReceipt = () => {
     Alert.alert('삭제', '영수증을 삭제할까요?', [
       { text: '취소', style: 'cancel' },

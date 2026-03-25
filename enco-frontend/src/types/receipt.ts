@@ -21,13 +21,16 @@ export type ReceiptItemDto = {
   options: ReceiptOptionDto[];
 };
 
-export type ReceiptDto = {
+export type ReceiptSubmissionDto = {
   merchantName: string;
   address: string;
   paidAt: string;
   businessNumber: string;
   totalAmount: number | null;
   items: ReceiptItemDto[];
+};
+
+export type ReceiptDto = ReceiptSubmissionDto & {
   candidates: ReceiptOcrCandidateMap;
   ocrMeta: ReceiptOcrMeta | null;
 };
@@ -51,24 +54,38 @@ export type ReceiptOcrResult = {
   rawResponse: unknown;
 };
 
-export type ReceiptEvidenceUploadResponse = {
-  evidenceId: string;
+export type TransactionReceiptContentResponse = {
+  message: string;
   receiptImageUrl: string;
-  source: string;
-  groupId: number | null;
+  rawResponse: unknown;
 };
 
-export type ReceiptContentSubmitRequestDto = {
-  groupId?: number;
-  evidenceId?: string;
-  receipt: ReceiptDto;
+export type SettlementParticipantResponse = {
+  chargeTargetId: number;
+  userId: number;
+  amount: number;
+  remainingAmount: number;
+  status: string;
 };
 
-export type ReceiptContentSubmitResponse = {
-  groupId: number | null;
-  evidenceId: string;
-  receipt: ReceiptDraft;
-  accepted: boolean;
+export type SettlementCreateResponse = {
+  expenseId: number;
+  chargeId: number;
+  groupId: number;
+  amount: number;
+  useCard: string;
+  paidCount: number;
+  totalCount: number;
+  displayName: string;
+  transactionType: string;
+  memo: string;
+  paidAt: string;
+  receiptImageUrl: string;
+  receiverAccountNumber: string;
+  receiverBankCode: string;
+  receiverBankName: string;
+  paymentInfo: ReceiptSubmissionDto;
+  participants: SettlementParticipantResponse[];
   rawResponse: unknown;
 };
 

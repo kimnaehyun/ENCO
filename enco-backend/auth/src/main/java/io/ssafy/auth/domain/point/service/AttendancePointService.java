@@ -67,7 +67,7 @@ public class AttendancePointService {
             throw new CustomException(ErrorCode.INVALID_ATTENDANCE_TIME);
         }
 
-        int totalMembers = getGroupMemberCount(groupId); // ⭐️ 현재 모임의 총 인원수 가져오기
+        int totalMembers = getGroupMemberCount(groupId);
 
         if (event.getMinLimit() != null && totalMembers < event.getMinLimit()) {
             throw new CustomException(ErrorCode.MIN_MEMBER_LIMIT_NOT_MET);
@@ -98,6 +98,7 @@ public class AttendancePointService {
 
         int targetRate = event.getTargetRate() != null ? event.getTargetRate() : 0;
         int targetMemberCount = (int) Math.ceil(totalMembers * (targetRate / 100.0));
+        boolean isRewardGranted = false;
 
         if (targetMemberCount > 0 && todayAttendCount == targetMemberCount) {
             Group group = groupRepository.findById(groupId).orElseThrow();
@@ -113,6 +114,7 @@ public class AttendancePointService {
                     .referenceId(savedAttendance.getId())
                     .build();
             pointHistoryRepository.save(history);
+            isRewardGranted = true;
             log.info("[출석 리워드 지급] groupId={}, 오늘출석인원={}, 목표인원={}, amount={}",
                     group.getId(), todayAttendCount, targetMemberCount, event.getRewardPoint());
         }
@@ -129,7 +131,8 @@ public class AttendancePointService {
                 savedAttendance.getId(),
                 savedAttendance.getAttendedAt().toLocalDate().toString(),
                 attendedDates.size(),
-                streakDays
+                streakDays,
+                isRewardGranted
         );
     }
 
@@ -166,6 +169,7 @@ public class AttendancePointService {
                 event.getEndDate().toString(),
                 event.getStartTime().toString(),
                 event.getEndTime().toString(),
+                event.getRewardPoint(),
                 totalDays,
                 targetMemberCount,
                 currentMemberCount
@@ -187,7 +191,7 @@ public class AttendancePointService {
 
         int streak = 0;
         LocalDate today = LocalDate.now();
-        LocalDate lastDate = dates.get(dates.size() - 1); // 가장 최근 출석일
+        LocalDate lastDate = dates.get(dates.size() - 1);
 
         if (lastDate.isEqual(today) || lastDate.isEqual(today.minusDays(1))) {
             streak = 1;
