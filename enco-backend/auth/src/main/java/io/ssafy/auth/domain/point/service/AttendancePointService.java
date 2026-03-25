@@ -98,6 +98,7 @@ public class AttendancePointService {
 
         int targetRate = event.getTargetRate() != null ? event.getTargetRate() : 0;
         int targetMemberCount = (int) Math.ceil(totalMembers * (targetRate / 100.0));
+        boolean isRewardGranted = false;
 
         if (targetMemberCount > 0 && todayAttendCount == targetMemberCount) {
             Group group = groupRepository.findById(groupId).orElseThrow();
@@ -113,6 +114,7 @@ public class AttendancePointService {
                     .referenceId(savedAttendance.getId())
                     .build();
             pointHistoryRepository.save(history);
+            isRewardGranted = true;
             log.info("[출석 리워드 지급] groupId={}, 오늘출석인원={}, 목표인원={}, amount={}",
                     group.getId(), todayAttendCount, targetMemberCount, event.getRewardPoint());
         }
@@ -129,7 +131,8 @@ public class AttendancePointService {
                 savedAttendance.getId(),
                 savedAttendance.getAttendedAt().toLocalDate().toString(),
                 attendedDates.size(),
-                streakDays
+                streakDays,
+                isRewardGranted
         );
     }
 
