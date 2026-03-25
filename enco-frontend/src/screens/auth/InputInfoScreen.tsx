@@ -6,10 +6,12 @@ import {
   ScrollView,
   KeyboardAvoidingView,
   Platform,
+  Image,
 } from 'react-native';
 import Text from '@/components/typography';
 import { AuthScreenProps } from '../../types/navigation';
 import type { SignupStep } from '../../types/navigation';
+import { getProfileImage } from '../../types/images';
 
 const PROFILE_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -197,19 +199,21 @@ export default function InputInfoScreen({
                         <Pressable
                           key={num}
                           onPress={() => handleProfileSelect(num)}
-                          className={`w-14 h-14 rounded-full items-center justify-center ${
-                            sel
-                              ? 'bg-[#1428A0]'
-                              : 'bg-white border border-gray-300'
-                          }`}
+                          style={{
+                            width: 64,
+                            height: 64,
+                            borderRadius: 32,
+                            overflow: 'hidden',
+                            borderWidth: sel ? 3 : 2,
+                            borderColor: sel ? '#1428A0' : '#D1D5DB',
+                            backgroundColor: sel ? '#EEF2FF' : '#FFFFFF',
+                          }}
                         >
-                          <Text
-                            weight="bold"
-                            style={{ fontSize: 18 }}
-                            color={sel ? 'white' : 'subtle'}
-                          >
-                            {num}
-                          </Text>
+                          <Image
+                            source={getProfileImage(num)}
+                            style={{ width: '100%', height: '100%' }}
+                            resizeMode="cover"
+                          />
                         </Pressable>
                       );
                     })}
