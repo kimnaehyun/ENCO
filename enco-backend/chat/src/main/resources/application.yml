@@ -66,8 +66,9 @@ gms:
     max-tokens: 4096
     temperature: 0.3
   embedding:
-    url: https://gms.ssafy.io/gmsapi/generativelanguage.googleapis.com/v1beta/models/text-embedding-004:embedContent
+    url: https://gms.ssafy.io/gmsapi/api.openai.com/v1/embeddings
     key: ${GMS_KEY}
+    model: text-embedding-3-large
 
 chroma:
   url: http://${CHROMA_HOST:localhost}:${CHROMA_PORT:8000}

@@ -24,16 +24,16 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(false);
   const [groups, setGroups] = useState<HomeGroupSummary[]>([]);
 
-  // 프로필이 없으면 API에서 가져오기
+  // 프로필이 없으면 API에서 가져오기 (로그인 응답에서 이미 저장된 경우 스킵)
   useEffect(() => {
     if (!profile) {
       setLoading(true);
       fetchMyPage()
         .then(data => setProfile(data))
-        .catch(err => console.warn('프로필 조회 실패:', err))
+        .catch(() => {}) // 마이페이지 API 미지원 시 무시 (로그인 응답 데이터 사용)
         .finally(() => setLoading(false));
     }
-  }, []);
+  }, [profile]);
 
   const displayName = profile?.name ?? user ?? '';
 
