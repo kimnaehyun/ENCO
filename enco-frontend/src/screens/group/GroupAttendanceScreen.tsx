@@ -1,9 +1,11 @@
-import React, { useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
+import React, { useEffect, useMemo } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
+import { useGroupAttendance } from '../../hooks/useGroupAttendance';
+import AttendanceHeroCard from '../../components/attendance/AttendanceHeroCard';
 
 type CalendarCell = {
   key: string;
@@ -15,19 +17,6 @@ type CalendarCell = {
 const WEEK_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const DAILY_REWARD = 100;
 
-// TODO: 백엔드 연동 후 실제 모임원 수 / 오늘 투표 참여 인원 / 출석 데이터로 교체
-const TOTAL_MEMBERS = 10;
-const TODAY_VOTED_COUNT = 6;
-const BASE_GROUP_BALANCE = 1200;
-
-function calcStreak(dates: number[], today: number): number {
-  let streak = 0;
-  for (let d = today; d >= 1; d--) {
-    if (dates.includes(d)) streak++;
-    else break;
-  }
-  return streak;
-}
 
 function ProgressBar({
   ratio,
@@ -70,16 +59,30 @@ export default function GroupAttendanceScreen() {
   const currentMonth = today.getMonth();
   const todayDate = today.getDate();
 
-  // TODO: 백엔드 연동 후 실제 출석 데이터로 교체
-  const [attendedDates, setAttendedDates] = useState<number[]>([2, 4, 7, 10]);
+  const {
+    attendedDates,
+    isAttending,
+    streak,
+    alreadyAttendedToday,
+    onPressAttend,
+    event,
+    totalAttendanceInEvent,
+    hasActiveEvent,
+    isLoadingAttendance,
+    attendanceError,
+  } = useGroupAttendance(params.groupId);
 
-  const alreadyAttendedToday = attendedDates.includes(todayDate);
-  const streak = calcStreak(attendedDates, todayDate);
+  useEffect(() => {
+    console.log('[AttendanceScreen] 화면 마운트');
+    console.log('[AttendanceScreen] groupId:', params.groupId);
+    console.log('[AttendanceScreen] groupName:', groupName);
+  }, []);
 
-  const voteParticipationRatio = TODAY_VOTED_COUNT / TOTAL_MEMBERS;
+  const totalMembers = event?.targetMemberCount ?? 0;
+  const todayAttendedCount = event?.currentMemberCount ?? 0;
+  const voteParticipationRatio = totalMembers > 0 ? todayAttendedCount / totalMembers : 0;
   const rewardUnlocked = voteParticipationRatio >= rewardThreshold;
-  const requiredVoteCount = Math.ceil(TOTAL_MEMBERS * rewardThreshold);
-  const currentGroupBalance = BASE_GROUP_BALANCE + (rewardUnlocked ? DAILY_REWARD : 0);
+  const requiredVoteCount = Math.ceil(totalMembers * rewardThreshold);
 
   const calendarCells = useMemo<CalendarCell[]>(() => {
     const firstDay = new Date(currentYear, currentMonth, 1).getDay();
@@ -116,10 +119,6 @@ export default function GroupAttendanceScreen() {
     return cells;
   }, [attendedDates, currentMonth, currentYear, todayDate]);
 
-  const onPressAttend = () => {
-    if (alreadyAttendedToday) return;
-    setAttendedDates(prev => [...prev, todayDate].sort((a, b) => a - b));
-  };
 
   return (
     <ScreenLayout>
@@ -132,31 +131,36 @@ export default function GroupAttendanceScreen() {
           <Text style={styles.headerSub}>{groupName}</Text>
         </View>
 
-        <View style={styles.heroCard}>
-          <Text style={styles.heroEmoji}>{alreadyAttendedToday ? '🎉' : '🌞'}</Text>
-          <Text style={styles.heroTitle}>
-            {alreadyAttendedToday ? '오늘도 출석 완료!' : '오늘도 출석하고'}
-          </Text>
-          <Text style={styles.heroTitle}>
-            {alreadyAttendedToday ? '좋은 하루 보내세요' : '모임에 활력을 더해보세요'}
-          </Text>
-          <Text style={styles.heroDesc}>
-            하루 한 번 출석하고 달력에 흔적을 남겨보세요.
-          </Text>
+        {isLoadingAttendance && (
+          <View style={styles.loadingRow}>
+            <ActivityIndicator size="small" color="#1428A0" />
+            <Text style={styles.loadingText}>출석 정보를 불러오는 중...</Text>
+          </View>
+        )}
 
-          <Pressable
-            onPress={onPressAttend}
-            disabled={alreadyAttendedToday}
-            style={[
-              styles.attendButton,
-              alreadyAttendedToday && styles.attendButtonDisabled,
-            ]}
-          >
-            <Text style={styles.attendButtonText}>
-              {alreadyAttendedToday ? '오늘 출석 완료 ✅' : '출석하기'}
+        {!isLoadingAttendance && attendanceError && (
+          <View style={styles.errorRow}>
+            <Text style={styles.errorText}>{attendanceError}</Text>
+          </View>
+        )}
+
+        {!isLoadingAttendance && event && (
+          <View style={styles.eventInfoCard}>
+            <Text style={styles.eventName}>{event.name}</Text>
+            <Text style={styles.eventDesc}>{event.description}</Text>
+            <Text style={styles.eventPeriod}>
+              {event.startDate} ~ {event.endDate}
             </Text>
-          </Pressable>
-        </View>
+          </View>
+        )}
+
+        <AttendanceHeroCard
+          hasActiveEvent={hasActiveEvent}
+          isLoadFailed={!!attendanceError}
+          alreadyAttendedToday={alreadyAttendedToday}
+          isAttending={isAttending}
+          onPressAttend={onPressAttend}
+        />
 
         <View style={styles.statsRow}>
           <View style={[styles.statCard, styles.statCardLeft]}>
@@ -166,9 +170,9 @@ export default function GroupAttendanceScreen() {
           </View>
 
           <View style={[styles.statCard, styles.statCardRight]}>
-            <Text style={styles.statEmoji}>💰</Text>
-            <Text style={styles.statValue}>{currentGroupBalance}원</Text>
-            <Text style={styles.statLabel}>모임통장</Text>
+            <Text style={styles.statEmoji}>📅</Text>
+            <Text style={styles.statValue}>{totalAttendanceInEvent}회</Text>
+            <Text style={styles.statLabel}>이번 모임 출석</Text>
           </View>
         </View>
 
@@ -197,7 +201,7 @@ export default function GroupAttendanceScreen() {
 
           <View style={styles.progressLabelRow}>
             <Text style={styles.progressLabel}>
-              오늘 투표 참여 {TODAY_VOTED_COUNT}/{TOTAL_MEMBERS}명
+              오늘 투표 참여 {todayAttendedCount}/{totalMembers}명
             </Text>
             <Text
               style={[
@@ -217,7 +221,7 @@ export default function GroupAttendanceScreen() {
             </Text>
           ) : (
             <Text style={styles.rewardHintText}>
-              {requiredVoteCount - TODAY_VOTED_COUNT}명만 더 투표하면 오늘 보상을 받을 수 있어요.
+              {requiredVoteCount - todayAttendedCount}명만 더 투표하면 오늘 보상을 받을 수 있어요.
             </Text>
           )}
         </View>
@@ -603,5 +607,59 @@ const styles = StyleSheet.create({
   },
   rewardFlexChild: {
     flex: 1,
+  },
+
+  loadingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 8,
+    marginBottom: 10,
+  },
+  loadingText: {
+    fontSize: 13,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+  },
+
+  errorRow: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
+  errorText: {
+    fontSize: 13,
+    color: '#DC2626',
+    fontFamily: FONT_FAMILY.medium,
+    textAlign: 'center',
+  },
+
+  eventInfoCard: {
+    backgroundColor: '#EEF2FF',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    marginBottom: 12,
+  },
+  eventName: {
+    fontSize: 15,
+    color: COLORS.primary,
+    fontFamily: FONT_FAMILY.bold,
+    marginBottom: 4,
+  },
+  eventDesc: {
+    fontSize: 12,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+    marginBottom: 6,
+    lineHeight: 18,
+  },
+  eventPeriod: {
+    fontSize: 12,
+    color: '#6366F1',
+    fontFamily: FONT_FAMILY.bold,
   },
 });
