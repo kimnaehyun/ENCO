@@ -62,6 +62,7 @@ export type GroupStackParamList = {
   AdminSendAlert: CommonParams | undefined;
   AdminCard:
     | (CommonParams & {
+        accountId?: number;
         selectedCardId?: string;
         selectedCardImage?: string;
         selectedCardName?: string;
@@ -73,22 +74,18 @@ export type GroupStackParamList = {
   AdminCardRecommend: {
     groupId?: string;
     groupName: string;
+    accountId?: number;
     tags: string[];
     prevTags?: string[];
     prevRecommendPressed?: boolean;
     prevViewAllPressed?: boolean;
   };
-  AdminCardPin: {
-    groupId?: string;
-    groupName: string;
-    tags: string[];
-    selectedCardId: string;
-    selectedCardName?: string | null;
-  };
   AdminCardDone: {
     groupId?: string;
     groupName?: string;
-    selectedCardId?: string;
+    cardId?: number;
+    cardNumber?: string;
+    frontImageUrl?: string;
   };
   AdminSettle: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
@@ -175,6 +172,7 @@ export type HomeStackParamList = {
   AdminSendAlert: CommonParams | undefined;
   AdminCard:
     | (CommonParams & {
+        accountId?: number;
         selectedCardId?: string;
         selectedCardImage?: string;
         selectedCardName?: string;
@@ -186,22 +184,18 @@ export type HomeStackParamList = {
   AdminCardRecommend: {
     groupId?: string;
     groupName: string;
+    accountId?: number;
     tags: string[];
     prevTags?: string[];
     prevRecommendPressed?: boolean;
     prevViewAllPressed?: boolean;
   };
-  AdminCardPin: {
-    groupId?: string;
-    groupName: string;
-    tags: string[];
-    selectedCardId: string;
-    selectedCardName?: string | null;
-  };
   AdminCardDone: {
     groupId?: string;
     groupName?: string;
-    selectedCardId?: string;
+    cardId?: number;
+    cardNumber?: string;
+    frontImageUrl?: string;
   };
   AdminSettle: CommonParams | undefined;
   GroupInviteEntry: { inviteToken?: string; groupName?: string } | undefined;
