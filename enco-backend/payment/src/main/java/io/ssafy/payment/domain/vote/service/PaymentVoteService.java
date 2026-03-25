@@ -14,6 +14,7 @@ import io.ssafy.payment.domain.vote.dto.request.PaymentVoteCreateRequestDto;
 import io.ssafy.payment.domain.vote.dto.response.PaymentVoteCreateResponseDto;
 import io.ssafy.payment.domain.vote.dto.response.PaymentVoteDetailResponseDto;
 import io.ssafy.payment.domain.vote.dto.response.PaymentVoteListResponseDto;
+import io.ssafy.payment.domain.vote.dto.response.PaymentVoteResultResponseDto;
 import io.ssafy.payment.domain.vote.entity.PaymentVote;
 import io.ssafy.payment.domain.vote.entity.PaymentVoteHistory;
 import io.ssafy.payment.domain.vote.entity.VoteChoice;
@@ -152,8 +153,6 @@ public class PaymentVoteService {
         TransactionHistory transaction = transactionHistoryRepository.findByVoteId(vote.getId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_TRANSACTION));
 
-//        int totalMembers = userServiceClient.getGroupMemberCount(groupId).result();
-
         int approveCount = (int) histories.stream()
                 .filter(h -> h.getChoice() == VoteChoice.APPROVE).count();
         int rejectCount = (int) histories.stream()
@@ -188,15 +187,20 @@ public class PaymentVoteService {
      * @param request
      */
     @Transactional
-    public void vote(Long voteId, Long userId, PaymentVoteChoiceRequestDto request) {
+    public PaymentVoteResultResponseDto vote(Long voteId, Long userId, PaymentVoteChoiceRequestDto request) {
         PaymentVote vote = voteRepository.findById(voteId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_VOTE));
 
-        if (vote.getStatus() != VoteStatus.VOTING) {
-            throw new CustomException(ErrorCode.VOTE_ALREADY_CLOSED);
+        if (vote.getStatus() == VoteStatus.APPROVED) {
+            throw new CustomException(ErrorCode.VOTE_ALREADY_APPROVED);
+        }
+        if (vote.getStatus() == VoteStatus.REJECTED) {
+            throw new CustomException(ErrorCode.VOTE_ALREADY_REJECTED);
         }
         if (LocalDateTime.now().isAfter(vote.getExpiredAt())) {
-            vote.expire();
+            if (vote.getStatus() == VoteStatus.VOTING) {
+                vote.expire(); // DB에 만료 상태 반영
+            }
             throw new CustomException(ErrorCode.VOTE_EXPIRED);
         }
         Optional<PaymentVoteHistory> optionalHistory = historyRepository.findByVoteAndUserId(vote, userId);
@@ -224,7 +228,11 @@ public class PaymentVoteService {
         if (currentApprovalRate >= voteCriteria) {
             vote.approve();
             executePayment(vote);
-            return;
+            return PaymentVoteResultResponseDto.of(
+                    vote.getId(),
+                    vote.getStatus(),
+                    "투표가 가결되어 결제가 성공적으로 승인되었습니다."
+            );
         }
 
         int totalVoted = historyRepository.findByVote(vote).size();
@@ -235,9 +243,18 @@ public class PaymentVoteService {
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_TRANSACTION));
 
             transaction.updateStatus(Status.REJECTED);
-
             log.info("[PaymentVote] 투표 부결 및 거래내역 취소 완료: voteId={}", vote.getId());
+            return PaymentVoteResultResponseDto.of(
+                    vote.getId(),
+                    vote.getStatus(),
+                    "투표가 부결되어 결제가 취소되었습니다."
+            );
         }
+        return PaymentVoteResultResponseDto.of(
+                vote.getId(),
+                vote.getStatus(),
+                "투표가 정상적으로 반영되었습니다. 다른 멤버의 투표를 기다리고 있습니다."
+        );
     }
 
     private void executePayment(PaymentVote vote) {

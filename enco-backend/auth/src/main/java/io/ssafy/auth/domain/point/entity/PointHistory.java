@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "point_histories")
@@ -34,6 +35,8 @@ public class PointHistory {
     @Column(nullable = false)
     private Long referenceId;
 
+    private LocalDateTime createdAt;
+
     @Builder
     public PointHistory(Long groupId, Long eventId, BigDecimal amount, BigDecimal balance, Direction direction, String description, Long referenceId) {
         this.groupId = groupId;
@@ -43,6 +46,7 @@ public class PointHistory {
         this.direction = direction;
         this.description = description;
         this.referenceId = referenceId;
+        this.createdAt = LocalDateTime.now();
     }
 
     public PointHistory() {
