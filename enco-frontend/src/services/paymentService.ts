@@ -310,8 +310,6 @@ export type GroupTransactionItem = {
 };
 
 export type GetGroupTransactionsParams = {
-  startDate?: string;
-  endDate?: string;
   sort?: GroupTransactionSort;
   type?: GroupTransactionType;
   cursor?: number;

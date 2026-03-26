@@ -21,6 +21,7 @@ import io.ssafy.payment.domain.billing.repository.ReceiptRepository;
 import io.ssafy.payment.global.common.BankCode;
 import io.ssafy.payment.global.common.error.CustomException;
 import io.ssafy.payment.global.common.error.ErrorCode;
+import io.ssafy.payment.infra.client.AuthServiceClient;
 import io.ssafy.payment.infra.messaging.producer.KafkaProducerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -33,6 +34,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -46,6 +48,7 @@ public class ExpenseService {
     private final ReceiptService receiptService;
     private final KafkaProducerService kafkaProducerService;
     private final ObjectMapper objectMapper;
+    private final AuthServiceClient authServiceClient;
 
     @Transactional
     public ExpenseResponseDto createExpense(Long groupId, Long userId, MultipartFile file, CreateExpenseRequestDto request) {
@@ -178,7 +181,12 @@ public class ExpenseService {
 
         List<ChargeTarget> targets = chargeTargetRepository.findByCharge_IdAndIsDeletedFalse(charge.getId());
 
-        return SettlementDefaultersResponseDto.of(targets);
+        List<Long> userIds = targets.stream().map(ChargeTarget::getUserId).distinct().toList();
+        Map<Long, AuthServiceClient.UserDetailResponse> userDetailMap = authServiceClient.getMemberDetails(userIds)
+                .stream()
+                .collect(Collectors.toMap(AuthServiceClient.UserDetailResponse::userId, u -> u));
+
+        return SettlementDefaultersResponseDto.of(targets, userDetailMap);
     }
 
     @Transactional(readOnly = true)

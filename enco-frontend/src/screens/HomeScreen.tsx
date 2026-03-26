@@ -10,9 +10,10 @@ import { fetchMyPage } from '../services/userService';
 import { getMyGroups } from '../services/groupService';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const LAYOUT_PADDING = 16; // ScreenLayout paddingHorizontal
 const HORIZONTAL_PADDING = 24;
-const CARD_GAP = 12;
 const CARD_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
+const CARD_HEIGHT = Math.round(CARD_WIDTH * (1100 / 800));
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
@@ -44,15 +45,17 @@ export default function HomeScreen() {
         console.log('내 모임 목록 조회 성공:', data);
         console.log('내 모임 배열:', data.result);
 
-        const mappedGroups: HomeGroupSummary[] = data.result.map(group => ({
-          id: String(group.groupId),
-          name: group.groupName,
-          coverImage: group.card?.frontImageUrl
-            ? { uri: `https://api.ssafywte.site${group.card.frontImageUrl}` }
-            : {
-                uri: 'https://dummy.image/default-card.png',
-              },
-        }));
+        const mappedGroups: HomeGroupSummary[] = data.result.map(group => {
+          console.log('[HomeScreen] group.card:', group.card);
+          return {
+            id: String(group.groupId),
+            name: group.groupName,
+            role: group.role,
+            coverImage: group.card?.frontImageUrl
+              ? { uri: group.card.frontImageUrl.replace(/^http:\/\//, 'https://') }
+              : images.card1,
+          };
+        });
 
         setGroups(mappedGroups);
       } catch (error: any) {
@@ -78,6 +81,7 @@ export default function HomeScreen() {
     navigation.navigate('GroupDashboard', {
       groupId: group.id,
       groupName: group.name,
+      isAdmin: group.role === 'ADMIN' || group.role === 'LEADER' || group.role === 'TREASURER',
     });
   };
 
@@ -88,25 +92,10 @@ export default function HomeScreen() {
   const renderCard = ({ item }: { item: HomeCardItem }) => {
     if (item.type === 'group') {
       return (
-        <Pressable onPress={() => onPressGroupCard(item.group)} style={styles.groupCard}>
-          {/* 배경 이미지 */}
-          <Image source={item.group.coverImage} style={styles.cardBgImage} resizeMode="cover" />
-
-          {/* 어두운 오버레이 */}
-          <View style={styles.cardOverlay} />
-
-          {/* 콘텐츠 */}
-          <View style={styles.cardContent}>
-            {/* 상단 뱃지 */}
-            <View style={styles.cardBadgeRow}>
-              <View style={styles.cardBadge}>
-                <Text style={styles.cardBadgeText}>모임통장</Text>
-              </View>
-              <Text style={styles.cardDots}>···</Text>
-            </View>
-
-            {/* 하단 정보 */}
-            <View>
+        <View style={styles.cardSlide}>
+          <Pressable onPress={() => onPressGroupCard(item.group)} style={styles.groupCard}>
+            <Image source={item.group.coverImage} style={styles.cardBgImage} resizeMode="contain" />
+            <View style={styles.cardFooter}>
               <Text style={styles.cardGroupName}>{item.group.name}</Text>
               <View style={styles.cardBottomRow}>
                 <Text style={styles.cardDashboardText}>대시보드 보기</Text>
@@ -115,19 +104,21 @@ export default function HomeScreen() {
                 </View>
               </View>
             </View>
-          </View>
-        </Pressable>
+          </Pressable>
+        </View>
       );
     }
 
     return (
-      <Pressable onPress={onPressCreateGroup} style={styles.addCard}>
-        <View style={styles.addIconCircle}>
-          <Text style={styles.addIconText}>+</Text>
-        </View>
-        <Text style={styles.addTitle}>모임 추가하기</Text>
-        <Text style={styles.addSubtitle}>새 모임을 만들어보세요</Text>
-      </Pressable>
+      <View style={styles.cardSlide}>
+        <Pressable onPress={onPressCreateGroup} style={styles.addCard}>
+          <View style={styles.addIconCircle}>
+            <Text style={styles.addIconText}>+</Text>
+          </View>
+          <Text style={styles.addTitle}>모임 추가하기</Text>
+          <Text style={styles.addSubtitle}>새 모임을 만들어보세요</Text>
+        </Pressable>
+      </View>
     );
   };
 
@@ -158,26 +149,27 @@ export default function HomeScreen() {
         </Pressable>
       </View>
 
-      {/* 섹션 타이틀 */}
-      <Text style={styles.sectionTitle}>내 모임 카드</Text>
+      {/* 섹션 타이틀 + 카드 슬라이더 — 남은 공간에서 세로 중앙 정렬 */}
+      <View style={styles.cardSection}>
+        <Text style={styles.sectionTitle}>내 모임 카드</Text>
 
-      {/* 카드 슬라이더 */}
-      <FlatList
-        data={cards}
-        keyExtractor={(item, index) =>
-          item.type === 'group' ? item.group.id : `add-${index}`
-        }
-        renderItem={renderCard}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        overScrollMode="never"
-        bounces={false}
-        snapToInterval={CARD_WIDTH + CARD_GAP}
-        decelerationRate="fast"
-        contentContainerStyle={{ paddingRight: HORIZONTAL_PADDING }}
-        ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
-      />
+        <FlatList
+          data={cards}
+          keyExtractor={(item, index) =>
+            item.type === 'group' ? item.group.id : `add-${index}`
+          }
+          renderItem={renderCard}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          overScrollMode="never"
+          bounces={false}
+          snapToInterval={SCREEN_WIDTH}
+          decelerationRate="fast"
+          style={{ marginHorizontal: -LAYOUT_PADDING }}
+          ItemSeparatorComponent={undefined}
+        />
+      </View>
 
     </ScreenLayout>
   );
@@ -233,6 +225,12 @@ const styles = StyleSheet.create({
     height: 25,
   },
 
+  // ── 카드 섹션 ─────────────────────────────────────
+  cardSection: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+
   // ── 섹션 타이틀 ───────────────────────────────────
   sectionTitle: {
     fontSize: 15,
@@ -241,59 +239,29 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
+  // ── 카드 슬라이드 래퍼 ────────────────────────────
+  cardSlide: {
+    width: SCREEN_WIDTH,
+    alignItems: 'center',
+  },
+
   // ── 모임 카드 ─────────────────────────────────────
   groupCard: {
     width: CARD_WIDTH,
-    height: 200,
-    borderRadius: 24,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 8,
   },
   cardBgImage: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
   },
-  cardOverlay: {
-    position: 'absolute',
-    width: '100%',
-    height: '100%',
-    backgroundColor: 'rgba(0,0,0,0.45)',
-  },
-  cardContent: {
-    flex: 1,
-    justifyContent: 'space-between',
-    padding: 22,
-  },
-  cardBadgeRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cardBadge: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-  },
-  cardBadgeText: {
-    color: COLORS.white,
-    fontSize: 12,
-    fontFamily: FONT_FAMILY.medium,
-  },
-  cardDots: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 18,
-    letterSpacing: 2,
+  cardFooter: {
+    width: CARD_WIDTH,
+    marginTop: 16,
+    paddingLeft: 23,
   },
   cardGroupName: {
-    color: 'rgba(255,255,255,0.75)',
-    fontSize: 13,
-    fontFamily: FONT_FAMILY.medium,
+    fontSize: 22,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
     marginBottom: 6,
   },
   cardBottomRow: {
@@ -302,15 +270,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   cardDashboardText: {
-    color: COLORS.white,
-    fontSize: 22,
-    fontFamily: FONT_FAMILY.bold,
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
   cardArrowCircle: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.25)',
+    backgroundColor: '#EEF2FF',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -318,7 +286,7 @@ const styles = StyleSheet.create({
   // ── 모임 추가 카드 ────────────────────────────────
   addCard: {
     width: CARD_WIDTH,
-    height: 200,
+    height: CARD_HEIGHT + 62,
     borderRadius: 24,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',
@@ -326,11 +294,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderStyle: 'dashed',
     borderColor: '#C7D2FE',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
   },
   addIconCircle: {
     width: 52,

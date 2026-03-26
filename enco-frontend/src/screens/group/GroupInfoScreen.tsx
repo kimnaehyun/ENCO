@@ -10,7 +10,6 @@ import {
   updateGroupSettings,
   getGroupMembers,
   type GroupMember,
-  updateGroupMemberRole,
 } from '../../services/groupService';
 import {
   getGroupCards,
@@ -71,17 +70,16 @@ export default function GroupInfoScreen() {
   const [isEdit, setIsEdit] = useState(false);
 
   const [groupName, setGroupName] = useState(params.groupName ?? '모임명');
-  const [intro, setIntro] = useState('회식좋아하는사람들');
-  const [selectedTags, setSelectedTags] = useState<string[]>(['여행', '음식']);
+  const [intro, setIntro] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [dues, setDues] = useState<DuesState>({
     cycle: '매월',
-    day: '15',
-    amount: '10,000',
-    rate: '80',
+    day: '',
+    amount: '',
+    rate: '',
   });
-  const [groundRules, setGroundRules] = useState(
-    '1. 아프면 사형\n2. 일정공유 잘하기\n3. MM 확인 체크하기\n4. 부드러운 말투로 대화해용',
-  );
+  const [groundRules, setGroundRules] = useState('');
+  const [createdAt, setCreatedAt] = useState('');
   const [issuedCards, setIssuedCards] = useState<IssuedCardUI[]>([]);
   const [representativeCardId, setRepresentativeCardId] = useState<string>('');
 
@@ -90,6 +88,7 @@ export default function GroupInfoScreen() {
 
   useEffect(() => {
     const fetchGroupSettings = async () => {
+      if (!groupId) return;
       try {
         console.log('groupId 확인:', groupId);
 
@@ -104,11 +103,23 @@ export default function GroupInfoScreen() {
         setSelectedTags((result.types ?? []).map(type => type.typeName));
         setGroundRules(result.groundRule ?? '');
 
-        if (result.policy) {
+        // createdAt 포맷: 'YYYY-MM-DDTHH:...' → 'YYYY.M.D'
+        if (result.createdAt) {
+          const d = new Date(result.createdAt);
+          setCreatedAt(
+            `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`
+          );
+        }
+
+        // GET 응답 필드명이 duePolicy / policy 두 가지일 수 있으므로 방어적으로 읽음
+        const rawResult = result as any;
+        const policyData = rawResult.duePolicy ?? rawResult.policy;
+        if (policyData) {
           setDues(prev => ({
             ...prev,
-            day: String(result.policy.dayOfMonth ?? ''),
-            amount: String(result.policy.monthlyFee ?? ''),
+            day: String(policyData.dayOfMonth ?? ''),
+            amount: String(policyData.amount ?? policyData.monthlyFee ?? ''),
+            rate: String(policyData.voteCriteria ?? ''),
           }));
         }
 
@@ -117,7 +128,7 @@ export default function GroupInfoScreen() {
         console.log('멤버 배열:', membersData.result);
         setMembers(membersData.result);
 
-        const cardsData = await getGroupCards(groupId!);
+        const cardsData = await getGroupCards(groupId);
         console.log('모임 카드 목록 조회 성공:', cardsData);
         console.log('카드 배열:', cardsData.result);
 
@@ -125,10 +136,10 @@ export default function GroupInfoScreen() {
           id: String(card.cardId),
           name: card.cardName,
           image: {
-            uri: `https://api.ssafywte.site${card.frontCardImageUrl}`,
+            uri: card.frontCardImageUrl.replace(/^http:\/\//, 'https://'),
           },
           backImage: {
-            uri: `https://api.ssafywte.site${card.backCardImageUrl}`,
+            uri: card.backCardImageUrl.replace(/^http:\/\//, 'https://'),
           },
           isBasic: card.isBasic,
         }));
@@ -154,20 +165,21 @@ export default function GroupInfoScreen() {
   }, [groupId]);
 
   const buildUpdateRequestBody = () => {
-    return {
+    const body = {
       groupName,
       instruction: intro,
       typeIds: selectedTags
         .map(tag => TAG_TYPE_ID_MAP[tag as keyof typeof TAG_TYPE_ID_MAP])
         .filter(Boolean),
-      policy: {
-        // 현재는 임시값, 나중에 조회 응답 policyId로 교체
-        policyId: 1,
+      duePolicy: {
+        amount: Number(String(dues.amount).replace(/,/g, '')),
         dayOfMonth: Number(dues.day),
-        monthlyFee: Number(String(dues.amount).replace(/,/g, '')),
+        voteCriteria: Number(dues.rate),
       },
-      groundRules,
+      groundRule: groundRules,
     };
+    console.log('[GroupInfo] updateGroupSettings requestBody:', JSON.stringify(body, null, 2));
+    return body;
   };
 
   const toggleTag = (tag: string) => {
@@ -177,43 +189,12 @@ export default function GroupInfoScreen() {
     );
   };
 
-  // 모임 권한 수정 임시 테스트 코드
-  const handleTestUpdateRole = async () => {
-    try {
-      const targetUserId = 23;
-
-      const response = await updateGroupMemberRole(groupId, targetUserId, {
-        role: 'TREASURER',
-      });
-
-      console.log('모임원 권한 변경 성공:', response);
-      console.log('권한 변경 result:', response.result);
-
-      Alert.alert('성공', '권한 변경 요청이 성공했습니다.');
-    } catch (error: any) {
-      console.error('모임원 권한 변경 실패:', error);
-      console.error('error.response?.status:', error?.response?.status);
-      console.error('error.response?.data:', error?.response?.data);
-
-      const errorData = error?.response?.data;
-      const errorMessage =
-        typeof errorData === 'object' && errorData?.message
-          ? errorData.message
-          : '권한 변경 중 오류가 발생했습니다.';
-
-      Alert.alert('오류', errorMessage);
-    }
-  };
-
   const onToggleEdit = async () => {
-    if (!isAdmin) return;
+    if (!isAdmin || !groupId) return;
 
     if (isEdit) {
       try {
         const requestBody = buildUpdateRequestBody();
-
-        console.log('모임 설정 수정 requestBody:', requestBody);
-
         const response = await updateGroupSettings(groupId, requestBody);
 
         console.log('모임 설정 수정 성공:', response);
@@ -242,6 +223,7 @@ export default function GroupInfoScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
 
         {/* 헤더 */}
@@ -327,7 +309,7 @@ export default function GroupInfoScreen() {
 
           {/* 모임 개설일 */}
           <InfoRow label="모임 개설일">
-            <Text style={styles.infoValueText}>2026.2.19</Text>
+            <Text style={styles.infoValueText}>{createdAt || '-'}</Text>
           </InfoRow>
 
           {/* 회비 */}
@@ -489,7 +471,7 @@ export default function GroupInfoScreen() {
 
         {/* 모임원 목록 테스트 */}
         <View className="bg-white rounded-3xl px-6 py-5 mt-4" style={styles.card}>
-          <Text style={styles.sectionTitle}>모임원 목록 테스트</Text>
+          <Text style={styles.sectionTitle}>모임원 목록</Text>
 
           {members.length === 0 ? (
             <Text style={styles.groundRulesText}>모임원이 없습니다.</Text>
@@ -548,8 +530,8 @@ const styles = StyleSheet.create({
   inputRowLast: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
   inputPill: { backgroundColor: '#E5E7EB', borderRadius: 50, paddingHorizontal: 20, height: 32, justifyContent: 'center', alignItems: 'center', minWidth: 80 },
   inputPillWide: { backgroundColor: '#E5E7EB', borderRadius: 50, paddingHorizontal: 20, height: 32, justifyContent: 'center', alignItems: 'center', minWidth: 120 },
-  pillInput: { fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', paddingVertical: 0, includeFontPadding: false },
-  pillInputCompact: { fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', padding: 0 },
+  pillInput: { width: '100%', fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', paddingVertical: 0, includeFontPadding: false },
+  pillInputCompact: { width: '100%', fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', padding: 0 },
   unitText: { fontSize: 13, color: '#000', fontFamily: FONT_FAMILY.medium },
 
   // 그라운드룰

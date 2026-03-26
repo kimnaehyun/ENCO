@@ -1,5 +1,5 @@
 // src/screens/group/GroupDashboardScreen.tsx
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -14,6 +14,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import { CommonParams } from '../../types/common';
 import { useNotifications } from '../../contexts/NotificationsContext';
 import { images } from '../../types/images';
+import AttendanceDashboardCard from '../../components/attendance/AttendanceDashboardCard';
 import BudgetGaugeCard from '../../components/analytics/BudgetGaugeCard';
 import ExpenseCategoryCard, {
   ExpenseCategoryItem,
@@ -24,8 +25,15 @@ import MonthlyTrendCard, {
 import {
   getGroupDashboard,
   getGroupDashboardReport,
+  getGroupTransactions,
 } from '../../services/paymentService';
+import {
+  getGroupSettings,
+  getGroupMembers,
+} from '../../services/groupService';
+import { useGroupAttendance } from '../../hooks/useGroupAttendance';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TOP_SPENDING_COLORS } from '../../constants/analyticsColors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 20;
@@ -46,50 +54,37 @@ export default function GroupDashboardScreen() {
   const { top: topInset } = useSafeAreaInsets();
   const params = (route.params ?? {}) as CommonParams;
   const groupId = params.groupId;
+  const isAdmin = !!params.isAdmin;
   const { unreadCount } = useNotifications();
 
   const [dashboardGroupName, setDashboardGroupName] = useState(
     params.groupName ?? '모임명'
   );
-  const [paidCount, setPaidCount] = useState(0);
-  const [unpaidCount, setUnpaidCount] = useState(0);
-  const [paidRatio, setPaidRatio] = useState(0);
-  const [unpaidRatio, setUnpaidRatio] = useState(0);
-  const [balance, setBalance] = useState(0);
   const [reportBalance, setReportBalance] = useState(0);
-  const [paidAmount, setPaidAmount] = useState(0);
-  const [pointAmount, setPointAmount] = useState(0);
 
-  const totalExpense = 428000;
-  const monthlyBudget = 500000;
+  const [calculatedMonthlyBudget, setCalculatedMonthlyBudget] = useState(0);
+  const [calculatedMonthlySpent, setCalculatedMonthlySpent] = useState(0);
 
-  const attendedCount = 6;
-  const totalMembers = 10;
-  const attendanceRewardThreshold = 0.7;
-  const attendanceRatio = attendedCount / totalMembers;
-  const requiredCount = Math.ceil(totalMembers * attendanceRewardThreshold);
+  const [topSpendingItems, setTopSpendingItems] = useState<ExpenseCategoryItem[]>([]);
+  const [calculatedTopSpendingTotal, setCalculatedTopSpendingTotal] = useState(0);
 
-  const categoryData = useMemo<ExpenseCategoryItem[]>(
-    () => [
-      { label: '식비', value: 180000, color: COLORS.brand },
-      { label: '유흥', value: 90000, color: '#60A5FA' },
-      { label: '회비 적립', value: 110000, color: '#818CF8' },
-      { label: '기타', value: 48000, color: '#C7D2FE' },
-    ],
-    []
-  );
+  const [calculatedMonthlyData, setCalculatedMonthlyData] = useState<MonthlyExpense[]>([]);
+  const [totalMembersCount, setTotalMembersCount] = useState(0);
 
-  const monthlyData = useMemo<MonthlyExpense[]>(
-    () => [
-      { month: '1월', amount: 210000 },
-      { month: '2월', amount: 320000 },
-      { month: '3월', amount: 280000 },
-      { month: '4월', amount: 410000 },
-      { month: '5월', amount: 360000 },
-      { month: '6월', amount: 428000 },
-    ],
-    []
-  );
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const flatListRef = useRef<any>(null);
+  const autoScrollPaused = useRef(false);
+
+  const {
+    alreadyAttendedToday,
+    event: attendanceEvent,
+  } = useGroupAttendance(groupId);
+
+  const attendedCount = attendanceEvent?.currentMemberCount ?? 0;
+  const rewardThreshold =
+    totalMembersCount > 0 && attendanceEvent?.targetMemberCount
+      ? attendanceEvent.targetMemberCount / totalMembersCount
+      : 0.7;
 
   const analyticsCards: AnalyticsCardItem[] = [
     { id: 'attendance', type: 'attendance' },
@@ -98,73 +93,148 @@ export default function GroupDashboardScreen() {
     { id: 'monthly', type: 'monthly' },
   ];
 
-  const attendanceMood = useMemo(() => {
-    if (attendanceRatio === 0) {
-      return {
-        title: '아직 아무도 출석하지 않았어요',
-        subtitle: '첫 출석을 시작해보세요',
-        accent: '#EF4444',
-        imageSource: require('../../assets/icons/sad_hamco.png'),
-      };
-    }
-
-    if (attendanceRatio < attendanceRewardThreshold) {
-      return {
-        title: '조금만 더 출석하면 목표 달성!',
-        subtitle: `${requiredCount - attendedCount}명만 더 출석하면 돼요`,
-        accent: '#1428A0',
-        imageSource: require('../../assets/icons/run_hamco.png'),
-      };
-    }
-
-    return {
-      title: '오늘 출석 목표 달성!',
-      subtitle: '모임 분위기가 아주 좋아요',
-      accent: '#22C55E',
-      imageSource: require('../../assets/icons/welcom_hamco.png'),
-    };
-  }, [attendanceRatio, attendanceRewardThreshold, attendedCount, requiredCount]);
 
   useEffect(() => {
     const fetchDashboard = async () => {
       if (!groupId) return;
       try {
         const dashboardData = await getGroupDashboard(Number(groupId));
-        const result = dashboardData.result;
-
-        setDashboardGroupName(result.groupName ?? '모임명');
-        setPaidCount(result.paymentStatus?.paidCount ?? 0);
-        setUnpaidCount(result.paymentStatus?.unpaidCount ?? 0);
-        setPaidRatio(result.paymentStatus?.paidRatio ?? 0);
-        setUnpaidRatio(result.paymentStatus?.unpaidRatio ?? 0);
-        setBalance(result.balance ?? 0);
+        setDashboardGroupName(dashboardData.result.groupName ?? '모임명');
 
         const reportData = await getGroupDashboardReport(groupId);
-        const reportResult = reportData.result;
-        setReportBalance(reportResult.balance ?? 0);
-        setPaidAmount(reportResult.paidAmount ?? 0);
-        setPointAmount(reportResult.pointAmount ?? 0);
+        setReportBalance(reportData.result.balance ?? 0);
       } catch (error: any) {
-        console.error('모임 대시보드 조회 실패:', error);
-        console.error('error.response?.status:', error?.response?.status);
-        console.error('error.response?.data:', error?.response?.data);
+        console.error('[Dashboard] fetch failed:', error?.response?.status, error?.response?.data);
       }
     };
-
     fetchDashboard();
   }, [groupId]);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (!groupId) return;
+      const gid = Number(groupId);
+      const now = new Date();
+      const thisYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      const recentMonths: string[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        recentMonths.push(
+          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        );
+      }
+      const recentMonthsSet = new Set(recentMonths);
+
+      // 예산 계산
+      try {
+        const [settingsData, membersData] = await Promise.all([
+          getGroupSettings(groupId),
+          getGroupMembers(groupId),
+        ]);
+        const rawResult = settingsData.result as any;
+        const monthlyFee =
+          rawResult.duePolicy?.amount ?? rawResult.policy?.monthlyFee ?? 0;
+        const memberCount = membersData.result.length;
+        setTotalMembersCount(memberCount);
+        setCalculatedMonthlyBudget(monthlyFee * memberCount);
+        console.log('[Analytics] monthlyFee:', monthlyFee, 'memberCount:', memberCount);
+      } catch (error: any) {
+        console.error('[Analytics] budget failed:', error?.response?.status, error?.response?.data);
+      }
+
+      // 거래내역 1번 fetch → 이번달 지출 / top5 / 6개월 트렌드 모두 계산
+      try {
+        const allItems: any[] = [];
+        let cursor: number | undefined;
+        while (true) {
+          const txData = await getGroupTransactions(gid, {
+            sort: 'LATEST' as const,
+            type: 'WITHDRAW' as const,
+            size: 200,
+            cursor,
+          });
+          allItems.push(...txData.result.items);
+          if (!txData.result.hasNext || txData.result.nextCursor == null) break;
+          cursor = txData.result.nextCursor;
+        }
+        console.log('[Analytics] 전체 WITHDRAW items:', allItems.length);
+
+        const thisMonthItems = allItems.filter(
+          item => item.transactionDate?.slice(0, 7) === thisYM
+        );
+
+        // 이번달 지출 합계
+        setCalculatedMonthlySpent(
+          thisMonthItems.reduce((sum, item) => sum + item.amount, 0)
+        );
+
+        // top 5 결제명
+        const groupedMap: Record<string, number> = {};
+        thisMonthItems.forEach(item => {
+          const key = item.title || '기타';
+          groupedMap[key] = (groupedMap[key] ?? 0) + item.amount;
+        });
+        const top5 = Object.entries(groupedMap)
+          .map(([label, value]) => ({ label, value }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 5);
+        setCalculatedTopSpendingTotal(top5.reduce((sum, item) => sum + item.value, 0));
+        setTopSpendingItems(
+          top5.map((item, index) => ({
+            label: item.label,
+            value: item.value,
+            color: TOP_SPENDING_COLORS[index] ?? '#CBD5E1',
+          }))
+        );
+
+        // 최근 6개월 트렌드
+        const groupedByMonth: Record<string, number> = {};
+        allItems
+          .filter(item => recentMonthsSet.has(item.transactionDate?.slice(0, 7)))
+          .forEach(item => {
+            const ym = item.transactionDate.slice(0, 7);
+            groupedByMonth[ym] = (groupedByMonth[ym] ?? 0) + item.amount;
+          });
+        setCalculatedMonthlyData(
+          recentMonths.map(ym => ({
+            month: `${parseInt(ym.split('-')[1], 10)}월`,
+            amount: groupedByMonth[ym] ?? 0,
+          }))
+        );
+      } catch (error: any) {
+        console.error('[Analytics] transactions failed:', error?.response?.status, error?.response?.data);
+      }
+    };
+    fetchAnalytics();
+  }, [groupId]);
+
+  // 3초마다 다음 카드로 자동 스크롤
+  useEffect(() => {
+    const total = analyticsCards.length;
+    const interval = setInterval(() => {
+      if (autoScrollPaused.current) return;
+      setActiveCardIndex(prev => {
+        const next = (prev + 1) % total;
+        flatListRef.current?.scrollToIndex({ index: next, animated: true });
+        return next;
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const onPressGroupInfo = () =>
     navigation.navigate('GroupInfo', {
       groupId: params.groupId,
       groupName: dashboardGroupName,
-      isAdmin: false,
+      isAdmin,
     });
 
   const onPressLedger = () =>
     navigation.navigate('GroupLedger', {
       groupId: params.groupId,
       groupName: dashboardGroupName,
+      isAdmin,
     });
 
   const onPressVotes = () =>
@@ -214,67 +284,20 @@ export default function GroupDashboardScreen() {
     return (
       <View style={{ width: ANALYTICS_CARD_WIDTH }}>
         {item.type === 'attendance' && (
-          <Pressable onPress={onPressAttendance} style={styles.attendanceCard}>
-            <View style={styles.attendanceHeader}>
-              <Text style={styles.attendanceTitle}>오늘의 출석 체크</Text>
-              <View style={styles.attendanceBadge}>
-                <Text style={styles.attendanceBadgeText}>
-                  출석률 {Math.round(attendanceRatio * 100)}%
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.attendanceInner}>
-              <Image
-                source={attendanceMood.imageSource}
-                style={styles.moodImage}
-                resizeMode="contain"
-              />
-
-              <Text style={styles.moodTitle}>{attendanceMood.title}</Text>
-              <Text style={styles.moodSubtitle}>{attendanceMood.subtitle}</Text>
-
-              <View style={styles.progressBarWrap}>
-                <View style={styles.progressBarBg}>
-                  <View
-                    style={[
-                      styles.progressBarFill,
-                      {
-                        width: `${Math.min(attendanceRatio * 100, 100)}%`,
-                        backgroundColor: attendanceMood.accent,
-                      },
-                    ]}
-                  />
-                </View>
-              </View>
-
-              <Text style={styles.membersText}>
-                {attendedCount} / {totalMembers}명 출석
-              </Text>
-
-              <Text
-                style={[
-                  styles.rewardText,
-                  {
-                    color:
-                      attendanceRatio >= attendanceRewardThreshold
-                        ? '#22C55E'
-                        : '#6B7280',
-                  },
-                ]}
-              >
-                {attendanceRatio >= attendanceRewardThreshold
-                  ? '오늘 보상 목표 달성!'
-                  : `${requiredCount}명 목표까지 ${requiredCount - attendedCount}명 남음`}
-              </Text>
-            </View>
-          </Pressable>
+          <AttendanceDashboardCard
+            alreadyAttendedToday={alreadyAttendedToday}
+            attendedCount={attendedCount}
+            totalMembers={totalMembersCount}
+            rewardThreshold={rewardThreshold}
+            height={ANALYTICS_CARD_HEIGHT}
+            onPress={onPressAttendance}
+          />
         )}
 
         {item.type === 'budget' && (
           <BudgetGaugeCard
-            budget={monthlyBudget}
-            spent={totalExpense}
+            budget={calculatedMonthlyBudget}
+            spent={calculatedMonthlySpent}
             onPress={onPressAnalytics}
             height={ANALYTICS_CARD_HEIGHT}
           />
@@ -282,8 +305,8 @@ export default function GroupDashboardScreen() {
 
         {item.type === 'category' && (
           <ExpenseCategoryCard
-            totalExpense={totalExpense}
-            categories={categoryData}
+            totalExpense={calculatedTopSpendingTotal}
+            categories={topSpendingItems}
             onPress={onPressAnalytics}
             height={ANALYTICS_CARD_HEIGHT}
           />
@@ -291,7 +314,7 @@ export default function GroupDashboardScreen() {
 
         {item.type === 'monthly' && (
           <MonthlyTrendCard
-            data={monthlyData}
+            data={calculatedMonthlyData}
             onPress={onPressAnalytics}
             height={ANALYTICS_CARD_HEIGHT}
           />
@@ -342,6 +365,7 @@ export default function GroupDashboardScreen() {
         {/* 시각화 카드 스와이프 */}
         <View style={styles.analyticsSection}>
           <FlatList
+            ref={flatListRef}
             data={analyticsCards}
             keyExtractor={item => item.id}
             renderItem={renderAnalyticsCard}
@@ -353,7 +377,24 @@ export default function GroupDashboardScreen() {
             contentContainerStyle={styles.flatListContent}
             ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
             style={styles.flatList}
+            onScrollBeginDrag={() => { autoScrollPaused.current = true; }}
+            onMomentumScrollEnd={e => {
+              autoScrollPaused.current = false;
+              const index = Math.round(
+                e.nativeEvent.contentOffset.x / (ANALYTICS_CARD_WIDTH + CARD_GAP)
+              );
+              setActiveCardIndex(index);
+            }}
           />
+          {/* 페이지 도트 */}
+          <View style={styles.dotRow}>
+            {analyticsCards.map((_, i) => (
+              <View
+                key={i}
+                style={[styles.dot, i === activeCardIndex && styles.dotActive]}
+              />
+            ))}
+          </View>
         </View>
 
         {/* 잔액 카드 */}
@@ -401,14 +442,16 @@ export default function GroupDashboardScreen() {
           </Pressable>
         </View>
 
-        {/* 모임 관리 버튼 */}
-        <Pressable
-          onPress={onPressAdmin}
-          className="rounded-3xl py-5 items-center justify-center mb-3"
-          style={styles.adminButton}
-        >
-          <Text style={styles.adminText}>모임 관리</Text>
-        </Pressable>
+        {/* 모임 관리 버튼 (관리자만 표시) */}
+        {isAdmin && (
+          <Pressable
+            onPress={onPressAdmin}
+            className="rounded-3xl py-5 items-center justify-center mb-3"
+            style={styles.adminButton}
+          >
+            <Text style={styles.adminText}>모임 관리</Text>
+          </Pressable>
+        )}
 
         {/* 모임초대 진입 테스트 버튼 */}
         <Pressable
@@ -430,7 +473,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   analyticsSection: {
-    height: ANALYTICS_CARD_HEIGHT,
+    height: ANALYTICS_CARD_HEIGHT + 24,
     marginBottom: 16,
     overflow: 'hidden',
   },
@@ -577,6 +620,23 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: FONT_FAMILY.bold,
     color: COLORS.primary,
+  },
+  dotRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#CBD5E1',
+  },
+  dotActive: {
+    width: 18,
+    backgroundColor: COLORS.brand,
   },
   rewardText: {
     marginTop: 6,
