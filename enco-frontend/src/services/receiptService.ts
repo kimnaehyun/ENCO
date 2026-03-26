@@ -447,8 +447,6 @@ const buildSettlementDetailEndpoint = (groupId: number, expenseId: number) =>
   `/groups/${groupId}/settlements/${expenseId}`;
 const buildSettlementDefaultersEndpoint = (groupId: number, expenseId: number) =>
   `/groups/${groupId}/settlements/${expenseId}/defaulters`;
-const buildSettlementReminderEndpoint = (groupId: number, expenseId: number) =>
-  `/groups/${groupId}/settlements/${expenseId}/reminder`;
 
 const normalizeSettlementReminderResponse = (
   responseData: unknown,
@@ -661,7 +659,7 @@ export async function sendSettlementReminder(
   }
 
   const response = await receiptApi.post(
-    buildSettlementReminderEndpoint(normalizedGroupId, normalizedExpenseId),
+    `/groups/${normalizedGroupId}/settlements/${normalizedExpenseId}/reminder`,
   );
 
   return normalizeSettlementReminderResponse(response.data);

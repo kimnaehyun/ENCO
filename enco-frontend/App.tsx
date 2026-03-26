@@ -14,10 +14,16 @@ import type { RootStackParamList } from './src/types/navigation';
 import { BackHandler, Linking, ToastAndroid } from 'react-native';
 import { ROUTES } from './src/constants/routes';
 import { linking } from '@/config/linking';
+import { setNotificationNavigationRef } from './src/hooks/useNotificationSetup';
 
 function App() {
   const navigationRef = useNavigationContainerRef<RootStackParamList>();
   const backPressedOnce = useRef(false);
+
+  // 알림 탭 시 네비게이션에 사용할 ref 등록
+  useEffect(() => {
+    setNotificationNavigationRef(navigationRef);
+  }, [navigationRef]);
 
   // ── 딥링크에서 초대 토큰 파싱 ──
   const handleDeepLink = (url: string | null) => {
