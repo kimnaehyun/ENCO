@@ -4,6 +4,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -97,6 +98,16 @@ export default function SettleDetailScreen() {
   );
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [sendingReminder, setSendingReminder] = useState(false);
+  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalMode, setModalMode] = useState<'confirm' | 'done'>('confirm');
+  const [modalMessage, setModalMessage] = useState('');
+  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+
+  const closeModal = () => {
+    setModalVisible(false);
+    setPendingAction(null);
+  };
 
   useEffect(() => {
     if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
@@ -220,59 +231,69 @@ export default function SettleDetailScreen() {
   const canDeleteSettlement =
     Number.isFinite(numericGroupId) && Number.isFinite(numericExpenseId);
 
-  const handleNotify = () => {
-    if (unpaidMembers.length === 0) {
-      Alert.alert('안내', '미납자 목록 정보가 없습니다.');
+  const formatKRW = (n: number) =>
+    `₩ ${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+
+  const doSendReminder = async () => {
+    if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
+      Alert.alert('안내', '알림 전송에 필요한 정산 정보가 없습니다.');
       return;
     }
+    try {
+      setSendingReminder(true);
+      const response = await sendSettlementReminder(numericGroupId, numericExpenseId);
+      console.log('[SettlementReminder] response:', JSON.stringify(response, null, 2));
+      return response;
+    } catch (error: any) {
+      console.log('[SettlementReminder] error:', JSON.stringify(error?.response?.data ?? error?.message, null, 2));
+      throw error;
+    } finally {
+      setSendingReminder(false);
+    }
+  };
 
-    const unpaidNames = unpaidMembers
-      .map(member => member.name)
-      .join(', ');
+  const onSendAlertSingle = (member: SettleMember) => {
+    const memberAmount = member.remainingAmount ?? member.amount ?? perPerson;
+    setModalMode('confirm');
+    setModalMessage(`${member.name}님에게 ${formatKRW(memberAmount)} 입금 요청 알림을 보냅니다.`);
+    setPendingAction(() => async () => {
+      try {
+        const response = await doSendReminder();
+        setSentIds(prev => new Set(prev).add(member.id));
+        setModalMode('done');
+        setModalMessage(`${member.name}님에게 알림을 전송했습니다.`);
+      } catch (error: any) {
+        setModalMode('done');
+        setModalMessage(error?.response?.data?.message || '알림 전송에 실패했습니다.');
+      }
+    });
+    setModalVisible(true);
+  };
 
-    if (unpaidCount === 0) {
-      Alert.alert('안내', '모든 멤버가 납부 완료했습니다.');
+  const onSendAlertAll = () => {
+    const unsent = unpaidMembers.filter(m => !sentIds.has(m.id));
+    if (unsent.length === 0) {
+      setModalMode('done');
+      setModalMessage('모든 미납자에게 이미 알림을 전송했습니다.');
+      setModalVisible(true);
       return;
     }
-
-    Alert.alert(
-      '미납자 알림 보내기',
-      `${unpaidNames}에게 ${perPerson.toLocaleString()}원 입금 요청 알림을 보냅니다.`,
-      [
-        { text: '취소', style: 'cancel' },
-        {
-          text: '보내기',
-          onPress: async () => {
-            if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
-              Alert.alert('안내', '알림 전송에 필요한 정산 정보가 없습니다.');
-              return;
-            }
-
-            try {
-              setSendingReminder(true);
-              const response = await sendSettlementReminder(
-                numericGroupId,
-                numericExpenseId,
-              );
-              Alert.alert(
-                '완료',
-                `알림 요청 ${response.requestedCount}건 중 ${response.sentCount}건을 전송했습니다.` +
-                  (response.failedCount > 0 ? ` 실패 ${response.failedCount}건` : ''),
-              );
-            } catch (error: any) {
-              Alert.alert(
-                '알림 전송 실패',
-                error?.response?.data?.message ||
-                  error?.message ||
-                  '미납자 알림 전송 중 오류가 발생했습니다.',
-              );
-            } finally {
-              setSendingReminder(false);
-            }
-          },
-        },
-      ]
-    );
+    setModalMode('confirm');
+    setModalMessage(`미납자 ${unsent.length}명에게 입금 요청 알림을 보냅니다.`);
+    setPendingAction(() => async () => {
+      try {
+        const response = await doSendReminder();
+        const newSet = new Set(sentIds);
+        unsent.forEach(m => newSet.add(m.id));
+        setSentIds(newSet);
+        setModalMode('done');
+        setModalMessage(`미납자 ${unsent.length}명에게 알림을 전송했습니다.`);
+      } catch (error: any) {
+        setModalMode('done');
+        setModalMessage(error?.response?.data?.message || '알림 전송에 실패했습니다.');
+      }
+    });
+    setModalVisible(true);
   };
 
   const handleDeleteSettlement = () => {
@@ -416,52 +437,119 @@ export default function SettleDetailScreen() {
           </View>
         </View>
 
-        {/* ── 미완료 시 미납자 요약 카드 ── */}
-        {!isSettled && unpaidCount > 0 && (
-          <View
-            className="bg-white rounded-3xl px-6 py-5 mb-4"
-            style={styles.unpaidCard}
-          >
-            <View className="flex-row items-center justify-between mb-3">
-              <Text style={styles.unpaidTitle}>미납자 현황</Text>
-              <View style={styles.unpaidBadge}>
-                <Text style={styles.unpaidBadgeText}>{unpaidCount}명 미납</Text>
+        {/* ── 미완료 시 미납자 섹션 (AdminSendAlert 디자인) ── */}
+        {!isSettled && unpaidCount > 0 && unpaidMembers.length > 0 && (
+          <View style={styles.sectionCard}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>미납자</Text>
+              <View style={styles.sectionCountPill}>
+                <Text style={styles.sectionCountText}>{unpaidCount}</Text>
               </View>
             </View>
 
-            {unpaidMembers.length > 0 ? unpaidMembers.map(m => (
-              <View key={m.id} className="flex-row items-center mb-2" style={styles.memberRow}>
-                <View style={styles.memberAvatar}>
-                  <Image
-                    source={getProfileImage(m.profileUrl)}
-                    style={styles.memberAvatarImage}
-                    resizeMode="cover"
-                  />
+            {unpaidMembers.map((m, index) => {
+              const isSent = sentIds.has(m.id);
+              const memberAmount = m.remainingAmount ?? m.amount ?? perPerson;
+              return (
+                <View
+                  key={m.id}
+                  style={[
+                    styles.alertMemberCard,
+                    styles.alertMemberCardUnpaid,
+                    index !== unpaidMembers.length - 1 && styles.alertMemberCardSpacing,
+                  ]}
+                >
+                  <View style={styles.alertMemberRow}>
+                    <View style={styles.alertAvatarWrap}>
+                      <Image
+                        source={getProfileImage(m.profileUrl)}
+                        style={styles.alertAvatarImage}
+                        resizeMode="cover"
+                      />
+                    </View>
+                    <View style={styles.alertMemberInfo}>
+                      <View style={styles.alertNameRow}>
+                        <Text style={styles.alertMemberName}>{m.name}</Text>
+                        <View style={styles.alertBadgeUnpaid}>
+                          <Text style={styles.alertBadgeUnpaidText}>미납</Text>
+                        </View>
+                      </View>
+                      <Text style={styles.alertMemberDue}>
+                        미납 금액: {formatKRW(memberAmount)}
+                      </Text>
+                    </View>
+                    <Pressable
+                      onPress={() => onSendAlertSingle(m)}
+                      disabled={isSent || sendingReminder}
+                      style={[styles.sendBadge, isSent && styles.sendBadgeSent]}
+                    >
+                      <Text style={[styles.sendBadgeText, isSent && styles.sendBadgeTextSent]}>
+                        {isSent ? '전송됨' : '전송'}
+                      </Text>
+                    </Pressable>
+                  </View>
                 </View>
-                <Text style={styles.memberName}>{m.name}</Text>
-                <Text style={styles.memberAmount}>
-                  {(m.remainingAmount ?? m.amount ?? perPerson).toLocaleString()}원
+              );
+            })}
+          </View>
+        )}
+
+        {/* 납부 완료 섹션 */}
+        {!isSettled && settleMembers.filter(m => m.isPaid).length > 0 && (
+          <View style={[styles.sectionCard, { marginTop: 16 }]}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>납부 완료</Text>
+              <View style={[styles.sectionCountPill, { backgroundColor: '#DCFCE7' }]}>
+                <Text style={[styles.sectionCountText, { color: '#16A34A' }]}>
+                  {settleMembers.filter(m => m.isPaid).length}
                 </Text>
               </View>
-            )) : (
-              <Text style={styles.helperDescription}>
-                현재 화면에는 미납자 상세 목록이 없어 인원 수만 표시합니다.
-              </Text>
-            )}
+            </View>
 
-            {unpaidMembers.length > 0 ? (
-              <Pressable
-                onPress={handleNotify}
-                disabled={sendingReminder}
-                className="rounded-2xl py-3 items-center justify-center mt-2"
-                style={[styles.notifyButton, sendingReminder && styles.notifyButtonDisabled]}
+            {settleMembers.filter(m => m.isPaid).map((m, index, arr) => (
+              <View
+                key={m.id}
+                style={[
+                  styles.alertMemberCard,
+                  index !== arr.length - 1 && styles.alertMemberCardSpacing,
+                ]}
               >
-                <Text style={styles.notifyButtonText}>
-                  {sendingReminder ? '알림 전송 중...' : '미납자에게 알림 보내기'}
-                </Text>
-              </Pressable>
-            ) : null}
+                <View style={styles.alertMemberRow}>
+                  <View style={styles.alertAvatarWrap}>
+                    <Image
+                      source={getProfileImage(m.profileUrl)}
+                      style={styles.alertAvatarImage}
+                      resizeMode="cover"
+                    />
+                  </View>
+                  <View style={styles.alertMemberInfo}>
+                    <View style={styles.alertNameRow}>
+                      <Text style={styles.alertMemberName}>{m.name}</Text>
+                      <View style={styles.alertBadgePaid}>
+                        <Text style={styles.alertBadgePaidText}>납부 완료</Text>
+                      </View>
+                    </View>
+                    <Text style={styles.alertMemberDue}>
+                      납부 금액: {formatKRW(m.amount ?? perPerson)}
+                    </Text>
+                  </View>
+                </View>
+              </View>
+            ))}
           </View>
+        )}
+
+        {/* 미납자 전체 알림 전송 버튼 */}
+        {!isSettled && unpaidMembers.length > 0 && (
+          <Pressable
+            onPress={onSendAlertAll}
+            disabled={sendingReminder}
+            style={[styles.bulkSendButton, sendingReminder && styles.bulkSendButtonDisabled]}
+          >
+            <Text style={styles.bulkSendButtonText}>
+              {sendingReminder ? '알림 전송 중...' : `미납자 전체 알림 전송 (${unpaidCount}명)`}
+            </Text>
+          </Pressable>
         )}
 
         {settleMembers.length > 0 ? (
@@ -499,6 +587,52 @@ export default function SettleDetailScreen() {
         ) : null}
 
       </ScrollView>
+
+      {/* 확인 / 완료 모달 */}
+      <Modal
+        visible={modalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeModal}
+      >
+        <Pressable style={styles.modalOverlay} onPress={closeModal}>
+          <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
+            <Pressable onPress={closeModal} style={styles.modalCloseButton}>
+              <Text style={styles.modalCloseText}>✕</Text>
+            </Pressable>
+
+            <Text style={styles.modalTitle}>
+              {modalMode === 'confirm' ? '알림 전송' : '전송 완료'}
+            </Text>
+            <Text style={styles.modalDescription}>{modalMessage}</Text>
+
+            {modalMode === 'confirm' && (
+              <Text style={styles.modalInfo}>
+                알림은 앱 푸시 알림으로 전송됩니다.{'\n'}
+                전송된 알림은 취소할 수 없습니다.
+              </Text>
+            )}
+
+            {modalMode === 'confirm' ? (
+              <View style={styles.modalButtonRow}>
+                <Pressable onPress={closeModal} style={styles.modalCancelButton}>
+                  <Text style={styles.modalCancelText}>취소</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => pendingAction?.()}
+                  style={styles.modalConfirmButton}
+                >
+                  <Text style={styles.modalConfirmText}>전송하기</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable onPress={closeModal} style={styles.modalDoneButton}>
+                <Text style={styles.modalConfirmText}>확인</Text>
+              </Pressable>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ScreenLayout>
   );
 }
@@ -633,74 +767,251 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // ── 미납자 카드 ───────────────────────────
-  unpaidCard: {
-    shadowColor: '#EF4444',
-    shadowOpacity: 0.08,
+  // ── 섹션 카드 (Admin 디자인) ──────────────
+  sectionCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    marginBottom: 16,
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 2,
   },
-  unpaidTitle: {
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  sectionTitle: {
     fontSize: 15,
     fontFamily: FONT_FAMILY.bold,
     color: COLORS.dark,
   },
-  unpaidBadge: {
-    backgroundColor: '#FEF2F2',
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+  sectionCountPill: {
+    marginLeft: 8,
+    backgroundColor: '#FEE2E2',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
   },
-  unpaidBadgeText: {
+  sectionCountText: {
     fontSize: 12,
-    color: COLORS.error,
     fontFamily: FONT_FAMILY.bold,
+    color: '#DC2626',
   },
-  memberRow: {
-    gap: 10,
+  alertMemberCard: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
   },
-  memberAvatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#FEF2F2',
+  alertMemberCardSpacing: {
+    marginBottom: 12,
+  },
+  alertMemberCardUnpaid: {
     borderWidth: 1.5,
-    borderColor: '#EF4444',
+    borderColor: '#FECACA',
+    backgroundColor: '#FEF2F2',
+  },
+  alertMemberRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  alertAvatarWrap: {
+    width: 54,
+    height: 54,
+    borderRadius: 27,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  memberAvatarImage: {
+  alertAvatarImage: {
     width: '100%',
     height: '100%',
   },
-  memberName: {
-    fontSize: 14,
-    fontFamily: FONT_FAMILY.bold,
-    color: COLORS.dark,
+  alertMemberInfo: {
     flex: 1,
+    marginLeft: 14,
   },
-  memberAmount: {
-    fontSize: 13,
-    color: COLORS.error,
+  alertNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  alertMemberName: {
+    fontSize: 17,
+    color: COLORS.dark,
     fontFamily: FONT_FAMILY.bold,
   },
-  notifyButton: {
-    backgroundColor: '#EF4444',
+  alertBadgeUnpaid: {
+    backgroundColor: '#FEE2E2',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
-  notifyButtonDisabled: {
-    opacity: 0.7,
-  },
-  notifyButtonText: {
-    fontSize: 14,
-    color: COLORS.white,
+  alertBadgeUnpaidText: {
+    fontSize: 11,
     fontFamily: FONT_FAMILY.bold,
+    color: '#DC2626',
   },
-  helperDescription: {
+  alertBadgePaid: {
+    backgroundColor: '#DCFCE7',
+    borderRadius: 999,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  alertBadgePaidText: {
+    fontSize: 11,
+    fontFamily: FONT_FAMILY.bold,
+    color: '#16A34A',
+  },
+  alertMemberDue: {
+    marginTop: 6,
     fontSize: 13,
     color: COLORS.muted,
     fontFamily: FONT_FAMILY.medium,
+  },
+  sendBadge: {
+    marginLeft: 10,
+    backgroundColor: '#1428A0',
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+  sendBadgeSent: {
+    backgroundColor: '#9CA3AF',
+  },
+  sendBadgeText: {
+    fontSize: 12,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  sendBadgeTextSent: {
+    color: '#E5E7EB',
+  },
+  bulkSendButton: {
+    height: 54,
+    borderRadius: 18,
+    backgroundColor: '#1428A0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+  },
+  bulkSendButtonDisabled: {
+    opacity: 0.45,
+  },
+  bulkSendButtonText: {
+    fontSize: 16,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
+  },
+
+  // ── 모달 ────────────────────────────────────
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(17, 24, 39, 0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    alignItems: 'center',
+    position: 'relative',
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  modalCloseButton: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCloseText: {
+    fontSize: 16,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  modalTitle: {
+    marginTop: 6,
+    fontSize: 19,
+    color: COLORS.dark,
+    textAlign: 'center',
+    fontFamily: FONT_FAMILY.bold,
+  },
+  modalDescription: {
+    marginTop: 10,
+    fontSize: 14,
+    lineHeight: 22,
+    color: COLORS.muted,
+    textAlign: 'center',
+    fontFamily: FONT_FAMILY.medium,
+  },
+  modalInfo: {
+    marginTop: 14,
+    fontSize: 12,
     lineHeight: 20,
+    color: COLORS.placeholder,
+    textAlign: 'center',
+    fontFamily: FONT_FAMILY.medium,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 20,
+    width: '100%',
+  },
+  modalCancelButton: {
+    flex: 1,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCancelText: {
+    fontSize: 15,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  modalConfirmButton: {
+    flex: 1,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: '#1428A0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalConfirmText: {
+    fontSize: 15,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  modalDoneButton: {
+    marginTop: 20,
+    width: '100%',
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: '#1428A0',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   // ── 정산인원 보기 버튼 ────────────────────

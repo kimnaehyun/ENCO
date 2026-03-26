@@ -7,7 +7,7 @@ import { useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
 import { AdminMember } from '../../types/admin';
-import { getGroupMembers, type GroupMember } from '../../services/groupService';
+import { getGroupMembers, updateGroupMemberRole, type GroupMember } from '../../services/groupService';
 import { createInviteToken } from '../../services/inviteService';
 
 // 딥링크 스킴
@@ -45,6 +45,39 @@ export default function AdminMembersScreen() {
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
+
+  // 역할 변경
+  const [roleTarget, setRoleTarget] = useState<GroupMember | null>(null);
+  const [roleLoading, setRoleLoading] = useState(false);
+
+  const onPressMember = (member: GroupMember) => {
+    if (kickMode) {
+      onSelectMemberForKick(member.userId);
+      return;
+    }
+    // 관리자(ADMIN/LEADER)는 역할 변경 불가
+    if (member.role === 'ADMIN' || member.role === 'LEADER') return;
+    setRoleTarget(member);
+  };
+
+  const onChangeRole = async (newRole: 'TREASURER' | 'USER') => {
+    if (!roleTarget || !groupId) return;
+    try {
+      setRoleLoading(true);
+      await updateGroupMemberRole(groupId, roleTarget.userId, { role: newRole });
+      // 로컬 상태 업데이트
+      setMembers(prev =>
+        prev.map(m => m.userId === roleTarget.userId ? { ...m, role: newRole } : m),
+      );
+      setRoleTarget(null);
+      Alert.alert('완료', `${roleTarget.name ?? '멤버'}님의 역할이 변경되었습니다.`);
+    } catch (error: any) {
+      console.error('역할 변경 실패:', error?.response?.data ?? error.message);
+      Alert.alert('오류', error?.response?.data?.message ?? '역할 변경에 실패했습니다.');
+    } finally {
+      setRoleLoading(false);
+    }
+  };
 
   // ── 초대 링크 생성 (API 호출) ──
   const onPressInvite = async () => {
@@ -193,7 +226,7 @@ export default function AdminMembersScreen() {
               return (
                 <Pressable
                   key={member.userId}
-                  onPress={() => onSelectMemberForKick(member.userId)}
+                  onPress={() => onPressMember(member)}
                   style={[
                     styles.memberCard,
                     index !== members.length - 1 && styles.memberCardSpacing,
@@ -214,7 +247,7 @@ export default function AdminMembersScreen() {
                       {member.name ?? `유저 ${member.userId}`}
                     </Text>
                     <Text style={styles.memberJoinedAt}>
-                      {member.role === 'ADMIN'
+                      {member.role === 'ADMIN' || member.role === 'LEADER'
                         ? '관리자'
                         : member.role === 'TREASURER'
                         ? '총무'
@@ -288,6 +321,66 @@ export default function AdminMembersScreen() {
           </Pressable>
         </Modal>
       </ScrollView>
+
+      {/* 역할 변경 모달 */}
+      {roleTarget && (
+        <Modal
+          visible
+          transparent
+          animationType="fade"
+          onRequestClose={() => setRoleTarget(null)}
+        >
+          <Pressable style={styles.modalOverlay} onPress={() => setRoleTarget(null)}>
+            <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
+              <Pressable onPress={() => setRoleTarget(null)} style={styles.modalCloseButton}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </Pressable>
+
+              <Text style={styles.modalTitle}>
+                {roleTarget.name ?? `유저 ${roleTarget.userId}`}
+              </Text>
+              <Text style={[styles.modalDescription, { marginBottom: 20 }]}>
+                현재 역할: {roleTarget.role === 'TREASURER' ? '총무' : '일반 회원'}
+              </Text>
+
+              <Pressable
+                onPress={() => onChangeRole('TREASURER')}
+                disabled={roleLoading || roleTarget.role === 'TREASURER'}
+                style={[
+                  styles.roleButton,
+                  roleTarget.role === 'TREASURER' && styles.roleButtonActive,
+                  roleLoading && { opacity: 0.5 },
+                ]}
+              >
+                <Text style={[
+                  styles.roleButtonText,
+                  roleTarget.role === 'TREASURER' && styles.roleButtonTextActive,
+                ]}>
+                  총무
+                </Text>
+              </Pressable>
+
+              <Pressable
+                onPress={() => onChangeRole('USER')}
+                disabled={roleLoading || roleTarget.role === 'USER'}
+                style={[
+                  styles.roleButton,
+                  { marginTop: 10 },
+                  roleTarget.role === 'USER' && styles.roleButtonActive,
+                  roleLoading && { opacity: 0.5 },
+                ]}
+              >
+                <Text style={[
+                  styles.roleButtonText,
+                  roleTarget.role === 'USER' && styles.roleButtonTextActive,
+                ]}>
+                  일반 회원
+                </Text>
+              </Pressable>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      )}
 
       {/* 하단 방출 버튼 */}
       {kickMode && (
@@ -463,5 +556,24 @@ const styles = StyleSheet.create({
     color: COLORS.muted,
     textAlign: 'center',
     fontFamily: FONT_FAMILY.medium,
+  },
+  roleButton: {
+    width: '100%',
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roleButtonActive: {
+    backgroundColor: '#1428A0',
+  },
+  roleButtonText: {
+    fontSize: 15,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  roleButtonTextActive: {
+    color: COLORS.white,
   },
 });

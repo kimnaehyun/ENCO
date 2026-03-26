@@ -62,13 +62,12 @@ export default function AdminCardRecommendScreen() {
     fetchCards();
   }, []);
 
-  const INITIAL_COUNT = 4;
-  const [showAll, setShowAll] = useState(false);
+  const PAGE_SIZE = 4;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const displayCards = isRecommendMode
     ? allCards
-    : showAll
-    ? allCards
-    : allCards.slice(0, INITIAL_COUNT);
+    : allCards.slice(0, visibleCount);
+  const hasMore = !isRecommendMode && visibleCount < allCards.length;
 
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [detailCard, setDetailCard] = useState<DisplayCard | null>(null);
@@ -155,13 +154,13 @@ export default function AdminCardRecommendScreen() {
 
   const ListFooter = () => (
     <>
-      {!isRecommendMode && !showAll && allCards.length > INITIAL_COUNT && (
+      {hasMore && (
         <TouchableOpacity
           activeOpacity={0.7}
-          onPress={() => setShowAll(true)}
+          onPress={() => setVisibleCount(prev => prev + PAGE_SIZE)}
           style={styles.showMoreButton}
         >
-          <Text style={styles.showMoreText}>더보기</Text>
+          <Text style={styles.showMoreText}>더보기 ({allCards.length - visibleCount}개 남음)</Text>
         </TouchableOpacity>
       )}
       <View style={{ height: 90 }} />
