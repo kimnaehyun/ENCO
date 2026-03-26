@@ -83,6 +83,9 @@ public class OnsitePaymentExecuteService {
         transactionHistoryRepository.save(history);
         redisTemplate.delete(redisKey);
 
+        String barcodeKey = "onsite:barcode:" + groupId;
+        redisTemplate.delete(barcodeKey);
+
         log.info("[현장결제 완료] 가맹점={}, 금액={}, groupId={}", merchantName, amount, groupId);
 
         try {

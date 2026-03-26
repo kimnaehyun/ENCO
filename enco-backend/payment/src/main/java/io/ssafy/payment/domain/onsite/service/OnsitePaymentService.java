@@ -67,7 +67,7 @@ public class OnsitePaymentService {
         }
 
         GeoResults<RedisGeoCommands.GeoLocation<String>> results = stringRedisTemplate.opsForGeo()
-                .radius(geoKey, "LEADER", new Distance(15, RedisGeoCommands.DistanceUnit.METERS));
+                .radius(geoKey, "LEADER", new Distance(5, RedisGeoCommands.DistanceUnit.METERS));
 
         int nearbyMembersCount = (results != null) ? results.getContent().size() : 0;
         log.info("[현장결제] groupId={}, 반경 15m 이내: {}/{}명", groupId, nearbyMembersCount, targetMemberCount);
@@ -88,6 +88,7 @@ public class OnsitePaymentService {
                 .setIfAbsent(barcodeKey, newBarcode, Duration.ofMinutes(3));
 
         if (Boolean.FALSE.equals(isSet)) {
+            stringRedisTemplate.delete(geoKey);
             return (BarcodeResponseDto) redisTemplate.opsForValue().get(barcodeKey);
         }
 
