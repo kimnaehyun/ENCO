@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @AllArgsConstructor
@@ -42,4 +43,14 @@ public class UserController {
     public ResponseEntity<CommonResponse<String>> getFcmToken(@PathVariable Long userId) {
         return ResponseEntity.ok(CommonResponse.success(userService.getFcmToken(userId)));
     }
+
+    @GetMapping("/internal/batch")
+    public ResponseEntity<CommonResponse<List<UserDetailDto>>> getUserDetails(@RequestParam List<Long> userIds) {
+        List<UserDetailDto> result = userService.getUsersByIds(userIds).stream()
+                .map(u -> new UserDetailDto(u.getId(), u.getName(), u.getProfileUrl()))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(CommonResponse.success(result));
+    }
+
+    public record UserDetailDto(Long userId, String name, Integer profileImage) {}
 }

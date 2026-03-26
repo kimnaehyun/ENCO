@@ -34,6 +34,7 @@ export default function ReLoginScreen({
 
       // 토큰 저장
       if (response.result?.accessToken) {
+        console.log('[ReLogin] Bearer token:', `Bearer ${response.result.accessToken}`);
         await saveTokens(response.result.accessToken, "");
       }
 

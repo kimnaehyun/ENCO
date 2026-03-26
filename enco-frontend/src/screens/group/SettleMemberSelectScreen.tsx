@@ -381,6 +381,17 @@ export default function SettleMemberSelectScreen() {
             )}
           </View>
 
+          {params.receiptUri ? (
+            <View style={styles.receiptPreviewCard}>
+              <Text style={styles.receiptPreviewTitle}>영수증 사진</Text>
+              <Image
+                source={{uri: params.receiptUri}}
+                style={styles.receiptPreviewImage}
+                resizeMode="cover"
+              />
+            </View>
+          ) : null}
+
           <View style={styles.guideCard}>
             <Text style={styles.guideTitle}>정산 등록 안내</Text>
             <Text style={styles.guideText}>
@@ -678,6 +689,24 @@ export default function SettleMemberSelectScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  receiptPreviewCard: {
+    marginBottom: 16,
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+  },
+  receiptPreviewTitle: {
+    fontSize: 16,
+    color: COLORS.primary,
+    fontFamily: FONT_FAMILY.bold,
+    marginBottom: 12,
+  },
+  receiptPreviewImage: {
+    width: '100%',
+    height: 220,
+    borderRadius: 18,
+    backgroundColor: '#E5E7EB',
   },
   pageScrollContent: {
     paddingBottom: 24,

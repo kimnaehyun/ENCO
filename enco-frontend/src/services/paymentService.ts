@@ -116,6 +116,13 @@ export type DuesPaymentRequest = {
   memo: string;
 };
 
+export type DuesPaymentItem = {
+  chargeTargetId: number;
+  allocatedAmount: number;
+  chargeStatus: string;
+  remainingAmount: number;
+}
+
 export type DuesPaymentResponse = {
   message: string;
   result: {
@@ -124,12 +131,7 @@ export type DuesPaymentResponse = {
     payerUserId: number;
     totalAmount: number;
     paidAt: string;
-    allocations: {
-      chargeTargetId: number;
-      allocatedAmount: number;
-      chargeStatus: string;
-      remainingAmount: number;
-    }[];
+    allocations: DuesPaymentItem[];
   };
 };
 
@@ -176,6 +178,15 @@ export async function selectedDuesPayment(
   return response.data;
 }
 
+export type UnpaidItem = {
+  chargeTargetId: number;
+  chargeId: number;
+  displayName: string;
+  amount: number;
+  paidAmount: number;
+  remainingAmount: number;
+}
+
 
 export type GetUnpaidDuesResponse = {
   message: string;
@@ -184,14 +195,7 @@ export type GetUnpaidDuesResponse = {
     userId: number;
     totalUnpaidAmount: number;
     totalUnpaidCount: number;
-    charges: {
-      chargeTargetId: number;
-      chargeId: number;
-      title: string;
-      amout: number;
-      paidAmount: number;
-      remainingAmount: number;
-    }[];
+    charges: UnpaidItem[];
   };
 };
 
@@ -204,18 +208,20 @@ export async function getUnpaidDues(
   return response.data;
 }
 
+export type GroupDashboardItem = {
+  paidCount: number;
+  unpaidCount: number;
+  paidRatio: number;
+  unpaidRatio: number;
+}
+
 // 모임 대시보드 조회
 export type GroupDashboardResponse = {
   message: string;
   result: {
     groupId: number;
     groupName: string;
-    paymentStatus: {
-      paidCount: number;
-      unpaidCount: number;
-      paidRatio: number;
-      unpaidRatio: number;
-    };
+    paymentStatus: GroupDashboardItem;
     balance: number;
   };
 };
@@ -353,24 +359,28 @@ export type GroupTransactionDetailResponse = {
         merchantName: string;
         address: string;
         paidAt: string;
-        items: {
-          name: string;
-          unitPrice: number | null;
-          quantity: number | null;
-          amount: number | null;
-          options: {
-            name: string;
-            unitPrice: number | null;
-            quantity: number | null;
-            amount: number | null;
-          }[];
-        }[];
+        items: GroupTransactionDetailItem[];
         totalAmount: number | null;
         businessNumber: string | null;
       } | null;
     } | null;
   };
 };
+
+export type GroupTransactionDetailItem = {
+  name: string;
+  unitPrice: number | null;
+  quantity: number | null;
+  amount: number | null;
+  options: GroupTransactionDetailItemOption[];
+}
+
+export type GroupTransactionDetailItemOption = {
+  name: string;
+  unitPrice: number | null;
+  quantity: number | null;
+  amount: number | null;
+}
 
 export async function getGroupTransactionDetail(
   groupId: number,

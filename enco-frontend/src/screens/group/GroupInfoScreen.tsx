@@ -243,12 +243,6 @@ export default function GroupInfoScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
-        <Pressable
-          onPress={handleTestUpdateRole}
-          style={styles.testButton}
-        >
-          <Text style={styles.testButtonText}>권한 변경 API 테스트</Text>
-        </Pressable>
 
         {/* 헤더 */}
         <View className="flex-row items-center justify-between mb-5">

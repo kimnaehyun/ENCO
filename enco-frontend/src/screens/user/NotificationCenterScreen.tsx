@@ -65,7 +65,7 @@ export default function NotificationCenterScreen() {
     <ScreenLayout>
       <View style={styles.container}>
         <View style={styles.headerBox}>
-          <Text style={styles.headerTitle}>알람</Text>
+          <Text style={styles.headerTitle}>알림</Text>
 
           <View style={styles.headerActions}>
             <Pressable onPress={markAllRead} hitSlop={12}>

@@ -254,12 +254,14 @@ export default function SettleDetailScreen() {
                 numericGroupId,
                 numericExpenseId,
               );
+              console.log('[SettlementReminder] response:', JSON.stringify(response, null, 2));
               Alert.alert(
                 '완료',
                 `알림 요청 ${response.requestedCount}건 중 ${response.sentCount}건을 전송했습니다.` +
                   (response.failedCount > 0 ? ` 실패 ${response.failedCount}건` : ''),
               );
             } catch (error: any) {
+              console.log('[SettlementReminder] error:', JSON.stringify(error?.response?.data ?? error?.message, null, 2));
               Alert.alert(
                 '알림 전송 실패',
                 error?.response?.data?.message ||

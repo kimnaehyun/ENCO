@@ -25,6 +25,7 @@ import messaging from '@react-native-firebase/messaging';
 import { useAuthStore } from '@/store/useAuthStore';
 import { locationApi } from '@/services/payment/location';
 import Geolocation from 'react-native-geolocation-service';
+import { setNotificationNavigationRef } from './src/hooks/useNotificationSetup';
 
 function App() {
   const navigationRef = useNavigationContainerRef<RootStackParamList>();
@@ -133,6 +134,10 @@ function App() {
       Alert.alert('💥 에러 발생', error?.message ?? JSON.stringify(error));
     }
   }
+  // 알림 탭 시 네비게이션에 사용할 ref 등록
+  useEffect(() => {
+    setNotificationNavigationRef(navigationRef);
+  }, [navigationRef]);
 
   // ── 딥링크에서 초대 토큰 파싱 ──
   const handleDeepLink = (url: string | null) => {
