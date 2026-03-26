@@ -33,20 +33,13 @@ import {
 } from '../../services/groupService';
 import { useGroupAttendance } from '../../hooks/useGroupAttendance';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { TOP_SPENDING_COLORS } from '../../constants/analyticsColors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 20;
 const CARD_GAP = 12;
 const ANALYTICS_CARD_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
 const ANALYTICS_CARD_HEIGHT = 320;
-
-const TOP_SPENDING_COLORS = [
-  COLORS.brand,
-  '#60A5FA',
-  '#818CF8',
-  '#C7D2FE',
-  '#CBD5E1',
-];
 
 type AnalyticsCardItem =
   | { id: 'attendance'; type: 'attendance' }
@@ -67,18 +60,10 @@ export default function GroupDashboardScreen() {
   const [dashboardGroupName, setDashboardGroupName] = useState(
     params.groupName ?? '모임명'
   );
-  const [paidCount, setPaidCount] = useState(0);
-  const [unpaidCount, setUnpaidCount] = useState(0);
-  const [paidRatio, setPaidRatio] = useState(0);
-  const [unpaidRatio, setUnpaidRatio] = useState(0);
-  const [balance, setBalance] = useState(0);
   const [reportBalance, setReportBalance] = useState(0);
-  const [paidAmount, setPaidAmount] = useState(0);
-  const [pointAmount, setPointAmount] = useState(0);
 
   const [calculatedMonthlyBudget, setCalculatedMonthlyBudget] = useState(0);
   const [calculatedMonthlySpent, setCalculatedMonthlySpent] = useState(0);
-  const [isLoadingBudgetGauge, setIsLoadingBudgetGauge] = useState(false);
 
   const [topSpendingItems, setTopSpendingItems] = useState<ExpenseCategoryItem[]>([]);
   const [calculatedTopSpendingTotal, setCalculatedTopSpendingTotal] = useState(0);
@@ -114,196 +99,56 @@ export default function GroupDashboardScreen() {
       if (!groupId) return;
       try {
         const dashboardData = await getGroupDashboard(Number(groupId));
-        const result = dashboardData.result;
-
-        setDashboardGroupName(result.groupName ?? '모임명');
-        setPaidCount(result.paymentStatus?.paidCount ?? 0);
-        setUnpaidCount(result.paymentStatus?.unpaidCount ?? 0);
-        setPaidRatio(result.paymentStatus?.paidRatio ?? 0);
-        setUnpaidRatio(result.paymentStatus?.unpaidRatio ?? 0);
-        setBalance(result.balance ?? 0);
+        setDashboardGroupName(dashboardData.result.groupName ?? '모임명');
 
         const reportData = await getGroupDashboardReport(groupId);
-        const reportResult = reportData.result;
-        setReportBalance(reportResult.balance ?? 0);
-        setPaidAmount(reportResult.paidAmount ?? 0);
-        setPointAmount(reportResult.pointAmount ?? 0);
+        setReportBalance(reportData.result.balance ?? 0);
       } catch (error: any) {
-        console.error('모임 대시보드 조회 실패:', error);
-        console.error('error.response?.status:', error?.response?.status);
-        console.error('error.response?.data:', error?.response?.data);
+        console.error('[Dashboard] fetch failed:', error?.response?.status, error?.response?.data);
       }
     };
-
     fetchDashboard();
   }, [groupId]);
 
   useEffect(() => {
-    const fetchBudget = async () => {
+    const fetchAnalytics = async () => {
       if (!groupId) return;
-      setIsLoadingBudgetGauge(true);
+      const gid = Number(groupId);
+      const now = new Date();
+      const thisYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      const recentMonths: string[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        recentMonths.push(
+          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        );
+      }
+      const recentMonthsSet = new Set(recentMonths);
+
+      // 예산 계산
       try {
         const [settingsData, membersData] = await Promise.all([
           getGroupSettings(groupId),
           getGroupMembers(groupId),
         ]);
-
-        // 모임 설정 전체 응답 로그
-        console.log('[BudgetGauge] settingsData.result:', JSON.stringify(settingsData.result, null, 2));
-
-        // GET 응답 필드명이 duePolicy / policy 두 가지일 수 있으므로 방어적으로 읽음
         const rawResult = settingsData.result as any;
         const monthlyFee =
           rawResult.duePolicy?.amount ?? rawResult.policy?.monthlyFee ?? 0;
-        console.log('[BudgetGauge] duePolicy raw:', JSON.stringify(rawResult.duePolicy, null, 2));
-        console.log('[BudgetGauge] policy raw (fallback):', JSON.stringify(rawResult.policy, null, 2));
         const memberCount = membersData.result.length;
         setTotalMembersCount(memberCount);
-        const budget = monthlyFee * memberCount;
-
-        console.log('[BudgetGauge] duePolicy.amount (monthlyFee):', monthlyFee);
-        console.log('[BudgetGauge] memberCount:', memberCount);
-        console.log('[BudgetGauge] calculatedMonthlyBudget:', budget);
-
-        setCalculatedMonthlyBudget(budget);
-
-        const now = new Date();
-        const thisYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
-        console.log('[BudgetGauge] groupId:', groupId);
-        console.log('[BudgetGauge] 클라이언트 필터 기준 월:', thisYM);
-
-        const allWithdrawItems: any[] = [];
-        let cursor: number | undefined;
-        while (true) {
-          const txData = await getGroupTransactions(Number(groupId), {
-            sort: 'LATEST' as const,
-            type: 'WITHDRAW' as const,
-            size: 100,
-            cursor,
-          });
-          allWithdrawItems.push(...txData.result.items);
-          if (!txData.result.hasNext || txData.result.nextCursor == null) break;
-          cursor = txData.result.nextCursor;
-        }
-
-        // 클라이언트에서 이번 달만 필터
-        const thisMonthItems = allWithdrawItems.filter(item =>
-          item.transactionDate?.slice(0, 7) === thisYM
-        );
-        console.log('[BudgetGauge] 전체 items:', allWithdrawItems.length, '/ 이번 달:', thisMonthItems.length);
-
-        let totalSpent = 0;
-        for (const item of thisMonthItems) {
-          totalSpent += item.amount;
-        }
-
-        console.log('[BudgetGauge] calculatedMonthlySpent:', totalSpent);
-        setCalculatedMonthlySpent(totalSpent);
-
-        console.log('[BudgetGauge] final budget:', budget);
-        console.log('[BudgetGauge] final spent:', totalSpent);
+        setCalculatedMonthlyBudget(monthlyFee * memberCount);
+        console.log('[Analytics] monthlyFee:', monthlyFee, 'memberCount:', memberCount);
       } catch (error: any) {
-        console.error('[BudgetGauge] failed:', error);
-        console.error('[BudgetGauge] status:', error?.response?.status);
-        console.error('[BudgetGauge] data:', error?.response?.data);
-      } finally {
-        setIsLoadingBudgetGauge(false);
+        console.error('[Analytics] budget failed:', error?.response?.status, error?.response?.data);
       }
-    };
-    fetchBudget();
-  }, [groupId]);
 
-  useEffect(() => {
-    const fetchTopSpendings = async () => {
-      if (!groupId) return;
+      // 거래내역 1번 fetch → 이번달 지출 / top5 / 6개월 트렌드 모두 계산
       try {
-        const now = new Date();
-        const thisYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-
         const allItems: any[] = [];
         let cursor: number | undefined;
         while (true) {
-          const txData = await getGroupTransactions(Number(groupId), {
-            sort: 'LATEST' as const,
-            type: 'WITHDRAW' as const,
-            size: 100,
-            cursor,
-          });
-          allItems.push(...txData.result.items);
-          if (!txData.result.hasNext || txData.result.nextCursor == null) break;
-          cursor = txData.result.nextCursor;
-        }
-
-        // 클라이언트에서 이번 달만 필터
-        const withdrawItems = allItems.filter(item =>
-          item.transactionDate?.slice(0, 7) === thisYM
-        );
-
-        console.log('[TopSpendings] withdraw items:', withdrawItems);
-
-        const groupedMap: Record<string, number> = {};
-        withdrawItems.forEach(item => {
-          const key = item.title || '기타';
-          groupedMap[key] = (groupedMap[key] ?? 0) + item.amount;
-        });
-
-        console.log('[TopSpendings] grouped map:', groupedMap);
-
-        const topSpendingTitles = Object.entries(groupedMap)
-          .map(([label, value]) => ({ label, value }))
-          .sort((a, b) => b.value - a.value)
-          .slice(0, 5);
-
-        console.log('[TopSpendings] top 5 titles:', topSpendingTitles);
-
-        const calculatedTotalExpense = topSpendingTitles.reduce(
-          (sum, item) => sum + item.value,
-          0
-        );
-        console.log('[TopSpendings] totalExpense:', calculatedTotalExpense);
-
-        const coloredItems: ExpenseCategoryItem[] = topSpendingTitles.map(
-          (item, index) => ({
-            label: item.label,
-            value: item.value,
-            color: TOP_SPENDING_COLORS[index] ?? '#CBD5E1',
-          })
-        );
-
-        setTopSpendingItems(coloredItems);
-        setCalculatedTopSpendingTotal(calculatedTotalExpense);
-      } catch (error: any) {
-        console.error('[TopSpendings] failed:', error);
-        console.error('[TopSpendings] status:', error?.response?.status);
-        console.error('[TopSpendings] data:', error?.response?.data);
-      }
-    };
-
-    fetchTopSpendings();
-  }, [groupId]);
-
-  useEffect(() => {
-    const fetchMonthlyTrend = async () => {
-      if (!groupId) return;
-      try {
-        const now = new Date();
-
-        // 최근 6개월 YYYY-MM 배열 생성 (현재 월 포함)
-        const recentMonths: string[] = [];
-        for (let i = 5; i >= 0; i--) {
-          const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-          const y = d.getFullYear();
-          const m = String(d.getMonth() + 1).padStart(2, '0');
-          recentMonths.push(`${y}-${m}`);
-        }
-
-        const recentMonthsSet = new Set(recentMonths);
-
-        const allItems: any[] = [];
-        let cursor: number | undefined;
-        while (true) {
-          const txData = await getGroupTransactions(Number(groupId), {
+          const txData = await getGroupTransactions(gid, {
             sort: 'LATEST' as const,
             type: 'WITHDRAW' as const,
             size: 200,
@@ -313,43 +158,55 @@ export default function GroupDashboardScreen() {
           if (!txData.result.hasNext || txData.result.nextCursor == null) break;
           cursor = txData.result.nextCursor;
         }
+        console.log('[Analytics] 전체 WITHDRAW items:', allItems.length);
 
-        // 클라이언트에서 최근 6개월만 필터
-        const withdrawItems = allItems.filter(item =>
-          recentMonthsSet.has(item.transactionDate?.slice(0, 7))
+        const thisMonthItems = allItems.filter(
+          item => item.transactionDate?.slice(0, 7) === thisYM
         );
 
-        console.log('[MonthlyTrend] withdraw items:', withdrawItems);
+        // 이번달 지출 합계
+        setCalculatedMonthlySpent(
+          thisMonthItems.reduce((sum, item) => sum + item.amount, 0)
+        );
 
-        // transactionDate 기준으로 YYYY-MM 그룹핑
-        const groupedByMonth: Record<string, number> = {};
-        withdrawItems.forEach(item => {
-          const ym = item.transactionDate.slice(0, 7); // 'YYYY-MM'
-          groupedByMonth[ym] = (groupedByMonth[ym] ?? 0) + item.amount;
+        // top 5 결제명
+        const groupedMap: Record<string, number> = {};
+        thisMonthItems.forEach(item => {
+          const key = item.title || '기타';
+          groupedMap[key] = (groupedMap[key] ?? 0) + item.amount;
         });
+        const top5 = Object.entries(groupedMap)
+          .map(([label, value]) => ({ label, value }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 5);
+        setCalculatedTopSpendingTotal(top5.reduce((sum, item) => sum + item.value, 0));
+        setTopSpendingItems(
+          top5.map((item, index) => ({
+            label: item.label,
+            value: item.value,
+            color: TOP_SPENDING_COLORS[index] ?? '#CBD5E1',
+          }))
+        );
 
-        console.log('[MonthlyTrend] grouped by month:', groupedByMonth);
-
-        // 빈 달은 0으로 채워 최근 6개월 배열 완성
-        const finalMonthlyData: MonthlyExpense[] = recentMonths.map(ym => ({
-          month: `${parseInt(ym.split('-')[1], 10)}월`,
-          amount: groupedByMonth[ym] ?? 0,
-        }));
-
-        const validMonthCount = finalMonthlyData.filter(d => d.amount > 0).length;
-
-        console.log('[MonthlyTrend] final monthly data:', finalMonthlyData);
-        console.log('[MonthlyTrend] valid non-zero months:', validMonthCount);
-
-        setCalculatedMonthlyData(finalMonthlyData);
+        // 최근 6개월 트렌드
+        const groupedByMonth: Record<string, number> = {};
+        allItems
+          .filter(item => recentMonthsSet.has(item.transactionDate?.slice(0, 7)))
+          .forEach(item => {
+            const ym = item.transactionDate.slice(0, 7);
+            groupedByMonth[ym] = (groupedByMonth[ym] ?? 0) + item.amount;
+          });
+        setCalculatedMonthlyData(
+          recentMonths.map(ym => ({
+            month: `${parseInt(ym.split('-')[1], 10)}월`,
+            amount: groupedByMonth[ym] ?? 0,
+          }))
+        );
       } catch (error: any) {
-        console.error('[MonthlyTrend] failed:', error);
-        console.error('[MonthlyTrend] status:', error?.response?.status);
-        console.error('[MonthlyTrend] data:', error?.response?.data);
+        console.error('[Analytics] transactions failed:', error?.response?.status, error?.response?.data);
       }
     };
-
-    fetchMonthlyTrend();
+    fetchAnalytics();
   }, [groupId]);
 
   // 3초마다 다음 카드로 자동 스크롤

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View, Pressable } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
+import { ActivityIndicator, ScrollView, StyleSheet, View, Pressable } from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
@@ -20,13 +20,7 @@ import {
   getGroupMembers,
 } from '../../services/groupService';
 
-const TOP_SPENDING_COLORS = [
-  COLORS.brand,
-  '#60A5FA',
-  '#818CF8',
-  '#C7D2FE',
-  '#CBD5E1',
-];
+import { TOP_SPENDING_COLORS } from '../../constants/analyticsColors';
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
@@ -53,11 +47,15 @@ export default function GroupAnalyticsScreen() {
   const [topSpendingTotal, setTopSpendingTotal] = useState(0);
 
   const [monthlyData, setMonthlyData] = useState<MonthlyExpense[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!groupId) return;
 
     const fetchAll = async () => {
+      setIsLoading(true);
+      setFetchError(null);
       const gid = Number(groupId);
       const now = new Date();
       const thisYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -164,6 +162,9 @@ export default function GroupAnalyticsScreen() {
         setMonthlyData(finalMonthly);
       } catch (error: any) {
         console.error('[Analytics] transactions fetch failed:', error?.response?.status, error?.response?.data);
+        setFetchError('데이터를 불러오지 못했습니다.');
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -186,6 +187,14 @@ export default function GroupAnalyticsScreen() {
             <Text style={styles.closeText}>닫기</Text>
           </Pressable>
         </View>
+
+        {isLoading && (
+          <ActivityIndicator size="large" color={COLORS.brand} style={styles.loader} />
+        )}
+
+        {fetchError && !isLoading && (
+          <Text style={styles.errorText}>{fetchError}</Text>
+        )}
 
         <View style={styles.statRow}>
           <StatCard label="총지출" value={`${totalExpense.toLocaleString()}원`} />
@@ -216,6 +225,16 @@ export default function GroupAnalyticsScreen() {
 const styles = StyleSheet.create({
   scrollContent: {
     paddingBottom: 32,
+  },
+  loader: {
+    marginVertical: 32,
+  },
+  errorText: {
+    marginVertical: 16,
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#EF4444',
+    fontFamily: FONT_FAMILY.medium,
   },
   cardWrap: {
     marginBottom: 16,
