@@ -290,6 +290,33 @@ public class ChargeService {
     }
 
     @Transactional(readOnly = true)
+    public ReminderResponseDto sendDuesReminderToUser(Long groupId, Long userId) {
+        boolean hasUnpaid = chargeTargetRepository
+                .findByCharge_GroupIdAndStatusInAndIsDeletedFalse(groupId, List.of(ChargeTargetStatus.UNPAID, ChargeTargetStatus.PARTIAL))
+                .stream()
+                .anyMatch(t -> t.getUserId().equals(userId));
+
+        LocalDateTime sentAt = LocalDateTime.now();
+
+        if (!hasUnpaid) {
+            return new ReminderResponseDto(null, 0, 0, 0, sentAt);
+        }
+
+        try {
+            String payload = objectMapper.writeValueAsString(Map.of(
+                    "type", "DUES_REMINDER",
+                    "groupId", groupId,
+                    "unpaidUserIds", List.of(userId)
+            ));
+            kafkaProducerService.send("dues-reminder", payload);
+            return new ReminderResponseDto(null, 1, 1, 0, sentAt);
+        } catch (Exception e) {
+            log.error("dues-reminder 개별 Kafka 전송 실패 - userId: {}", userId, e);
+            return new ReminderResponseDto(null, 1, 0, 1, sentAt);
+        }
+    }
+
+    @Transactional(readOnly = true)
     public UnpaidChargeResponseDto getUnpaidCharges(Long groupId, Long userId) {
         List<ChargeTarget> targets = chargeTargetRepository
                 .findByUserIdAndCharge_GroupIdAndStatusInAndIsDeletedFalse(

@@ -56,6 +56,15 @@ public class ChargeController {
         return ResponseEntity.ok(CommonResponse.success(chargeService.sendDuesReminder(groupId)));
     }
 
+    @PostMapping("/{groupId}/members/{targetUserId}/dues/reminder")
+    public ResponseEntity<CommonResponse<ReminderResponseDto>> sendDuesReminderToUser(
+            @PathVariable Long groupId,
+            @PathVariable Long targetUserId,
+            @RequestHeader("X-User-Id") Long requesterId
+    ) {
+        return ResponseEntity.ok(CommonResponse.success(chargeService.sendDuesReminderToUser(groupId, targetUserId)));
+    }
+
     /*
     미납 금액 조회 API
      */
