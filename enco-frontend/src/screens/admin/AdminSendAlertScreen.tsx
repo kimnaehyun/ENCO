@@ -1,11 +1,16 @@
 // src/screens/admin/AdminSendAlertScreen.tsx
-import React, { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, View, Image } from 'react-native'
+import React, { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, View, Image } from 'react-native'
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
-import { AdminMemberPay } from '../../types/admin';
+import { sendDuesReminder, sendDuesReminderAll } from '../../services/receiptService';
+import {
+  getGroupPaymentStatus,
+  type PaymentStatusMember,
+} from '../../services/paymentService';
+import { getProfileImage } from '../../types/images';
 
 const formatKRW = (n: number) =>
   `₩ ${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
@@ -14,23 +19,34 @@ export default function AdminSendAlertScreen() {
   const route = useRoute();
   const params = (route.params ?? {}) as CommonParams;
 
+  const groupId = params.groupId ?? '';
   const groupName = params.groupName ?? '모임명';
 
-  // ✅ 임시 데이터 (나중에 API로 교체)
-  const members: AdminMemberPay[] = useMemo(
-    () => [
-      { id: 'm1', name: '김싸피', joinedAt: '2026-03-01', memo: '총무(임시)', isPaid: true, dueAmount: 10000 },
-      { id: 'm2', name: '이싸피', joinedAt: '2026-03-02', memo: '회계 담당(임시)', isPaid: false, dueAmount: 10000 },
-      { id: 'm3', name: '박싸피', joinedAt: '2026-03-03', memo: '지출 잦음(임시)', isPaid: false, dueAmount: 10000 },
-      { id: 'm4', name: '홍싸피', joinedAt: '2026-03-04', memo: '늦게 납부(임시)', isPaid: true, dueAmount: 10000 },
-    ],
-    [],
-  );
+  const [unpaidMembers, setUnpaidMembers] = useState<PaymentStatusMember[]>([]);
+  const [paidMembers, setPaidMembers] = useState<PaymentStatusMember[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const unpaidMembers = useMemo(() => members.filter(m => !m.isPaid), [members]);
-  const paidMembers = useMemo(() => members.filter(m => m.isPaid), [members]);
+  const fetchPaymentStatus = useCallback(async () => {
+    if (!groupId) return;
+    try {
+      setLoading(true);
+      const res = await getGroupPaymentStatus(groupId);
+      setUnpaidMembers(res.result.unpaidMembers);
+      setPaidMembers(res.result.paidMembers);
+    } catch (err: any) {
+      console.log('[AdminSendAlert] fetch error:', JSON.stringify(err?.response?.data ?? err?.message, null, 2));
+      console.log('[AdminSendAlert] status:', err?.response?.status);
+      Alert.alert('오류', '납부 현황을 불러오지 못했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  }, [groupId]);
 
-  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    fetchPaymentStatus();
+  }, [fetchPaymentStatus]);
+
+  const [sentIds, setSentIds] = useState<Set<number>>(new Set());
 
   // 모달 상태: 'confirm' = 전송 전 확인, 'done' = 전송 완료
   const [modalMode, setModalMode] = useState<'confirm' | 'done'>('confirm');
@@ -44,19 +60,25 @@ export default function AdminSendAlertScreen() {
     setPendingAction(null);
   };
 
-  const onSendAlert = (member: AdminMemberPay) => {
+  const onSendAlert = (member: PaymentStatusMember) => {
     setModalMode('confirm');
-    setModalMessage(`${member.name}님에게 ${formatKRW(member.dueAmount)} 입금 요청 알림을 보냅니다.`);
-    setPendingAction(() => () => {
-      setSentIds(prev => new Set(prev).add(member.id));
-      setModalMode('done');
-      setModalMessage(`${member.name}님에게 알림을 전송했습니다.`);
+    setModalMessage(`${member.name}님에게 ${formatKRW(member.unpaidAmount)} 입금 요청 알림을 보냅니다.`);
+    setPendingAction(() => async () => {
+      try {
+        await sendDuesReminder(groupId, member.userId);
+        setSentIds(prev => new Set(prev).add(member.userId));
+        setModalMode('done');
+        setModalMessage(`${member.name}님에게 알림을 전송했습니다.`);
+      } catch {
+        closeModal();
+        Alert.alert('전송 실패', '알림 전송에 실패했습니다. 다시 시도해주세요.');
+      }
     });
     setModalVisible(true);
   };
 
   const onSendAlertAll = () => {
-    const unsent = unpaidMembers.filter(m => !sentIds.has(m.id));
+    const unsent = unpaidMembers.filter(m => !sentIds.has(m.userId));
     if (unsent.length === 0) {
       setModalMode('done');
       setModalMessage('모든 미납자에게 이미 알림을 전송했습니다.');
@@ -66,32 +88,38 @@ export default function AdminSendAlertScreen() {
 
     setModalMode('confirm');
     setModalMessage(`미납자 ${unsent.length}명에게 입금 요청 알림을 보냅니다.`);
-    setPendingAction(() => () => {
-      const newSet = new Set(sentIds);
-      unsent.forEach(m => newSet.add(m.id));
-      setSentIds(newSet);
-      setModalMode('done');
-      setModalMessage(`미납자 ${unsent.length}명에게 알림을 전송했습니다.`);
+    setPendingAction(() => async () => {
+      try {
+        await sendDuesReminderAll(groupId);
+        const newSet = new Set(sentIds);
+        unsent.forEach(m => newSet.add(m.userId));
+        setSentIds(newSet);
+        setModalMode('done');
+        setModalMessage(`미납자 ${unsent.length}명에게 알림을 전송했습니다.`);
+      } catch {
+        closeModal();
+        Alert.alert('전송 실패', '알림 전송에 실패했습니다. 다시 시도해주세요.');
+      }
     });
     setModalVisible(true);
   };
 
-  const renderMemberCard = (member: AdminMemberPay, index: number, isLast: boolean) => {
-    const isSent = sentIds.has(member.id);
+  const renderMemberCard = (member: PaymentStatusMember, index: number, isLast: boolean, isUnpaid: boolean) => {
+    const isSent = sentIds.has(member.userId);
 
     return (
       <View
-        key={member.id}
+        key={member.userId}
         style={[
           styles.memberCard,
           !isLast && styles.memberCardSpacing,
-          !member.isPaid && styles.memberCardUnpaid,
+          isUnpaid && styles.memberCardUnpaid,
         ]}
       >
         <View style={styles.memberRow}>
           <View style={styles.avatarWrap}>
             <Image
-              source={require('../../assets/icons/nomal_hamco.png')}
+              source={getProfileImage(member.profileImage)}
               style={styles.avatarImage}
               resizeMode="contain"
             />
@@ -100,19 +128,21 @@ export default function AdminSendAlertScreen() {
           <View style={styles.memberInfo}>
             <View style={styles.nameRow}>
               <Text style={styles.memberName}>{member.name}</Text>
-              <View style={[styles.badge, member.isPaid ? styles.badgePaid : styles.badgeUnpaid]}>
-                <Text style={[styles.badgeText, member.isPaid ? styles.badgePaidText : styles.badgeUnpaidText]}>
-                  {member.isPaid ? '납부 완료' : '미납'}
+              <View style={[styles.badge, isUnpaid ? styles.badgeUnpaid : styles.badgePaid]}>
+                <Text style={[styles.badgeText, isUnpaid ? styles.badgeUnpaidText : styles.badgePaidText]}>
+                  {isUnpaid ? '미납' : '납부 완료'}
                 </Text>
               </View>
             </View>
-            <Text style={styles.memberDue}>
-              미납 금액: {formatKRW(member.dueAmount)}
-            </Text>
+            {isUnpaid && (
+              <Text style={styles.memberDue}>
+                미납 금액: {formatKRW(member.unpaidAmount)}
+              </Text>
+            )}
           </View>
 
           {/* 알림 전송 버튼 (미납자만, 우측 배치) */}
-          {!member.isPaid && (
+          {isUnpaid && (
             <Pressable
               onPress={() => onSendAlert(member)}
               disabled={isSent}
@@ -127,6 +157,16 @@ export default function AdminSendAlertScreen() {
       </View>
     );
   };
+
+  if (loading) {
+    return (
+      <ScreenLayout>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+          <ActivityIndicator size="large" color="#1428A0" />
+        </View>
+      </ScreenLayout>
+    );
+  }
 
   return (
     <ScreenLayout>
@@ -159,7 +199,7 @@ export default function AdminSendAlertScreen() {
             </View>
 
             {unpaidMembers.map((member, index) =>
-              renderMemberCard(member, index, index === unpaidMembers.length - 1),
+              renderMemberCard(member, index, index === unpaidMembers.length - 1, true),
             )}
           </View>
         )}
@@ -175,7 +215,7 @@ export default function AdminSendAlertScreen() {
             </View>
 
             {paidMembers.map((member, index) =>
-              renderMemberCard(member, index, index === paidMembers.length - 1),
+              renderMemberCard(member, index, index === paidMembers.length - 1, false),
             )}
           </View>
         )}

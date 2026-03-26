@@ -125,6 +125,8 @@ export type DeleteSettlementResponse = {
 export type SettlementDefaulterParticipantResponse = {
   chargeTargetId: number;
   userId: number;
+  name: string;
+  profileImage: number;
   amount: number;
   remainingAmount: number;
   status: string;

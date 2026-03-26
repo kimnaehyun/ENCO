@@ -171,7 +171,7 @@ export default function SettleDetailScreen() {
             member.userId,
             {
               name: member.name?.trim() || `멤버 ${member.userId}`,
-              profileUrl: member.profileUrl ?? member.profileImg ?? null,
+              profileUrl: member.profileImage ?? member.profileUrl ?? member.profileImg ?? null,
             },
           ]),
         );
