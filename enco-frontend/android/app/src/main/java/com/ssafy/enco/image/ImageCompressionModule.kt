@@ -1,4 +1,4 @@
-package com.frontend.image
+package com.ssafy.enco.image
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory

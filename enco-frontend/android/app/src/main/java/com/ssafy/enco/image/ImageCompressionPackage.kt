@@ -1,4 +1,4 @@
-package com.frontend.image
+package com.ssafy.enco.image
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule
