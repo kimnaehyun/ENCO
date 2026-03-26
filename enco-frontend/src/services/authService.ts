@@ -165,6 +165,7 @@ export type AttendResponse = {
     attendedAt: string;
     totalAttendanceInEvent: number;
     streakDays: number;
+    isRewardGranted: boolean;
   };
 };
 
@@ -175,7 +176,7 @@ export async function postAttend(groupId: number): Promise<AttendResponse> {
   return response.data;
 }
 
-// ── 내 출석 조회 (GET /users/{eventId}/attendance) ──
+// ── 내 출석 조회 (GET /users/{groupId}/attendances) ──
 
 export type GetMyAttendanceResponse = {
   message: string;
@@ -190,6 +191,7 @@ export type GetMyAttendanceResponse = {
       startTime: string;
       endTime: string;
       totalDays: number;
+      rewardPoint: number;
       targetMemberCount: number;
       currentMemberCount: number;
     };

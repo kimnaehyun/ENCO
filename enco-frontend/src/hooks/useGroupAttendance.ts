@@ -12,6 +12,7 @@ export type AttendanceEvent = {
   startTime: string;
   endTime: string;
   totalDays: number;
+  rewardPoint: number;
   targetMemberCount: number;
   currentMemberCount: number;
 };
@@ -58,7 +59,9 @@ export function useGroupAttendance(groupId?: string) {
       .then(res => {
         console.log('[MyAttendance] success:', res);
         console.log('[MyAttendance] event:', res.result.event);
+        console.log('[MyAttendance] rewardPoint:', res.result.event.rewardPoint);
         console.log('[MyAttendance] streakDays:', res.result.streakDays);
+        console.log('[MyAttendance] totalAttendanceInEvent:', res.result.totalAttendanceInEvent);
         console.log('[MyAttendance] stamps:', res.result.stamps);
         const converted = stampsToDateNumbers(res.result.stamps);
         const today = todayISODate();
@@ -111,6 +114,7 @@ export function useGroupAttendance(groupId?: string) {
       console.log('[Attend] attendedAt:', res.result.attendedAt);
       console.log('[Attend] streakDays:', res.result.streakDays);
       console.log('[Attend] totalAttendanceInEvent:', res.result.totalAttendanceInEvent);
+      console.log('[Attend] isRewardGranted:', res.result.isRewardGranted);
 
       const todayStr = todayISODate();
       setStamps(prev => [...prev, todayStr]);
@@ -118,9 +122,12 @@ export function useGroupAttendance(groupId?: string) {
       setStreak(res.result.streakDays);
       setTotalAttendanceInEvent(res.result.totalAttendanceInEvent);
 
+      const rewardLine = res.result.isRewardGranted
+        ? '\n오늘 리워드가 지급되었어요!'
+        : '';
       Alert.alert(
         '출석 완료',
-        `연속 출석 ${res.result.streakDays}일\n이번 모임 총 ${res.result.totalAttendanceInEvent}회 출석`,
+        `연속 출석 ${res.result.streakDays}일\n이번 출석 이벤트 ${res.result.totalAttendanceInEvent}회 참여${rewardLine}`,
       );
     } catch (error: any) {
       console.error('[Attend] failed:', error);

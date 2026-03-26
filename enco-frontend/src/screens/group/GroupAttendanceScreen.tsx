@@ -15,7 +15,6 @@ type CalendarCell = {
 };
 
 const WEEK_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-const DAILY_REWARD = 100;
 
 
 function ProgressBar({
@@ -51,9 +50,6 @@ export default function GroupAttendanceScreen() {
   const params = (route.params ?? {}) as CommonParams;
   const groupName = params.groupName ?? '모임명';
 
-  // TODO: 백엔드에서 받아올 목표 투표 비율
-  const rewardThreshold: number = (params as any).rewardThreshold ?? 0.6;
-
   const today = new Date();
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth();
@@ -78,11 +74,12 @@ export default function GroupAttendanceScreen() {
     console.log('[AttendanceScreen] groupName:', groupName);
   }, []);
 
-  const totalMembers = event?.targetMemberCount ?? 0;
-  const todayAttendedCount = event?.currentMemberCount ?? 0;
-  const voteParticipationRatio = totalMembers > 0 ? todayAttendedCount / totalMembers : 0;
-  const rewardUnlocked = voteParticipationRatio >= rewardThreshold;
-  const requiredVoteCount = Math.ceil(totalMembers * rewardThreshold);
+  const rewardPoint = event?.rewardPoint ?? 100;
+  const targetMemberCount = event?.targetMemberCount ?? 0;
+  const currentMemberCount = event?.currentMemberCount ?? 0;
+  const participationRatio = targetMemberCount > 0 ? currentMemberCount / targetMemberCount : 0;
+  const rewardUnlocked = targetMemberCount > 0 && currentMemberCount >= targetMemberCount;
+  const membersNeeded = Math.max(targetMemberCount - currentMemberCount, 0);
 
   const calendarCells = useMemo<CalendarCell[]>(() => {
     const firstDay = new Date(currentYear, currentMonth, 1).getDay();
@@ -179,11 +176,11 @@ export default function GroupAttendanceScreen() {
         <View style={styles.rewardCard}>
           <View style={styles.rewardTopRow}>
             <View style={styles.rewardFlexChild}>
-              <Text style={styles.rewardTitle}>🗳️ 오늘의 투표 미션</Text>
+              <Text style={styles.rewardTitle}>🏅 이벤트 참여 현황</Text>
               <Text style={styles.rewardDesc}>
-                모임원 <Text style={styles.highlight}>{requiredVoteCount}명</Text> 이상이
-                투표하면 모임통장에{' '}
-                <Text style={styles.highlight}>하루 100원</Text>이 적립돼요.
+                모임원 <Text style={styles.highlight}>{targetMemberCount}명</Text>이
+                출석하면 각자{' '}
+                <Text style={styles.highlight}>{rewardPoint}포인트</Text>가 지급돼요.
               </Text>
             </View>
 
@@ -194,14 +191,14 @@ export default function GroupAttendanceScreen() {
               ]}
             >
               <Text style={styles.rewardBadgeText}>
-                {rewardUnlocked ? '달성!' : `+${DAILY_REWARD}원`}
+                {rewardUnlocked ? '달성!' : `+${rewardPoint}P`}
               </Text>
             </View>
           </View>
 
           <View style={styles.progressLabelRow}>
             <Text style={styles.progressLabel}>
-              오늘 투표 참여 {todayAttendedCount}/{totalMembers}명
+              참여 인원 {currentMemberCount}/{targetMemberCount}명
             </Text>
             <Text
               style={[
@@ -209,19 +206,19 @@ export default function GroupAttendanceScreen() {
                 rewardUnlocked && styles.progressPercentDone,
               ]}
             >
-              {Math.round(voteParticipationRatio * 100)}%
+              {Math.round(participationRatio * 100)}%
             </Text>
           </View>
 
-          <ProgressBar ratio={voteParticipationRatio} threshold={rewardThreshold} />
+          <ProgressBar ratio={participationRatio} threshold={1} />
 
           {rewardUnlocked ? (
             <Text style={styles.rewardSuccessText}>
-              오늘 목표를 달성해서 모임통장에 +{DAILY_REWARD}원 적립됐어요!
+              참여 목표 달성! 각자 {rewardPoint}포인트가 지급돼요.
             </Text>
           ) : (
             <Text style={styles.rewardHintText}>
-              {requiredVoteCount - todayAttendedCount}명만 더 투표하면 오늘 보상을 받을 수 있어요.
+              {membersNeeded}명만 더 출석하면 보상을 받을 수 있어요.
             </Text>
           )}
         </View>
