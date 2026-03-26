@@ -107,18 +107,28 @@ public class OnsitePaymentService {
         return new BarcodeResponseDto(barcodeNumber, qrData, expiredAt);
     }
 
+    //    public void startPayment(Long groupId, Long userId) {
+//        String initKey = INIT_KEY_PREFIX + groupId;
+//
+//        Boolean isFirst = stringRedisTemplate.opsForValue()
+//                .setIfAbsent(initKey, "1", Duration.ofMinutes(5));
+//
+//        if (Boolean.TRUE.equals(isFirst)) {
+//            log.info("[현장결제] 결제 시작. groupId={}", groupId);
+//            kafkaProducerService.sendOnsitePaymentRequest(groupId, userId, "방장");
+//        } else {
+//            log.warn("[현장결제] 이미 진행 중인 결제입니다. groupId={}", groupId);
+//            throw new CustomException(ErrorCode.PAYMENT_ALREADY_IN_PROGRESS);
+//        }
+//    }
     public void startPayment(Long groupId, Long userId) {
         String initKey = INIT_KEY_PREFIX + groupId;
 
-        Boolean isFirst = stringRedisTemplate.opsForValue()
-                .setIfAbsent(initKey, "1", Duration.ofMinutes(5));
+        // 테스트를 위해 setIfAbsent 대신 그냥 set을 써서 무조건 덮어씁니다! (항상 갱신)
+        stringRedisTemplate.opsForValue().set(initKey, "1", Duration.ofMinutes(5));
 
-        if (Boolean.TRUE.equals(isFirst)) {
-            log.info("[현장결제] 결제 시작. groupId={}", groupId);
-            kafkaProducerService.sendOnsitePaymentRequest(groupId, userId, "방장");
-        } else {
-            log.warn("[현장결제] 이미 진행 중인 결제입니다. groupId={}", groupId);
-            throw new CustomException(ErrorCode.PAYMENT_ALREADY_IN_PROGRESS);
-        }
+        // if문 조건 없이 무조건 카프카를 쏘게 만듭니다!
+        log.info("[현장결제 테스트] 무조건 결제 시작 및 알림 전송! groupId={}", groupId);
+        kafkaProducerService.sendOnsitePaymentRequest(groupId, userId, "방장");
     }
 }
