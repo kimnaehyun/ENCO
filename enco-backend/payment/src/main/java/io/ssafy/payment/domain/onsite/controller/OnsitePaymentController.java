@@ -3,6 +3,7 @@ package io.ssafy.payment.domain.onsite.controller;
 import io.ssafy.payment.domain.onsite.dto.request.BarcodePaymentRequestDto;
 import io.ssafy.payment.domain.onsite.dto.request.LocationRequestDto;
 import io.ssafy.payment.domain.onsite.dto.response.BarcodeResponseDto;
+import io.ssafy.payment.domain.onsite.dto.response.LocationResponseDto;
 import io.ssafy.payment.domain.onsite.service.OnsitePaymentExecuteService;
 import io.ssafy.payment.domain.onsite.service.OnsitePaymentService;
 import io.ssafy.payment.global.common.response.CommonResponse;
@@ -20,21 +21,32 @@ public class OnsitePaymentController {
     private final OnsitePaymentService onsitePaymentService;
     private final OnsitePaymentExecuteService onsitePaymentExecuteService;
 
+    /**
+     * 모임 리더 최초 호출 api
+     * @param groupId
+     * @param userId
+     * @return
+     */
+    @PostMapping("/{groupId}/start")
+    public ResponseEntity<CommonResponse<Void>> startOnsitePayment(
+            @PathVariable Long groupId,
+            @RequestHeader("X-User-Id") Long userId) {
+
+        onsitePaymentService.startPayment(groupId, userId);
+        return ResponseEntity.ok(CommonResponse.success());
+    }
+
     @PostMapping("/{groupId}/location")
-    public ResponseEntity<CommonResponse<BarcodeResponseDto>> syncLocation(
+    public ResponseEntity<CommonResponse<LocationResponseDto>> syncLocation(
             @PathVariable Long groupId,
             @RequestHeader("X-User-Id") Long userId,
             @RequestBody LocationRequestDto request) {
 
-        BarcodeResponseDto barcode = onsitePaymentService.updateLocationAndCheckBarcode(
+        LocationResponseDto response = onsitePaymentService.updateLocationAndCheckBarcode(
                 groupId, userId, request.latitude(), request.longitude(), request.isLeader()
         );
 
-        if (barcode == null) {
-            return ResponseEntity.ok(CommonResponse.success(null));
-        }
-
-        return ResponseEntity.ok(CommonResponse.success(barcode));
+        return ResponseEntity.ok(CommonResponse.success(response));
     }
 
     @PostMapping("/pay")
