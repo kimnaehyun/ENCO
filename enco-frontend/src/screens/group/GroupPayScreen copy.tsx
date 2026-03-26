@@ -225,13 +225,6 @@ export default function GroupPayScreen({ navigation, route }: GroupProps<'GroupP
         {step === 'success' && (
           <View style={{ flex: 1, marginTop: 60, alignItems: 'center' }}>
             <Text style={styles.successTitle}>송금 완료되었습니다</Text>
-
-            <Pressable
-              onPress={onPressNotify}
-              style={[styles.primaryBtn, { marginTop: 20, width: 220 }]}
-            >
-              <Text style={styles.primaryBtnText}>송금완료 알림보내기</Text>
-            </Pressable>
           </View>
         )}
       </ScreenLayout>

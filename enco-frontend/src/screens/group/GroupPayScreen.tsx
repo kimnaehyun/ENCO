@@ -149,7 +149,19 @@ export default function GroupPayScreen({
     }
     if (step === 'success') {
       resetAllPayState();
-      setStep('summary');
+      navigation.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'GroupDashboard',
+            params: {
+              groupId: route.params?.groupId,
+              groupName: route.params?.groupName,
+              isAdmin: route.params?.isAdmin,
+            },
+          },
+        ],
+      });
       return;
     }
   }, [navigation, resetConfirmInputs, resetAllPayState, step, isSubmitting]);
