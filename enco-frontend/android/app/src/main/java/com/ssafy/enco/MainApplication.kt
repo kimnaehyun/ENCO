@@ -1,4 +1,4 @@
-package com.frontend
+package com.ssafy.enco
 
 import android.app.Application
 import com.facebook.react.PackageList
@@ -6,8 +6,8 @@ import com.facebook.react.ReactApplication
 import com.facebook.react.ReactHost
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
 import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
-import com.frontend.docScan.DocumentScannerPackage
-import com.frontend.image.ImageCompressionPackage
+import com.ssafy.enco.docScan.DocumentScannerPackage
+import com.ssafy.enco.image.ImageCompressionPackage
 import com.rnfs.RNFSPackage
 
 class MainApplication : Application(), ReactApplication {

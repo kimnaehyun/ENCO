@@ -85,6 +85,10 @@ public class OnsitePaymentExecuteService {
 
         log.info("[현장결제 완료] 가맹점={}, 금액={}, groupId={}", merchantName, amount, groupId);
 
-        kafkaProducerService.sendOnsitePaymentComplete(groupId, amount, merchantName);
+        try {
+            kafkaProducerService.sendOnsitePaymentComplete(groupId, amount, merchantName);
+        } catch (Exception e) {
+            log.error("[현장결제] 결제는 성공했지만 카프카 알림 전송에 실패했습니다. groupId={}", groupId, e);
+        }
     }
 }

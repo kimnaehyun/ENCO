@@ -1,4 +1,4 @@
-package com.frontend.docScan
+package com.ssafy.enco.docScan
 
 import android.app.Activity
 import android.content.Intent

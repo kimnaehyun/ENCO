@@ -1,10 +1,10 @@
-package com.frontend
+package com.ssafy.enco
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
-import com.frontend.docScan.DocumentScannerLauncher
+import com.ssafy.enco.docScan.DocumentScannerLauncher
 
 class MainActivity : ReactActivity() {
 
