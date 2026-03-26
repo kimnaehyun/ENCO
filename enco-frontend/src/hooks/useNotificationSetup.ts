@@ -1,17 +1,88 @@
 // src/hooks/useNotificationSetup.ts
 // 로그인 후 FCM 토큰 발급 → 서버 등록 → SSE 구독을 자동으로 처리하는 훅
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNotifications } from '../contexts/NotificationsContext';
 import { getFcmToken, onFcmTokenRefresh } from '../utils/fcm';
 import { getMessaging, onMessage } from '@react-native-firebase/messaging';
+import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 import {
   subscribeSse,
   unsubscribeSse,
   registerFcmToken,
   SseNotification,
 } from '../services/notificationService';
+
+// navigationRef를 외부에서 주입받기 위한 holder
+let _navigationRef: any = null;
+
+export function setNotificationNavigationRef(ref: any) {
+  _navigationRef = ref;
+}
+
+/**
+ * 포그라운드에서 FCM 수신 시 시스템 알림 배너 표시
+ */
+async function displayLocalNotification(
+  title: string,
+  body: string,
+  data: Record<string, any>,
+) {
+  const channelId = await notifee.createChannel({
+    id: 'default',
+    name: '기본 알림',
+    importance: AndroidImportance.HIGH,
+  });
+
+  await notifee.displayNotification({
+    title,
+    body,
+    data,
+    android: {
+      channelId,
+      smallIcon: 'ic_launcher',
+      pressAction: { id: 'default' },
+    },
+  });
+}
+
+/**
+ * 알림 탭 시 해당 화면으로 네비게이션
+ */
+function handleNotificationPress(data: Record<string, any>) {
+  if (!_navigationRef?.isReady()) return;
+
+  const type = String(data.type ?? '');
+  const groupId = data.groupId ? String(data.groupId) : undefined;
+
+  // 알림 타입별 화면 이동
+  if (type === 'VOTE_CREATED' || type === 'VOTE') {
+    if (groupId) {
+      _navigationRef.navigate('GroupStack', {
+        screen: 'GroupVotes',
+        params: { groupId },
+      });
+    }
+  } else if (type === 'LEDGER_UPDATE' || type === 'LEDGER') {
+    if (groupId) {
+      _navigationRef.navigate('GroupStack', {
+        screen: 'GroupDashboard',
+        params: { groupId },
+      });
+    }
+  } else if (type === 'SETTLEMENT_REMINDER' || type === 'DUES_REMINDER' || type === 'DUE_REMINDER') {
+    if (groupId) {
+      _navigationRef.navigate('GroupStack', {
+        screen: 'GroupDashboard',
+        params: { groupId },
+      });
+    }
+  } else {
+    // 기본: 알림 목록 또는 홈으로
+    _navigationRef.navigate('App', { screen: 'HomeTab' });
+  }
+}
 
 /**
  * App.tsx 또는 RootNavigator 안에서 한 번만 호출하세요.
@@ -20,11 +91,32 @@ import {
  * 2. SSE 구독 시작 → 실시간 알림을 NotificationsContext에 push
  * 3. 로그아웃 시 SSE 해제
  * 4. 앱이 포그라운드로 돌아오면 SSE 재연결
+ * 5. 포그라운드에서도 시스템 푸시 배너 표시
+ * 6. 알림 탭 시 해당 화면으로 이동
  */
 export function useNotificationSetup() {
   const user = useAuthStore(s => s.user);
   const userId = useAuthStore(s => s.userId);
   const { pushOne } = useNotifications();
+
+  // notifee 이벤트 리스너 (알림 탭 처리)
+  useEffect(() => {
+    // 앱이 포그라운드일 때 알림 탭
+    const unsubNotifee = notifee.onForegroundEvent(({ type, detail }) => {
+      if (type === EventType.PRESS && detail.notification?.data) {
+        handleNotificationPress(detail.notification.data);
+      }
+    });
+
+    // 앱이 백그라운드에서 알림 탭으로 열렸을 때
+    notifee.getInitialNotification().then(initialNotification => {
+      if (initialNotification?.notification?.data) {
+        handleNotificationPress(initialNotification.notification.data);
+      }
+    });
+
+    return unsubNotifee;
+  }, []);
 
   useEffect(() => {
     if (!user || !userId) {
@@ -72,17 +164,23 @@ export function useNotificationSetup() {
     const unsubFcm = onMessage(getMessaging(), async (remoteMessage) => {
       console.log('[NotificationSetup] FCM 포그라운드 메시지:', JSON.stringify(remoteMessage, null, 2));
       const data = remoteMessage.data ?? {};
+      const title = remoteMessage.notification?.title ?? String(data.type ?? '알림');
+      const body = remoteMessage.notification?.body ?? '';
 
+      // 인앱 알림 목록에 추가
       pushOne({
         id: String(data.notificationId ?? Date.now()),
         type: mapNotificationType(String(data.type ?? '')),
-        title: remoteMessage.notification?.title ?? String(data.type ?? '알림'),
-        body: remoteMessage.notification?.body ?? '',
+        title,
+        body,
         createdAt: String(data.createdAt ?? new Date().toISOString()),
         isRead: false,
         groupId: data.groupId ? String(data.groupId) : undefined,
         amount: data.amount ? Number(data.amount) : undefined,
       });
+
+      // 시스템 푸시 배너도 표시
+      await displayLocalNotification(title, body, data as Record<string, any>);
     });
 
     // FCM 토큰 갱신 리스너

@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(grep -E \"^-.*\\\\.\\(tsx|ts|json|md|js\\)$\")",
-      "Bash(find C:S14P21E104enco-frontend/src/screens/group -type f -name *.js -o -name *.ts -o -name *.tsx -o -name *.jsx)"
+      "Bash(find C:S14P21E104enco-frontend/src/screens/group -type f -name *.js -o -name *.ts -o -name *.tsx -o -name *.jsx)",
+      "Bash(git pull:*)",
+      "Bash(npm list:*)",
+      "Bash(npm install:*)"
     ]
   }
 }
