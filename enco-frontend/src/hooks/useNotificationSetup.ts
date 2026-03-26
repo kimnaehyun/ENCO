@@ -5,6 +5,7 @@ import { AppState, AppStateStatus } from 'react-native';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNotifications } from '../contexts/NotificationsContext';
 import { getFcmToken, onFcmTokenRefresh } from '../utils/fcm';
+import { getMessaging, onMessage } from '@react-native-firebase/messaging';
 import {
   subscribeSse,
   unsubscribeSse,
@@ -67,6 +68,23 @@ export function useNotificationSetup() {
 
     setup();
 
+    // FCM 포그라운드 메시지 리스너
+    const unsubFcm = onMessage(getMessaging(), async (remoteMessage) => {
+      console.log('[NotificationSetup] FCM 포그라운드 메시지:', JSON.stringify(remoteMessage, null, 2));
+      const data = remoteMessage.data ?? {};
+
+      pushOne({
+        id: String(data.notificationId ?? Date.now()),
+        type: mapNotificationType(String(data.type ?? '')),
+        title: remoteMessage.notification?.title ?? String(data.type ?? '알림'),
+        body: remoteMessage.notification?.body ?? '',
+        createdAt: String(data.createdAt ?? new Date().toISOString()),
+        isRead: false,
+        groupId: data.groupId ? String(data.groupId) : undefined,
+        amount: data.amount ? Number(data.amount) : undefined,
+      });
+    });
+
     // FCM 토큰 갱신 리스너
     const unsubToken = onFcmTokenRefresh(async (newToken) => {
       console.log('[NotificationSetup] FCM 토큰 갱신됨');
@@ -97,6 +115,7 @@ export function useNotificationSetup() {
 
     return () => {
       unsubscribeSse();
+      unsubFcm();
       unsubToken();
       appStateSub.remove();
     };
