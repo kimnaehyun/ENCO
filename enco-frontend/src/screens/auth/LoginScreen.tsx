@@ -31,7 +31,7 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
 
       // accessToken 저장
       if (response.result?.accessToken) {
-        console.log('[Login] accessToken:', response.result.accessToken);
+        console.log('[Login] Bearer token:', `Bearer ${response.result.accessToken}`);
         await saveTokens(response.result.accessToken, '');
       }
 
