@@ -223,6 +223,7 @@ export default function GroupInfoScreen() {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
       >
 
         {/* 헤더 */}
@@ -529,8 +530,8 @@ const styles = StyleSheet.create({
   inputRowLast: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
   inputPill: { backgroundColor: '#E5E7EB', borderRadius: 50, paddingHorizontal: 20, height: 32, justifyContent: 'center', alignItems: 'center', minWidth: 80 },
   inputPillWide: { backgroundColor: '#E5E7EB', borderRadius: 50, paddingHorizontal: 20, height: 32, justifyContent: 'center', alignItems: 'center', minWidth: 120 },
-  pillInput: { fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', paddingVertical: 0, includeFontPadding: false },
-  pillInputCompact: { fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', padding: 0 },
+  pillInput: { width: '100%', fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', paddingVertical: 0, includeFontPadding: false },
+  pillInputCompact: { width: '100%', fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', padding: 0 },
   unitText: { fontSize: 13, color: '#000', fontFamily: FONT_FAMILY.medium },
 
   // 그라운드룰

@@ -46,13 +46,14 @@ export function useGroupAttendance(groupId?: string) {
   const [event, setEvent] = useState<AttendanceEvent | null>(null);
   const [isLoadingAttendance, setIsLoadingAttendance] = useState(false);
   const [attendanceError, setAttendanceError] = useState<string | null>(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     if (!Number.isFinite(numericGroupId)) {
       console.log('[MyAttendance] groupId 없음 → 스킵');
       return;
     }
-    console.log('[MyAttendance] groupId:', numericGroupId);
+    console.log('[MyAttendance] groupId:', numericGroupId, 'refreshKey:', refreshKey);
     setIsLoadingAttendance(true);
     setAttendanceError(null);
     getMyAttendance(numericGroupId)
@@ -83,7 +84,7 @@ export function useGroupAttendance(groupId?: string) {
       .finally(() => {
         setIsLoadingAttendance(false);
       });
-  }, [numericGroupId]);
+  }, [numericGroupId, refreshKey]);
 
   const alreadyAttendedToday = stamps.includes(todayISODate());
   const hasActiveEvent = event !== null;
@@ -116,12 +117,6 @@ export function useGroupAttendance(groupId?: string) {
       console.log('[Attend] totalAttendanceInEvent:', res.result.totalAttendanceInEvent);
       console.log('[Attend] isRewardGranted:', res.result.isRewardGranted);
 
-      const todayStr = todayISODate();
-      setStamps(prev => [...prev, todayStr]);
-      setAttendedDates(prev => [...prev, todayDate].sort((a, b) => a - b));
-      setStreak(res.result.streakDays);
-      setTotalAttendanceInEvent(res.result.totalAttendanceInEvent);
-
       const rewardLine = res.result.isRewardGranted
         ? '\n오늘 리워드가 지급되었어요!'
         : '';
@@ -129,6 +124,8 @@ export function useGroupAttendance(groupId?: string) {
         '출석 완료',
         `연속 출석 ${res.result.streakDays}일\n이번 출석 이벤트 ${res.result.totalAttendanceInEvent}회 참여${rewardLine}`,
       );
+      // 서버 최신 데이터 전체 재조회 (currentMemberCount 등 포함)
+      setRefreshKey(prev => prev + 1);
     } catch (error: any) {
       console.error('[Attend] failed:', error);
       console.error('[Attend] status:', error?.response?.status);
