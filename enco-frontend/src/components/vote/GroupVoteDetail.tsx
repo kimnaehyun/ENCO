@@ -9,7 +9,11 @@ import { useAuthStore } from '@/store/useAuthStore';
 
 const formatKRW = (n: number) => n.toLocaleString();
 
-export default function GroupVoteDetail({ voteId, groupId, onVoteDone }: GroupVoteDetailType) {
+export default function GroupVoteDetail({
+  voteId,
+  groupId,
+  onVoteDone,
+}: GroupVoteDetailType) {
   const [data, setData] = useState<VoteDetail | null>(null);
   const userId = useAuthStore(state => state.userId);
 
@@ -17,11 +21,10 @@ export default function GroupVoteDetail({ voteId, groupId, onVoteDone }: GroupVo
     setData(null);
     voteApi
       .detail(Number(voteId), Number(groupId))
-      .then(res => 
-        {setData(res.data.result)
-          console.log(res.data.result);
-          
-        })
+      .then(res => {
+        setData(res.data.result);
+        console.log(res.data.result);
+      })
       .catch(console.log);
   }, [voteId, groupId]);
 
@@ -41,7 +44,11 @@ export default function GroupVoteDetail({ voteId, groupId, onVoteDone }: GroupVo
     );
   }
 
-    const hasVoted = data?.histories?.some(h => h.userId === userId) ?? false;
+  const myHistory = data?.histories?.find(h => h.userId === userId);
+  const myChoice = myHistory?.choice ?? null;
+
+  const hasVoted = myChoice !== null;
+
   const isOngoing = data?.status === 'VOTING';
 
   const handleVote = async (choice: 'APPROVE' | 'REJECT') => {
@@ -65,33 +72,47 @@ export default function GroupVoteDetail({ voteId, groupId, onVoteDone }: GroupVo
       </View>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>참여 인원</Text>
-        <Text style={styles.infoValue}>{data.votedCount} / {data.totalMembers}</Text>
+        <Text style={styles.infoValue}>
+          {data.votedCount} / {data.totalMembers}
+        </Text>
       </View>
       <View style={styles.infoRow}>
         <Text style={styles.infoLabel}>찬성 / 반대</Text>
-        <Text style={styles.infoValue}>{data.approveCount} / {data.rejectCount}</Text>
+        <Text style={styles.infoValue}>
+          {data.approveCount} / {data.rejectCount}
+        </Text>
       </View>
 
       <View style={styles.divider} />
 
       <Text style={styles.sectionTitle}>설명</Text>
       <Text style={styles.description}>{data.description}</Text>
-{isOngoing && !hasVoted && (
-  <View style={styles.buttonRow}>
-    <Pressable
-      onPress={() => handleVote('APPROVE')}
-      style={[styles.voteButton, styles.agreeButton]}
-    >
-      <Text style={styles.voteButtonText}>찬성</Text>
-    </Pressable>
-    <Pressable
-      onPress={() => handleVote('REJECT')}
-      style={[styles.voteButton, styles.disagreeButton]}
-    >
-      <Text style={styles.voteButtonText}>반대</Text>
-    </Pressable>
-  </View>
-)}
+
+      {/* 내 선택 표시 */}
+      {hasVoted && (
+        <View style={styles.myChoiceBox}>
+          <Text style={styles.myChoiceText}>
+            내 선택: {myChoice === 'APPROVE' ? '찬성' : '반대'}
+          </Text>
+        </View>
+      )}
+
+      {isOngoing && !hasVoted && (
+        <View style={styles.buttonRow}>
+          <Pressable
+            onPress={() => handleVote('APPROVE')}
+            style={[styles.voteButton, styles.agreeButton]}
+          >
+            <Text style={styles.voteButtonText}>찬성</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => handleVote('REJECT')}
+            style={[styles.voteButton, styles.disagreeButton]}
+          >
+            <Text style={styles.voteButtonText}>반대</Text>
+          </Pressable>
+        </View>
+      )}
     </View>
   );
 }
@@ -169,5 +190,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.dark,
     fontFamily: FONT_FAMILY.bold,
+  },
+  myChoiceBox: {
+    marginTop: 16,
+    alignSelf: 'flex-start',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  myChoiceText: {
+    fontSize: 13,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 });
