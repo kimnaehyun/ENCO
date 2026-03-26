@@ -1,5 +1,5 @@
 import React , {useState, useEffect} from 'react';
-import { Dimensions, FlatList, Pressable, StyleSheet, View, Image, Alert } from 'react-native'
+import { Dimensions, FlatList, Pressable, StyleSheet, View, Image } from 'react-native'
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../components/ScreenLayout';
@@ -8,7 +8,6 @@ import { images, getProfileImage } from '../types/images';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchMyPage } from '../services/userService';
 import { getMyGroups } from '../services/groupService';
-import { getCachedAccessToken } from '../utils/tokenStorage';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const HORIZONTAL_PADDING = 24;
@@ -84,23 +83,6 @@ export default function HomeScreen() {
 
   const onPressCreateGroup = () => {
     navigation.navigate('GroupCreate');
-  };
-
-  // TODO: 테스트 후 제거
-  const onPressFcmTest = async () => {
-    const token = getCachedAccessToken();
-    try {
-      const res = await fetch('https://api.ssafywte.site/chat-service/api/v1/test/fcm', {
-        method: 'PUT',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'text/event-stream',
-        },
-      });
-      Alert.alert('FCM 테스트', `status: ${res.status}`);
-    } catch (e) {
-      Alert.alert('FCM 테스트 실패', String(e));
-    }
   };
 
   const renderCard = ({ item }: { item: HomeCardItem }) => {
@@ -197,24 +179,12 @@ export default function HomeScreen() {
         ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
       />
 
-      {/* TODO: 테스트 후 제거 */}
-      <Pressable onPress={onPressFcmTest} style={styles.fcmTestButton}>
-        <Text style={{ color: 'white', fontWeight: 'bold' }}>FCM 테스트</Text>
-      </Pressable>
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
   // ── 헤더 ──────────────────────────────────────────
-  fcmTestButton: {
-    marginTop: 16,
-    marginHorizontal: 24,
-    backgroundColor: '#1428A0',
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
