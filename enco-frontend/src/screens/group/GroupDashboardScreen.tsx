@@ -1,5 +1,5 @@
 // src/screens/group/GroupDashboardScreen.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -85,6 +85,10 @@ export default function GroupDashboardScreen() {
 
   const [calculatedMonthlyData, setCalculatedMonthlyData] = useState<MonthlyExpense[]>([]);
   const [totalMembersCount, setTotalMembersCount] = useState(0);
+
+  const [activeCardIndex, setActiveCardIndex] = useState(0);
+  const flatListRef = useRef<any>(null);
+  const autoScrollPaused = useRef(false);
 
   const {
     alreadyAttendedToday,
@@ -348,6 +352,20 @@ export default function GroupDashboardScreen() {
     fetchMonthlyTrend();
   }, [groupId]);
 
+  // 3초마다 다음 카드로 자동 스크롤
+  useEffect(() => {
+    const total = analyticsCards.length;
+    const interval = setInterval(() => {
+      if (autoScrollPaused.current) return;
+      setActiveCardIndex(prev => {
+        const next = (prev + 1) % total;
+        flatListRef.current?.scrollToIndex({ index: next, animated: true });
+        return next;
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
+
   const onPressGroupInfo = () =>
     navigation.navigate('GroupInfo', {
       groupId: params.groupId,
@@ -490,6 +508,7 @@ export default function GroupDashboardScreen() {
         {/* 시각화 카드 스와이프 */}
         <View style={styles.analyticsSection}>
           <FlatList
+            ref={flatListRef}
             data={analyticsCards}
             keyExtractor={item => item.id}
             renderItem={renderAnalyticsCard}
@@ -501,7 +520,24 @@ export default function GroupDashboardScreen() {
             contentContainerStyle={styles.flatListContent}
             ItemSeparatorComponent={() => <View style={styles.cardSeparator} />}
             style={styles.flatList}
+            onScrollBeginDrag={() => { autoScrollPaused.current = true; }}
+            onMomentumScrollEnd={e => {
+              autoScrollPaused.current = false;
+              const index = Math.round(
+                e.nativeEvent.contentOffset.x / (ANALYTICS_CARD_WIDTH + CARD_GAP)
+              );
+              setActiveCardIndex(index);
+            }}
           />
+          {/* 페이지 도트 */}
+          <View style={styles.dotRow}>
+            {analyticsCards.map((_, i) => (
+              <View
+                key={i}
+                style={[styles.dot, i === activeCardIndex && styles.dotActive]}
+              />
+            ))}
+          </View>
         </View>
 
         {/* 잔액 카드 */}
@@ -580,7 +616,7 @@ const styles = StyleSheet.create({
     paddingBottom: 32,
   },
   analyticsSection: {
-    height: ANALYTICS_CARD_HEIGHT,
+    height: ANALYTICS_CARD_HEIGHT + 24,
     marginBottom: 16,
     overflow: 'hidden',
   },
@@ -727,6 +763,23 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontFamily: FONT_FAMILY.bold,
     color: COLORS.primary,
+  },
+  dotRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#CBD5E1',
+  },
+  dotActive: {
+    width: 18,
+    backgroundColor: COLORS.brand,
   },
   rewardText: {
     marginTop: 6,
