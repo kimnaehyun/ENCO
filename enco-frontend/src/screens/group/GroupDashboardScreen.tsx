@@ -24,7 +24,12 @@ import MonthlyTrendCard, {
 import {
   getGroupDashboard,
   getGroupDashboardReport,
+  getGroupTransactions,
 } from '../../services/paymentService';
+import {
+  getGroupSettings,
+  getGroupMembers,
+} from '../../services/groupService';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -60,8 +65,9 @@ export default function GroupDashboardScreen() {
   const [paidAmount, setPaidAmount] = useState(0);
   const [pointAmount, setPointAmount] = useState(0);
 
-  const totalExpense = 428000;
-  const monthlyBudget = 500000;
+  const [calculatedMonthlyBudget, setCalculatedMonthlyBudget] = useState(0);
+  const [calculatedMonthlySpent, setCalculatedMonthlySpent] = useState(0);
+  const [isLoadingBudgetGauge, setIsLoadingBudgetGauge] = useState(false);
 
   const attendedCount = 6;
   const totalMembers = 10;
@@ -152,6 +158,82 @@ export default function GroupDashboardScreen() {
     };
 
     fetchDashboard();
+  }, [groupId]);
+
+  useEffect(() => {
+    const fetchBudget = async () => {
+      if (!groupId) return;
+      setIsLoadingBudgetGauge(true);
+      try {
+        const [settingsData, membersData] = await Promise.all([
+          getGroupSettings(groupId),
+          getGroupMembers(groupId),
+        ]);
+
+        // 모임 설정 전체 응답 로그 — monthlyFee 필드 확인용
+        console.log('[BudgetGauge] settingsData.result:', JSON.stringify(settingsData.result, null, 2));
+        console.log('[BudgetGauge] policy raw:', JSON.stringify(settingsData.result.policy, null, 2));
+
+        const monthlyFee = settingsData.result.policy?.monthlyFee ?? 0;
+        const memberCount = membersData.result.length;
+        const budget = monthlyFee * memberCount;
+
+        console.log('[BudgetGauge] monthlyFee:', monthlyFee);
+        console.log('[BudgetGauge] memberCount:', memberCount);
+        console.log('[BudgetGauge] calculatedMonthlyBudget:', budget);
+
+        setCalculatedMonthlyBudget(budget);
+
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const firstOfMonth = `${year}-${month}-01`;
+        const lastDay = new Date(year, now.getMonth() + 1, 0).getDate();
+        const lastOfMonth = `${year}-${month}-${String(lastDay).padStart(2, '0')}`;
+
+        const txParams = {
+          startDate: firstOfMonth,
+          endDate: lastOfMonth,
+          sort: 'LATEST' as const,
+          type: 'WITHDRAW' as const,
+          size: 100,
+        };
+        console.log('[BudgetGauge] groupId:', groupId);
+        console.log('[BudgetGauge] startDate:', txParams.startDate);
+        console.log('[BudgetGauge] endDate:', txParams.endDate);
+        console.log('[BudgetGauge] sort:', txParams.sort);
+        console.log('[BudgetGauge] type:', txParams.type);
+        console.log('[BudgetGauge] size:', txParams.size);
+
+        let totalSpent = 0;
+        let cursor: number | undefined;
+        while (true) {
+          const txData = await getGroupTransactions(Number(groupId), {
+            ...txParams,
+            cursor,
+          });
+          console.log('[BudgetGauge] withdraw transactions:', txData.result.items);
+          for (const item of txData.result.items) {
+            totalSpent += item.amount;
+          }
+          if (!txData.result.hasNext || txData.result.nextCursor == null) break;
+          cursor = txData.result.nextCursor;
+        }
+
+        console.log('[BudgetGauge] calculatedMonthlySpent:', totalSpent);
+        setCalculatedMonthlySpent(totalSpent);
+
+        console.log('[BudgetGauge] final budget:', budget);
+        console.log('[BudgetGauge] final spent:', totalSpent);
+      } catch (error: any) {
+        console.error('[BudgetGauge] failed:', error);
+        console.error('[BudgetGauge] status:', error?.response?.status);
+        console.error('[BudgetGauge] data:', error?.response?.data);
+      } finally {
+        setIsLoadingBudgetGauge(false);
+      }
+    };
+    fetchBudget();
   }, [groupId]);
 
   const onPressGroupInfo = () =>
@@ -273,8 +355,8 @@ export default function GroupDashboardScreen() {
 
         {item.type === 'budget' && (
           <BudgetGaugeCard
-            budget={monthlyBudget}
-            spent={totalExpense}
+            budget={calculatedMonthlyBudget}
+            spent={calculatedMonthlySpent}
             onPress={onPressAnalytics}
             height={ANALYTICS_CARD_HEIGHT}
           />
@@ -282,7 +364,7 @@ export default function GroupDashboardScreen() {
 
         {item.type === 'category' && (
           <ExpenseCategoryCard
-            totalExpense={totalExpense}
+            totalExpense={calculatedMonthlySpent}
             categories={categoryData}
             onPress={onPressAnalytics}
             height={ANALYTICS_CARD_HEIGHT}
