@@ -181,7 +181,7 @@ export async function selectedDuesPayment(
 export type UnpaidItem = {
   chargeTargetId: number;
   chargeId: number;
-  title: string;
+  displayName: string;
   amount: number;
   paidAmount: number;
   remainingAmount: number;
