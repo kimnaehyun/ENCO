@@ -42,7 +42,7 @@ public enum ErrorCode {
     AUTH_SERVER_ERROR(HttpStatus.BAD_REQUEST, " Auth 서버 통신 오류로 모임원 수를 가져오지 못했습니다.", "AUTH_SERVER_ERROR"),
     NOT_FOUND_GROUP_INFO(HttpStatus.NOT_FOUND, "주변에 그룹원이 존재하지 않습니다." ,"NOT_FOUND_GROUP_INFO"),
     INVALID_OR_EXPIRED_BARCODE(HttpStatus.NOT_FOUND, "유효하지 않거나 만료된 바코드입니다.", "INVALID_OR_EXPIRED_BARCODE"),
-    PAYMENT_ALREADY_IN_PROGRESS(HttpStatus.CONTINUE, "이미 진행 중인 결제입니다.", "PAYMENT_ALREADY_IN_PROGRESS");
+    PAYMENT_ALREADY_IN_PROGRESS(HttpStatus.CONFLICT, "이미 진행 중인 결제입니다.", "PAYMENT_ALREADY_IN_PROGRESS");
 
     private final HttpStatus httpStatusCode;
     private final String errorMessage;

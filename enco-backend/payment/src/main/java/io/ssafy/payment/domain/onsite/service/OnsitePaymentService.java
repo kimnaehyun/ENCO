@@ -53,6 +53,8 @@ public class OnsitePaymentService {
         String memberKey = isLeader ? "LEADER" : String.valueOf(userId);
         stringRedisTemplate.opsForGeo().add(geoKey, new Point(lon, lat), memberKey);
 
+        stringRedisTemplate.expire(geoKey, Duration.ofMinutes(5));
+
         if (!isLeader) {
             return new LocationResponseDto(0, 0, null);
         }
