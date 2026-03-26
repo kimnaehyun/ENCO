@@ -28,6 +28,9 @@ const PIN_LEN = 4;
 const formatKRW = (n: number) =>
   `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원`;
 
+const formatAmountNumber = (n: number) =>
+  n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
 const formatInputNumber = (value: string) => value.replace(/[^0-9]/g, '');
 
 function InfoInputBox({
@@ -367,9 +370,9 @@ export default function GroupPayScreen({
               <View style={styles.heroAmountRow}>
                 <View style={styles.heroUnderlineWrap}>
                   <Text style={styles.heroAmount}>
-                    {parsedAmount > 0 ? formatKRW(parsedAmount) : ''}
+                    {formatAmountNumber(parsedAmount)}
                   </Text>
-                  {parsedAmount > 0 && <View style={styles.heroUnderline} />}
+                  <View style={styles.heroUnderline} />
                 </View>
                 <Text style={styles.heroLine}>원 입금합니다</Text>
               </View>
@@ -423,7 +426,7 @@ export default function GroupPayScreen({
                             selected && styles.unpaidItemTextSelected,
                           ]}
                         >
-                          {item.title}
+                          {item.displayName}
                         </Text>
                         <Text
                           style={[
