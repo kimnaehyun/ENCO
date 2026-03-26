@@ -24,6 +24,7 @@ import io.ssafy.payment.domain.vote.repository.PaymentVoteRepository;
 import io.ssafy.payment.global.common.error.CustomException;
 import io.ssafy.payment.global.common.error.ErrorCode;
 import io.ssafy.payment.infra.client.UserServiceClient;
+import io.ssafy.payment.infra.messaging.producer.KafkaProducerService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,9 +48,29 @@ public class PaymentVoteService {
     private final TransactionHistoryRepository transactionHistoryRepository;
     private final UserServiceClient userServiceClient;
     private final PasswordEncoder passwordEncoder;
+    private final KafkaProducerService kafkaProducerService;
 
     @Transactional
     public PaymentVoteCreateResponseDto createVote(PaymentVoteCreateRequestDto request, String idempotencyKey) {
+        log.info("요청 완료 = {}", request.groupId());
+
+        if (idempotencyKey == null || idempotencyKey.trim().isEmpty()) {
+            throw new CustomException(ErrorCode.MISSING_IDEMPOTENCY_KEY);
+        }
+
+        if (request.amount() == null || request.amount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new CustomException(ErrorCode.INVALID_PAYMENT_AMOUNT);
+        }
+
+        Optional<TransactionHistory> existing = transactionHistoryRepository.findByIdempotencyKey(idempotencyKey);
+
+        if (existing.isPresent()) {
+            PaymentVote existingVote = voteRepository.findById(existing.get().getVoteId())
+                    .orElseThrow(()-> new CustomException(ErrorCode.DUPLICATE_PAYMENTVOTE)
+            );
+            return PaymentVoteCreateResponseDto.from(existingVote);
+        }
+
         Account account = accountRepository.findByGroupId(request.groupId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ACCOUNT));
 
@@ -65,6 +86,7 @@ public class PaymentVoteService {
             totalMembersResult = userServiceClient.getGroupMemberCount(request.groupId()).result();
         } catch (Exception e) {
             log.warn("[PaymentVote] Auth 서버 통신 오류로 모임원 수를 가져오지 못했습니다.", e);
+            throw new CustomException(ErrorCode.AUTH_SERVER_ERROR);
         }
         int totalMembers = (totalMembersResult != null) ? totalMembersResult : 0;
 
@@ -76,19 +98,9 @@ public class PaymentVoteService {
                 .status(VoteStatus.VOTING)
                 .expiredAt(LocalDateTime.now().plusHours(1))
                 .build();
-        PaymentVote savedVote = voteRepository.saveAndFlush(vote);
+        PaymentVote savedVote = voteRepository.save(vote);
 
         BigDecimal totalAmount = request.amount();
-        BigDecimal usedPoint = BigDecimal.ZERO;
-
-//        try {
-////            usedPoint = userServiceClient.useGroupPoint(request.groupId(), totalAmount, savedVote.getId()).result();
-////            if (usedPoint == null) usedPoint = BigDecimal.ZERO;
-//        } catch (Exception e) {
-//            log.warn("[PaymentVote] 포인트 차감 실패 (Auth 서버 통신 오류). 전액 현금 청구됨.", e);
-//        }
-
-        BigDecimal finalCashAmount = totalAmount.subtract(usedPoint);
 
         TransactionHistory pendingTransaction = TransactionHistory.builder()
                 .accountId(account.getId())
@@ -97,7 +109,7 @@ public class PaymentVoteService {
                 .counterpartyBankAccountNumber(request.counterpartyBankAccountNumber())
                 .counterpartyBankName(request.counterpartyBankName())
                 .counterpartyName(request.counterpartyName())
-                .amount(finalCashAmount)
+                .amount(totalAmount)
                 .displayName(request.counterpartyName())
                 .type(Type.CARD_PAYMENT)
                 .direction(Direction.OUT)
@@ -106,7 +118,17 @@ public class PaymentVoteService {
                 .build();
         transactionHistoryRepository.save(pendingTransaction);
 
-        log.info("[PaymentVote] 투표 생성 완료: 총금액={}, 사용포인트={}, 청구현금={}", totalAmount, usedPoint, finalCashAmount);
+        log.info("[PaymentVote] 투표 생성 완료: 총금액={}, 청구현금={}", totalAmount, totalAmount);
+
+        // 카프카 이벤트 발행: 투표 생성 알림
+        kafkaProducerService.sendVoteNotification(
+                savedVote.getGroupId(),
+                savedVote.getId(),
+                savedVote.getTitle(),
+                "새로운 결제 투표가 등록되었습니다. 찬반 투표를 진행해 주세요.",
+                "VOTE_CREATED"
+        );
+
         return PaymentVoteCreateResponseDto.from(savedVote);
     }
 
@@ -131,7 +153,6 @@ public class PaymentVoteService {
                     return PaymentVoteListResponseDto.of(
                             vote,
                             historyRepository.findByVote(vote).size()
-                            // totalMembers  // <- 프론트가 필요로 한다면 DTO 수정 후 주석 해제!
                     );
                 })
                 .toList();
@@ -188,7 +209,7 @@ public class PaymentVoteService {
      */
     @Transactional
     public PaymentVoteResultResponseDto vote(Long voteId, Long userId, PaymentVoteChoiceRequestDto request) {
-        PaymentVote vote = voteRepository.findById(voteId)
+        PaymentVote vote = voteRepository.findByIdWithPessimisticLock(voteId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_VOTE));
 
         if (vote.getStatus() == VoteStatus.APPROVED) {
@@ -199,10 +220,11 @@ public class PaymentVoteService {
         }
         if (LocalDateTime.now().isAfter(vote.getExpiredAt())) {
             if (vote.getStatus() == VoteStatus.VOTING) {
-                vote.expire(); // DB에 만료 상태 반영
+                vote.expire();
             }
             throw new CustomException(ErrorCode.VOTE_EXPIRED);
         }
+
         Optional<PaymentVoteHistory> optionalHistory = historyRepository.findByVoteAndUserId(vote, userId);
 
         if (optionalHistory.isPresent()) {
@@ -219,7 +241,7 @@ public class PaymentVoteService {
             log.info("[PaymentVote] 유저 첫 투표 완료: voteId={}, userId={}, choice={}", voteId, userId, request.choice());
         }
 
-        int totalMembers = userServiceClient.getGroupMemberCount(vote.getGroupId()).result();
+        int totalMembers = vote.getTotalMembers();
         int voteCriteria = userServiceClient.getVoteCriteria(vote.getGroupId()).result();
         int approveCount = historyRepository.countByVoteAndChoice(vote, VoteChoice.APPROVE);
 
@@ -228,6 +250,16 @@ public class PaymentVoteService {
         if (currentApprovalRate >= voteCriteria) {
             vote.approve();
             executePayment(vote);
+
+            // 카프카 이벤트 발행: 결제 승인 완료 알림
+            kafkaProducerService.sendVoteNotification(
+                    vote.getGroupId(),
+                    vote.getId(),
+                    vote.getTitle(),
+                    "투표가 가결되어 결제가 성공적으로 승인되었습니다.",
+                    "PAYMENT_APPROVED"
+            );
+
             return PaymentVoteResultResponseDto.of(
                     vote.getId(),
                     vote.getStatus(),
@@ -260,6 +292,11 @@ public class PaymentVoteService {
     private void executePayment(PaymentVote vote) {
         TransactionHistory transaction = transactionHistoryRepository.findByVoteId(vote.getId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_TRANSACTION));
+
+        if (transaction.getStatus() != Status.PENDING) {
+            log.warn("[PaymentVote] 이미 처리된 거래입니다. voteId={}", vote.getId());
+            return;
+        }
 
         Account account = accountRepository.findById(transaction.getAccountId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ACCOUNT));
