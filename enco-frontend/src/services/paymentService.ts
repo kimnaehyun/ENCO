@@ -17,7 +17,6 @@ paymentApi.interceptors.request.use(config => {
   const token = getCachedAccessToken();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
-    console.log(token);
   }
   return config;
 });

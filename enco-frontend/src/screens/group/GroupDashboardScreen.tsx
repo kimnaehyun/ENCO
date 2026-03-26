@@ -198,11 +198,15 @@ export default function GroupDashboardScreen() {
       groupName: dashboardGroupName,
     });
 
-  const onPressAttendance = () =>
+  const onPressAttendance = () => {
+    console.log('[Dashboard→Attendance] 출석 화면으로 이동');
+    console.log('[Dashboard→Attendance] groupId:', params.groupId);
+    console.log('[Dashboard→Attendance] groupName:', dashboardGroupName);
     navigation.navigate('GroupAttendance', {
       groupId: params.groupId,
       groupName: dashboardGroupName,
     });
+  };
 
   const onPressInviteEntryTest = () => navigation.navigate('GroupInviteEntry');
 

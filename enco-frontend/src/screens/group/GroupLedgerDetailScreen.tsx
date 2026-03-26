@@ -13,8 +13,16 @@ type RouteParams = {
   groupId?: string;
   groupName?: string;
   isAdmin?: boolean;
-  transactionId: number;
+  transactionId?: number;
   referenceType?: 'TRANSACTION' | 'EXPENSE' | 'POINT';
+  pointId?: number;
+  listItem?: {
+    title: string;
+    amount: number;
+    transactionDate: string;
+    balanceAfter: number;
+    type: 'DEPOSIT' | 'WITHDRAW';
+  };
 };
 
 type DetailResult = GroupTransactionDetailResponse['result'];
@@ -44,7 +52,7 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 export default function GroupLedgerDetailScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const { groupId, groupName, isAdmin, transactionId } =
+  const { groupId, groupName, isAdmin, transactionId, referenceType, pointId, listItem } =
     (route.params ?? {}) as RouteParams;
 
   const [detail, setDetail] = useState<DetailResult | null>(null);
@@ -53,6 +61,13 @@ export default function GroupLedgerDetailScreen() {
   const [localReceiptUri, setLocalReceiptUri] = useState<string | null>(null);
 
   const fetchDetail = useCallback(async () => {
+    // POINT: 상세 API 미연결 → listItem 기반으로 표시
+    if (referenceType === 'POINT') {
+      console.log('[PointDetail] route item:', listItem);
+      console.log('[PointDetail] pointId:', pointId);
+      return;
+    }
+
     const numericGroupId = groupId ? Number(groupId) : NaN;
 
     console.log('[TransactionDetail] groupId:', numericGroupId);
@@ -77,7 +92,7 @@ export default function GroupLedgerDetailScreen() {
     } finally {
       setIsLoading(false);
     }
-  }, [groupId, transactionId]);
+  }, [groupId, transactionId, referenceType, pointId, listItem]);
 
   useFocusEffect(
     useCallback(() => {
@@ -108,7 +123,11 @@ export default function GroupLedgerDetailScreen() {
   const receiptImageUrl = localReceiptUri ?? detail?.receipt?.receiptImageUrl ?? null;
   const receiptContent = detail?.receipt?.receiptContent ?? null;
 
-  const isDeposit = detail ? detail.amount >= 0 : false;
+  const isDeposit = referenceType === 'POINT'
+    ? listItem?.type === 'DEPOSIT'
+    : detail
+    ? detail.amount >= 0
+    : false;
 
   return (
     <ScreenLayout>
@@ -138,10 +157,44 @@ export default function GroupLedgerDetailScreen() {
           </View>
         )}
 
-        {/* 데이터 없음 */}
-        {!isLoading && !error && !detail && (
+        {/* 데이터 없음 (TRANSACTION 전용) */}
+        {!isLoading && !error && !detail && referenceType !== 'POINT' && (
           <View style={styles.statusCard}>
             <Text style={styles.statusText}>거래 상세 내역이 없습니다.</Text>
+          </View>
+        )}
+
+        {/* POINT 상세 — listItem 기반 표시 (API 미연결) */}
+        {referenceType === 'POINT' && listItem && (
+          <View style={[styles.card, styles.shadowCard]}>
+            <Text
+              style={[
+                styles.amountText,
+                { color: isDeposit ? '#1428A0' : '#EF4444' },
+              ]}
+            >
+              {formatMoney(isDeposit ? listItem.amount : -listItem.amount)}
+            </Text>
+            <Text style={styles.balanceText}>
+              잔액 {listItem.balanceAfter.toLocaleString()}원
+            </Text>
+
+            <View style={styles.divider} />
+
+            <InfoRow label="내용">
+              <Text style={styles.infoValueText}>{listItem.title}</Text>
+            </InfoRow>
+            <InfoRow label="거래일시">
+              <Text style={styles.infoValueText}>{formatDateTime(listItem.transactionDate)}</Text>
+            </InfoRow>
+            <InfoRow label="거래유형">
+              <Text style={styles.infoValueText}>포인트</Text>
+            </InfoRow>
+            <InfoRow label="거래 후 잔액">
+              <Text style={styles.infoValueText}>
+                {listItem.balanceAfter.toLocaleString()}원
+              </Text>
+            </InfoRow>
           </View>
         )}
 

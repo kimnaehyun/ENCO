@@ -178,6 +178,7 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingRight: HORIZONTAL_PADDING }}
         ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
       />
+
     </ScreenLayout>
   );
 }

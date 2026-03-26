@@ -44,7 +44,7 @@ spring:
             - id: payment-service-public
               uri: http://${PAYMENT_SERVICE_HOST}:${PAYMENT_SERVICE_PORT}
               predicates:
-                - Path=/payment-service/api/v1/ai/receipt/parse, /payment-service/api/v1/files/image/**
+                - Path=/payment-service/api/v1/ai/receipt/parse, /payment-service/api/v1/files/image/**, /payment-service/api/v1/payments/pay
               filters:
                 - StripPrefix=1
 

@@ -52,7 +52,7 @@ export default function ReLoginScreen({
         gender: 'M',
         address: '',
         profileUrl: r.profileImg ?? 0,
-      });
+      }, r.id);
     } catch (err: any) {
       const message =
         err?.response?.data?.message ||

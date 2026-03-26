@@ -494,6 +494,9 @@ export default function GroupLedgerScreen() {
                   key={`${it.referenceType}-${it.referenceId}-${it.transactionDate}`}
                   style={styles.ledgerItem}
                   onPress={() => {
+                    console.log('[GroupTransactions] item clicked:', it);
+                    console.log('[GroupTransactions] referenceType:', it.referenceType);
+                    console.log('[GroupTransactions] referenceId:', it.referenceId);
                     if (it.referenceType === 'TRANSACTION') {
                       navigation.navigate('GroupLedgerDetail', {
                         groupId: params.groupId,
@@ -512,8 +515,31 @@ export default function GroupLedgerScreen() {
                         receiptUri: null,
                         groupName: params.groupName ?? groupName,
                         groupId: params.groupId,
+                      }),
+                    } else if (it.referenceType === 'POINT') {
+                      console.log('[PointFlow] POINT item branch entered');
+                      console.log('[PointFlow] groupId:', params.groupId);
+                      console.log('[PointFlow] pointId:', it.referenceId);
+                      console.log('[PointFlow] navigate to point detail');
+                      navigation.navigate('GroupLedgerDetail', {
+                        groupId: params.groupId,
+                        groupName: params.groupName ?? groupName,
+                        referenceType: 'POINT',
+                        pointId: it.referenceId,
+                        isAdmin,
+                        listItem: {
+                          title: it.title,
+                          amount: it.amount,
+                          transactionDate: it.transactionDate,
+                          balanceAfter: it.balanceAfter,
+                          type: it.type,
+                        },
                       });
                     } else {
+                      // EXPENSE
+                      console.log('[ExpenseFlow] EXPENSE item branch entered');
+                      console.log('[ExpenseFlow] expenseId:', it.referenceId);
+                      console.log('[ExpenseFlow] expense detail not implemented yet');
                       Alert.alert('준비 중', '해당 거래 유형의 상세 내역은 준비 중입니다.');
                     }
                   }}
