@@ -352,3 +352,9 @@ export type Message = {
   createdAt: string;
   status?: 'sending' | 'sent' | 'failed';
 };
+
+export type GroupVoteDetailType = {
+  voteId: number;
+  groupId: number;
+  onVoteDone: () => void;
+};

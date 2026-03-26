@@ -10,7 +10,6 @@ import GroupVotesScreen from '../screens/group/GroupVotesScreen';
 import GroupPayScreen from '../screens/group/GroupPayScreen';
 import GroupChatScreen from '../screens/group/GroupChatScreen';
 import GroupLedgerScreen from '../screens/group/GroupLedgerScreen';
-import GroupVoteDetailScreen from '../screens/group/GroupVoteDetailScreen';
 import VoteCreateScreen from '../screens/InternetPayment/VoteCreateScreen';
 import AdminMenuScreen from '../screens/admin/AdminMenuScreen';
 import AdminReceiptScreen from '../screens/admin/AdminReceiptScreen';
@@ -52,7 +51,6 @@ export default function HomeStackNavigator() {
       <Stack.Screen name="GroupPay" component={GroupPayScreen} />
       <Stack.Screen name="GroupChat" component={GroupChatScreen} />
       <Stack.Screen name="GroupLedger" component={GroupLedgerScreen} />
-      <Stack.Screen name="GroupVoteDetail" component={GroupVoteDetailScreen} />
       <Stack.Screen name="VoteCreate" component={VoteCreateScreen} />
       <Stack.Screen name="AdminMenu" component={AdminMenuScreen} />
       <Stack.Screen name="AdminReceipt" component={AdminReceiptScreen} />
