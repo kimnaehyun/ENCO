@@ -286,7 +286,12 @@ public class PaymentVoteService {
             TransactionHistory transaction = transactionHistoryRepository.findByVoteId(vote.getId())
                     .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_TRANSACTION));
 
+            Account account = accountRepository.findById(transaction.getAccountId())
+                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ACCOUNT));
+
             transaction.updateStatus(Status.REJECTED);
+            transaction.updateBalance(account.getAmount());
+
             log.info("[PaymentVote] 투표 부결 및 거래내역 취소 완료: voteId={}", vote.getId());
             return PaymentVoteResultResponseDto.of(
                     vote.getId(),

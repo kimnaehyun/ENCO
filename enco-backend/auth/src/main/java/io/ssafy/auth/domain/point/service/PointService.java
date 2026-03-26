@@ -48,7 +48,7 @@ public class PointService {
             throw new CustomException(ErrorCode.INSUFFICIENT_POINT);
         }
 
-        group.addPoint(amountToUse.negate());
+        group.deductPoint(amountToUse);
 
         PointHistory history = PointHistory.builder()
                 .groupId(groupId)

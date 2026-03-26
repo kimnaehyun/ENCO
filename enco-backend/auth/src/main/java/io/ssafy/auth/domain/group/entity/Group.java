@@ -63,6 +63,8 @@ public class Group {
         this.point = this.point.add(amount);
     }
 
+    public void deductPoint(BigDecimal amount) { this.point = this.point.subtract(amount);}
+
     public void togglePoint(boolean status) {
         this.isPointEnabled = status;
     }
