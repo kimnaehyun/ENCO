@@ -39,4 +39,9 @@ public interface UserServiceClient {
             @PathVariable("groupId") Long groupId,
             @RequestBody PointUseRequestDto request
     );
+
+    @GetMapping("/api/v1/users/{groupId}/members/{userId}/check")
+    CommonResponse<Boolean> checkGroupMember(
+            @PathVariable("groupId") Long groupId,
+            @PathVariable("userId") Long userId);
 }

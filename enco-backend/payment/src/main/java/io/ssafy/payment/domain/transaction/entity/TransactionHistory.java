@@ -26,7 +26,6 @@ public class TransactionHistory {
 
     private Long cardId;
 
-    @Column(unique = true)
     private Long voteId;
 
     private String displayName;

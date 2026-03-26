@@ -224,6 +224,11 @@ public class PaymentVoteService {
         PaymentVote vote = voteRepository.findByIdWithPessimisticLock(voteId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_VOTE));
 
+        boolean isMember = userServiceClient.checkGroupMember(vote.getGroupId(), userId).result();
+        if (!isMember) {
+            throw new CustomException(ErrorCode.NOT_GROUP_MEMBER);
+        }
+
         if (vote.getStatus() == VoteStatus.APPROVED) {
             throw new CustomException(ErrorCode.VOTE_ALREADY_APPROVED);
         }
@@ -260,50 +265,63 @@ public class PaymentVoteService {
         double currentApprovalRate = ((double) approveCount / totalMembers) * 100;
 
         if (currentApprovalRate >= voteCriteria) {
-            vote.approve();
-            executePayment(vote);
+            try {
+                executePayment(vote);
 
-            // 카프카 이벤트 발행: 결제 승인 완료 알림
-            kafkaProducerService.sendVoteNotification(
-                    vote.getGroupId(),
-                    vote.getId(),
-                    vote.getTitle(),
-                    "투표가 가결되어 결제가 성공적으로 승인되었습니다.",
-                    "PAYMENT_APPROVED"
-            );
+                vote.approve();
 
-            return PaymentVoteResultResponseDto.of(
-                    vote.getId(),
-                    vote.getStatus(),
-                    "투표가 가결되어 결제가 성공적으로 승인되었습니다."
-            );
+                kafkaProducerService.sendVoteNotification(
+                        vote.getGroupId(),
+                        vote.getId(),
+                        vote.getTitle(),
+                        "투표가 가결되어 결제가 성공적으로 승인되었습니다.",
+                        "PAYMENT_APPROVED"
+                );
+
+                return PaymentVoteResultResponseDto.of(
+                        vote.getId(),
+                        vote.getStatus(),
+                        "투표가 가결되어 결제가 성공적으로 승인되었습니다."
+                );
+
+            } catch (CustomException e) {
+                if (e.getErrorCode() == ErrorCode.INSUFFICIENT_BALANCE) {
+                    log.warn("[PaymentVote] 결제 실패(잔액부족)로 투표 강제 부결 처리: voteId={}", vote.getId());
+                    return processRejection(vote, "잔액 부족으로 결제가 취소(부결)되었습니다.");
+                }
+                throw e;
+            }
         }
 
         int totalVoted = historyRepository.findByVote(vote).size();
         if (totalVoted >= totalMembers) {
-            vote.reject();
-
-            TransactionHistory transaction = transactionHistoryRepository.findByVoteId(vote.getId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_TRANSACTION));
-
-            Account account = accountRepository.findById(transaction.getAccountId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ACCOUNT));
-
-            transaction.updateStatus(Status.REJECTED);
-            transaction.updateBalance(account.getAmount());
-
-            log.info("[PaymentVote] 투표 부결 및 거래내역 취소 완료: voteId={}", vote.getId());
-            return PaymentVoteResultResponseDto.of(
-                    vote.getId(),
-                    vote.getStatus(),
-                    "투표가 부결되어 결제가 취소되었습니다."
-            );
+            return processRejection(vote, "투표가 부결되어 결제가 취소되었습니다.");
         }
+
         return PaymentVoteResultResponseDto.of(
                 vote.getId(),
                 vote.getStatus(),
                 "투표가 정상적으로 반영되었습니다. 다른 멤버의 투표를 기다리고 있습니다."
         );
+    }
+
+    /**
+     * [추가] 부결 처리를 담당하는 공통 메서드
+     */
+    private PaymentVoteResultResponseDto processRejection(PaymentVote vote, String message) {
+        vote.reject();
+
+        TransactionHistory transaction = transactionHistoryRepository.findByVoteId(vote.getId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_TRANSACTION));
+
+        Account account = accountRepository.findById(transaction.getAccountId())
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ACCOUNT));
+
+        transaction.updateStatus(Status.REJECTED);
+        transaction.updateBalance(account.getAmount()); // 부결(취소) 시점의 잔액을 정상적으로 기록
+
+        log.info("[PaymentVote] 투표 부결 및 거래내역 취소 완료: voteId={}", vote.getId());
+        return PaymentVoteResultResponseDto.of(vote.getId(), vote.getStatus(), message);
     }
 
     private void executePayment(PaymentVote vote) {
