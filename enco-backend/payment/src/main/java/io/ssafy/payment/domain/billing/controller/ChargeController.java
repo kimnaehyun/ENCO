@@ -3,9 +3,11 @@ package io.ssafy.payment.domain.billing.controller;
 import io.ssafy.payment.domain.billing.dto.request.CreateChargeRequestDto;
 import io.ssafy.payment.domain.billing.dto.request.CreateRegularChargeRequestDto;
 import io.ssafy.payment.domain.billing.dto.response.ChargeResponseDto;
+import io.ssafy.payment.domain.billing.dto.response.MemberPaymentStatusResponseDto;
 import io.ssafy.payment.domain.billing.dto.response.ReminderResponseDto;
 import io.ssafy.payment.domain.billing.dto.response.UnpaidChargeResponseDto;
 import io.ssafy.payment.domain.billing.service.ChargeService;
+import io.ssafy.payment.domain.billing.service.MemberPaymentStatusService;
 import io.ssafy.payment.global.common.response.CommonResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 public class ChargeController {
 
     private final ChargeService chargeService;
+    private final MemberPaymentStatusService memberPaymentStatusService;
 
     /*
     Todo: user 완료되면 createdByUserId 바꾸기, 정산 로직에 이용할 예정
@@ -62,5 +65,12 @@ public class ChargeController {
             @RequestHeader("X-User-Id")  Long userId
     ) {
         return ResponseEntity.ok(CommonResponse.success(chargeService.getUnpaidCharges(groupId, userId)));
+    }
+
+    @GetMapping("/{groupId}/members/payment-status")
+    public ResponseEntity<CommonResponse<MemberPaymentStatusResponseDto>> getMemberPaymentStatus(
+            @PathVariable Long groupId
+    ) {
+        return ResponseEntity.ok(CommonResponse.success(memberPaymentStatusService.getMemberPaymentStatus(groupId)));
     }
 }

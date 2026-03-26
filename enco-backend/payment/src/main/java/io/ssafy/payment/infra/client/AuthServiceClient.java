@@ -84,6 +84,21 @@ public class AuthServiceClient {
         return response.result();
     }
 
+    public List<UserDetailResponse> getMemberDetails(List<Long> userIds) {
+        String url = authServiceUrl + "/api/v1/users/internal/batch?userIds=" +
+                userIds.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(","));
+
+        CommonResponse<List<UserDetailResponse>> response = restTemplate.exchange(
+                url,
+                HttpMethod.GET,
+                null,
+                new ParameterizedTypeReference<CommonResponse<List<UserDetailResponse>>>() {}
+        ).getBody();
+
+        if (response == null || response.result() == null) return List.of();
+        return response.result();
+    }
+
     public record GroupMemberResponse(Long userId, String role) {}
 
     public record GroupInfoResponse(String groupName, BigDecimal point) {}
@@ -91,4 +106,6 @@ public class AuthServiceClient {
     public record ActiveDuePolicyResponse(Long policyId, Long groupId, BigDecimal amount) {}
 
     public record PointHistoryResponse(Long id, BigDecimal amount, BigDecimal balance, String direction, String description, LocalDateTime createdAt) {}
+
+    public record UserDetailResponse(Long userId, String name, Integer profileImage) {}
 }

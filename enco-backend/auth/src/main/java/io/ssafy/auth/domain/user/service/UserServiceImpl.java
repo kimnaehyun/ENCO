@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 
@@ -73,5 +74,10 @@ public class UserServiceImpl{
         return userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER))
                 .getFcmToken();
+    }
+
+    @Transactional(readOnly = true)
+    public List<User> getUsersByIds(List<Long> userIds) {
+        return userRepository.findAllById(userIds);
     }
 }
