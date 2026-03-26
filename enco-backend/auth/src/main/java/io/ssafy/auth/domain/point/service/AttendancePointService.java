@@ -36,22 +36,6 @@ public class AttendancePointService {
     private final PointHistoryRepository pointHistoryRepository;
     private final GroupUserRepository groupUserRepository;
 
-    public BigDecimal getGroupPoint(Long groupId) {
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_GROUP));
-        log.info("그룹 포인트 = {}", group.getPoint());
-        return group.getPoint();
-    }
-
-    @Transactional
-    public boolean togglePointUsage(Long groupId, boolean status) {
-        Group group = groupRepository.findById(groupId)
-                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_GROUP));
-
-        group.togglePoint(status);
-        log.info("포인트 사용 유무= {}", status);
-        return group.isPointEnabled();
-    }
 
     @Transactional
     public AttendanceCheckResponseDto attend(Long userId, Long groupId) {

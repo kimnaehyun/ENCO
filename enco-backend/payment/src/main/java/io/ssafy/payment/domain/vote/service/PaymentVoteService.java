@@ -11,6 +11,7 @@ import io.ssafy.payment.domain.transaction.entity.Type;
 import io.ssafy.payment.domain.transaction.repository.TransactionHistoryRepository;
 import io.ssafy.payment.domain.vote.dto.request.PaymentVoteChoiceRequestDto;
 import io.ssafy.payment.domain.vote.dto.request.PaymentVoteCreateRequestDto;
+import io.ssafy.payment.domain.vote.dto.request.PointUseRequestDto;
 import io.ssafy.payment.domain.vote.dto.response.PaymentVoteCreateResponseDto;
 import io.ssafy.payment.domain.vote.dto.response.PaymentVoteDetailResponseDto;
 import io.ssafy.payment.domain.vote.dto.response.PaymentVoteListResponseDto;
@@ -50,6 +51,13 @@ public class PaymentVoteService {
     private final PasswordEncoder passwordEncoder;
     private final KafkaProducerService kafkaProducerService;
 
+    /**
+     * 결제 투표 생성 (온라인 결제)
+     *
+     * @param request
+     * @param idempotencyKey
+     * @return
+     */
     @Transactional
     public PaymentVoteCreateResponseDto createVote(PaymentVoteCreateRequestDto request, String idempotencyKey) {
         log.info("요청 완료 = {}", request.groupId());
@@ -66,8 +74,8 @@ public class PaymentVoteService {
 
         if (existing.isPresent()) {
             PaymentVote existingVote = voteRepository.findById(existing.get().getVoteId())
-                    .orElseThrow(()-> new CustomException(ErrorCode.DUPLICATE_PAYMENTVOTE)
-            );
+                    .orElseThrow(() -> new CustomException(ErrorCode.DUPLICATE_PAYMENTVOTE)
+                    );
             return PaymentVoteCreateResponseDto.from(existingVote);
         }
 
@@ -97,6 +105,7 @@ public class PaymentVoteService {
                 .totalMembers(totalMembers)
                 .status(VoteStatus.VOTING)
                 .expiredAt(LocalDateTime.now().plusHours(1))
+                .usePoint(request.usePoint() != null ? request.usePoint() : false)
                 .build();
         PaymentVote savedVote = voteRepository.save(vote);
 
@@ -162,7 +171,7 @@ public class PaymentVoteService {
     }
 
     /**
-     * 투표 조회
+     * 투표 상세 조회
      *
      * @param voteId
      * @param groupId
@@ -304,15 +313,73 @@ public class PaymentVoteService {
         Account account = accountRepository.findById(transaction.getAccountId())
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_ACCOUNT));
 
-        if (account.getAmount().compareTo(transaction.getAmount()) < 0) {
-            log.warn("[PaymentVote] 결제 실패 (잔액 부족): voteId={}", vote.getId());
-            throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
+        BigDecimal totalAmount = transaction.getAmount();
+
+        BigDecimal usedPoints = processPointPayment(vote.getGroupId(), vote.getId(), totalAmount, vote.isUsePoint());
+
+        BigDecimal cashToPay = totalAmount.subtract(usedPoints);
+
+        if (cashToPay.compareTo(BigDecimal.ZERO) > 0) {
+            if (account.getAmount().compareTo(cashToPay) < 0) {
+                log.warn("[PaymentVote] 결제 실패 (잔액 부족): voteId={}", vote.getId());
+
+                rollbackPointPayment(vote.getGroupId(), usedPoints, vote.getId());
+
+                throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
+            }
+            account.deductAmount(cashToPay);
         }
 
-        account.deductAmount(transaction.getAmount());
         transaction.updateStatus(Status.APPROVED);
         transaction.updateBalance(account.getAmount());
 
-        log.info("[PaymentVote] 결제 실행 및 승인 완료: voteId={}, 차감현금={}", vote.getId(), transaction.getAmount());
+        log.info("[PaymentVote] 결제 실행 및 승인 완료: voteId={}, 총금액={}, 포인트사용={}, 차감현금={}",
+                vote.getId(), totalAmount, usedPoints, cashToPay);
+    }
+
+    /**
+     * 포인트 조회 및 차감을 전담하는 메서드
+     */
+    private BigDecimal processPointPayment(Long groupId, Long voteId, BigDecimal totalAmount, boolean usePoint) {
+        // 프론트에서 포인트 사용을 안 하겠다고 했으면 0 리턴
+        if (!usePoint) {
+            return BigDecimal.ZERO;
+        }
+
+        try {
+            BigDecimal pointBalance = userServiceClient.getGroupPointBalance(groupId).result();
+
+            if (pointBalance == null || pointBalance.compareTo(BigDecimal.ZERO) <= 0) {
+                return BigDecimal.ZERO;
+            }
+
+            BigDecimal usedPoints = totalAmount.min(pointBalance);
+
+            if (usedPoints.compareTo(BigDecimal.ZERO) > 0) {
+                userServiceClient.deductGroupPoint(groupId, new PointUseRequestDto(usedPoints, voteId));
+            }
+
+            return usedPoints;
+
+        } catch (Exception e) {
+            log.error("[PaymentVote] Auth 서버 포인트 조회/차감 오류: groupId={}, voteId={}", groupId, voteId, e);
+            throw new CustomException(ErrorCode.POINT_SYSTEM_ERROR);
+        }
+    }
+
+    /**
+     * 포인트 롤백 (보상 트랜잭션) 메서드
+     */
+    private void rollbackPointPayment(Long groupId, BigDecimal usedPoints, Long voteId) {
+        if (usedPoints.compareTo(BigDecimal.ZERO) > 0) {
+            try {
+                log.info("[PaymentVote] 결제 실패로 인한 포인트 롤백 요청: groupId={}, amount={}", groupId, usedPoints);
+
+                userServiceClient.refundGroupPoint(groupId, new PointUseRequestDto(usedPoints, voteId));
+
+            } catch (Exception e) {
+                log.error("[PaymentVote] 포인트 롤백 실패! 수동 확인 필요: groupId={}, voteId={}", groupId, voteId, e);
+            }
+        }
     }
 }

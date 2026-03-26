@@ -40,6 +40,7 @@ public class PointHistory {
     private Long referenceId;
 
     @CreatedDate
+    @Column(nullable = false)
     private LocalDateTime createdAt;
 
     @LastModifiedDate
