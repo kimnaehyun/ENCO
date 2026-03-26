@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View, Pressable } from 'react-native'
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -11,14 +11,24 @@ import ExpenseCategoryCard, {
 import MonthlyTrendCard, {
   MonthlyExpense,
 } from '../../components/analytics/MonthlyTrendCard';
+import {
+  getGroupDashboardReport,
+  getGroupTransactions,
+} from '../../services/paymentService';
+import {
+  getGroupSettings,
+  getGroupMembers,
+} from '../../services/groupService';
 
-function StatCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+const TOP_SPENDING_COLORS = [
+  COLORS.brand,
+  '#60A5FA',
+  '#818CF8',
+  '#C7D2FE',
+  '#CBD5E1',
+];
+
+function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.statCard}>
       <Text style={styles.statLabel}>{label}</Text>
@@ -31,35 +41,134 @@ export default function GroupAnalyticsScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
   const params = (route.params ?? {}) as CommonParams;
-
+  const groupId = params.groupId;
   const groupName = params.groupName ?? '모임명';
 
-  const totalExpense = 428000;
-  const totalIncome = 600000;
-  const currentBalance = 172000;
-  const monthlyBudget = 500000;
+  const [totalExpense, setTotalExpense] = useState(0);
+  const [totalIncome, setTotalIncome] = useState(0);
+  const [currentBalance, setCurrentBalance] = useState(0);
+  const [monthlyBudget, setMonthlyBudget] = useState(0);
 
-  const categoryData = useMemo<ExpenseCategoryItem[]>(
-    () => [
-      { label: '식비', value: 180000, color: COLORS.brand },
-      { label: '유흥', value: 90000, color: '#60A5FA' },
-      { label: '회비 적립', value: 110000, color: '#818CF8' },
-      { label: '기타', value: 48000, color: '#C7D2FE' },
-    ],
-    []
-  );
+  const [topSpendingItems, setTopSpendingItems] = useState<ExpenseCategoryItem[]>([]);
+  const [topSpendingTotal, setTopSpendingTotal] = useState(0);
 
-  const monthlyData = useMemo<MonthlyExpense[]>(
-    () => [
-      { month: '1월', amount: 210000 },
-      { month: '2월', amount: 320000 },
-      { month: '3월', amount: 280000 },
-      { month: '4월', amount: 410000 },
-      { month: '5월', amount: 360000 },
-      { month: '6월', amount: 428000 },
-    ],
-    []
-  );
+  const [monthlyData, setMonthlyData] = useState<MonthlyExpense[]>([]);
+
+  useEffect(() => {
+    if (!groupId) return;
+
+    const fetchAll = async () => {
+      const gid = Number(groupId);
+      const now = new Date();
+      const thisYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      // 최근 6개월 YYYY-MM 배열
+      const recentMonths: string[] = [];
+      for (let i = 5; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        recentMonths.push(
+          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        );
+      }
+      const recentMonthsSet = new Set(recentMonths);
+
+      // ── 예산 계산 (settings + members) ──
+      try {
+        const [settingsData, membersData] = await Promise.all([
+          getGroupSettings(groupId),
+          getGroupMembers(groupId),
+        ]);
+        const rawResult = settingsData.result as any;
+        const feePerMember =
+          rawResult.duePolicy?.amount ?? rawResult.policy?.monthlyFee ?? 0;
+        const memberCount = membersData.result.length;
+        const budget = feePerMember * memberCount;
+        console.log('[Analytics] feePerMember:', feePerMember, 'memberCount:', memberCount, 'budget:', budget);
+        setMonthlyBudget(budget);
+      } catch (error: any) {
+        console.error('[Analytics] budget fetch failed:', error?.response?.status, error?.response?.data);
+      }
+
+      // ── 입금 / 잔액 (dashboard report) ──
+      try {
+        const reportData = await getGroupDashboardReport(groupId);
+        console.log('[Analytics] report:', reportData.result);
+        setTotalIncome(reportData.result.paidAmount ?? 0);
+        setCurrentBalance(reportData.result.balance ?? 0);
+      } catch (error: any) {
+        console.error('[Analytics] report fetch failed:', error?.response?.status, error?.response?.data);
+      }
+
+      // ── 거래내역 (WITHDRAW 전체 → 클라이언트 필터) ──
+      try {
+        const allItems: any[] = [];
+        let cursor: number | undefined;
+        while (true) {
+          const txData = await getGroupTransactions(gid, {
+            sort: 'LATEST' as const,
+            type: 'WITHDRAW' as const,
+            size: 200,
+            cursor,
+          });
+          allItems.push(...txData.result.items);
+          if (!txData.result.hasNext || txData.result.nextCursor == null) break;
+          cursor = txData.result.nextCursor;
+        }
+
+        console.log('[Analytics] 전체 WITHDRAW items:', allItems.length);
+
+        // 이번 달 지출 합계
+        const thisMonthItems = allItems.filter(
+          item => item.transactionDate?.slice(0, 7) === thisYM
+        );
+        const spent = thisMonthItems.reduce((sum, item) => sum + item.amount, 0);
+        console.log('[Analytics] 이번 달 지출:', spent);
+        setTotalExpense(spent);
+
+        // 이번 달 상위 5개 결제명
+        const groupedMap: Record<string, number> = {};
+        thisMonthItems.forEach(item => {
+          const key = item.title || '기타';
+          groupedMap[key] = (groupedMap[key] ?? 0) + item.amount;
+        });
+        const top5 = Object.entries(groupedMap)
+          .map(([label, value]) => ({ label, value }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 5);
+        console.log('[Analytics] top5:', top5);
+        const top5Total = top5.reduce((sum, item) => sum + item.value, 0);
+        setTopSpendingTotal(top5Total);
+        setTopSpendingItems(
+          top5.map((item, index) => ({
+            label: item.label,
+            value: item.value,
+            color: TOP_SPENDING_COLORS[index] ?? '#CBD5E1',
+          }))
+        );
+
+        // 최근 6개월 월별 그룹핑
+        const recentItems = allItems.filter(item =>
+          recentMonthsSet.has(item.transactionDate?.slice(0, 7))
+        );
+        const groupedByMonth: Record<string, number> = {};
+        recentItems.forEach(item => {
+          const ym = item.transactionDate.slice(0, 7);
+          groupedByMonth[ym] = (groupedByMonth[ym] ?? 0) + item.amount;
+        });
+        console.log('[Analytics] groupedByMonth:', groupedByMonth);
+        const finalMonthly: MonthlyExpense[] = recentMonths.map(ym => ({
+          month: `${parseInt(ym.split('-')[1], 10)}월`,
+          amount: groupedByMonth[ym] ?? 0,
+        }));
+        console.log('[Analytics] finalMonthly:', finalMonthly);
+        setMonthlyData(finalMonthly);
+      } catch (error: any) {
+        console.error('[Analytics] transactions fetch failed:', error?.response?.status, error?.response?.data);
+      }
+    };
+
+    fetchAll();
+  }, [groupId]);
 
   return (
     <ScreenLayout>
@@ -93,8 +202,8 @@ export default function GroupAnalyticsScreen() {
 
         <View style={styles.cardWrap}>
           <ExpenseCategoryCard
-            totalExpense={totalExpense}
-            categories={categoryData}
+            totalExpense={topSpendingTotal}
+            categories={topSpendingItems}
           />
         </View>
 

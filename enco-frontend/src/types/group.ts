@@ -129,8 +129,16 @@ export type GroupStackParamList = {
     groupId?: string;
     groupName?: string;
     isAdmin?: boolean;
-    transactionId: number;
+    transactionId?: number;
     referenceType?: 'TRANSACTION' | 'EXPENSE' | 'POINT';
+    pointId?: number;
+    listItem?: {
+      title: string;
+      amount: number;
+      transactionDate: string;
+      balanceAfter: number;
+      type: 'DEPOSIT' | 'WITHDRAW';
+    };
   };
   SettlementReceiptOcr:
     | { imageUri?: string; groupName?: string; groupId?: string }
@@ -216,8 +224,16 @@ export type HomeStackParamList = {
     groupId?: string;
     groupName?: string;
     isAdmin?: boolean;
-    transactionId: number;
+    transactionId?: number;
     referenceType?: 'TRANSACTION' | 'EXPENSE' | 'POINT';
+    pointId?: number;
+    listItem?: {
+      title: string;
+      amount: number;
+      transactionDate: string;
+      balanceAfter: number;
+      type: 'DEPOSIT' | 'WITHDRAW';
+    };
   };
   SettleDetail: {
     expenseId?: number;
@@ -335,4 +351,10 @@ export type Message = {
   metadata: null;
   createdAt: string;
   status?: 'sending' | 'sent' | 'failed';
+};
+
+export type GroupVoteDetailType = {
+  voteId: number;
+  groupId: number;
+  onVoteDone: () => void;
 };

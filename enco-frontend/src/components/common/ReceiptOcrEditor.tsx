@@ -312,6 +312,21 @@ export default function ReceiptOcrEditor({
       : isoPrefix.replace(/\./g, '-');
   };
 
+  const updateSettlementPaidAtDate = (value: string) => {
+    const sanitized = value.replace(/[^0-9.-]/g, '').replace(/\./g, '-');
+    const datePart = sanitized.slice(0, 10);
+
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+      updateDraftField('paidAt', sanitized);
+      return;
+    }
+
+    const existingPaidAt = receiptDraft?.paidAt ?? '';
+    const timeMatch = existingPaidAt.match(/T(\d{2}:\d{2}:\d{2})/);
+    const timePart = timeMatch?.[1] ?? '00:00:00';
+    updateDraftField('paidAt', `${datePart}T${timePart}`);
+  };
+
   const resetReceiptAnalysis = (uri: string | null) => {
     setImageUri(uri);
     setReceiptDraft(null);
@@ -736,6 +751,18 @@ export default function ReceiptOcrEditor({
                 placeholderTextColor="#9CA3AF"
                 style={styles.input}
               />
+            </View>
+
+            <View style={styles.fieldGroup}>
+              <Text style={styles.fieldLabel}>결제 날짜</Text>
+              <TextInput
+                value={formatSettlementDate(receiptDraft.paidAt)}
+                onChangeText={updateSettlementPaidAtDate}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor="#9CA3AF"
+                style={styles.input}
+              />
+              <Text style={styles.helperText}>정산 날짜를 수정하면 영수증 결제일에도 반영됩니다.</Text>
             </View>
 
             <View style={styles.inlineRow}>

@@ -47,6 +47,7 @@ export default function HomeScreen() {
         const mappedGroups: HomeGroupSummary[] = data.result.map(group => ({
           id: String(group.groupId),
           name: group.groupName,
+          role: group.role,
           coverImage: group.card?.frontImageUrl
             ? { uri: `https://api.ssafywte.site${group.card.frontImageUrl}` }
             : {
@@ -78,6 +79,7 @@ export default function HomeScreen() {
     navigation.navigate('GroupDashboard', {
       groupId: group.id,
       groupName: group.name,
+      isAdmin: group.role === 'ADMIN' || group.role === 'LEADER' || group.role === 'TREASURER',
     });
   };
 
@@ -178,6 +180,7 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingRight: HORIZONTAL_PADDING }}
         ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
       />
+
     </ScreenLayout>
   );
 }

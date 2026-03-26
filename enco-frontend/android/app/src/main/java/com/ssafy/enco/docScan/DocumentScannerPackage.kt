@@ -1,4 +1,4 @@
-package com.frontend.docScan
+package com.ssafy.enco.docScan
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule

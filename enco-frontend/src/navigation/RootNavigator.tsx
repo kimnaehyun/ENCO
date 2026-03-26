@@ -16,12 +16,16 @@ import GroupCardRecommendScreen from '../screens/group/GroupCardRecommendScreen'
 import GroupPinSetupScreen from '../screens/group/GroupPinSetupScreen';
 
 import type { RootStackParamList } from '../types/navigation';
+import { useNotificationSetup } from '../hooks/useNotificationSetup';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
   const [isBooting, setIsBooting] = useState(true);
   const user = useAuthStore((s) => s.user);
+
+  // FCM 토큰 발급 + SSE 알림 구독 (로그인 시 자동)
+  useNotificationSetup();
 
   useEffect(() => {
     const t = setTimeout(() => setIsBooting(false), 800);

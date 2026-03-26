@@ -1,5 +1,6 @@
 package io.ssafy.payment.domain.onsite.service;
 
+
 import io.ssafy.payment.domain.onsite.dto.response.BarcodeResponseDto;
 import io.ssafy.payment.domain.onsite.dto.response.LocationResponseDto;
 import io.ssafy.payment.infra.client.UserServiceClient;
@@ -18,6 +19,8 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Slf4j
