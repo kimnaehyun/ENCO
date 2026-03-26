@@ -5,6 +5,7 @@ import io.ssafy.payment.domain.onsite.dto.response.BarcodeResponseDto;
 import io.ssafy.payment.infra.client.UserServiceClient;
 import io.ssafy.payment.global.common.error.CustomException;
 import io.ssafy.payment.global.common.error.ErrorCode;
+import io.ssafy.payment.infra.messaging.producer.KafkaProducerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.geo.Distance;
@@ -29,13 +30,24 @@ public class OnsitePaymentService {
     private final RedisTemplate<String, Object> redisTemplate;
     private final UserServiceClient userServiceClient;
     private final StringRedisTemplate stringRedisTemplate;
+    private final KafkaProducerService kafkaProducerService;
 
     private static final String GEO_KEY_PREFIX = "onsite:geo:";
     private static final String BARCODE_KEY_PREFIX = "onsite:barcode:";
 
     public BarcodeResponseDto updateLocationAndCheckBarcode(Long groupId, Long userId, double lat, double lon, boolean isLeader) {
         String geoKey = GEO_KEY_PREFIX + groupId;
+
+        if (isLeader) {
+            Boolean isFirstTime = stringRedisTemplate.hasKey(geoKey);
+            if (Boolean.FALSE.equals(isFirstTime)) {
+                log.info("[현장결제] 방장이 결제를 시작했습니다. 카프카 이벤트를 발행합니다. groupId={}", groupId);
+
+                kafkaProducerService.sendOnsitePaymentRequest(groupId, userId, "방장");
+            }
+        }
         String barcodeKey = BARCODE_KEY_PREFIX + groupId;
+
 
         BarcodeResponseDto existingBarcode = (BarcodeResponseDto) redisTemplate.opsForValue().get(barcodeKey);
         if (existingBarcode != null) {
