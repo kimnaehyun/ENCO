@@ -11,7 +11,7 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { NotificationsProvider } from './src/contexts/NotificationsContext';
 import './global.css';
 import type { RootStackParamList } from './src/types/navigation';
-import { BackHandler, Linking, ToastAndroid } from 'react-native';
+import { BackHandler, Linking, PermissionsAndroid, Platform, ToastAndroid } from 'react-native';
 import { ROUTES } from './src/constants/routes';
 import { linking } from '@/config/linking';
 import { setNotificationNavigationRef } from './src/hooks/useNotificationSetup';
@@ -24,6 +24,29 @@ function App() {
   useEffect(() => {
     setNotificationNavigationRef(navigationRef);
   }, [navigationRef]);
+
+  // 앱 시작 시 권한 요청 (알림, 카메라, 위치)
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+
+    const requestPermissions = async () => {
+      try {
+        const permissions: string[] = [
+          PermissionsAndroid.PERMISSIONS.CAMERA,
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        ];
+        // POST_NOTIFICATIONS는 Android 13(API 33) 이상에서만 필요
+        if (Number(Platform.Version) >= 33) {
+          permissions.push(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
+        }
+        await PermissionsAndroid.requestMultiple(permissions as any);
+      } catch (err) {
+        console.warn('[Permissions] 권한 요청 실패:', err);
+      }
+    };
+
+    requestPermissions();
+  }, []);
 
   // ── 딥링크에서 초대 토큰 파싱 ──
   const handleDeepLink = (url: string | null) => {
