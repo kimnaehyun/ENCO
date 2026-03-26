@@ -12,6 +12,7 @@ import io.ssafy.payment.domain.transaction.entity.Type;
 import io.ssafy.payment.domain.transaction.repository.TransactionHistoryRepository;
 import io.ssafy.payment.global.common.error.CustomException;
 import io.ssafy.payment.global.common.error.ErrorCode;
+import io.ssafy.payment.infra.messaging.producer.KafkaProducerService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -29,6 +30,7 @@ public class OnsitePaymentExecuteService {
     private final AccountRepository accountRepository;
     private final TransactionHistoryRepository transactionHistoryRepository;
     private final CardRepository cardRepository;
+    private final KafkaProducerService kafkaProducerService;
 
     private static final String BARCODE_AUTH_PREFIX = "onsite:auth:";
 
@@ -82,5 +84,7 @@ public class OnsitePaymentExecuteService {
         redisTemplate.delete(redisKey);
 
         log.info("[현장결제 완료] 가맹점={}, 금액={}, groupId={}", merchantName, amount, groupId);
+
+        kafkaProducerService.sendOnsitePaymentComplete(groupId, amount, merchantName);
     }
 }

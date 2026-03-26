@@ -1,8 +1,10 @@
 package io.ssafy.chat.infra.messaging.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.ssafy.chat.common.enums.NotificationType;
 import io.ssafy.chat.infra.client.AuthServiceClient;
 import io.ssafy.chat.notification.service.FcmService;
+import io.ssafy.chat.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -18,6 +20,7 @@ public class OnsitePaymentRequestConsumer {
     private final FcmService fcmService;
     private final AuthServiceClient authServiceClient;
     private final ObjectMapper objectMapper;
+    private final NotificationService notificationService;
 
     @KafkaListener(topics = "onsite-payment-request", groupId = "chat-service")
     public void consume(String message) {
@@ -46,13 +49,23 @@ public class OnsitePaymentRequestConsumer {
             for (Long memberId : memberIds) {
                 if (!memberId.equals(event.leaderId)) {
                     try {
+                        notificationService.sendNotification(
+                                memberId,
+                                NotificationType.ONSITE_PAYMENT_REQUEST,
+                                title,
+                                body,
+                                (Map<String, Object>) (Map) data
+                        );
+                    } catch (Exception dbEx) {
+                        log.error("[현장결제] 채팅 DB 저장 실패 (FCM은 계속 진행) - memberId: {}", memberId, dbEx);
+                    }
+                    try {
                         String fcmToken = authServiceClient.getFcmToken(memberId).result();
                         if (fcmToken != null && !fcmToken.isBlank()) {
                             fcmService.sendPushNotification(fcmToken, title, body, data);
-                            log.info("[현장결제] FCM 전송 - groupId: {}, memberId: {}", groupId, memberId);
                         }
-                    } catch (Exception e) {
-                        log.warn("[현장결제] FCM 토큰 조회 실패 - memberId: {}", memberId, e);
+                    } catch (Exception fcmEx) {
+                        log.error("[현장결제] FCM 발송 실패 - memberId: {}", memberId, fcmEx);
                     }
                 }
             }
@@ -70,7 +83,8 @@ public class OnsitePaymentRequestConsumer {
         public String leaderName;
         public Long timestamp;
 
-        public OnsitePaymentRequestEvent() {}
+        public OnsitePaymentRequestEvent() {
+        }
 
         public OnsitePaymentRequestEvent(Long groupId, Long leaderId, String leaderName, Long timestamp) {
             this.groupId = groupId;
