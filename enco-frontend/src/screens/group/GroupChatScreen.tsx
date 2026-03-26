@@ -7,6 +7,7 @@ import { CommonParams } from '../../types/common';
 import { images } from '@/types/images';
 import { useChat } from '@/hooks/useChat';
 import { useChatbot } from '@/hooks/useChatbot';
+import { useAuthStore } from '@/store/useAuthStore';
 import ChatInput from '@/components/groupChat/ChatInput';
 import ChatMessageList from '@/components/groupChat/ChatMessageList';
 
@@ -20,7 +21,8 @@ export default function GroupChatScreen() {
   const groupName = params.groupName ?? '회식주의자';
   const groupId = params.groupId;
   const isAdmin = TEMP_IS_ADMIN;
-  const [userId] = useState(1);
+  const storeUserId = useAuthStore(s => s.userId);
+  const userId = storeUserId ? Number(storeUserId) : 0;
   const [msg, setMsg] = useState('');
 
   const {
