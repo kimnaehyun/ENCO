@@ -17,6 +17,8 @@ type MonthlyTrendCardProps = {
 };
 
 function AreaTrendChart({ data }: { data: MonthlyExpense[] }) {
+  if (data.length < 2) return null;
+
   const width = 300;
   const height = 145;
   const padding = 16;
@@ -27,7 +29,7 @@ function AreaTrendChart({ data }: { data: MonthlyExpense[] }) {
   const points = data.map((item, index) => {
     const x =
       padding +
-      (index * (width - padding * 2)) / Math.max(data.length - 1, 1);
+      (index * (width - padding * 2)) / (data.length - 1);
     const y =
       height -
       padding -
@@ -85,13 +87,33 @@ export default function MonthlyTrendCard({
   onPress,
   height = 320,
 }: MonthlyTrendCardProps) {
+  const validMonthCount = data.filter(d => d.amount > 0).length;
+  const hasNoData = data.length === 0 || validMonthCount === 0;
+  const hasInsufficientData = !hasNoData && validMonthCount <= 1;
+
+  const displayDescription = hasNoData
+    ? '최근 6개월 지출 데이터가 없습니다.'
+    : hasInsufficientData
+    ? '월별 추이를 보기엔 데이터가 부족합니다.'
+    : description;
+
   return (
     <Pressable onPress={onPress} style={[styles.sectionCard, { height }]}>
       <Text style={styles.sectionTitle}>{title}</Text>
       <Text style={styles.cardDesc} numberOfLines={2}>
-        {description}
+        {displayDescription}
       </Text>
-      <AreaTrendChart data={data} />
+      {hasNoData ? (
+        <View style={styles.emptyWrap}>
+          <Text style={styles.emptyText}>지출 내역이 없습니다.</Text>
+        </View>
+      ) : hasInsufficientData ? (
+        <View style={styles.emptyWrap}>
+          <Text style={styles.emptyText}>추이를 보기엔 데이터가 부족합니다.</Text>
+        </View>
+      ) : (
+        <AreaTrendChart data={data} />
+      )}
     </Pressable>
   );
 }
@@ -130,6 +152,16 @@ const styles = StyleSheet.create({
   axisLabel: {
     fontSize: 11,
     color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  emptyWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: COLORS.subtle,
     fontFamily: FONT_FAMILY.medium,
   },
 });

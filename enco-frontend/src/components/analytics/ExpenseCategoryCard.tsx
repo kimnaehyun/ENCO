@@ -18,7 +18,7 @@ type ExpenseCategoryCardProps = {
 };
 
 export default function ExpenseCategoryCard({
-  title = '카테고리별 지출 비율',
+  title = '이번 달 지출 상위 TOP 5',
   totalExpense,
   categories,
   onPress,
@@ -29,32 +29,42 @@ export default function ExpenseCategoryCard({
     color: item.color,
   }));
 
+  const hasData = categories.length > 0 && totalExpense > 0;
+
   return (
     <Pressable onPress={onPress} style={[styles.sectionCard, { height }]}>
       <Text style={styles.sectionTitle}>{title}</Text>
 
-      <View style={styles.pieSection}>
-        <View style={styles.pieCenterWrap}>
-          <PieChart slices={pieSlices} size={150} />
+      {!hasData ? (
+        <View style={styles.emptyWrap}>
+          <Text style={styles.emptyText}>이번 달 지출 내역이 없습니다.</Text>
         </View>
+      ) : (
+        <View style={styles.pieSection}>
+          <View style={styles.pieCenterWrap}>
+            <PieChart slices={pieSlices} size={150} />
+          </View>
 
-        <View style={styles.legendWrap}>
-          {categories.map(item => (
-            <View key={item.label} style={styles.legendRow}>
-              <View
-                style={[
-                  styles.legendDot,
-                  { backgroundColor: item.color },
-                ]}
-              />
-              <Text style={styles.legendLabel}>{item.label}</Text>
-              <Text style={styles.legendValue}>
-                {Math.round((item.value / totalExpense) * 100)}%
-              </Text>
-            </View>
-          ))}
+          <View style={styles.legendWrap}>
+            {categories.map(item => (
+              <View key={item.label} style={styles.legendRow}>
+                <View
+                  style={[
+                    styles.legendDot,
+                    { backgroundColor: item.color },
+                  ]}
+                />
+                <Text style={styles.legendLabel}>{item.label}</Text>
+                <Text style={styles.legendValue}>
+                  {totalExpense > 0
+                    ? `${Math.round((item.value / totalExpense) * 100)}%`
+                    : '0%'}
+                </Text>
+              </View>
+            ))}
+          </View>
         </View>
-      </View>
+      )}
     </Pressable>
   );
 }
@@ -111,5 +121,15 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: COLORS.dark,
     fontFamily: FONT_FAMILY.bold,
+  },
+  emptyWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    fontSize: 14,
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
   },
 });
