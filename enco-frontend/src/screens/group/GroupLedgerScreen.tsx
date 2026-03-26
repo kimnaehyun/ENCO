@@ -515,7 +515,7 @@ export default function GroupLedgerScreen() {
                         receiptUri: null,
                         groupName: params.groupName ?? groupName,
                         groupId: params.groupId,
-                      }),
+                      });
                     } else if (it.referenceType === 'POINT') {
                       console.log('[PointFlow] POINT item branch entered');
                       console.log('[PointFlow] groupId:', params.groupId);
