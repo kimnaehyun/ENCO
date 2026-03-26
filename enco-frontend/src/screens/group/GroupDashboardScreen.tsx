@@ -46,6 +46,7 @@ export default function GroupDashboardScreen() {
   const { top: topInset } = useSafeAreaInsets();
   const params = (route.params ?? {}) as CommonParams;
   const groupId = params.groupId;
+  const isAdmin = !!params.isAdmin;
   const { unreadCount } = useNotifications();
 
   const [dashboardGroupName, setDashboardGroupName] = useState(
@@ -158,13 +159,14 @@ export default function GroupDashboardScreen() {
     navigation.navigate('GroupInfo', {
       groupId: params.groupId,
       groupName: dashboardGroupName,
-      isAdmin: false,
+      isAdmin,
     });
 
   const onPressLedger = () =>
     navigation.navigate('GroupLedger', {
       groupId: params.groupId,
       groupName: dashboardGroupName,
+      isAdmin,
     });
 
   const onPressVotes = () =>
@@ -401,14 +403,16 @@ export default function GroupDashboardScreen() {
           </Pressable>
         </View>
 
-        {/* 모임 관리 버튼 */}
-        <Pressable
-          onPress={onPressAdmin}
-          className="rounded-3xl py-5 items-center justify-center mb-3"
-          style={styles.adminButton}
-        >
-          <Text style={styles.adminText}>모임 관리</Text>
-        </Pressable>
+        {/* 모임 관리 버튼 (관리자만 표시) */}
+        {isAdmin && (
+          <Pressable
+            onPress={onPressAdmin}
+            className="rounded-3xl py-5 items-center justify-center mb-3"
+            style={styles.adminButton}
+          >
+            <Text style={styles.adminText}>모임 관리</Text>
+          </Pressable>
+        )}
 
         {/* 모임초대 진입 테스트 버튼 */}
         <Pressable

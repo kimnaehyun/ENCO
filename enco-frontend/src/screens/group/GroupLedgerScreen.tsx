@@ -243,7 +243,7 @@ export default function GroupLedgerScreen() {
     const numericGroupId = groupId ? Number(groupId) : NaN;
     if (!Number.isFinite(numericGroupId)) return;
 
-    const params = { sort: 'LATEST' as const, type: 'ALL' as const, size: 20 };
+    const params = { sort: 'LATEST' as const, type: 'ALL' as const, size: 100 };
 
     console.log('[GroupTransactions] groupId:', numericGroupId);
     console.log('[GroupTransactions] params:', params);
@@ -255,16 +255,12 @@ export default function GroupLedgerScreen() {
       const result = await getGroupTransactions(numericGroupId, params);
       console.log('[GroupTransactions] success:', result);
       console.log('[GroupTransactions] items:', result.result.items);
-      console.log('[GroupTransactions] nextCursor:', result.result.nextCursor);
-      console.log('[GroupTransactions] hasNext:', result.result.hasNext);
 
       setTransactions(result.result.items);
       setNextCursor(result.result.nextCursor);
       setHasNext(result.result.hasNext);
     } catch (error: any) {
       console.error('[GroupTransactions] failed:', error);
-      console.error('[GroupTransactions] status:', error?.response?.status);
-      console.error('[GroupTransactions] data:', error?.response?.data);
       setTransactionError('거래내역을 불러오지 못했습니다.');
     } finally {
       setIsLoadingTransactions(false);
@@ -334,6 +330,30 @@ export default function GroupLedgerScreen() {
     setTmpTx('all');
   };
 
+  // ── 클라이언트 필터링 ──
+  const filteredTransactions = useMemo(() => {
+    if (!appliedFilter) return transactions;
+
+    let filtered = transactions.filter(it => {
+      const txDate = it.transactionDate.slice(0, 10);
+      const startStr = fmtDate(appliedFilter.start);
+      const endStr = fmtDate(appliedFilter.end);
+      return txDate >= startStr && txDate <= endStr;
+    });
+
+    if (appliedFilter.tx === 'deposit') {
+      filtered = filtered.filter(it => it.type === 'DEPOSIT');
+    } else if (appliedFilter.tx === 'withdraw') {
+      filtered = filtered.filter(it => it.type === 'WITHDRAW');
+    }
+
+    if (appliedFilter.sort === 'oldest') {
+      filtered = [...filtered].reverse();
+    }
+
+    return filtered;
+  }, [transactions, appliedFilter]);
+
   // ── 거래내역 최초 조회 ──
   useEffect(() => {
     fetchTransactions();
@@ -384,14 +404,14 @@ export default function GroupLedgerScreen() {
           : '출금';
     const sortLabel = appliedFilter.sort === 'latest' ? '최신순' : '과거순';
 
-    const totalDeposit = transactions
+    const totalDeposit = filteredTransactions
       .filter(it => it.type === 'DEPOSIT')
       .reduce((sum, it) => sum + it.amount, 0);
-    const totalWithdraw = transactions
+    const totalWithdraw = filteredTransactions
       .filter(it => it.type === 'WITHDRAW')
       .reduce((sum, it) => sum + it.amount, 0);
 
-    const rows = transactions
+    const rows = filteredTransactions
       .map(it => {
         const isDeposit = it.type === 'DEPOSIT';
         const signedAmount = isDeposit ? it.amount : -it.amount;
@@ -452,7 +472,7 @@ export default function GroupLedgerScreen() {
             </div>
           </div>
 
-          <p class="filter-info">필터: ${filterLabel} · ${sortLabel} · ${transactions.length}건</p>
+          <p class="filter-info">필터: ${filterLabel} · ${sortLabel} · ${filteredTransactions.length}건</p>
 
           <table>
             <thead>
@@ -503,7 +523,7 @@ export default function GroupLedgerScreen() {
       console.error('PDF 생성 실패:', err);
       Alert.alert('오류', 'PDF 생성에 실패했습니다. 다시 시도해주세요.');
     }
-  }, [appliedFilter, transactions, groupName, balance]);
+  }, [appliedFilter, filteredTransactions, groupName, balance]);
 
   return (
     <ScreenLayout>
@@ -612,12 +632,12 @@ export default function GroupLedgerScreen() {
                 거래내역을 불러오지 못했습니다.
               </Text>
             </View>
-          ) : transactions.length === 0 ? (
+          ) : filteredTransactions.length === 0 ? (
             <View style={styles.emptyCard}>
               <Text style={styles.emptyText}>거래내역이 없습니다.</Text>
             </View>
           ) : (
-            transactions.map(it => {
+            filteredTransactions.map(it => {
               const isDeposit = it.type === 'DEPOSIT';
               const signedAmount = isDeposit ? it.amount : -it.amount;
 
