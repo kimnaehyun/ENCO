@@ -19,7 +19,11 @@ interface AuthState {
 
   login: (name: string) => void;
   setProfile: (profile: UserProfile) => void;
-  loginWithProfile: (name: string, profile: UserProfile) => void;
+  loginWithProfile: (
+    name: string,
+    profile: UserProfile,
+    userId: number,
+  ) => void;
   logout: () => void;
 }
 
@@ -30,6 +34,7 @@ export const useAuthStore = create<AuthState>(set => ({
 
   login: name => set({ user: name }),
   setProfile: profile => set({ profile }),
-  loginWithProfile: (name, profile) => set({ user: name, profile }),
+  loginWithProfile: (name, profile, userId) =>
+    set({ user: name, profile, userId }),
   logout: () => set({ user: null, profile: null }),
 }));
