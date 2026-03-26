@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/internal/groups")
 @RequiredArgsConstructor
@@ -33,5 +35,17 @@ public class UserClientController {
         return ResponseEntity.ok(CommonResponse.success(
                 groupUserRepository.countByGroup_IdAndIsDeletedFalse(groupId)
         ));
+    }
+
+    @GetMapping("/{groupId}/members")
+    public ResponseEntity<CommonResponse<List<Long>>> getGroupMembers(@PathVariable Long groupId) {
+
+        // 주의: groupUserRepository에 findByGroup_IdAndIsDeletedFalse 메서드가 없다면 추가해 주셔야 합니다!
+        List<Long> memberIds = groupUserRepository.findByGroup_IdAndIsDeletedFalse(groupId)
+                .stream()
+                .map(groupUser -> groupUser.getUser().getId()) // ⭐️ 모임원 정보에서 유저 ID만 쏙쏙 뽑아냅니다
+                .toList();
+
+        return ResponseEntity.ok(CommonResponse.success(memberIds));
     }
 }

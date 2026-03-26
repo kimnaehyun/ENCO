@@ -13,6 +13,6 @@ public interface AuthServiceClient {
     @GetMapping("/api/v1/users/internal/{userId}/fcm-token")
     CommonResponse<String> getFcmToken(@PathVariable Long userId);
 
-    @GetMapping("/api/v1/groups/internal/{groupId}/members")
+    @GetMapping("/internal/groups/{groupId}/members")
     CommonResponse<List<Long>> getGroupMembers(@PathVariable Long groupId);
 }
