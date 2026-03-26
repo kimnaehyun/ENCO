@@ -505,7 +505,6 @@ export default function GroupLedgerScreen() {
                         referenceType: it.referenceType,
                         isAdmin,
                       });
-<<<<<<< Updated upstream
                     } else if (it.referenceType === 'EXPENSE') {
                       navigation.navigate('SettleDetail', {
                         expenseId: it.referenceId,
@@ -516,7 +515,7 @@ export default function GroupLedgerScreen() {
                         receiptUri: null,
                         groupName: params.groupName ?? groupName,
                         groupId: params.groupId,
-=======
+                      }),
                     } else if (it.referenceType === 'POINT') {
                       console.log('[PointFlow] POINT item branch entered');
                       console.log('[PointFlow] groupId:', params.groupId);
@@ -535,7 +534,6 @@ export default function GroupLedgerScreen() {
                           balanceAfter: it.balanceAfter,
                           type: it.type,
                         },
->>>>>>> Stashed changes
                       });
                     } else {
                       // EXPENSE
