@@ -29,22 +29,29 @@ async function displayLocalNotification(
   body: string,
   data: Record<string, any>,
 ) {
-  const channelId = await notifee.createChannel({
-    id: 'default',
-    name: '기본 알림',
-    importance: AndroidImportance.HIGH,
-  });
+  try {
+    console.log('[Notifee] 로컬 알림 표시 시도:', title);
+    const channelId = await notifee.createChannel({
+      id: 'default',
+      name: '기본 알림',
+      importance: AndroidImportance.HIGH,
+    });
+    console.log('[Notifee] 채널 생성 완료:', channelId);
 
-  await notifee.displayNotification({
-    title,
-    body,
-    data,
-    android: {
-      channelId,
-      smallIcon: 'ic_launcher',
-      pressAction: { id: 'default' },
-    },
-  });
+    await notifee.displayNotification({
+      title,
+      body,
+      data,
+      android: {
+        channelId,
+        smallIcon: 'ic_launcher',
+        pressAction: { id: 'default' },
+      },
+    });
+    console.log('[Notifee] 알림 표시 성공');
+  } catch (err) {
+    console.error('[Notifee] 알림 표시 실패:', err);
+  }
 }
 
 /**
@@ -53,35 +60,13 @@ async function displayLocalNotification(
 function handleNotificationPress(data: Record<string, any>) {
   if (!_navigationRef?.isReady()) return;
 
-  const type = String(data.type ?? '');
-  const groupId = data.groupId ? String(data.groupId) : undefined;
-
-  // 알림 타입별 화면 이동
-  if (type === 'VOTE_CREATED' || type === 'VOTE') {
-    if (groupId) {
-      _navigationRef.navigate('GroupStack', {
-        screen: 'GroupVotes',
-        params: { groupId },
-      });
-    }
-  } else if (type === 'LEDGER_UPDATE' || type === 'LEDGER') {
-    if (groupId) {
-      _navigationRef.navigate('GroupStack', {
-        screen: 'GroupDashboard',
-        params: { groupId },
-      });
-    }
-  } else if (type === 'SETTLEMENT_REMINDER' || type === 'DUES_REMINDER' || type === 'DUE_REMINDER') {
-    if (groupId) {
-      _navigationRef.navigate('GroupStack', {
-        screen: 'GroupDashboard',
-        params: { groupId },
-      });
-    }
-  } else {
-    // 기본: 알림 목록 또는 홈으로
-    _navigationRef.navigate('App', { screen: 'HomeTab' });
-  }
+  // 알림 탭 시 알림 센터 화면으로 이동
+  _navigationRef.navigate('App', {
+    screen: 'HomeTab',
+    params: {
+      screen: 'UserNotifications',
+    },
+  });
 }
 
 /**

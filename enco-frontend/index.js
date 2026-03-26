@@ -9,12 +9,15 @@ import {
   getMessaging,
   setBackgroundMessageHandler,
 } from '@react-native-firebase/messaging';
-import notifee, { AndroidImportance } from '@notifee/react-native';
 import App from './App';
 import { name as appName } from './app.json';
 
-// 백그라운드/종료 상태에서 FCM 메시지 수신 시 로컬 알림 표시
+// 백그라운드/종료 상태에서 FCM 메시지 수신 시 처리
+// notifee는 여기서 import하지 않고, 핸들러 내부에서 lazy require
 setBackgroundMessageHandler(getMessaging(), async remoteMessage => {
+  const notifee = (await import('@notifee/react-native')).default;
+  const { AndroidImportance } = await import('@notifee/react-native');
+
   const data = remoteMessage.data ?? {};
   const channelId = await notifee.createChannel({
     id: 'default',
