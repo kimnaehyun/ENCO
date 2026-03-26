@@ -1,6 +1,6 @@
 import { View, Text, Button, BackHandler } from 'react-native';
 import React, { useEffect } from 'react';
-import { CommonActions, useRoute } from '@react-navigation/native';
+import { useRoute } from '@react-navigation/native';
 import { ROUTES } from '../../constants/routes';
 
 export default function PaymentSuccess({ navigation }: { navigation: any }) {
@@ -19,7 +19,7 @@ export default function PaymentSuccess({ navigation }: { navigation: any }) {
     return () => sub.remove();
   }, [navigation]);
   return (
-    <View className='bg-[#F0F4FF]'>
+    <View className="bg-[#F0F4FF]">
       <Text>결제 성공</Text>
       <Text>매장: {storeName}</Text>
       <Text>금액: {amount}원</Text>

@@ -3,7 +3,8 @@ import {
   PermissionsAndroid,
   Platform,
   ActivityIndicator,
-  Button,
+  Pressable,
+  Alert,
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import { Text } from 'react-native-gesture-handler';
@@ -13,7 +14,7 @@ import Geolocation from 'react-native-geolocation-service';
 import BarcodeQR from './BarcodeQR';
 import BarcodeCardRecommendation from './BarcodeCardRecommendation';
 import { locationApi } from '@/services/payment/location';
-import { getGroupCards } from '@/services/paymentService';
+import { getGroupCards, onsiteBarcodePayment } from '@/services/paymentService';
 import { images } from '@/types/images';
 import { voteApi } from '@/services/payment/vote';
 
@@ -26,6 +27,13 @@ export default function index({ groupId }: { groupId: number }) {
 
   const [cardsInfo, setCardsInfo] = useState<any>();
   const selectedCard = cardsInfo?.[cardNumber];
+
+  const [barcodeInfo, setBarcodeInfo] = useState<{
+    barcodeNumber: string;
+    expiredAt: string;
+    qrData: string;
+  } | null>(null);
+
   useEffect(() => {
     let watchId: number;
 
@@ -66,7 +74,6 @@ export default function index({ groupId }: { groupId: number }) {
   useEffect(() => {
     const fetchCards = async () => {
       const response = await getGroupCards(groupId);
-      console.log(response);
       const mapped = response.result.map(item => ({
         image: images.card1, // 임시 폴백
         cardId: item.cardId,
@@ -80,7 +87,7 @@ export default function index({ groupId }: { groupId: number }) {
     const locationRequestNotification = async () => {
       try {
         const response = await voteApi.request(groupId);
-        console.log(response);
+        console.log(response.data);
       } catch (error) {
         console.log(error);
       }
@@ -106,6 +113,10 @@ export default function index({ groupId }: { groupId: number }) {
         if (response.data?.result.barcode !== null) {
           clearInterval(intervalId);
           setIsGPS(true);
+          setBarcodeInfo(response.data.result.barcode);
+          console.log('qr');
+
+          console.log(response.data);
         }
       } catch (error) {
         console.log(error);
@@ -156,13 +167,35 @@ export default function index({ groupId }: { groupId: number }) {
       }
     };
   }, []);
+  const handlePayment = async () => {
+    if (!barcodeInfo || !selectedCard) return;
+
+    try {
+      const response = await onsiteBarcodePayment(
+        barcodeInfo.barcodeNumber,
+        selectedCard.cardId,
+      );
+      Alert.alert('결제 성공', JSON.stringify(response));
+    } catch (error: any) {
+      console.log(error.response?.data);
+      Alert.alert(
+        '결제 실패',
+        error.response?.data?.message ?? '알 수 없는 오류',
+      );
+    }
+  };
   return (
     <View className="flex-1 gap-3">
       <View className="flex-1 rounded-[20px] py-8 bg-white justify-center">
         {isGPS ? (
-          selectedCard ? (
+          selectedCard && barcodeInfo ? (
             <View className="items-center">
-              <BarcodeQR cardId={selectedCard.cardId} />
+              <Pressable onPress={handlePayment}>
+                <BarcodeQR
+                  cardId={selectedCard.cardId}
+                  qrData={barcodeInfo.qrData}
+                />
+              </Pressable>
             </View>
           ) : (
             <ActivityIndicator size="large" />
@@ -171,18 +204,12 @@ export default function index({ groupId }: { groupId: number }) {
           <View className="items-center">
             <ActivityIndicator size="large" />
             <Text>
-              GPS로 주변 모임원 찾는 중...
+              주변 모임원 찾는 중...
               {'\n'}
               위도:{latitude.toFixed(6) ?? '가져오는 중'}
               {'\n'}
               경도: {longitude.toFixed(6) ?? '가져오는 중'}
             </Text>
-            <Button
-              title="다음으로"
-              onPress={() => {
-                setIsGPS(true);
-              }}
-            />
           </View>
         )}
       </View>
