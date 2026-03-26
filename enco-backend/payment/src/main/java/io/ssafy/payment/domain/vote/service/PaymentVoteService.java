@@ -120,14 +120,17 @@ public class PaymentVoteService {
 
         log.info("[PaymentVote] 투표 생성 완료: 총금액={}, 청구현금={}", totalAmount, totalAmount);
 
-        // 카프카 이벤트 발행: 투표 생성 알림
-        kafkaProducerService.sendVoteNotification(
-                savedVote.getGroupId(),
-                savedVote.getId(),
-                savedVote.getTitle(),
-                "새로운 결제 투표가 등록되었습니다. 찬반 투표를 진행해 주세요.",
-                "VOTE_CREATED"
-        );
+        try {
+            kafkaProducerService.sendVoteNotification(
+                    savedVote.getGroupId(),
+                    savedVote.getId(),
+                    savedVote.getTitle(),
+                    "새로운 결제 투표가 등록되었습니다. 찬반 투표를 진행해 주세요.",
+                    "VOTE_CREATED"
+            );
+        } catch (Exception e) {
+            log.error("[PaymentVote] 투표는 생성됐지만 카프카 알림 전송에 실패했습니다. voteId={}", savedVote.getId(), e);
+        }
 
         return PaymentVoteCreateResponseDto.from(savedVote);
     }
