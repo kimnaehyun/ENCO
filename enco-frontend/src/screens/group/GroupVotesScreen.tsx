@@ -14,7 +14,6 @@ import { GroupScreenProps } from '../../types/group';
 import { voteApi } from '@/services/payment/vote';
 import GroupVoteDetail from '@/components/vote/GroupVoteDetail';
 
-
 export default function GroupVotesScreen({
   route,
 }: GroupScreenProps<'GroupVotes'>) {
@@ -22,7 +21,6 @@ export default function GroupVotesScreen({
   const [expandedId, setExpandedId] = useState<number | null>(null);
 
   const groupId = route.params?.groupId;
-
 
   useEffect(() => {
     const fetchVote = async () => {
@@ -32,7 +30,7 @@ export default function GroupVotesScreen({
           (a, b) => b.voteId - a.voteId,
         );
         console.log(response.data);
-        
+
         setVotes(sorted);
       } catch (e) {
         console.log(e);
@@ -55,43 +53,45 @@ export default function GroupVotesScreen({
     setExpandedId(prev => (prev === id ? null : id));
   };
 
-const renderItem = ({ item }: { item: Vote }) => {
-  const ongoing = item.status === 'VOTING';
-  const isExpanded = expandedId === item.voteId;
+  const renderItem = ({ item }: { item: Vote }) => {
+    const ongoing = item.status === 'VOTING';
+    const isExpanded = expandedId === item.voteId;
 
-  return (
-    <View>
-      <Pressable
-        onPress={() => toggleExpand(item.voteId)}
-        className="bg-white rounded-2xl px-5 py-4 flex-row items-center justify-between"
-        style={styles.cardShadow}
-      >
-        <View
-          className="w-2.5 h-2.5 rounded-full mr-3"
-          style={{ backgroundColor: ongoing ? '#EF4444' : '#818CF8' }}
-        />
-        <Text numberOfLines={1} style={styles.itemTitle}>
-          {item.title}
-        </Text>
-        <Text style={styles.itemCount}>
-          {item.votedCount} / {item.totalMembers ?? '?'}
-        </Text>
-      </Pressable>
+    return (
+      <View>
+        <Pressable
+          onPress={() => toggleExpand(item.voteId)}
+          className="bg-white rounded-2xl px-5 py-4 flex-row items-center justify-between"
+          style={styles.cardShadow}
+        >
+          <View
+            className="w-2.5 h-2.5 rounded-full mr-3"
+            style={{ backgroundColor: ongoing ? '#EF4444' : '#818CF8' }}
+          />
+          <Text numberOfLines={1} style={styles.itemTitle}>
+            {item.title}
+          </Text>
+          <Text style={styles.itemCount}>
+            {item.votedCount} / {item.totalMembers ?? '?'}
+          </Text>
+        </Pressable>
 
-      {isExpanded && (
-        <GroupVoteDetail
-          voteId={item.voteId}
-          groupId={Number(groupId)}
-          onVoteDone={async () => {
-            const response = await voteApi.list(Number(groupId));
-            setVotes([...response.data.result].sort((a, b) => b.voteId - a.voteId));
-            setExpandedId(null);
-          }}
-        />
-      )}
-    </View>
-  );
-};
+        {isExpanded && (
+          <GroupVoteDetail
+            voteId={item.voteId}
+            groupId={Number(groupId)}
+            onVoteDone={async () => {
+              const response = await voteApi.list(Number(groupId));
+              setVotes(
+                [...response.data.result].sort((a, b) => b.voteId - a.voteId),
+              );
+              setExpandedId(null);
+            }}
+          />
+        )}
+      </View>
+    );
+  };
 
   return (
     <View className="flex-1 bg-[#F0F4FF]">
@@ -103,6 +103,11 @@ const renderItem = ({ item }: { item: Vote }) => {
         ListHeaderComponent={
           <View className="flex-row items-center justify-between mb-5">
             <Text style={styles.headerTitle}>투표 목록</Text>
+          </View>
+        }
+        ListEmptyComponent={
+          <View className="items-center justify-center py-16">
+            <Text style={styles.emptyText}>진행 중인 투표가 없어요</Text>
           </View>
         }
         ItemSeparatorComponent={() => <View style={styles.separator} />}
@@ -120,6 +125,13 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 10,
+  },
+
+  // ── 리스트 없음 ──────────────────────────────────
+  emptyText: {
+    fontSize: 15,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // ── 헤더 ──────────────────────────────────
