@@ -136,10 +136,10 @@ export default function GroupInfoScreen() {
           id: String(card.cardId),
           name: card.cardName,
           image: {
-            uri: `https://api.ssafywte.site${card.frontCardImageUrl}`,
+            uri: card.frontCardImageUrl.replace(/^http:\/\//, 'https://'),
           },
           backImage: {
-            uri: `https://api.ssafywte.site${card.backCardImageUrl}`,
+            uri: card.backCardImageUrl.replace(/^http:\/\//, 'https://'),
           },
           isBasic: card.isBasic,
         }));

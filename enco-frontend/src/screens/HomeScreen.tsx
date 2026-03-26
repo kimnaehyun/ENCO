@@ -44,16 +44,17 @@ export default function HomeScreen() {
         console.log('내 모임 목록 조회 성공:', data);
         console.log('내 모임 배열:', data.result);
 
-        const mappedGroups: HomeGroupSummary[] = data.result.map(group => ({
-          id: String(group.groupId),
-          name: group.groupName,
-          role: group.role,
-          coverImage: group.card?.frontImageUrl
-            ? { uri: `https://api.ssafywte.site${group.card.frontImageUrl}` }
-            : {
-                uri: 'https://dummy.image/default-card.png',
-              },
-        }));
+        const mappedGroups: HomeGroupSummary[] = data.result.map(group => {
+          console.log('[HomeScreen] group.card:', group.card);
+          return {
+            id: String(group.groupId),
+            name: group.groupName,
+            role: group.role,
+            coverImage: group.card?.frontImageUrl
+              ? { uri: group.card.frontImageUrl.replace(/^http:\/\//, 'https://') }
+              : images.card1,
+          };
+        });
 
         setGroups(mappedGroups);
       } catch (error: any) {
