@@ -3,6 +3,7 @@ package io.ssafy.payment.domain.billing.dto.response;
 import io.ssafy.payment.domain.billing.entity.ChargeTarget;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 public record UnpaidChargeResponseDto(
@@ -18,7 +19,8 @@ public record UnpaidChargeResponseDto(
             String displayName,
             BigDecimal amount,
             BigDecimal paidAmount,
-            BigDecimal remainingAmount
+            BigDecimal remainingAmount,
+            LocalDateTime createdAt
     ) {
         public static UnpaidChargeItemDto from(ChargeTarget target) {
             BigDecimal paidAmount = target.getAmount().subtract(target.getRemainingAmount());
@@ -28,7 +30,8 @@ public record UnpaidChargeResponseDto(
                     target.getCharge().getDisplayName(),
                     target.getAmount(),
                     paidAmount,
-                    target.getRemainingAmount()
+                    target.getRemainingAmount(),
+                    target.getCreatedAt()
             );
         }
     }
