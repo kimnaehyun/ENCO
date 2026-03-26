@@ -140,8 +140,9 @@ export default function GroupAttendanceScreen() {
             <Text style={styles.errorText}>{attendanceError}</Text>
           </View>
         )}
-
-        {!isLoadingAttendance && event && (
+        
+        {/* 출석이벤트 삭제 */}
+        {/* {!isLoadingAttendance && event && (
           <View style={styles.eventInfoCard}>
             <Text style={styles.eventName}>{event.name}</Text>
             <Text style={styles.eventDesc}>{event.description}</Text>
@@ -149,7 +150,7 @@ export default function GroupAttendanceScreen() {
               {event.startDate} ~ {event.endDate}
             </Text>
           </View>
-        )}
+        )} */}
 
         <AttendanceHeroCard
           hasActiveEvent={hasActiveEvent}

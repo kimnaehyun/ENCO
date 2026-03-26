@@ -27,10 +27,10 @@ export interface GroupTypeItem {
   typeName: string;
 }
 
-export interface GroupPolicy {
-  policyId: number;
+export interface GroupDuePolicy {
   dayOfMonth: number;
-  monthlyFee: number;
+  amount: number;
+  voteCriteria: number;
 }
 
 export interface GroupCard {
@@ -47,7 +47,7 @@ export interface GroupSettingsResult {
   introduction: string | null;
   types: GroupTypeItem[];
   createdAt: string;
-  policy: GroupPolicy | null;
+  duePolicy: GroupDuePolicy | null;
   groundRule: string | null;
   card: GroupCard | null;
 }
@@ -66,18 +66,18 @@ export async function getGroupSettings(
   return response.data;
 }
 
-// ── 모임 설정 수정 (PUT /groups/{groupId}/settings) ──
+// ── 모임 설정 수정 (PATCH /groups/{groupId}/settings) ──
 
 export interface UpdateGroupSettingsRequest {
   groupName: string;
-  introduction: string;
+  instruction: string;
   typeIds: number[];
-  policy: {
-    policyId: number;
+  duePolicy: {
+    amount: number;
     dayOfMonth: number;
-    monthlyFee: number;
+    voteCriteria: number;
   };
-  groundRules: string;
+  groundRule: string;
 }
 
 export interface UpdateGroupSettingsResponse {
