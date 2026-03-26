@@ -10,15 +10,15 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-@Repository
 public interface AttendanceRepository extends JpaRepository<Attendance, Long> {
-    boolean existsByUserIdAndEventIdAndAttendedAtAfter(Long userId, Long eventId, LocalDateTime startOfDay);
 
-    @Query("SELECT MAX(a.attendDays) FROM Attendance a WHERE a.userId = :userId AND a.event.id = :eventId")
-    Optional<Integer> findMaxAttendDays(@Param("userId") Long userId, @Param("eventId") Long eventId);
+    boolean existsByUserIdAndGroupIdAndEventIdAndAttendedAtAfter(Long userId, Long groupId, Long eventId, LocalDateTime startOfDay);
 
-    @Query("SELECT COUNT(DISTINCT a.userId) FROM Attendance a WHERE a.event.id = :eventId AND a.attendedAt >= :startOfDay")
-    int countTodayAttendancesByEventId(@Param("eventId") Long eventId, @Param("startOfDay") LocalDateTime startOfDay);
+    @Query("SELECT MAX(a.attendDays) FROM Attendance a WHERE a.userId = :userId AND a.groupId = :groupId AND a.event.id = :eventId")
+    Optional<Integer> findMaxAttendDays(@Param("userId") Long userId, @Param("groupId") Long groupId, @Param("eventId") Long eventId);
 
-    List<Attendance> findAllByUserIdAndEventIdOrderByAttendedAtAsc(Long userId, Long id);
+    @Query("SELECT COUNT(DISTINCT a.userId) FROM Attendance a WHERE a.groupId = :groupId AND a.event.id = :eventId AND a.attendedAt >= :startOfDay")
+    int countTodayAttendancesByGroupIdAndEventId(@Param("groupId") Long groupId, @Param("eventId") Long eventId, @Param("startOfDay") LocalDateTime startOfDay);
+
+    List<Attendance> findAllByUserIdAndGroupIdAndEventIdOrderByAttendedAtAsc(Long userId, Long groupId, Long eventId);
 }

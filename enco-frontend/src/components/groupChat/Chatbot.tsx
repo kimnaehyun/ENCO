@@ -16,7 +16,7 @@ export default function Chatbot({ item }: { item: any }) {
         source={
           item.senderImageUrl
             ? { uri: item.senderImageUrl }
-            : require('../../assets/icons/nomal_hamco.png')
+            : require('../../assets/icons/CHATCO_icon.png')
         }
         className={botAvatar}
         resizeMode="contain"

@@ -1,5 +1,6 @@
 import { Image } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ROUTES } from '../constants/routes';
 import HomeStackNavigator from './HomeStackNavigator';
 import OnsitePaymentNavigator from './OnsitePaymentNavigator';
@@ -10,6 +11,8 @@ import InternetPayNavigator from './InternetPaymentNavigator';
 const Tab = createBottomTabNavigator();
 
 export default function BottomNavigator() {
+  const { bottom } = useSafeAreaInsets();
+
   return (
     <Tab.Navigator
       initialRouteName={ROUTES.TAB_HOME}
@@ -21,7 +24,8 @@ export default function BottomNavigator() {
           backgroundColor: '#FFFFFF',
           borderTopWidth: 1,
           borderTopColor: '#F3F4F6',
-          height: 64,
+          height: 64 + bottom,
+          paddingBottom: bottom,
         },
       }}
     >

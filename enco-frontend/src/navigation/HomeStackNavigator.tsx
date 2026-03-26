@@ -10,7 +10,6 @@ import GroupVotesScreen from '../screens/group/GroupVotesScreen';
 import GroupPayScreen from '../screens/group/GroupPayScreen';
 import GroupChatScreen from '../screens/group/GroupChatScreen';
 import GroupLedgerScreen from '../screens/group/GroupLedgerScreen';
-import GroupVoteDetailScreen from '../screens/group/GroupVoteDetailScreen';
 import VoteCreateScreen from '../screens/InternetPayment/VoteCreateScreen';
 import AdminMenuScreen from '../screens/admin/AdminMenuScreen';
 import AdminReceiptScreen from '../screens/admin/AdminReceiptScreen';
@@ -18,10 +17,10 @@ import AdminMembersScreen from '../screens/admin/AdminMembersScreen';
 import AdminSendAlertScreen from '../screens/admin/AdminSendAlertScreen';
 import AdminCardScreen from '../screens/admin/AdminCardScreen';
 import AdminCardRecommendScreen from '../screens/admin/AdminCardRecommendScreen';
-import AdminCardPinScreen from '../screens/admin/AdminCardPinScreen';
 import AdminCardDoneScreen from '../screens/admin/AdminCardDoneScreen';
 import AdminSettleScreen from '../screens/admin/AdminSettleScreen';
-import OcrTestScreen from '../screens/OcrTestScreen';
+import SettlementReceiptOcrScreen from '../screens/receipt/SettlementReceiptOcrScreen';
+import TransactionReceiptOcrScreen from '../screens/receipt/TransactionReceiptOcrScreen';
 import GroupLedgerDetailScreen from '../screens/group/GroupLedgerDetailScreen';
 import SettleDetailScreen from '../screens/group/SettleDetailScreen';
 import SettleMemberSelectScreen from '../screens/group/SettleMemberSelectScreen';
@@ -52,7 +51,6 @@ export default function HomeStackNavigator() {
       <Stack.Screen name="GroupPay" component={GroupPayScreen} />
       <Stack.Screen name="GroupChat" component={GroupChatScreen} />
       <Stack.Screen name="GroupLedger" component={GroupLedgerScreen} />
-      <Stack.Screen name="GroupVoteDetail" component={GroupVoteDetailScreen} />
       <Stack.Screen name="VoteCreate" component={VoteCreateScreen} />
       <Stack.Screen name="AdminMenu" component={AdminMenuScreen} />
       <Stack.Screen name="AdminReceipt" component={AdminReceiptScreen} />
@@ -60,7 +58,6 @@ export default function HomeStackNavigator() {
       <Stack.Screen name="AdminSendAlert" component={AdminSendAlertScreen} />
       <Stack.Screen name="AdminCard" component={AdminCardScreen} />
       <Stack.Screen name="AdminCardRecommend" component={AdminCardRecommendScreen} />
-      <Stack.Screen name="AdminCardPin" component={AdminCardPinScreen} />
       <Stack.Screen name="AdminCardDone" component={AdminCardDoneScreen} />
       <Stack.Screen name="AdminSettle" component={AdminSettleScreen} />
 
@@ -80,7 +77,14 @@ export default function HomeStackNavigator() {
       <Stack.Screen name="GroupAnalytics" component={GroupAnalyticsScreen} />
       <Stack.Screen name="GroupAttendance" component={GroupAttendanceScreen} />
       <Stack.Screen name="UserNotifications" component={NotificationCenterScreen} />
-      <Stack.Screen name="OcrTest" component={OcrTestScreen} />
+      <Stack.Screen
+        name="SettlementReceiptOcr"
+        component={SettlementReceiptOcrScreen}
+      />
+      <Stack.Screen
+        name="TransactionReceiptOcr"
+        component={TransactionReceiptOcrScreen}
+      />
       <Stack.Screen
         name="GroupLedgerDetail"
         component={GroupLedgerDetailScreen}

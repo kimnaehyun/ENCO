@@ -16,20 +16,22 @@ import ScreenLayout from '../../components/ScreenLayout';
 import PinEntry from '../../components/pin/PinEntry';
 import { GroupPayStep, GroupProps } from '../../types/group';
 import { SelectedAccount } from '../../types/payment';
-import { duesPayment } from '../../services/paymentService';
+import {
+  duesPayment,
+  getUnpaidDues,
+  selectedDuesPayment,
+  type UnpaidItem,
+} from '../../services/paymentService';
 
 const PIN_LEN = 4;
 
 const formatKRW = (n: number) =>
   `${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}원`;
 
-const formatInputNumber = (value: string) => value.replace(/[^0-9]/g, '');
+const formatAmountNumber = (n: number) =>
+  n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 
-type UnpaidItem = {
-  id: string;
-  label: string;
-  amount: number;
-};
+const formatInputNumber = (value: string) => value.replace(/[^0-9]/g, '');
 
 function InfoInputBox({
   label,
@@ -68,6 +70,7 @@ export default function GroupPayScreen({
   navigation,
   route,
 }: GroupProps<'GroupPay'>) {
+  const groupIdParam = route.params?.groupId;
   const presetAmount = route.params?.presetAmount;
   const presetMemo = route.params?.presetMemo ?? '';
   const paySource = route.params?.paySource ?? 'default';
@@ -97,20 +100,75 @@ export default function GroupPayScreen({
   const [myAccountLabel, setMyAccountLabel] = useState('');
   const [groupAccountLabel, setGroupAccountLabel] = useState('');
   const [memo, setMemo] = useState(presetMemo);
+  const [unpaidItems, setUnpaidItems] = useState<UnpaidItem[]>([]);
+  const [isLoadingUnpaidItems, setIsLoadingUnpaidItems] = useState(false);
+  const [unpaidLoadError, setUnpaidLoadError] = useState('');
 
-  const unpaidItems = useMemo<UnpaidItem[]>(
-    () => [
-      { id: 'u1', label: '26.3.1 3월 회비', amount: 10000 },
-      { id: 'u2', label: '26.2.1 2월 회비', amount: 10000 },
-      { id: 'u3', label: '26.1.1 1월 회비', amount: 10000 },
-    ],
-    []
+  const numericGroupId = useMemo(() => {
+    if (!groupIdParam) return NaN;
+    return Number(groupIdParam);
+  }, [groupIdParam]);
+
+  const selectedChargeTargetIds = useMemo(
+    () => unpaidItems
+      .filter(item => selectedUnpaidIds.includes(String(item.chargeTargetId)))
+      .map(item => item.chargeTargetId),
+    [selectedUnpaidIds, unpaidItems]
   );
 
   const parsedAmount = useMemo(() => {
     const parsed = parseInt(formatInputNumber(amountText), 10);
     return Number.isNaN(parsed) ? 0 : parsed;
   }, [amountText]);
+
+  useEffect(() => {
+    if (!Number.isFinite(numericGroupId)) {
+      setUnpaidItems([]);
+      setUnpaidLoadError(groupIdParam ? '모임 정보를 확인할 수 없습니다.' : '');
+      setIsLoadingUnpaidItems(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchUnpaidItems = async () => {
+      try {
+        setIsLoadingUnpaidItems(true);
+        setUnpaidLoadError('');
+
+        const response = await getUnpaidDues(numericGroupId);
+        const nextItems = response.result.charges ?? [];
+
+        if (!isMounted) return;
+        setUnpaidItems(nextItems);
+      } catch (error) {
+        if (!isMounted) return;
+        console.error('[GetUnpaidDues] failed:', error);
+        setUnpaidItems([]);
+        setUnpaidLoadError('미납 내역을 불러오지 못했습니다.');
+      } finally {
+        if (isMounted) {
+          setIsLoadingUnpaidItems(false);
+        }
+      }
+    };
+
+    fetchUnpaidItems();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [groupIdParam, numericGroupId]);
+
+  useEffect(() => {
+    if (isSettlementLocked || selectedUnpaidIds.length === 0) return;
+
+    const nextAmount = unpaidItems
+      .filter(unpaid => selectedUnpaidIds.includes(String(unpaid.chargeTargetId)))
+      .reduce((sum, unpaid) => sum + unpaid.remainingAmount, 0);
+
+    setAmountText(nextAmount > 0 ? String(nextAmount) : '');
+  }, [isSettlementLocked, selectedUnpaidIds, unpaidItems]);
 
   const resetConfirmInputs = useCallback(() => {
     setSelectedAccount(DEFAULT_ACCOUNT);
@@ -184,14 +242,15 @@ export default function GroupPayScreen({
     if (isSettlementLocked) return;
 
     setSelectedUnpaidIds(prev => {
-      const isSelected = prev.includes(item.id);
+      const itemId = String(item.chargeTargetId);
+      const isSelected = prev.includes(itemId);
       const nextIds = isSelected
-        ? prev.filter(id => id !== item.id)
-        : [...prev, item.id];
+        ? prev.filter(id => id !== itemId)
+        : [...prev, itemId];
 
       const nextAmount = unpaidItems
-        .filter(unpaid => nextIds.includes(unpaid.id))
-        .reduce((sum, unpaid) => sum + unpaid.amount, 0);
+        .filter(unpaid => nextIds.includes(String(unpaid.chargeTargetId)))
+        .reduce((sum, unpaid) => sum + unpaid.remainingAmount, 0);
 
       setAmountText(nextAmount > 0 ? String(nextAmount) : '');
       return nextIds;
@@ -225,9 +284,6 @@ export default function GroupPayScreen({
   const handleSubmitPayment = async () => {
     if (isSubmitting) return;
 
-    const groupIdParam = route.params?.groupId;
-    const numericGroupId = groupIdParam ? Number(groupIdParam) : NaN;
-
     if (!Number.isFinite(numericGroupId)) {
       Alert.alert('오류', '유효하지 않은 모임 ID입니다.');
       return;
@@ -255,7 +311,15 @@ export default function GroupPayScreen({
       console.log('[DuesPayment] groupId:', numericGroupId);
       console.log('[DuesPayment] requestBody:', requestBody);
 
-      const result = await duesPayment(numericGroupId, requestBody);
+      const result = selectedChargeTargetIds.length > 0
+        ? await selectedDuesPayment(numericGroupId, {
+            amount: parsedAmount,
+            targetChargeTargetIds: selectedChargeTargetIds,
+            withdrawDisplayName: requestBody.withdrawDisplayName,
+            depositDisplayName: requestBody.depositDisplayName,
+            memo: requestBody.memo,
+          })
+        : await duesPayment(numericGroupId, requestBody);
 
       console.log('[DuesPayment] success response:', result);
       console.log('[DuesPayment] paymentId:', result.result.paymentId);
@@ -318,9 +382,9 @@ export default function GroupPayScreen({
               <View style={styles.heroAmountRow}>
                 <View style={styles.heroUnderlineWrap}>
                   <Text style={styles.heroAmount}>
-                    {parsedAmount > 0 ? formatKRW(parsedAmount) : ''}
+                    {formatAmountNumber(parsedAmount)}
                   </Text>
-                  {parsedAmount > 0 && <View style={styles.heroUnderline} />}
+                  <View style={styles.heroUnderline} />
                 </View>
                 <Text style={styles.heroLine}>원 입금합니다</Text>
               </View>
@@ -347,39 +411,47 @@ export default function GroupPayScreen({
               </Text>
 
               <View style={styles.unpaidList}>
-                {unpaidItems.map(item => {
-                  const selected = selectedUnpaidIds.includes(item.id);
+                {isLoadingUnpaidItems ? (
+                  <Text style={styles.unpaidStateText}>미납 내역을 불러오는 중입니다.</Text>
+                ) : unpaidLoadError ? (
+                  <Text style={styles.unpaidStateText}>{unpaidLoadError}</Text>
+                ) : unpaidItems.length === 0 ? (
+                  <Text style={styles.unpaidStateText}>미납 내역이 없습니다.</Text>
+                ) : (
+                  unpaidItems.map(item => {
+                    const selected = selectedUnpaidIds.includes(String(item.chargeTargetId));
 
-                  return (
-                    <Pressable
-                      key={item.id}
-                      onPress={() => onPressUnpaidItem(item)}
-                      style={[
-                        styles.unpaidItem,
-                        selected && styles.unpaidItemSelected,
-                        isSettlementLocked && { opacity: 0.45 },
-                      ]}
-                      disabled={isSettlementLocked}
-                    >
-                      <Text
+                    return (
+                      <Pressable
+                        key={item.chargeTargetId}
+                        onPress={() => onPressUnpaidItem(item)}
                         style={[
-                          styles.unpaidItemLabel,
-                          selected && styles.unpaidItemTextSelected,
+                          styles.unpaidItem,
+                          selected && styles.unpaidItemSelected,
+                          isSettlementLocked && { opacity: 0.45 },
                         ]}
+                        disabled={isSettlementLocked}
                       >
-                        {item.label}
-                      </Text>
-                      <Text
-                        style={[
-                          styles.unpaidItemAmount,
-                          selected && styles.unpaidItemTextSelected,
-                        ]}
-                      >
-                        {formatKRW(item.amount)}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
+                        <Text
+                          style={[
+                            styles.unpaidItemLabel,
+                            selected && styles.unpaidItemTextSelected,
+                          ]}
+                        >
+                          {item.displayName}
+                        </Text>
+                        <Text
+                          style={[
+                            styles.unpaidItemAmount,
+                            selected && styles.unpaidItemTextSelected,
+                          ]}
+                        >
+                          {formatKRW(item.remainingAmount)}
+                        </Text>
+                      </Pressable>
+                    );
+                  })
+                )}
               </View>
 
               <Pressable
@@ -569,6 +641,11 @@ const styles = StyleSheet.create({
   unpaidList: {
     marginTop: 14,
     gap: 14,
+  },
+  unpaidStateText: {
+    fontSize: 14,
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
   },
   unpaidItem: {
     minHeight: 40,

@@ -20,6 +20,10 @@ public interface ChargeTargetRepository extends JpaRepository<ChargeTarget, Long
 
     boolean existsByCharge_IdAndStatusNotAndIsDeletedFalse(Long chargeId, ChargeTargetStatus status);
 
+    List<ChargeTarget> findByCharge_GroupIdAndStatusInAndIsDeletedFalse(Long groupId, List<ChargeTargetStatus> statuses);
+
+    List<ChargeTarget> findByCharge_GroupIdAndIsDeletedFalse(Long groupId);
+
     @Query("SELECT COUNT(DISTINCT ct.userId) FROM ChargeTarget ct WHERE ct.charge.groupId = :groupId AND ct.status IN :statuses AND ct.isDeleted = false")
     long countDistinctUnpaidUsersByGroupId(@Param("groupId") Long groupId, @Param("statuses") List<ChargeTargetStatus> statuses);
 

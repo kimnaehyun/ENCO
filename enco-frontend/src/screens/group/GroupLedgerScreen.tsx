@@ -1,8 +1,21 @@
 // src/screens/group/GroupLedgerScreen.tsx
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, View, Platform, PermissionsAndroid } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  Platform,
+  PermissionsAndroid,
+} from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
+import {
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
 import {
@@ -18,8 +31,12 @@ function formatMoney(n: number) {
   const sign = n >= 0 ? '+' : '-';
   return `${sign}${Math.abs(n).toLocaleString()}원`;
 }
-function pad(n: number) { return n < 10 ? `0${n}` : `${n}`; }
-function fmtDate(d: Date) { return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; }
+function pad(n: number) {
+  return n < 10 ? `0${n}` : `${n}`;
+}
+function fmtDate(d: Date) {
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
 function addMonths(d: Date, n: number) {
   const r = new Date(d);
   r.setMonth(r.getMonth() + n);
@@ -31,12 +48,24 @@ function shortDate(dateStr: string) {
 }
 
 // ─── 달력 모달 ───
-function CalendarModal({ selected, onSelect, onClose, title }: {
-  selected: Date | null; onSelect: (d: Date) => void; onClose: () => void; title: string;
+function CalendarModal({
+  selected,
+  onSelect,
+  onClose,
+  title,
+}: {
+  selected: Date | null;
+  onSelect: (d: Date) => void;
+  onClose: () => void;
+  title: string;
 }) {
   const today = new Date();
-  const [viewYear, setViewYear] = useState(selected?.getFullYear() ?? today.getFullYear());
-  const [viewMonth, setViewMonth] = useState(selected?.getMonth() ?? today.getMonth());
+  const [viewYear, setViewYear] = useState(
+    selected?.getFullYear() ?? today.getFullYear(),
+  );
+  const [viewMonth, setViewMonth] = useState(
+    selected?.getMonth() ?? today.getMonth(),
+  );
 
   const firstDay = new Date(viewYear, viewMonth, 1).getDay();
   const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
@@ -48,23 +77,42 @@ function CalendarModal({ selected, onSelect, onClose, title }: {
   for (let w = 0; w < 6; w++) {
     const week: number[] = [];
     for (let d = 0; d < 7; d++) {
-      if (w === 0 && d < firstDay) week.push(-(prevMonthDays - firstDay + d + 1));
-      else if (day > daysInMonth) { week.push(-(100 + nextDay)); nextDay++; }
-      else { week.push(day); day++; }
+      if (w === 0 && d < firstDay)
+        week.push(-(prevMonthDays - firstDay + d + 1));
+      else if (day > daysInMonth) {
+        week.push(-(100 + nextDay));
+        nextDay++;
+      } else {
+        week.push(day);
+        day++;
+      }
     }
     weeks.push(week);
     if (day > daysInMonth && w >= 4) break;
   }
 
   const goMonth = (dir: number) => {
-    let m = viewMonth + dir, y = viewYear;
-    if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; }
-    setViewMonth(m); setViewYear(y);
+    let m = viewMonth + dir,
+      y = viewYear;
+    if (m < 0) {
+      m = 11;
+      y--;
+    }
+    if (m > 11) {
+      m = 0;
+      y++;
+    }
+    setViewMonth(m);
+    setViewYear(y);
   };
 
   const isSelected = (d: number) => {
     if (!selected || d <= 0) return false;
-    return selected.getFullYear() === viewYear && selected.getMonth() === viewMonth && selected.getDate() === d;
+    return (
+      selected.getFullYear() === viewYear &&
+      selected.getMonth() === viewMonth &&
+      selected.getDate() === d
+    );
   };
 
   const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
@@ -78,7 +126,9 @@ function CalendarModal({ selected, onSelect, onClose, title }: {
             <Pressable onPress={() => goMonth(-1)} hitSlop={12}>
               <Text style={calStyles.calNavArrow}>{'<'}</Text>
             </Pressable>
-            <Text style={calStyles.calMonthLabel}>{viewYear}년 {viewMonth + 1}월</Text>
+            <Text style={calStyles.calMonthLabel}>
+              {viewYear}년 {viewMonth + 1}월
+            </Text>
             <Pressable onPress={() => goMonth(1)} hitSlop={12}>
               <Text style={calStyles.calNavArrow}>{'>'}</Text>
             </Pressable>
@@ -86,10 +136,17 @@ function CalendarModal({ selected, onSelect, onClose, title }: {
           <View style={calStyles.calDayNamesRow}>
             {dayNames.map((dn, i) => (
               <View key={dn} style={calStyles.calDayNameCell}>
-                <Text style={[
-                  calStyles.calDayNameText,
-                  { color: i === 0 ? '#EF4444' : i === 6 ? '#3B82F6' : '#9CA3AF' },
-                ]}>{dn}</Text>
+                <Text
+                  style={[
+                    calStyles.calDayNameText,
+                    {
+                      color:
+                        i === 0 ? '#EF4444' : i === 6 ? '#3B82F6' : '#9CA3AF',
+                    },
+                  ]}
+                >
+                  {dn}
+                </Text>
               </View>
             ))}
           </View>
@@ -97,19 +154,43 @@ function CalendarModal({ selected, onSelect, onClose, title }: {
             <View key={wi} style={calStyles.calWeekRow}>
               {week.map((d, di) => {
                 const other = d <= 0;
-                const display = other ? (d > -100 ? Math.abs(d) : Math.abs(d) - 100) : d;
+                const display = other
+                  ? d > -100
+                    ? Math.abs(d)
+                    : Math.abs(d) - 100
+                  : d;
                 const sel = !other && isSelected(d);
                 return (
                   <Pressable
                     key={di}
-                    onPress={() => { if (!other) { onSelect(new Date(viewYear, viewMonth, d)); onClose(); } }}
+                    onPress={() => {
+                      if (!other) {
+                        onSelect(new Date(viewYear, viewMonth, d));
+                        onClose();
+                      }
+                    }}
                     style={calStyles.calDayCell}
                   >
-                    <View style={[calStyles.calDayInner, sel && calStyles.calDayInnerSelected]}>
-                      <Text style={[
-                        calStyles.calDayText,
-                        { color: other ? '#D1D5DB' : sel ? '#1428A0' : '#374151' },
-                      ]}>{display || ''}</Text>
+                    <View
+                      style={[
+                        calStyles.calDayInner,
+                        sel && calStyles.calDayInnerSelected,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          calStyles.calDayText,
+                          {
+                            color: other
+                              ? '#D1D5DB'
+                              : sel
+                                ? '#1428A0'
+                                : '#374151',
+                          },
+                        ]}
+                      >
+                        {display || ''}
+                      </Text>
                     </View>
                   </Pressable>
                 );
@@ -139,28 +220,60 @@ export default function GroupLedgerScreen() {
   const [paidAmount, setPaidAmount] = useState(0);
   const [pointAmount, setPointAmount] = useState(0);
 
-  useEffect(() => {
-    const fetchLedgerSummary = async () => {
-      try {
-        console.log('ledger groupId 확인:', groupId);
+  const fetchLedgerSummary = useCallback(async () => {
+    try {
+      console.log('ledger groupId 확인:', groupId);
 
-        const reportData = await getGroupDashboardReport(groupId);
-        console.log('모임비 대시보드 조회 성공:', reportData);
-        console.log('모임비 대시보드 result:', reportData.result);
+      const reportData = await getGroupDashboardReport(groupId);
+      console.log('모임비 대시보드 조회 성공:', reportData);
+      console.log('모임비 대시보드 result:', reportData.result);
 
-        const result = reportData.result;
-        setBalance(result.balance ?? 0);
-        setPaidAmount(result.paidAmount ?? 0);
-        setPointAmount(result.pointAmount ?? 0);
-      } catch (error: any) {
-        console.error('모임비 대시보드 조회 실패:', error);
-        console.error('error.response?.status:', error?.response?.status);
-        console.error('error.response?.data:', error?.response?.data);
-      }
-    };
-
-    fetchLedgerSummary();
+      const result = reportData.result;
+      setBalance(result.balance ?? 0);
+      setPaidAmount(result.paidAmount ?? 0);
+      setPointAmount(result.pointAmount ?? 0);
+    } catch (error: any) {
+      console.error('모임비 대시보드 조회 실패:', error);
+      console.error('error.response?.status:', error?.response?.status);
+      console.error('error.response?.data:', error?.response?.data);
+    }
   }, [groupId]);
+
+  const fetchTransactions = useCallback(async () => {
+    const numericGroupId = groupId ? Number(groupId) : NaN;
+    if (!Number.isFinite(numericGroupId)) return;
+
+    const params = { sort: 'LATEST' as const, type: 'ALL' as const, size: 20 };
+
+    console.log('[GroupTransactions] groupId:', numericGroupId);
+    console.log('[GroupTransactions] params:', params);
+
+    setIsLoadingTransactions(true);
+    setTransactionError(null);
+
+    try {
+      const result = await getGroupTransactions(numericGroupId, params);
+      console.log('[GroupTransactions] success:', result);
+      console.log('[GroupTransactions] items:', result.result.items);
+      console.log('[GroupTransactions] nextCursor:', result.result.nextCursor);
+      console.log('[GroupTransactions] hasNext:', result.result.hasNext);
+
+      setTransactions(result.result.items);
+      setNextCursor(result.result.nextCursor);
+      setHasNext(result.result.hasNext);
+    } catch (error: any) {
+      console.error('[GroupTransactions] failed:', error);
+      console.error('[GroupTransactions] status:', error?.response?.status);
+      console.error('[GroupTransactions] data:', error?.response?.data);
+      setTransactionError('거래내역을 불러오지 못했습니다.');
+    } finally {
+      setIsLoadingTransactions(false);
+    }
+  }, [groupId]);
+
+  useEffect(() => {
+    fetchLedgerSummary();
+  }, [fetchLedgerSummary]);
 
   // ── 거래내역 API state ──
   const [transactions, setTransactions] = useState<GroupTransactionItem[]>([]);
@@ -172,7 +285,9 @@ export default function GroupLedgerScreen() {
   // ── 필터 상태 ──
   const today = useMemo(() => new Date(), []);
   const [filterVisible, setFilterVisible] = useState(false);
-  const [calendarTarget, setCalendarTarget] = useState<'start' | 'end' | null>(null);
+  const [calendarTarget, setCalendarTarget] = useState<'start' | 'end' | null>(
+    null,
+  );
 
   // 바텀시트 내 임시 상태 (조회 누르기 전)
   const [tmpPreset, setTmpPreset] = useState<PeriodPreset>('1m');
@@ -183,17 +298,30 @@ export default function GroupLedgerScreen() {
 
   // 적용된 필터 (조회 누른 후)
   const [appliedFilter, setAppliedFilter] = useState<{
-    start: Date; end: Date; sort: SortOrder; tx: TxFilter;
+    start: Date;
+    end: Date;
+    sort: SortOrder;
+    tx: TxFilter;
   } | null>(null);
 
   const handlePreset = (preset: PeriodPreset) => {
     setTmpPreset(preset);
-    if (preset === '1m') { setTmpStart(addMonths(today, -1)); setTmpEnd(today); }
-    else if (preset === '3m') { setTmpStart(addMonths(today, -3)); setTmpEnd(today); }
+    if (preset === '1m') {
+      setTmpStart(addMonths(today, -1));
+      setTmpEnd(today);
+    } else if (preset === '3m') {
+      setTmpStart(addMonths(today, -3));
+      setTmpEnd(today);
+    }
   };
 
   const handleQuery = () => {
-    setAppliedFilter({ start: tmpStart, end: tmpEnd, sort: tmpSort, tx: tmpTx });
+    setAppliedFilter({
+      start: tmpStart,
+      end: tmpEnd,
+      sort: tmpSort,
+      tx: tmpTx,
+    });
     setFilterVisible(false);
   };
 
@@ -208,40 +336,15 @@ export default function GroupLedgerScreen() {
 
   // ── 거래내역 최초 조회 ──
   useEffect(() => {
-    const numericGroupId = groupId ? Number(groupId) : NaN;
-    if (!Number.isFinite(numericGroupId)) return;
-
-    const fetchTransactions = async () => {
-      const params = { sort: 'LATEST' as const, type: 'ALL' as const, size: 20 };
-
-      console.log('[GroupTransactions] groupId:', numericGroupId);
-      console.log('[GroupTransactions] params:', params);
-
-      setIsLoadingTransactions(true);
-      setTransactionError(null);
-
-      try {
-        const result = await getGroupTransactions(numericGroupId, params);
-        console.log('[GroupTransactions] success:', result);
-        console.log('[GroupTransactions] items:', result.result.items);
-        console.log('[GroupTransactions] nextCursor:', result.result.nextCursor);
-        console.log('[GroupTransactions] hasNext:', result.result.hasNext);
-
-        setTransactions(result.result.items);
-        setNextCursor(result.result.nextCursor);
-        setHasNext(result.result.hasNext);
-      } catch (error: any) {
-        console.error('[GroupTransactions] failed:', error);
-        console.error('[GroupTransactions] status:', error?.response?.status);
-        console.error('[GroupTransactions] data:', error?.response?.data);
-        setTransactionError('거래내역을 불러오지 못했습니다.');
-      } finally {
-        setIsLoadingTransactions(false);
-      }
-    };
-
     fetchTransactions();
-  }, [groupId]);
+  }, [fetchTransactions]);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchLedgerSummary();
+      fetchTransactions();
+    }, [fetchLedgerSummary, fetchTransactions]),
+  );
 
   // ── PDF 생성 및 저장 ──
   const handleExportPDF = useCallback(async () => {
@@ -254,13 +357,17 @@ export default function GroupLedgerScreen() {
           PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
           {
             title: '저장소 접근 권한',
-            message: 'PDF 파일을 다운로드 폴더에 저장하려면 저장소 권한이 필요합니다.',
+            message:
+              'PDF 파일을 다운로드 폴더에 저장하려면 저장소 권한이 필요합니다.',
             buttonPositive: '허용',
             buttonNegative: '거부',
           },
         );
         if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          Alert.alert('권한 필요', '저장소 권한이 거부되어 PDF를 저장할 수 없습니다.');
+          Alert.alert(
+            '권한 필요',
+            '저장소 권한이 거부되어 PDF를 저장할 수 없습니다.',
+          );
           return;
         }
       } catch (err) {
@@ -269,7 +376,12 @@ export default function GroupLedgerScreen() {
       }
     }
 
-    const filterLabel = appliedFilter.tx === 'all' ? '전체' : appliedFilter.tx === 'deposit' ? '입금' : '출금';
+    const filterLabel =
+      appliedFilter.tx === 'all'
+        ? '전체'
+        : appliedFilter.tx === 'deposit'
+          ? '입금'
+          : '출금';
     const sortLabel = appliedFilter.sort === 'latest' ? '최신순' : '과거순';
 
     const totalDeposit = transactions
@@ -279,10 +391,11 @@ export default function GroupLedgerScreen() {
       .filter(it => it.type === 'WITHDRAW')
       .reduce((sum, it) => sum + it.amount, 0);
 
-    const rows = transactions.map(it => {
-      const isDeposit = it.type === 'DEPOSIT';
-      const signedAmount = isDeposit ? it.amount : -it.amount;
-      return `
+    const rows = transactions
+      .map(it => {
+        const isDeposit = it.type === 'DEPOSIT';
+        const signedAmount = isDeposit ? it.amount : -it.amount;
+        return `
         <tr>
           <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#6B7280;">${it.transactionDate.slice(0, 10)}</td>
           <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#111827; font-weight:600;">${it.title}</td>
@@ -293,7 +406,8 @@ export default function GroupLedgerScreen() {
             ${it.balanceAfter.toLocaleString()}원
           </td>
         </tr>`;
-    }).join('');
+      })
+      .join('');
 
     const html = `
       <html>
@@ -378,7 +492,10 @@ export default function GroupLedgerScreen() {
       if (Platform.OS === 'android') {
         const destPath = `${RNFS.DownloadDirectoryPath}/${pdfFileName}`;
         await RNFS.copyFile(file.filePath, destPath);
-        Alert.alert('저장 완료', `PDF가 다운로드 폴더에 저장되었습니다.\n${pdfFileName}`);
+        Alert.alert(
+          '저장 완료',
+          `PDF가 다운로드 폴더에 저장되었습니다.\n${pdfFileName}`,
+        );
       } else {
         Alert.alert('저장 완료', `PDF가 저장되었습니다.\n${pdfFileName}`);
       }
@@ -390,8 +507,10 @@ export default function GroupLedgerScreen() {
 
   return (
     <ScreenLayout>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
         {/* 헤더 */}
         <View style={styles.headerRow}>
           <Text style={styles.headerTitle}>모임 장부</Text>
@@ -400,15 +519,21 @@ export default function GroupLedgerScreen() {
         {/* 잔액 카드 */}
         <View style={styles.balanceCard}>
           <Text style={styles.balanceCardLabel}>현재 모임 통장 잔액</Text>
-          <Text style={styles.balanceCardAmount}>{balance.toLocaleString()}원</Text>
+          <Text style={styles.balanceCardAmount}>
+            {balance.toLocaleString()}원
+          </Text>
           <View style={styles.divider} />
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>납부 금액</Text>
-            <Text style={styles.summaryValue}>{paidAmount.toLocaleString()}원</Text>
+            <Text style={styles.summaryValue}>
+              {paidAmount.toLocaleString()}원
+            </Text>
           </View>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>포인트 금액</Text>
-            <Text style={styles.summaryValue}>{pointAmount.toLocaleString()}원</Text>
+            <Text style={styles.summaryValue}>
+              {pointAmount.toLocaleString()}원
+            </Text>
           </View>
         </View>
 
@@ -416,7 +541,12 @@ export default function GroupLedgerScreen() {
         <View style={styles.filterButtonRow}>
           {isAdmin && (
             <Pressable
-              onPress={() => navigation.navigate('OcrTest', { groupName, groupId: params.groupId })}
+              onPress={() =>
+                navigation.navigate('SettlementReceiptOcr', {
+                  groupName,
+                  groupId: params.groupId,
+                })
+              }
               style={styles.settleButton}
             >
               <Text style={styles.settleButtonText}>정산하기</Text>
@@ -424,9 +554,17 @@ export default function GroupLedgerScreen() {
           )}
           <Pressable
             onPress={() => setFilterVisible(true)}
-            style={[styles.filterButton, appliedFilter && styles.filterButtonActive]}
+            style={[
+              styles.filterButton,
+              appliedFilter && styles.filterButtonActive,
+            ]}
           >
-            <Text style={[styles.filterButtonText, appliedFilter && styles.filterButtonTextActive]}>
+            <Text
+              style={[
+                styles.filterButtonText,
+                appliedFilter && styles.filterButtonTextActive,
+              ]}
+            >
               {appliedFilter ? '필터 변경' : '필터'}
             </Text>
           </Pressable>
@@ -447,7 +585,11 @@ export default function GroupLedgerScreen() {
             </View>
             <View style={styles.appliedChip}>
               <Text style={styles.appliedChipText}>
-                {appliedFilter.tx === 'all' ? '전체' : appliedFilter.tx === 'deposit' ? '입금' : '출금'}
+                {appliedFilter.tx === 'all'
+                  ? '전체'
+                  : appliedFilter.tx === 'deposit'
+                    ? '입금'
+                    : '출금'}
               </Text>
             </View>
             <View style={styles.appliedChip}>
@@ -466,7 +608,9 @@ export default function GroupLedgerScreen() {
             </View>
           ) : transactionError ? (
             <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>거래내역을 불러오지 못했습니다.</Text>
+              <Text style={styles.emptyText}>
+                거래내역을 불러오지 못했습니다.
+              </Text>
             </View>
           ) : transactions.length === 0 ? (
             <View style={styles.emptyCard}>
@@ -482,6 +626,15 @@ export default function GroupLedgerScreen() {
                   key={`${it.referenceType}-${it.referenceId}-${it.transactionDate}`}
                   style={styles.ledgerItem}
                   onPress={() => {
+                    console.log('[GroupTransactions] item clicked:', it);
+                    console.log(
+                      '[GroupTransactions] referenceType:',
+                      it.referenceType,
+                    );
+                    console.log(
+                      '[GroupTransactions] referenceId:',
+                      it.referenceId,
+                    );
                     if (it.referenceType === 'TRANSACTION') {
                       navigation.navigate('GroupLedgerDetail', {
                         groupId: params.groupId,
@@ -490,8 +643,47 @@ export default function GroupLedgerScreen() {
                         referenceType: it.referenceType,
                         isAdmin,
                       });
+                    } else if (it.referenceType === 'EXPENSE') {
+                      navigation.navigate('SettleDetail', {
+                        expenseId: it.referenceId,
+                        amount: it.amount,
+                        storeName: it.title,
+                        date: it.transactionDate.slice(0, 10),
+                        memo: '',
+                        receiptUri: null,
+                        groupName: params.groupName ?? groupName,
+                        groupId: params.groupId,
+                      });
+                    } else if (it.referenceType === 'POINT') {
+                      console.log('[PointFlow] POINT item branch entered');
+                      console.log('[PointFlow] groupId:', params.groupId);
+                      console.log('[PointFlow] pointId:', it.referenceId);
+                      console.log('[PointFlow] navigate to point detail');
+                      navigation.navigate('GroupLedgerDetail', {
+                        groupId: params.groupId,
+                        groupName: params.groupName ?? groupName,
+                        referenceType: 'POINT',
+                        pointId: it.referenceId,
+                        isAdmin,
+                        listItem: {
+                          title: it.title,
+                          amount: it.amount,
+                          transactionDate: it.transactionDate,
+                          balanceAfter: it.balanceAfter,
+                          type: it.type,
+                        },
+                      });
                     } else {
-                      Alert.alert('준비 중', '해당 거래 유형의 상세 내역은 준비 중입니다.');
+                      // EXPENSE
+                      console.log('[ExpenseFlow] EXPENSE item branch entered');
+                      console.log('[ExpenseFlow] expenseId:', it.referenceId);
+                      console.log(
+                        '[ExpenseFlow] expense detail not implemented yet',
+                      );
+                      Alert.alert(
+                        '준비 중',
+                        '해당 거래 유형의 상세 내역은 준비 중입니다.',
+                      );
                     }
                   }}
                 >
@@ -501,22 +693,36 @@ export default function GroupLedgerScreen() {
                         <Text style={styles.ledgerItemDate}>
                           {shortDate(it.transactionDate.slice(0, 10))}
                         </Text>
-                        <View style={[
-                          styles.settleBadge,
-                          { backgroundColor: isDeposit ? '#1428A0' : '#EF4444' },
-                        ]}>
+                        <View
+                          style={[
+                            styles.settleBadge,
+                            {
+                              backgroundColor: isDeposit
+                                ? '#1428A0'
+                                : '#EF4444',
+                            },
+                          ]}
+                        >
                           <Text style={styles.settleBadgeText}>
                             {isDeposit ? '입금' : '출금'}
                           </Text>
                         </View>
                       </View>
-                      <Text style={styles.ledgerItemTitle}>{it.title}</Text>
+                      <Text
+                        style={styles.ledgerItemTitle}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                      >
+                        {it.title}
+                      </Text>
                     </View>
                     <View style={styles.ledgerItemRight}>
-                      <Text style={[
-                        styles.ledgerItemAmount,
-                        { color: isDeposit ? '#1428A0' : '#EF4444' },
-                      ]}>
+                      <Text
+                        style={[
+                          styles.ledgerItemAmount,
+                          { color: isDeposit ? '#1428A0' : '#EF4444' },
+                        ]}
+                      >
                         {formatMoney(signedAmount)}
                       </Text>
                       <Text style={styles.ledgerItemBalance}>
@@ -532,21 +738,24 @@ export default function GroupLedgerScreen() {
 
         {/* PDF 다운로드 (필터 적용 시만 노출) */}
         {appliedFilter && (
-          <Pressable
-            onPress={() => handleExportPDF()}
-            style={styles.pdfButton}
-          >
+          <Pressable onPress={() => handleExportPDF()} style={styles.pdfButton}>
             <Text style={styles.pdfButtonText}>PDF로 저장</Text>
           </Pressable>
         )}
-
       </ScrollView>
 
       {/* ── 필터 바텀시트 ── */}
-      <Modal visible={filterVisible} transparent animationType="slide" onRequestClose={() => setFilterVisible(false)}>
-        <Pressable style={styles.sheetOverlay} onPress={() => setFilterVisible(false)}>
+      <Modal
+        visible={filterVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setFilterVisible(false)}
+      >
+        <Pressable
+          style={styles.sheetOverlay}
+          onPress={() => setFilterVisible(false)}
+        >
           <Pressable onPress={() => {}} style={styles.sheet}>
-
             {/* 핸들 바 */}
             <View style={styles.sheetHandle} />
 
@@ -555,13 +764,26 @@ export default function GroupLedgerScreen() {
             {/* 조회기간 */}
             <Text style={styles.sheetSectionLabel}>조회기간</Text>
             <View style={styles.chipRow}>
-              {([['1m', '1개월'], ['3m', '3개월'], ['custom', '직접입력']] as const).map(([key, label]) => (
+              {(
+                [
+                  ['1m', '1개월'],
+                  ['3m', '3개월'],
+                  ['custom', '직접입력'],
+                ] as const
+              ).map(([key, label]) => (
                 <Pressable
                   key={key}
                   onPress={() => handlePreset(key)}
                   style={[styles.chip, tmpPreset === key && styles.chipActive]}
                 >
-                  <Text style={[styles.chipText, tmpPreset === key && styles.chipTextActive]}>{label}</Text>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      tmpPreset === key && styles.chipTextActive,
+                    ]}
+                  >
+                    {label}
+                  </Text>
                 </Pressable>
               ))}
             </View>
@@ -569,7 +791,10 @@ export default function GroupLedgerScreen() {
             {tmpPreset === 'custom' ? (
               <View style={styles.dateInputRow}>
                 <Pressable
-                  onPress={() => { setFilterVisible(false); setTimeout(() => setCalendarTarget('start'), 300); }}
+                  onPress={() => {
+                    setFilterVisible(false);
+                    setTimeout(() => setCalendarTarget('start'), 300);
+                  }}
                   style={styles.dateInputButton}
                 >
                   <Text style={styles.dateInputText}>{fmtDate(tmpStart)}</Text>
@@ -578,7 +803,10 @@ export default function GroupLedgerScreen() {
                   <Text style={styles.dateInputTilde}>~</Text>
                 </View>
                 <Pressable
-                  onPress={() => { setFilterVisible(false); setTimeout(() => setCalendarTarget('end'), 300); }}
+                  onPress={() => {
+                    setFilterVisible(false);
+                    setTimeout(() => setCalendarTarget('end'), 300);
+                  }}
                   style={styles.dateInputButton}
                 >
                   <Text style={styles.dateInputText}>{fmtDate(tmpEnd)}</Text>
@@ -595,13 +823,25 @@ export default function GroupLedgerScreen() {
             {/* 정렬 */}
             <Text style={styles.sheetSectionLabel}>정렬</Text>
             <View style={styles.chipRow}>
-              {([['latest', '최신순'], ['oldest', '과거순']] as const).map(([key, label]) => (
+              {(
+                [
+                  ['latest', '최신순'],
+                  ['oldest', '과거순'],
+                ] as const
+              ).map(([key, label]) => (
                 <Pressable
                   key={key}
                   onPress={() => setTmpSort(key)}
                   style={[styles.chip, tmpSort === key && styles.chipActive]}
                 >
-                  <Text style={[styles.chipText, tmpSort === key && styles.chipTextActive]}>{label}</Text>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      tmpSort === key && styles.chipTextActive,
+                    ]}
+                  >
+                    {label}
+                  </Text>
                 </Pressable>
               ))}
             </View>
@@ -609,13 +849,26 @@ export default function GroupLedgerScreen() {
             {/* 조회구분 */}
             <Text style={styles.sheetSectionLabel}>조회구분</Text>
             <View style={styles.chipRow}>
-              {([['all', '전체'], ['deposit', '입금'], ['withdraw', '출금']] as const).map(([key, label]) => (
+              {(
+                [
+                  ['all', '전체'],
+                  ['deposit', '입금'],
+                  ['withdraw', '출금'],
+                ] as const
+              ).map(([key, label]) => (
                 <Pressable
                   key={key}
                   onPress={() => setTmpTx(key)}
                   style={[styles.chip, tmpTx === key && styles.chipActive]}
                 >
-                  <Text style={[styles.chipText, tmpTx === key && styles.chipTextActive]}>{label}</Text>
+                  <Text
+                    style={[
+                      styles.chipText,
+                      tmpTx === key && styles.chipTextActive,
+                    ]}
+                  >
+                    {label}
+                  </Text>
                 </Pressable>
               ))}
             </View>
@@ -631,10 +884,13 @@ export default function GroupLedgerScreen() {
       {/* ── 달력 모달 (직접입력 시) ── */}
       {calendarTarget && (
         <CalendarModal
-          title={calendarTarget === 'start' ? '조회기간 시작일' : '조회기간 종료일'}
+          title={
+            calendarTarget === 'start' ? '조회기간 시작일' : '조회기간 종료일'
+          }
           selected={calendarTarget === 'start' ? tmpStart : tmpEnd}
-          onSelect={(d) => {
-            if (calendarTarget === 'start') setTmpStart(d); else setTmpEnd(d);
+          onSelect={d => {
+            if (calendarTarget === 'start') setTmpStart(d);
+            else setTmpEnd(d);
             setCalendarTarget(null);
             setTimeout(() => setFilterVisible(true), 300);
           }}
@@ -895,6 +1151,7 @@ const styles = StyleSheet.create({
   },
   ledgerItemLeft: {
     flex: 1,
+    minWidth: 0,
     marginRight: 12,
   },
   ledgerItemTopRow: {
@@ -922,6 +1179,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: COLORS.dark,
     fontFamily: FONT_FAMILY.bold,
+    flexShrink: 1,
   },
   ledgerItemMemo: {
     fontSize: 12,
@@ -930,11 +1188,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   ledgerItemRight: {
+    minWidth: 124,
     alignItems: 'flex-end',
+    flexShrink: 0,
   },
   ledgerItemAmount: {
     fontSize: 18,
     fontFamily: FONT_FAMILY.bold,
+    textAlign: 'right',
   },
   ledgerItemBalance: {
     fontSize: 12,

@@ -15,16 +15,23 @@ import io.ssafy.payment.domain.billing.repository.ChargeRepository;
 import io.ssafy.payment.domain.billing.repository.ChargeTargetRepository;
 import io.ssafy.payment.domain.billing.repository.DuePaymentRepository;
 import io.ssafy.payment.domain.billing.repository.UserPrepaymentRepository;
+import io.ssafy.payment.domain.billing.dto.response.ReminderResponseDto;
 import io.ssafy.payment.infra.client.AuthServiceClient;
+import io.ssafy.payment.infra.messaging.producer.KafkaProducerService;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ChargeService {
@@ -34,6 +41,8 @@ public class ChargeService {
     private final AuthServiceClient authServiceClient;
     private final UserPrepaymentRepository userPrepaymentRepository;
     private final DuePaymentRepository duePaymentRepository;
+    private final KafkaProducerService kafkaProducerService;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public ChargeResponseDto createCharge(Long groupId, Long createdByUserId, CreateChargeRequestDto request) {
@@ -121,6 +130,8 @@ public class ChargeService {
                     });
         }
 
+        sendDuesCreatedNotification(groupId, targets);
+
         return ChargeResponseDto.of(charge, targets);
     }
 
@@ -177,6 +188,131 @@ public class ChargeService {
                         prepayment.deduct(payAmount);
                         userPrepaymentRepository.save(prepayment);
                     });
+        }
+
+        sendDuesCreatedNotification(groupId, targets);
+    }
+
+    private void sendDuesCreatedNotification(Long groupId, List<ChargeTarget> targets) {
+        try {
+            List<Map<String, Object>> targetInfos = targets.stream()
+                    .map(t -> Map.of(
+                            "userId", (Object) t.getUserId(),
+                            "chargeId", (Object) t.getCharge().getId(),
+                            "chargeTargetId", (Object) t.getId(),
+                            "amount", (Object) t.getAmount()
+                    ))
+                    .toList();
+
+            String displayName = targets.get(0).getCharge().getDisplayName();
+
+            String payload = objectMapper.writeValueAsString(Map.of(
+                    "groupId", groupId,
+                    "displayName", displayName != null ? displayName : "",
+                    "targets", targetInfos
+            ));
+            kafkaProducerService.send("dues-created", payload);
+        } catch (Exception e) {
+            log.error("dues-created Kafka 전송 실패 - groupId: {}", groupId, e);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public ReminderResponseDto sendDuesReminder(Long groupId, Long chargeId) {
+        Charge charge = chargeRepository.findById(chargeId)
+                .orElseThrow(() -> new RuntimeException("청구를 찾을 수 없습니다."));
+
+        if (!charge.getGroupId().equals(groupId)) {
+            throw new RuntimeException("해당 그룹의 청구가 아닙니다.");
+        }
+
+        List<Map<String, Object>> unpaidTargets = chargeTargetRepository
+                .findByCharge_IdAndIsDeletedFalse(chargeId).stream()
+                .filter(t -> t.getStatus() != ChargeTargetStatus.PAID)
+                .map(t -> Map.of(
+                        "userId", (Object) t.getUserId(),
+                        "chargeTargetId", (Object) t.getId(),
+                        "amount", (Object) t.getRemainingAmount()
+                ))
+                .toList();
+
+        int requestedCount = unpaidTargets.size();
+        LocalDateTime sentAt = LocalDateTime.now();
+
+        if (requestedCount == 0) {
+            return new ReminderResponseDto(chargeId, 0, 0, 0, sentAt);
+        }
+
+        try {
+            String payload = objectMapper.writeValueAsString(Map.of(
+                    "type", "DUES_REMINDER",
+                    "groupId", groupId,
+                    "chargeId", chargeId,
+                    "merchantName", charge.getDisplayName() != null ? charge.getDisplayName() : "",
+                    "unpaidTargets", unpaidTargets
+            ));
+            kafkaProducerService.send("settlement-reminder", payload);
+            return new ReminderResponseDto(chargeId, requestedCount, requestedCount, 0, sentAt);
+        } catch (Exception e) {
+            log.error("dues-reminder Kafka 전송 실패", e);
+            return new ReminderResponseDto(chargeId, requestedCount, 0, requestedCount, sentAt);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public ReminderResponseDto sendDuesReminder(Long groupId) {
+        List<Long> unpaidUserIds = chargeTargetRepository
+                .findByCharge_GroupIdAndStatusInAndIsDeletedFalse(groupId, List.of(ChargeTargetStatus.UNPAID, ChargeTargetStatus.PARTIAL))
+                .stream()
+                .map(ChargeTarget::getUserId)
+                .distinct()
+                .toList();
+
+        int requestedCount = unpaidUserIds.size();
+        LocalDateTime sentAt = LocalDateTime.now();
+
+        if (requestedCount == 0) {
+            return new ReminderResponseDto(null, 0, 0, 0, sentAt);
+        }
+
+        try {
+            String payload = objectMapper.writeValueAsString(Map.of(
+                    "type", "DUES_REMINDER",
+                    "groupId", groupId,
+                    "unpaidUserIds", unpaidUserIds
+            ));
+            kafkaProducerService.send("dues-reminder", payload);
+            return new ReminderResponseDto(null, requestedCount, requestedCount, 0, sentAt);
+        } catch (Exception e) {
+            log.error("dues-reminder Kafka 전송 실패", e);
+            return new ReminderResponseDto(null, requestedCount, 0, requestedCount, sentAt);
+        }
+    }
+
+    @Transactional(readOnly = true)
+    public ReminderResponseDto sendDuesReminderToUser(Long groupId, Long userId) {
+        boolean hasUnpaid = chargeTargetRepository
+                .findByCharge_GroupIdAndStatusInAndIsDeletedFalse(groupId, List.of(ChargeTargetStatus.UNPAID, ChargeTargetStatus.PARTIAL))
+                .stream()
+                .anyMatch(t -> t.getUserId().equals(userId));
+
+        LocalDateTime sentAt = LocalDateTime.now();
+
+        if (!hasUnpaid) {
+            return new ReminderResponseDto(null, 0, 0, 0, sentAt);
+        }
+
+        try {
+            String payload = objectMapper.writeValueAsString(Map.of(
+                    "type", "DUES_REMINDER",
+                    "groupId", groupId,
+                    "unpaidUserIds", List.of(userId)
+            ));
+            kafkaProducerService.send("dues-reminder", payload);
+            return new ReminderResponseDto(null, 1, 1, 0, sentAt);
+        } catch (Exception e) {
+            log.error("dues-reminder 개별 Kafka 전송 실패 - userId: {}", userId, e);
+            return new ReminderResponseDto(null, 1, 0, 1, sentAt);
         }
     }
 

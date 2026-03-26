@@ -77,22 +77,18 @@ export type GroupStackParamList = {
   AdminCardRecommend: {
     groupId?: string;
     groupName: string;
+    accountId?: number;
     tags: string[];
     prevTags?: string[];
     prevRecommendPressed?: boolean;
     prevViewAllPressed?: boolean;
   };
-  AdminCardPin: {
-    groupId?: string;
-    groupName: string;
-    tags: string[];
-    selectedCardId: string;
-    selectedCardName?: string | null;
-  };
   AdminCardDone: {
     groupId?: string;
     groupName?: string;
-    selectedCardId?: string;
+    cardId?: number;
+    cardNumber?: string;
+    frontImageUrl?: string;
   };
   AdminSettle: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
@@ -133,13 +129,25 @@ export type GroupStackParamList = {
     groupId?: string;
     groupName?: string;
     isAdmin?: boolean;
-    transactionId: number;
+    transactionId?: number;
     referenceType?: 'TRANSACTION' | 'EXPENSE' | 'POINT';
+    pointId?: number;
+    listItem?: {
+      title: string;
+      amount: number;
+      transactionDate: string;
+      balanceAfter: number;
+      type: 'DEPOSIT' | 'WITHDRAW';
+    };
   };
-  OcrTest:
+  SettlementReceiptOcr:
     | { imageUri?: string; groupName?: string; groupId?: string }
     | undefined;
+  TransactionReceiptOcr:
+    | { imageUri?: string; groupName?: string; groupId?: string; transactionId: number }
+    | undefined;
   SettleDetail: {
+    expenseId?: number;
     amount: number;
     storeName: string;
     date: string;
@@ -189,38 +197,46 @@ export type HomeStackParamList = {
   AdminCardRecommend: {
     groupId?: string;
     groupName: string;
+    accountId?: number;
     tags: string[];
     prevTags?: string[];
     prevRecommendPressed?: boolean;
     prevViewAllPressed?: boolean;
   };
-  AdminCardPin: {
-    groupId?: string;
-    groupName: string;
-    tags: string[];
-    selectedCardId: string;
-    selectedCardName?: string | null;
-  };
   AdminCardDone: {
     groupId?: string;
     groupName?: string;
-    selectedCardId?: string;
+    cardId?: number;
+    cardNumber?: string;
+    frontImageUrl?: string;
   };
   AdminSettle: CommonParams | undefined;
   GroupInviteEntry: undefined;
   GroupInviteDecision: undefined;
   GroupInviteSuccess: undefined;
-  OcrTest:
+  SettlementReceiptOcr:
     | { imageUri?: string; groupName?: string; groupId?: string }
+    | undefined;
+  TransactionReceiptOcr:
+    | { imageUri?: string; groupName?: string; groupId?: string; transactionId: number }
     | undefined;
   GroupLedgerDetail: {
     groupId?: string;
     groupName?: string;
     isAdmin?: boolean;
-    transactionId: number;
+    transactionId?: number;
     referenceType?: 'TRANSACTION' | 'EXPENSE' | 'POINT';
+    pointId?: number;
+    listItem?: {
+      title: string;
+      amount: number;
+      transactionDate: string;
+      balanceAfter: number;
+      type: 'DEPOSIT' | 'WITHDRAW';
+    };
   };
   SettleDetail: {
+    expenseId?: number;
     amount: number;
     storeName: string;
     date: string;
@@ -335,4 +351,10 @@ export type Message = {
   metadata: null;
   createdAt: string;
   status?: 'sending' | 'sent' | 'failed';
+};
+
+export type GroupVoteDetailType = {
+  voteId: number;
+  groupId: number;
+  onVoteDone: () => void;
 };

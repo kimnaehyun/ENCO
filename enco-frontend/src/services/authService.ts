@@ -31,6 +31,9 @@ export type LoginResponse = {
   result: {
     id: number;
     name: string;
+    email: string;
+    phoneNumber: string;
+    profileImg: number;
     deviceToken: string;
     accessToken: string;
     expiresIn: number;
@@ -56,6 +59,9 @@ export type ReLoginResponse = {
   result: {
     id: number;
     name: string;
+    email: string;
+    phoneNumber: string;
+    profileImg: number;
     deviceToken: string;
     accessToken: string;
     expiresIn: number;
@@ -147,5 +153,59 @@ export type GetGroupTypeResponse = {
 
 export async function getGroupType(): Promise<GetGroupTypeResponse> {
   const response = await authApi.get<GetGroupTypeResponse>('/groups/types');
+  return response.data;
+}
+
+// ── 출석 체크 (POST /users/{groupId}/attend) ──
+
+export type AttendResponse = {
+  message: string;
+  result: {
+    attendanceId: number;
+    attendedAt: string;
+    totalAttendanceInEvent: number;
+    streakDays: number;
+    isRewardGranted: boolean;
+  };
+};
+
+export async function postAttend(groupId: number): Promise<AttendResponse> {
+  const response = await authApi.post<AttendResponse>(
+    `/users/${groupId}/attend`,
+  );
+  return response.data;
+}
+
+// ── 내 출석 조회 (GET /users/{groupId}/attendances) ──
+
+export type GetMyAttendanceResponse = {
+  message: string;
+  result: {
+    attendanceId: number | null;
+    event: {
+      eventId: number;
+      name: string;
+      description: string;
+      startDate: string;
+      endDate: string;
+      startTime: string;
+      endTime: string;
+      totalDays: number;
+      rewardPoint: number;
+      targetMemberCount: number;
+      currentMemberCount: number;
+    };
+    totalAttendanceInEvent: number;
+    streakDays: number;
+    stamps: string[];
+  };
+};
+
+export async function getMyAttendance(
+  groupId: number,
+): Promise<GetMyAttendanceResponse> {
+  const response = await authApi.get<GetMyAttendanceResponse>(
+    `/users/${groupId}/attendances`,
+  );
   return response.data;
 }

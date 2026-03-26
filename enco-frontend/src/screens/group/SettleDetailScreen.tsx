@@ -1,17 +1,40 @@
 // src/screens/group/SettleDetailScreen.tsx
-import React, { useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
-import { useNavigation, useRoute } from '@react-navigation/native';
+import React, {useEffect, useMemo, useState} from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
+import Text, {FONT_FAMILY, COLORS} from '@/components/typography';
+import {useNavigation, useRoute} from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
+import {
+  deleteSettlement,
+  getSettlementDefaulters,
+  getSettlementDetail,
+  sendSettlementReminder,
+} from '../../services/receiptService';
+import {getGroupMembers} from '../../services/groupService';
+import type {SettlementDetailResponse} from '../../types/receipt';
+import {getProfileImage} from '../../types/images';
 
 type SettleMember = {
   id: string;
+  userId: number;
   name: string;
+  profileUrl?: string | number | null;
   isPaid: boolean;
+  amount?: number;
+  remainingAmount?: number;
 };
 
 type RouteParams = {
+  expenseId?: number;
   amount: number;
   storeName: string;
   date: string;
@@ -21,6 +44,19 @@ type RouteParams = {
   groupId?: string;
   settleMembers?: SettleMember[];
   isSettled?: boolean;
+};
+
+const formatSettlementDate = (value: string) => {
+  if (!value) {
+    return '';
+  }
+
+  const isoPrefix = value.slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(isoPrefix)) {
+    return isoPrefix;
+  }
+
+  return value;
 };
 
 function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
@@ -38,39 +74,160 @@ export default function SettleDetailScreen() {
   const params = (route.params ?? {}) as RouteParams;
 
   const {
-    amount = 10000,
-    storeName = '맥도날드',
-    date = '2026-03-05',
+    expenseId,
+    amount = 0,
+    storeName = '',
+    date = '',
     memo = '',
     receiptUri = null,
     groupName = '모임명',
     groupId,
     isSettled: initialSettled = false,
   } = params;
+  const numericGroupId = groupId ? Number(groupId) : NaN;
+  const numericExpenseId = typeof expenseId === 'number' ? expenseId : NaN;
 
   const [memoText, setMemoText] = useState(memo);
-
-  // 정산 멤버 데이터
-  const [settleMembers] = useState<SettleMember[]>(
-    params.settleMembers ?? [
-      { id: 'm1', name: '김싸피', isPaid: true },
-      { id: 'm2', name: '고싸피', isPaid: false },
-      { id: 'm3', name: '장싸피', isPaid: true },
-      { id: 'm4', name: '정싸피', isPaid: false },
-    ]
+  const [detail, setDetail] = useState<SettlementDetailResponse | null>(null);
+  const [loadingDetail, setLoadingDetail] = useState(false);
+  const [detailError, setDetailError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [settleMembers, setSettleMembers] = useState<SettleMember[]>(
+    params.settleMembers ?? [],
   );
+  const [loadingParticipants, setLoadingParticipants] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState(false);
 
-  const paidCount = settleMembers.filter(m => m.isPaid).length;
-  const totalCount = settleMembers.length;
-  const unpaidCount = totalCount - paidCount;
-  const isSettled = initialSettled || paidCount === totalCount;
-  const perPerson = totalCount > 0 ? Math.ceil(amount / totalCount) : 0;
+  useEffect(() => {
+    if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
+      return;
+    }
 
-  // 미납자 알림
+    let mounted = true;
+    setLoadingDetail(true);
+    setDetailError('');
+
+    getSettlementDetail(numericGroupId, numericExpenseId)
+      .then(response => {
+        if (!mounted) {
+          return;
+        }
+
+        setDetail(response);
+        setMemoText(response.memo || memo);
+      })
+      .catch((error: any) => {
+        if (!mounted) {
+          return;
+        }
+
+        setDetailError(
+          error?.response?.data?.message ||
+            error?.message ||
+            '정산 상세 정보를 불러오지 못했습니다.',
+        );
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoadingDetail(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [memo, numericExpenseId, numericGroupId]);
+
+  useEffect(() => {
+    if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
+      return;
+    }
+
+    let mounted = true;
+    setLoadingParticipants(true);
+
+    Promise.all([
+      getSettlementDefaulters(numericGroupId, numericExpenseId),
+      getGroupMembers(numericGroupId).catch(() => ({message: '', result: []})),
+    ])
+      .then(([defaultersResponse, membersResponse]) => {
+        if (!mounted) {
+          return;
+        }
+
+        const memberNameMap = new Map(
+          membersResponse.result.map(member => [
+            member.userId,
+            {
+              name: member.name?.trim() || `멤버 ${member.userId}`,
+              profileUrl: member.profileUrl ?? member.profileImg ?? null,
+            },
+          ]),
+        );
+
+        const nextMembers = defaultersResponse.participants.map(participant => ({
+          id: String(participant.chargeTargetId || participant.userId),
+          userId: participant.userId,
+          name:
+            memberNameMap.get(participant.userId)?.name ||
+            `멤버 ${participant.userId}`,
+          profileUrl: memberNameMap.get(participant.userId)?.profileUrl ?? null,
+          isPaid:
+            participant.status === 'PAID' || participant.remainingAmount <= 0,
+          amount: participant.amount,
+          remainingAmount: participant.remainingAmount,
+        }));
+
+        setSettleMembers(nextMembers);
+      })
+      .catch(() => {
+        if (!mounted) {
+          return;
+        }
+
+        setSettleMembers(params.settleMembers ?? []);
+      })
+      .finally(() => {
+        if (mounted) {
+          setLoadingParticipants(false);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [numericExpenseId, numericGroupId, params.settleMembers]);
+
+  const fallbackPaidCount = settleMembers.filter(member => member.isPaid).length;
+  const fallbackTotalCount = settleMembers.length;
+  const paidCount = detail?.paidCount ?? fallbackPaidCount;
+  const totalCount = detail?.totalCount ?? fallbackTotalCount;
+  const unpaidCount = Math.max(totalCount - paidCount, 0);
+  const isSettled =
+    initialSettled ||
+    (totalCount > 0 && paidCount === totalCount) ||
+    detail?.status === 'PAID';
+  const effectiveAmount =
+    amount > 0
+      ? amount
+      : detail?.paymentInfo?.totalAmount ?? detail?.amount ?? 0;
+  const effectiveStoreName =
+    detail?.paymentInfo?.merchantName || detail?.displayName || storeName || '정산 요청';
+  const effectiveDate = formatSettlementDate(detail?.paidAt || date);
+  const effectiveReceiptUri = detail?.receiptImageUrl || receiptUri;
+  const unpaidMembers = settleMembers.filter(member => !member.isPaid);
+  const perPerson = totalCount > 0 ? Math.ceil(effectiveAmount / totalCount) : 0;
+  const canDeleteSettlement =
+    Number.isFinite(numericGroupId) && Number.isFinite(numericExpenseId);
+
   const handleNotify = () => {
-    const unpaidNames = settleMembers
-      .filter(m => !m.isPaid)
-      .map(m => m.name)
+    if (unpaidMembers.length === 0) {
+      Alert.alert('안내', '미납자 목록 정보가 없습니다.');
+      return;
+    }
+
+    const unpaidNames = unpaidMembers
+      .map(member => member.name)
       .join(', ');
 
     if (unpaidCount === 0) {
@@ -85,13 +242,88 @@ export default function SettleDetailScreen() {
         { text: '취소', style: 'cancel' },
         {
           text: '보내기',
-          onPress: () => {
-            Alert.alert('완료', `미납자 ${unpaidCount}명에게 알림을 보냈습니다.`);
+          onPress: async () => {
+            if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
+              Alert.alert('안내', '알림 전송에 필요한 정산 정보가 없습니다.');
+              return;
+            }
+
+            try {
+              setSendingReminder(true);
+              const response = await sendSettlementReminder(
+                numericGroupId,
+                numericExpenseId,
+              );
+              Alert.alert(
+                '완료',
+                `알림 요청 ${response.requestedCount}건 중 ${response.sentCount}건을 전송했습니다.` +
+                  (response.failedCount > 0 ? ` 실패 ${response.failedCount}건` : ''),
+              );
+            } catch (error: any) {
+              Alert.alert(
+                '알림 전송 실패',
+                error?.response?.data?.message ||
+                  error?.message ||
+                  '미납자 알림 전송 중 오류가 발생했습니다.',
+              );
+            } finally {
+              setSendingReminder(false);
+            }
           },
         },
       ]
     );
   };
+
+  const handleDeleteSettlement = () => {
+    if (!canDeleteSettlement) {
+      Alert.alert('안내', '삭제에 필요한 정산 정보가 없습니다.');
+      return;
+    }
+
+    Alert.alert('정산 요청 삭제', '이 정산 요청을 삭제할까요?', [
+      {text: '취소', style: 'cancel'},
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            setDeleting(true);
+            const response = await deleteSettlement(numericGroupId, numericExpenseId);
+            Alert.alert('완료', response.message, [
+              {
+                text: '확인',
+                onPress: () => {
+                  navigation.popToTop();
+                  navigation.navigate('GroupLedger', {
+                    groupId,
+                    groupName,
+                  });
+                },
+              },
+            ]);
+          } catch (error: any) {
+            Alert.alert(
+              '삭제 실패',
+              error?.response?.data?.message ||
+                error?.message ||
+                '정산 요청 삭제 중 오류가 발생했습니다.',
+            );
+          } finally {
+            setDeleting(false);
+          }
+        },
+      },
+    ]);
+  };
+
+  const settlementStatusText = useMemo(() => {
+    if (isSettled) {
+      return '정산완료';
+    }
+
+    return `정산미완료 (${paidCount}/${totalCount}명)`;
+  }, [isSettled, paidCount, totalCount]);
 
   return (
     <ScreenLayout>
@@ -105,11 +337,29 @@ export default function SettleDetailScreen() {
           </Pressable>
         </View>
 
-        {/* 날짜 + 가맹점 */}
-        <Text style={styles.storeDateText}>{date} {storeName}</Text>
+        {loadingDetail ? (
+          <View style={styles.loadingCard}>
+            <ActivityIndicator color="#1428A0" />
+            <Text style={styles.loadingText}>정산 상세 정보를 불러오는 중...</Text>
+          </View>
+        ) : null}
 
-        {/* 금액 */}
-        <Text style={styles.amountText}>-{amount.toLocaleString()}원</Text>
+        {loadingParticipants ? (
+          <View style={styles.loadingCard}>
+            <ActivityIndicator color="#1428A0" />
+            <Text style={styles.loadingText}>정산 인원 정보를 불러오는 중...</Text>
+          </View>
+        ) : null}
+
+        {detailError ? (
+          <View style={styles.errorCard}>
+            <Text style={styles.errorText}>{detailError}</Text>
+          </View>
+        ) : null}
+
+        <Text style={styles.storeDateText}>{effectiveDate} {effectiveStoreName}</Text>
+
+        <Text style={styles.amountText}>-{effectiveAmount.toLocaleString()}원</Text>
 
         {/* 정보 카드 */}
         <View
@@ -123,7 +373,7 @@ export default function SettleDetailScreen() {
           <InfoRow label="상태">
             <View style={[styles.statusBadge, { backgroundColor: isSettled ? '#22C55E' : '#EF4444' }]}>
               <Text style={styles.statusBadgeText}>
-                {isSettled ? '정산완료' : `정산미완료 (${paidCount}/${totalCount}명)`}
+                {settlementStatusText}
               </Text>
             </View>
           </InfoRow>
@@ -148,9 +398,9 @@ export default function SettleDetailScreen() {
           <View className="flex-row items-start justify-between pt-3">
             <Text style={styles.infoLabel}>영수증</Text>
             <View style={styles.infoValueWrap}>
-              {receiptUri ? (
+              {effectiveReceiptUri ? (
                 <Image
-                  source={{ uri: receiptUri }}
+                  source={{ uri: effectiveReceiptUri }}
                   style={styles.receiptImage}
                   resizeMode="cover"
                 />
@@ -179,45 +429,74 @@ export default function SettleDetailScreen() {
               </View>
             </View>
 
-            {settleMembers.filter(m => !m.isPaid).map(m => (
+            {unpaidMembers.length > 0 ? unpaidMembers.map(m => (
               <View key={m.id} className="flex-row items-center mb-2" style={styles.memberRow}>
                 <View style={styles.memberAvatar}>
-                  <Text style={styles.memberEmoji}>🐹</Text>
+                  <Image
+                    source={getProfileImage(m.profileUrl)}
+                    style={styles.memberAvatarImage}
+                    resizeMode="cover"
+                  />
                 </View>
                 <Text style={styles.memberName}>{m.name}</Text>
-                <Text style={styles.memberAmount}>{perPerson.toLocaleString()}원</Text>
+                <Text style={styles.memberAmount}>
+                  {(m.remainingAmount ?? m.amount ?? perPerson).toLocaleString()}원
+                </Text>
               </View>
-            ))}
+            )) : (
+              <Text style={styles.helperDescription}>
+                현재 화면에는 미납자 상세 목록이 없어 인원 수만 표시합니다.
+              </Text>
+            )}
 
-            {/* 미납자 알림 보내기 */}
-            <Pressable
-              onPress={handleNotify}
-              className="rounded-2xl py-3 items-center justify-center mt-2"
-              style={styles.notifyButton}
-            >
-              <Text style={styles.notifyButtonText}>미납자에게 알림 보내기</Text>
-            </Pressable>
+            {unpaidMembers.length > 0 ? (
+              <Pressable
+                onPress={handleNotify}
+                disabled={sendingReminder}
+                className="rounded-2xl py-3 items-center justify-center mt-2"
+                style={[styles.notifyButton, sendingReminder && styles.notifyButtonDisabled]}
+              >
+                <Text style={styles.notifyButtonText}>
+                  {sendingReminder ? '알림 전송 중...' : '미납자에게 알림 보내기'}
+                </Text>
+              </Pressable>
+            ) : null}
           </View>
         )}
 
-        {/* 정산인원 보기 버튼 */}
-        <Pressable
-          onPress={() => navigation.navigate('SettleMemberSelect', {
-            amount,
-            storeName,
-            date,
-            memo: memoText,
-            receiptUri,
-            groupName,
-            groupId,
-            settleMembers,
-            isNewSettle: false,
-          })}
-          className="rounded-2xl py-4 items-center justify-center"
-          style={styles.settleDetailButton}
-        >
-          <Text style={styles.settleDetailButtonText}>정산인원 보기</Text>
-        </Pressable>
+        {settleMembers.length > 0 ? (
+          <Pressable
+            onPress={() => navigation.navigate('SettleMemberSelect', {
+              amount: effectiveAmount,
+              storeName: effectiveStoreName,
+              date: effectiveDate,
+              memo: memoText,
+              receiptUri: effectiveReceiptUri,
+              expenseId: numericExpenseId,
+              groupName,
+              groupId,
+              settleMembers,
+              isNewSettle: false,
+            })}
+            className="rounded-2xl py-4 items-center justify-center"
+            style={styles.settleDetailButton}
+          >
+            <Text style={styles.settleDetailButtonText}>정산인원 보기</Text>
+          </Pressable>
+        ) : null}
+
+        {canDeleteSettlement ? (
+          <Pressable
+            onPress={handleDeleteSettlement}
+            disabled={deleting}
+            className="rounded-2xl py-4 items-center justify-center"
+            style={[styles.deleteSettlementButton, deleting && styles.deleteSettlementButtonDisabled]}
+          >
+            <Text style={styles.deleteSettlementButtonText}>
+              {deleting ? '정산 요청 삭제 중...' : '정산 요청 삭제'}
+            </Text>
+          </Pressable>
+        ) : null}
 
       </ScrollView>
     </ScreenLayout>
@@ -250,7 +529,9 @@ const styles = StyleSheet.create({
   },
   amountText: {
     fontSize: 32,
+    lineHeight: 42,
     fontFamily: FONT_FAMILY.bold,
+    paddingVertical: 2,
     color: COLORS.error,
     marginBottom: 16,
   },
@@ -261,6 +542,29 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 12,
     elevation: 2,
+  },
+  loadingCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  errorCard: {
+    backgroundColor: '#FEF2F2',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 12,
+  },
+  errorText: {
+    fontSize: 13,
+    color: COLORS.error,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // ── InfoRow ────────────────────────────────
@@ -364,9 +668,11 @@ const styles = StyleSheet.create({
     borderColor: '#EF4444',
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  memberEmoji: {
-    fontSize: 18,
+  memberAvatarImage: {
+    width: '100%',
+    height: '100%',
   },
   memberName: {
     fontSize: 14,
@@ -382,19 +688,43 @@ const styles = StyleSheet.create({
   notifyButton: {
     backgroundColor: '#EF4444',
   },
+  notifyButtonDisabled: {
+    opacity: 0.7,
+  },
   notifyButtonText: {
     fontSize: 14,
     color: COLORS.white,
     fontFamily: FONT_FAMILY.bold,
   },
+  helperDescription: {
+    fontSize: 13,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+    lineHeight: 20,
+  },
 
   // ── 정산인원 보기 버튼 ────────────────────
   settleDetailButton: {
     backgroundColor: '#1428A0',
+    marginBottom: 12,
   },
   settleDetailButtonText: {
     fontSize: 16,
     color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  deleteSettlementButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EF4444',
+    marginBottom: 12,
+  },
+  deleteSettlementButtonDisabled: {
+    opacity: 0.6,
+  },
+  deleteSettlementButtonText: {
+    fontSize: 16,
+    color: '#EF4444',
     fontFamily: FONT_FAMILY.bold,
   },
 });

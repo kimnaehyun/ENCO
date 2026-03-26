@@ -62,6 +62,7 @@ export type GroupStackParamList = {
   AdminSendAlert: CommonParams | undefined;
   AdminCard:
     | (CommonParams & {
+        accountId?: number;
         selectedCardId?: string;
         selectedCardImage?: string;
         selectedCardName?: string;
@@ -73,22 +74,18 @@ export type GroupStackParamList = {
   AdminCardRecommend: {
     groupId?: string;
     groupName: string;
+    accountId?: number;
     tags: string[];
     prevTags?: string[];
     prevRecommendPressed?: boolean;
     prevViewAllPressed?: boolean;
   };
-  AdminCardPin: {
-    groupId?: string;
-    groupName: string;
-    tags: string[];
-    selectedCardId: string;
-    selectedCardName?: string | null;
-  };
   AdminCardDone: {
     groupId?: string;
     groupName?: string;
-    selectedCardId?: string;
+    cardId?: number;
+    cardNumber?: string;
+    frontImageUrl?: string;
   };
   AdminSettle: CommonParams | undefined;
   GroupVoteDetail: { voteId: string } & CommonParams;
@@ -130,10 +127,14 @@ export type GroupStackParamList = {
     isAdmin: boolean;
     groupName: string;
   };
-  OcrTest:
+  SettlementReceiptOcr:
     | { imageUri?: string; groupName?: string; groupId?: string }
     | undefined;
+  TransactionReceiptOcr:
+    | { imageUri?: string; groupName?: string; groupId?: string; transactionId: number }
+    | undefined;
   SettleDetail: {
+    expenseId?: number;
     amount: number;
     storeName: string;
     date: string;
@@ -175,6 +176,7 @@ export type HomeStackParamList = {
   AdminSendAlert: CommonParams | undefined;
   AdminCard:
     | (CommonParams & {
+        accountId?: number;
         selectedCardId?: string;
         selectedCardImage?: string;
         selectedCardName?: string;
@@ -186,29 +188,28 @@ export type HomeStackParamList = {
   AdminCardRecommend: {
     groupId?: string;
     groupName: string;
+    accountId?: number;
     tags: string[];
     prevTags?: string[];
     prevRecommendPressed?: boolean;
     prevViewAllPressed?: boolean;
   };
-  AdminCardPin: {
-    groupId?: string;
-    groupName: string;
-    tags: string[];
-    selectedCardId: string;
-    selectedCardName?: string | null;
-  };
   AdminCardDone: {
     groupId?: string;
     groupName?: string;
-    selectedCardId?: string;
+    cardId?: number;
+    cardNumber?: string;
+    frontImageUrl?: string;
   };
   AdminSettle: CommonParams | undefined;
   GroupInviteEntry: { inviteToken?: string; groupName?: string } | undefined;
   GroupInviteDecision: { inviteToken?: string; groupName?: string } | undefined;
   GroupInviteSuccess: { groupId?: number | string; groupName?: string } | undefined;
-  OcrTest:
+  SettlementReceiptOcr:
     | { imageUri?: string; groupName?: string; groupId?: string }
+    | undefined;
+  TransactionReceiptOcr:
+    | { imageUri?: string; groupName?: string; groupId?: string; transactionId: number }
     | undefined;
   GroupLedgerDetail: {
     item: any;
@@ -217,6 +218,7 @@ export type HomeStackParamList = {
     groupName: string;
   };
   SettleDetail: {
+    expenseId?: number;
     amount: number;
     storeName: string;
     date: string;

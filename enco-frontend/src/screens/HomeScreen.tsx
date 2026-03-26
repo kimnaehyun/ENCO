@@ -4,7 +4,7 @@ import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
-import { images } from '../types/images';
+import { images, getProfileImage } from '../types/images';
 import { useAuthStore } from '../store/useAuthStore';
 import { fetchMyPage } from '../services/userService';
 import { getMyGroups } from '../services/groupService';
@@ -24,16 +24,16 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(false);
   const [groups, setGroups] = useState<HomeGroupSummary[]>([]);
 
-  // 프로필이 없으면 API에서 가져오기
+  // 프로필이 없으면 API에서 가져오기 (로그인 응답에서 이미 저장된 경우 스킵)
   useEffect(() => {
     if (!profile) {
       setLoading(true);
       fetchMyPage()
         .then(data => setProfile(data))
-        .catch(err => console.warn('프로필 조회 실패:', err))
+        .catch(() => {}) // 마이페이지 API 미지원 시 무시 (로그인 응답 데이터 사용)
         .finally(() => setLoading(false));
     }
-  }, []);
+  }, [profile]);
 
   const displayName = profile?.name ?? user ?? '';
 
@@ -138,7 +138,11 @@ export default function HomeScreen() {
         {/* 프로필 아바타 + 인사말 */}
         <View style={styles.profileRow}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarEmoji}>🙂</Text>
+            <Image
+              source={getProfileImage(profile?.profileUrl)}
+              style={{ width: '100%', height: '100%' }}
+              resizeMode="cover"
+            />
           </View>
           <View>
             <Text style={styles.greeting}>안녕하세요 👋</Text>
@@ -174,6 +178,7 @@ export default function HomeScreen() {
         contentContainerStyle={{ paddingRight: HORIZONTAL_PADDING }}
         ItemSeparatorComponent={() => <View style={{ width: CARD_GAP }} />}
       />
+
     </ScreenLayout>
   );
 }
@@ -196,7 +201,8 @@ const styles = StyleSheet.create({
     width: 46,
     height: 46,
     borderRadius: 23,
-    backgroundColor: '#1428A0',
+    backgroundColor: '#EEF2FF',
+    overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
   },

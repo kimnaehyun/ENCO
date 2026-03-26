@@ -7,15 +7,15 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 
+// 이벤트
 @Entity
-@Table(name = "attendance_events")
+@Table(name = "events")
 @Getter
 public class AttendanceEvent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private Long groupId;
     private String eventName;
     private String description;
     private LocalDate startDate;

@@ -65,4 +65,6 @@ public interface TransactionHistoryRepository extends JpaRepository<TransactionH
             @Param("cursor") LocalDateTime cursor,
             @Param("size") int size
     );
+
+    Optional<TransactionHistory> findByIdempotencyKey(String idempotencyKey);
 }

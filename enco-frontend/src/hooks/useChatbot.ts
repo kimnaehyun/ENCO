@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { ChatAction, ChatItem } from '@/types/chat';
+import { askChatbot } from '@/services/chatService';
 
 interface UseChatbotProps {
   isAdmin: boolean;
@@ -17,6 +19,8 @@ export function useChatbot({
   navigation,
   appendChatItem,
 }: UseChatbotProps) {
+  const [pickMode, setPickMode] = useState(false);
+
   const getNowLabel = () => {
     const now = new Date();
     const hours = now.getHours();
@@ -89,6 +93,59 @@ export function useChatbot({
     setTimeout(() => appendChatItem(buildHamcoActions()), 120);
   };
 
+  // 햄코 PICK 모드에서 메시지 전송
+  const sendPickMessage = async (message: string) => {
+    if (!message.trim()) return;
+
+    // 사용자 메시지를 채팅에 표시
+    appendChatItem({
+      id: `user-pick-${Date.now()}`,
+      type: 'user',
+      text: message,
+      createdAt: getNowLabel(),
+    });
+
+    // 로딩 표시
+    const loadingId = `bot-pick-loading-${Date.now()}`;
+    appendChatItem({
+      id: loadingId,
+      type: 'chatbot',
+      senderName: '햄코',
+      senderImageUrl: '',
+      content: '추천 결과를 찾고 있어요...',
+      createdAt: getNowLabel(),
+    });
+
+    try {
+      const roomId = String(groupId ?? '');
+      console.log('[햄코PICK] 요청:', { roomId, senderId: userId, message });
+
+      await askChatbot({
+        roomId,
+        senderId: userId,
+        message: message.trim(),
+      });
+
+      // 응답은 WebSocket(CHATBOT_RESPONSE)으로 수신되므로
+      // useChat의 subscribe에서 자동으로 messages에 추가됨
+      // 로딩 메시지 제거는 WebSocket 응답이 오면 자연스럽게 밀려남
+
+      console.log('[햄코PICK] 요청 전송 완료, WebSocket 응답 대기 중');
+    } catch (err: any) {
+      console.error('[햄코PICK] 요청 실패:', err?.response?.data ?? err);
+
+      // 에러 시 안내 메시지
+      appendChatItem({
+        id: `bot-pick-error-${Date.now()}`,
+        type: 'chatbot',
+        senderName: '햄코',
+        senderImageUrl: '',
+        content: '추천 결과를 가져오지 못했어요. 다시 시도해주세요!',
+        createdAt: getNowLabel(),
+      });
+    }
+  };
+
   const handleActionPress = (action: ChatAction, label: string) => {
     appendChatItem({
       id: `user-${Date.now()}`,
@@ -126,26 +183,27 @@ export function useChatbot({
       return;
     }
     if (action === 'pick') {
+      setPickMode(true);
       appendChatItem({
-        id: `bot-pick-${Date.now()}`,
-        type: 'bot-actions',
-        text: '햄코 PICK은 나중에 추천형 챗봇으로 연결될 예정이에요.',
+        id: `bot-pick-guide-${Date.now()}`,
+        type: 'chatbot',
+        senderName: '햄코',
+        senderImageUrl: '',
+        content: '햄코 PICK 모드입니다! 🐹\n원하는 장소나 조건을 자유롭게 말씀해주세요.\n\n예) "부산에서 오션뷰이고 주차 가능한 숙소 추천해줘"',
         createdAt: getNowLabel(),
-        actions: isAdmin
-          ? [
-              { label: '정산하기', action: 'settlement' },
-              { label: '모임 관리', action: 'admin' },
-            ]
-          : [
-              { label: '회비 납부', action: 'pay' },
-              { label: '투표 확인', action: 'votes' },
-            ],
       });
     }
   };
 
+  const exitPickMode = () => {
+    setPickMode(false);
+  };
+
   return {
+    pickMode,
     handleHamcoTrigger,
     handleActionPress,
+    sendPickMessage,
+    exitPickMode,
   };
 }

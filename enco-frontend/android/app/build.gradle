@@ -77,9 +77,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.frontend"
+    namespace "com.ssafy.enco"
     defaultConfig {
-        applicationId "com.frontend"
+        applicationId "com.ssafy.enco"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -113,9 +113,14 @@ dependencies {
 
     implementation 'com.google.android.gms:play-services-mlkit-document-scanner:16.0.0'
 
+    implementation project(':react-native-fs')
+
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")
     } else {
         implementation jscFlavor
     }
+    implementation platform('com.google.firebase:firebase-bom:33.0.0') 
+    implementation 'com.google.firebase:firebase-messaging' 
 }
+apply plugin: 'com.google.gms.google-services' 

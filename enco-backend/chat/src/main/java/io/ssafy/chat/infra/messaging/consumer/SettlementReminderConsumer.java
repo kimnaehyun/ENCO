@@ -50,7 +50,7 @@ public class SettlementReminderConsumer {
                         .userId(userId)
                         .type(NotificationType.SETTLEMENT_REMINDER)
                         .title(title)
-                        .message("미납된 정산이 있습니다. 확인 후 납부해주세요.")
+                        .message("[" + merchantName + "] 건으로 " + formattedAmount + "원 납부 요청이 왔습니다.")
                         .data(Map.of(
                                 "groupId", groupId,
                                 "expenseId", expenseId,

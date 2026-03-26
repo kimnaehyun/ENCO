@@ -11,4 +11,5 @@ public class KafkaConsumerService {
     public void consume(String message) {
         log.info("Received: {}", message);
     }
+
 }

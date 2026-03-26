@@ -23,7 +23,7 @@ public class PaymentVote {
     @Column(nullable = false)
     private Long groupId;
 
-    @Column(length = 50, nullable = false)
+    @Column(length = 50)
     private String title;
 
     @Column(columnDefinition = "TEXT")

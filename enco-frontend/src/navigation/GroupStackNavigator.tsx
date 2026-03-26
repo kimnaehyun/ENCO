@@ -8,7 +8,6 @@ import GroupVotesScreen from '../screens/group/GroupVotesScreen';
 import GroupPayScreen from '../screens/group/GroupPayScreen';
 import GroupChatScreen from '../screens/group/GroupChatScreen';
 import GroupLedgerScreen from '../screens/group/GroupLedgerScreen';
-import GroupVoteDetailScreen from '../screens/group/GroupVoteDetailScreen';
 import VoteCreateScreen from '../screens/InternetPayment/VoteCreateScreen.tsx';
 import GroupInviteEntryScreen from '../screens/group/GroupInviteEntryScreen.tsx';
 import GroupInviteDecisionScreen from '../screens/group/GroupInviteDecisionScreen';
@@ -20,7 +19,6 @@ import AdminSendAlertScreen from '../screens/admin/AdminSendAlertScreen';
 import AdminSettleScreen from '../screens/admin/AdminSettleScreen';
 import AdminCardScreen from '../screens/admin/AdminCardScreen';
 import AdminCardRecommendScreen from '../screens/admin/AdminCardRecommendScreen';
-import AdminCardPinScreen from '../screens/admin/AdminCardPinScreen';
 import AdminCardDoneScreen from '../screens/admin/AdminCardDoneScreen';
 import GroupCreateScreen from '../screens/group/GroupCreateScreen';
 import GroupCardRecommendScreen from '../screens/group/GroupCardRecommendScreen';
@@ -32,7 +30,8 @@ import NotificationCenterScreen from '../screens/user/NotificationCenterScreen.t
 
 import { GroupStackParamList } from '../types/navigation';
 import GroupLedgerDetailScreen from '../screens/group/GroupLedgerDetailScreen.tsx';
-import OcrTestScreen from '../screens/OcrTestScreen';
+import SettlementReceiptOcrScreen from '../screens/receipt/SettlementReceiptOcrScreen';
+import TransactionReceiptOcrScreen from '../screens/receipt/TransactionReceiptOcrScreen';
 import SettleDetailScreen from '../screens/group/SettleDetailScreen';
 import SettleMemberSelectScreen from '../screens/group/SettleMemberSelectScreen';
 const Stack = createNativeStackNavigator<GroupStackParamList>();
@@ -55,7 +54,6 @@ export default function GroupStackNavigator() {
       <Stack.Screen name="GroupVotes" component={GroupVotesScreen} />
       <Stack.Screen name="GroupPay" component={GroupPayScreen} />
       <Stack.Screen name="GroupChat" component={GroupChatScreen} />
-      <Stack.Screen name="GroupVoteDetail" component={GroupVoteDetailScreen} />
       <Stack.Screen name="VoteCreate" component={VoteCreateScreen} />
       <Stack.Screen name="GroupAnalytics" component={GroupAnalyticsScreen} />
       <Stack.Screen name="GroupAttendance" component={GroupAttendanceScreen} />
@@ -81,7 +79,6 @@ export default function GroupStackNavigator() {
       <Stack.Screen name="AdminSendAlert" component={AdminSendAlertScreen} />
       <Stack.Screen name="AdminCard" component={AdminCardScreen} />
       <Stack.Screen name="AdminCardRecommend" component={AdminCardRecommendScreen} />
-      <Stack.Screen name="AdminCardPin" component={AdminCardPinScreen} />
       <Stack.Screen name="AdminCardDone" component={AdminCardDoneScreen} />
       <Stack.Screen name="AdminSettle" component={AdminSettleScreen} />
       <Stack.Screen name="GroupCreate" component={GroupCreateScreen} />
@@ -98,7 +95,14 @@ export default function GroupStackNavigator() {
         name="GroupLedgerDetail"
         component={GroupLedgerDetailScreen}
       />
-      <Stack.Screen name="OcrTest" component={OcrTestScreen} />
+      <Stack.Screen
+        name="SettlementReceiptOcr"
+        component={SettlementReceiptOcrScreen}
+      />
+      <Stack.Screen
+        name="TransactionReceiptOcr"
+        component={TransactionReceiptOcrScreen}
+      />
       <Stack.Screen name="SettleDetail" component={SettleDetailScreen} />
       <Stack.Screen
         name="SettleMemberSelect"

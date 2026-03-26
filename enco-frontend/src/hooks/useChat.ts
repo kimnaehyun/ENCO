@@ -5,20 +5,32 @@ import { chatService } from '@/services/chatService';
 import { ApiMessage, ChatItem } from '@/types/chat';
 
 function apiMessageToChatItem(m: ApiMessage): ChatItem {
-  if (m.type === 'CHATBOT_RESPONSE') {
+  // 메시지 ID: 서버는 'id', 레거시는 'messageId'
+  const msgId = m.id ?? m.messageId ?? `msg-${Date.now()}`;
+  // 메시지 타입: 서버는 'messageType', 레거시는 'type'
+  const msgType = m.messageType ?? m.type ?? 'CHAT';
+
+  // 챗봇 응답 판별: BOT_ANSWER 또는 CHATBOT_RESPONSE 또는 senderId가 음수
+  const isChatbot =
+    msgType === 'BOT_ANSWER' ||
+    msgType === 'CHATBOT_RESPONSE' ||
+    (m.senderId !== undefined && m.senderId < 0);
+
+  if (isChatbot) {
     return {
-      id: m.messageId,
+      id: msgId,
       type: 'chatbot',
-      senderName: m.senderName,
-      senderImageUrl: m.senderImageUrl,
+      senderName: m.senderName ?? '햄코',
+      senderImageUrl: m.senderImageUrl ?? '',
       content: m.content,
       createdAt: m.createdAt,
     };
   }
+
   return {
-    id: m.messageId,
+    id: msgId,
     type: 'chat',
-    messageType: m.type,
+    messageType: msgType,
     roomId: String(m.roomId),
     senderId: m.senderId ?? 0,
     senderName: m.senderName,
@@ -71,11 +83,29 @@ export function useChat(roomId: string, userId: number) {
     client.onConnect = () => {
       client.subscribe(`/sub/chat/room/${roomId}`, message => {
         const data: ApiMessage = JSON.parse(message.body);
+        const msgType = data.messageType ?? data.type ?? 'CHAT';
+        console.log('[useChat] WebSocket 수신:', msgType, 'senderId:', data.senderId);
 
-        if (data.type === 'CHATBOT_RESPONSE') {
-          setMessages(prev => [...prev, apiMessageToChatItem(data)]);
+        // BOT_QUESTION은 서버가 브로드캐스트하는 사용자 질문 — 프론트에서 이미 표시했으므로 무시
+        if (msgType === 'BOT_QUESTION') {
           return;
         }
+
+        const chatItem = apiMessageToChatItem(data);
+
+        // 챗봇 응답(BOT_ANSWER)은 그대로 추가
+        if (chatItem.type === 'chatbot') {
+          setMessages(prev => {
+            // 로딩 메시지("추천 결과를 찾고 있어요...") 제거
+            const filtered = prev.filter(
+              m => !(m.type === 'chatbot' && m.id.startsWith('bot-pick-loading-'))
+            );
+            return [...filtered, chatItem];
+          });
+          return;
+        }
+
+        // 일반 채팅: sending 상태인 임시 메시지와 매칭하여 교체
 
         setMessages(prev => {
           const tempIndex = prev.findIndex(
