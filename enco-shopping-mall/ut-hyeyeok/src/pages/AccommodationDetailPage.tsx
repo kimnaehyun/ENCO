@@ -30,9 +30,12 @@ export default function AccommodationDetailPage() {
       'http://ssafywte.site/payment-success'
     );
 
+    const storeName = encodeURIComponent(accommodation.name);
+
     const deepLink =
       `enco://app/pay/success?orderId=${orderId}` +
       `&amount=${price}` +
+      `&storeName=${storeName}` +
       `&callbackUrl=${callbackUrl}`;
 
     window.location.href = deepLink;
