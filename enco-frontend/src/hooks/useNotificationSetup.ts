@@ -74,7 +74,7 @@ function handleNotificationPress(data: Record<string, any>) {
       screen: 'Account',
       params: {
         screen: 'PaymentMethod',
-        params: { title: '현장결제', groupId },
+        params: { title: '현장결제', groupId, isLeader: false },
       },
     });
     return;
@@ -202,8 +202,9 @@ export function useNotificationSetup() {
         amount: data.amount ? Number(data.amount) : undefined,
       });
 
-      // Firebase SDK가 notification 필드로 자동 배너를 표시하므로
-      // Notifee 수동 표시는 생략 (중복 알림 방지)
+      // 포그라운드에서는 Firebase SDK가 자동 배너를 표시하지 않으므로
+      // Notifee로 직접 시스템 알림 표시 (백그라운드/killed에서는 onMessage가 호출되지 않아 중복 없음)
+      await displayLocalNotification(title, body, data as Record<string, any>);
     });
 
     // FCM 토큰 갱신 리스너

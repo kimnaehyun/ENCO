@@ -18,7 +18,7 @@ import { getGroupCards, onsiteBarcodePayment } from '@/services/paymentService';
 import { images } from '@/types/images';
 import { voteApi } from '@/services/payment/vote';
 
-export default function index({ groupId }: { groupId: number }) {
+export default function index({ groupId, isLeader = true }: { groupId: number; isLeader?: boolean }) {
   const [cardNumber, setCardNumber] = useState<number>(0);
   const [isGPS, setIsGPS] = useState<boolean>(false);
 
@@ -84,6 +84,7 @@ export default function index({ groupId }: { groupId: number }) {
   }, []);
 
   useEffect(() => {
+    if (!isLeader) return;
     const locationRequestNotification = async () => {
       try {
         const response = await voteApi.request(groupId);
@@ -107,7 +108,7 @@ export default function index({ groupId }: { groupId: number }) {
           groupId,
           latitude,
           longitude,
-          true,
+          isLeader,
         );
 
         if (response.data?.result.barcode !== null) {
