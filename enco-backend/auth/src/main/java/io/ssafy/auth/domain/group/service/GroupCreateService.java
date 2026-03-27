@@ -115,5 +115,9 @@ public class GroupCreateService {
             throw new CustomException(ErrorCode.INTERNAL_SERVER_ERROR);
         }
     }
+    public boolean checkGroupMember(Long groupId, Long userId) {
+        return groupUserRepository.existsByGroupIdAndUserId(groupId, userId);
+    }
+
 }
 
