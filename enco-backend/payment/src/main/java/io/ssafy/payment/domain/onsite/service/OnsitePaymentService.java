@@ -19,8 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.UUID;
 
 @Slf4j
@@ -42,13 +40,6 @@ public class OnsitePaymentService {
 
         String geoKey = GEO_KEY_PREFIX + groupId;
         String barcodeKey = BARCODE_KEY_PREFIX + groupId;
-
-        BarcodeResponseDto existingBarcode = (BarcodeResponseDto) redisTemplate.opsForValue().get(barcodeKey);
-        if (existingBarcode != null) {
-            Integer total = userServiceClient.getGroupMemberCount(groupId).result();
-            int totalCount = (total != null) ? total : 0;
-            return new LocationResponseDto(totalCount, totalCount, existingBarcode);
-        }
 
         String memberKey = isLeader ? "LEADER" : String.valueOf(userId);
         stringRedisTemplate.opsForGeo().add(geoKey, new Point(lon, lat), memberKey);
@@ -72,12 +63,26 @@ public class OnsitePaymentService {
 
         log.info("[현장결제] groupId={}, 반경 15m 이내: {}/{}명", groupId, nearbyMembersCount, targetMemberCount);
 
-        if (nearbyMembersCount >= targetMemberCount && targetMemberCount > 0) {
-            BarcodeResponseDto newBarcode = generateAndSaveBarcode(groupId, geoKey, barcodeKey);
-            return new LocationResponseDto(nearbyMembersCount, targetMemberCount, newBarcode);
-        }
+        BarcodeResponseDto existingBarcode = (BarcodeResponseDto) redisTemplate.opsForValue().get(barcodeKey);
 
-        return new LocationResponseDto(nearbyMembersCount, targetMemberCount, null);
+        if (nearbyMembersCount >= targetMemberCount && targetMemberCount > 0) {
+            if (existingBarcode != null) {
+                // 이미 생성된 바코드가 있다면 그대로 유지
+                return new LocationResponseDto(nearbyMembersCount, targetMemberCount, existingBarcode);
+            } else {
+                // 없으면 새로 만들어서 내려줌 (3분짜리로 만들지만, 멀어지면 아래 else문에서 강제 삭제됨)
+                BarcodeResponseDto newBarcode = generateAndSaveBarcode(groupId, geoKey, barcodeKey);
+                return new LocationResponseDto(nearbyMembersCount, targetMemberCount, newBarcode);
+            }
+        } else {
+            // [단 한 명이라도 15m 밖으로 나갔을 때]
+            if (existingBarcode != null) {
+                log.info("[현장결제] 누군가 이탈하여 기존 바코드를 강제 파기합니다! groupId={}", groupId);
+                redisTemplate.delete(barcodeKey);
+                redisTemplate.delete("onsite:auth:" + existingBarcode.barcodeNumber());
+            }
+            return new LocationResponseDto(nearbyMembersCount, targetMemberCount, null);
+        }
     }
 
     private BarcodeResponseDto generateAndSaveBarcode(Long groupId, String geoKey, String barcodeKey) {
@@ -101,17 +106,27 @@ public class OnsitePaymentService {
 
     private BarcodeResponseDto generateBarcode() {
         String barcodeUuid = UUID.randomUUID().toString().replace("-", "");
-        String tokenUuid = UUID.randomUUID().toString().replace("-", "");
-
         String barcodeNumber = barcodeUuid.substring(0, 16).toUpperCase();
-        String qrData = "ncopay://pay?token=" + tokenUuid;
-        String expiredAt = Instant.now().plusSeconds(180).toString(); // UTC 기준
+
+        String qrData = barcodeNumber;
+
+        String expiredAt = Instant.now().plusSeconds(180).toString();
 
         return new BarcodeResponseDto(barcodeNumber, qrData, expiredAt);
     }
 
     public void startPayment(Long groupId, Long userId) {
         String initKey = INIT_KEY_PREFIX + groupId;
+        String geoKey = GEO_KEY_PREFIX + groupId;
+        String barcodeKey = BARCODE_KEY_PREFIX + groupId;
+
+
+        BarcodeResponseDto existingBarcode = (BarcodeResponseDto) redisTemplate.opsForValue().get(barcodeKey);
+        if (existingBarcode != null) {
+            redisTemplate.delete("onsite:auth:" + existingBarcode.barcodeNumber());
+        }
+
+        cleanupOnsitePaymentData(groupId);
 
         Boolean isFirst = stringRedisTemplate.opsForValue()
                 .setIfAbsent(initKey, "1", Duration.ofMinutes(5));

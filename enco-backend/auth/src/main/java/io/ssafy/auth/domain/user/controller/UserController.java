@@ -53,4 +53,5 @@ public class UserController {
     }
 
     public record UserDetailDto(Long userId, String name, Integer profileImage) {}
+
 }

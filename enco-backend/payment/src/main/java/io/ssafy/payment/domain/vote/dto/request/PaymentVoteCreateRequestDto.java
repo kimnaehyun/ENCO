@@ -11,5 +11,6 @@ public record PaymentVoteCreateRequestDto(
         String password,
         String title,
         String description,
-        BigDecimal amount
+        BigDecimal amount,
+        Boolean usePoint
 ) {}

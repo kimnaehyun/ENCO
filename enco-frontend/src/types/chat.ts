@@ -6,6 +6,8 @@ type ChatMsgProps = {
   isMe: boolean;
   created_at: string;
   status?: 'sending' | 'sent' | 'failed';
+  senderImageUrl?: string;
+  senderName?: string;
   onRetry?: () => void;
   onCancel?: () => void;
 };

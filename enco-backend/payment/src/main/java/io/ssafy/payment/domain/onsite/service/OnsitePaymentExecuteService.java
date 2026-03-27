@@ -71,6 +71,9 @@ public class OnsitePaymentExecuteService {
                 .accountId(account.getId())
                 .amount(amount)
                 .balance(account.getAmount())
+                .counterpartyBankCode("999")
+                .counterpartyBankName("현장 결제")
+                .counterpartyBankAccountNumber(barcodeNumber)
                 .counterpartyName(merchantName)
                 .displayName(merchantName)
                 .type(Type.CARD_PAYMENT)
@@ -83,8 +86,10 @@ public class OnsitePaymentExecuteService {
         transactionHistoryRepository.save(history);
         redisTemplate.delete(redisKey);
 
-        String barcodeKey = "onsite:barcode:" + groupId;
-        redisTemplate.delete(barcodeKey);
+        String initKey = "onsite:init:" + groupId;
+        String geoKey = "onsite:geo:" + groupId;
+        redisTemplate.delete(initKey);
+        redisTemplate.delete(geoKey);
 
         log.info("[현장결제 완료] 가맹점={}, 금액={}, groupId={}", merchantName, amount, groupId);
 

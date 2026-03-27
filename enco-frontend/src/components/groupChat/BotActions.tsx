@@ -1,5 +1,5 @@
-import { View, Image } from 'react-native'
-import Text from '@/components/typography';;
+import { View, Image } from 'react-native';
+import Text from '@/components/typography';
 import {
   botAvatar,
   botCard,
@@ -19,12 +19,12 @@ export default function BotActions({
   return (
     <View className={botRow}>
       <Image
-        source={require('../../assets/icons/nomal_hamco.png')}
+        source={require('../../assets/icons/CHATCO_icon.png')}
         className={botAvatar}
         resizeMode="contain"
       />
       <View className={botCard}>
-        <Text weight="bold" className={botText} >
+        <Text weight="bold" className={botText}>
           {item.text}
         </Text>
         <View className="gap-3">

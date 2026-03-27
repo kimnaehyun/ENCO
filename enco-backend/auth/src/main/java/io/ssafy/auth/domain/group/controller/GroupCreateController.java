@@ -3,6 +3,7 @@ package io.ssafy.auth.domain.group.controller;
 import io.ssafy.auth.domain.group.dto.request.GroupAccountCreateRequestDto;
 import io.ssafy.auth.domain.group.dto.response.GroupAccountCreateResponseDto;
 import io.ssafy.auth.domain.group.dto.response.TypeResponseDto;
+import io.ssafy.auth.domain.group.repository.GroupUserRepository;
 import io.ssafy.auth.domain.group.service.GroupCreateService;
 import io.ssafy.auth.global.common.response.CommonResponse;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GroupCreateController {
     private final GroupCreateService groupCreateService;
-
+    private final GroupUserRepository groupUserRepository;
     /**
      * 모임 성향 리스트 조회
      * @return
@@ -51,6 +52,15 @@ public class GroupCreateController {
 
         GroupAccountCreateResponseDto result = groupCreateService.createGroupAccount(userId, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(CommonResponse.success(result));
+    }
+
+    @GetMapping("/{groupId}/members/{userId}/check")
+    public ResponseEntity<CommonResponse<Boolean>> checkGroupMember(
+            @PathVariable Long groupId,
+            @PathVariable Long userId) {
+
+        boolean isMember = groupUserRepository.existsByGroupIdAndUserId(groupId, userId);
+        return ResponseEntity.ok(CommonResponse.success(isMember));
     }
 }
 
