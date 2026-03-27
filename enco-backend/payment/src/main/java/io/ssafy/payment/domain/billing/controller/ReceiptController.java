@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
-import java.util.HashMap;
 import java.util.Map;
 
 @Slf4j
@@ -34,22 +33,6 @@ public class ReceiptController {
     ) {
         ReceiptOcrDraftResponseDto result = receiptOcrService.analyze(file);
         return ResponseEntity.ok(new CommonResponse<>("영수증 OCR 분석에 성공했습니다.", result));
-    }
-
-    @PostMapping("/charges/{chargeId}/expenses/receipts")
-    public ResponseEntity<CommonResponse<?>> uploadReceiptFile(
-            @RequestParam("file") MultipartFile file
-    ) {
-        try {
-            String url = minioService.uploadFile(file, "receipt");
-            Map<String, Object> body = new HashMap<>();
-            body.put("receiptImageUrl", url);
-            body.put("receipt", null);
-            return ResponseEntity.ok(CommonResponse.success(body));
-        } catch (Exception e) {
-            log.error("File upload failed", e);
-            throw new CustomException(ErrorCode.FILE_UPLOAD_FAIL);
-        }
     }
 
     @PostMapping("/files/upload")
