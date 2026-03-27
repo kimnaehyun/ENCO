@@ -27,10 +27,26 @@ type RouteParams = {
 };
 
 type DetailResult = GroupTransactionDetailResponse['result'];
+type LedgerStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
 
 function formatMoney(n: number) {
   const sign = n >= 0 ? '+' : '-';
   return `${sign}${Math.abs(n).toLocaleString()}원`;
+}
+
+function getTransactionStatusMeta(status?: LedgerStatus) {
+  switch (status) {
+    case 'PENDING':
+      return { label: '진행중', color: '#F59E0B' };
+    case 'REJECTED':
+      return { label: '거절', color: '#EF4444' };
+    case 'CANCELED':
+      return { label: '취소', color: '#9CA3AF' };
+    case 'APPROVED':
+      return { label: '완료', color: '#1428A0' };
+    default:
+      return { label: '정상', color: COLORS.dark };
+  }
 }
 
 function toSafeNumber(value: unknown, fallback = 0): number {
@@ -126,7 +142,10 @@ export default function GroupLedgerDetailScreen() {
   const receiptItems = Array.isArray(receiptContent?.items)
     ? receiptContent.items
     : [];
-  const isCanceled = listItem?.status === 'CANCELED';
+  const transactionStatus = listItem?.status;
+  const statusMeta = getTransactionStatusMeta(transactionStatus);
+  const isCanceled = transactionStatus === 'CANCELED';
+  const isApproved = !transactionStatus || transactionStatus === 'APPROVED';
 
   const effectiveType = listItem?.type;
   const isDeposit = effectiveType
@@ -221,8 +240,8 @@ export default function GroupLedgerDetailScreen() {
                 style={[
                   styles.amountText,
                   {
-                    color: isCanceled
-                      ? '#9CA3AF'
+                    color: !isApproved
+                      ? statusMeta.color
                       : isDeposit
                         ? '#1428A0'
                         : '#EF4444',
@@ -231,8 +250,10 @@ export default function GroupLedgerDetailScreen() {
               >
                 {formatMoney(signedDetailAmount)}
               </Text>
-              {isCanceled && (
-                <Text style={styles.canceledNotice}>취소된 거래</Text>
+              {!isApproved && (
+                <Text style={[styles.canceledNotice, { color: statusMeta.color }]}> 
+                  {statusMeta.label} 상태의 거래입니다
+                </Text>
               )}
               <Text style={styles.balanceText}>
                 잔액 {toSafeNumber(detail.balanceAfter).toLocaleString()}원
@@ -255,10 +276,10 @@ export default function GroupLedgerDetailScreen() {
                 <Text
                   style={[
                     styles.infoValueText,
-                    isCanceled ? { color: '#9CA3AF' } : null,
+                    { color: statusMeta.color },
                   ]}
                 >
-                  {isCanceled ? '취소' : '정상'}
+                  {statusMeta.label}
                 </Text>
               </InfoRow>
               {detail.cardName && (
@@ -356,7 +377,7 @@ export default function GroupLedgerDetailScreen() {
             )}
 
             {/* 관리자 전용 — 영수증 증빙 */}
-            {isAdmin && !isCanceled && (
+            {isAdmin && isApproved && (
               <View style={styles.actionRow}>
                 <Pressable
                   onPress={handleReceiptProof}

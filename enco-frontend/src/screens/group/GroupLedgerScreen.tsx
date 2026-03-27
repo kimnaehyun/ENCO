@@ -60,6 +60,29 @@ function shortDate(dateStr: string) {
   return `${parseInt(parts[1])}.${parseInt(parts[2])}`;
 }
 
+type LedgerStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
+
+function getTransactionStatusMeta(status?: LedgerStatus) {
+  switch (status) {
+    case 'PENDING':
+      return { label: '진행중', backgroundColor: '#F59E0B', textColor: '#FFFFFF' };
+    case 'REJECTED':
+      return { label: '거절', backgroundColor: '#EF4444', textColor: '#FFFFFF' };
+    case 'CANCELED':
+      return { label: '취소', backgroundColor: '#9CA3AF', textColor: '#FFFFFF' };
+    case 'APPROVED':
+      return { label: '완료', backgroundColor: '#1428A0', textColor: '#FFFFFF' };
+    default:
+      return null;
+  }
+}
+
+function getDirectionMeta(type: 'DEPOSIT' | 'WITHDRAW') {
+  return type === 'DEPOSIT'
+    ? { label: '입금', backgroundColor: '#DBEAFE', textColor: '#1428A0' }
+    : { label: '출금', backgroundColor: '#FEE2E2', textColor: '#EF4444' };
+}
+
 // ─── 달력 모달 ───
 function CalendarModal({
   selected,
@@ -660,8 +683,13 @@ export default function GroupLedgerScreen() {
           ) : (
             filteredTransactions.map(it => {
               const isDeposit = it.type === 'DEPOSIT';
-              const isCanceled =
-                it.referenceType === 'TRANSACTION' && it.status === 'CANCELED';
+              const statusMeta =
+                it.referenceType === 'TRANSACTION'
+                  ? getTransactionStatusMeta(it.status)
+                  : null;
+              const directionMeta = getDirectionMeta(it.type);
+              const isInactiveTransaction =
+                it.referenceType === 'TRANSACTION' && it.status && it.status !== 'APPROVED';
               const amount = toSafeNumber(it.amount);
               const signedAmount = isDeposit ? amount : -amount;
               const txDate = toSafeDateText(it.transactionDate);
@@ -747,20 +775,36 @@ export default function GroupLedgerScreen() {
                         <Text style={styles.ledgerItemDate}>
                           {shortDate(txDate)}
                         </Text>
+                        {statusMeta && (
+                          <View
+                            style={[
+                              styles.settleBadge,
+                              { backgroundColor: statusMeta.backgroundColor },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.settleBadgeText,
+                                { color: statusMeta.textColor },
+                              ]}
+                            >
+                              {statusMeta.label}
+                            </Text>
+                          </View>
+                        )}
                         <View
                           style={[
                             styles.settleBadge,
-                            {
-                              backgroundColor: isCanceled
-                                ? '#9CA3AF'
-                                : isDeposit
-                                  ? '#1428A0'
-                                  : '#EF4444',
-                            },
+                            { backgroundColor: directionMeta.backgroundColor },
                           ]}
                         >
-                          <Text style={styles.settleBadgeText}>
-                            {isCanceled ? '취소' : isDeposit ? '입금' : '출금'}
+                          <Text
+                            style={[
+                              styles.settleBadgeText,
+                              { color: directionMeta.textColor },
+                            ]}
+                          >
+                            {directionMeta.label}
                           </Text>
                         </View>
                       </View>
@@ -769,15 +813,20 @@ export default function GroupLedgerScreen() {
                         numberOfLines={1}
                         ellipsizeMode="tail"
                       >
-                        {isCanceled ? `${it.title} (취소됨)` : it.title}
+                        {it.title}
                       </Text>
+                      {statusMeta && it.status !== 'APPROVED' && (
+                        <Text style={styles.ledgerItemStatusNote}>
+                          {statusMeta.label}된 거래입니다.
+                        </Text>
+                      )}
                     </View>
                     <View style={styles.ledgerItemRight}>
                       <Text
                         style={[
                           styles.ledgerItemAmount,
                           {
-                            color: isCanceled
+                            color: isInactiveTransaction
                               ? '#9CA3AF'
                               : isDeposit
                                 ? '#1428A0'
@@ -1246,6 +1295,12 @@ const styles = StyleSheet.create({
   ledgerItemMemo: {
     fontSize: 12,
     color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+    marginTop: 4,
+  },
+  ledgerItemStatusNote: {
+    fontSize: 12,
+    color: COLORS.placeholder,
     fontFamily: FONT_FAMILY.medium,
     marginTop: 4,
   },
