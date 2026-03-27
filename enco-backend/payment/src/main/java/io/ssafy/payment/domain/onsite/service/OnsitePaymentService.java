@@ -1,5 +1,6 @@
 package io.ssafy.payment.domain.onsite.service;
 
+
 import io.ssafy.payment.domain.onsite.dto.response.BarcodeResponseDto;
 import io.ssafy.payment.domain.onsite.dto.response.LocationResponseDto;
 import io.ssafy.payment.infra.client.UserServiceClient;
@@ -37,137 +38,48 @@ public class OnsitePaymentService {
     public LocationResponseDto updateLocationAndCheckBarcode(
             Long groupId, Long userId, double lat, double lon, boolean isLeader) {
 
-        log.info("[현장결제:위치수신] ▶ groupId={}, userId={}, role={}, lat={}, lon={}",
-                groupId, userId, isLeader ? "LEADER" : "MEMBER", lat, lon);
-
-        // ── 입력값 검증 ──────────────────────────────────────────
-        if (groupId == null || userId == null) {
-            log.error("[현장결제:위치수신] ❌ 필수 파라미터 누락. groupId={}, userId={}", groupId, userId);
-            throw new CustomException(ErrorCode.BAD_REQUEST);
-        }
-
         String geoKey = GEO_KEY_PREFIX + groupId;
         String barcodeKey = BARCODE_KEY_PREFIX + groupId;
+
         String memberKey = isLeader ? "LEADER" : String.valueOf(userId);
+        stringRedisTemplate.opsForGeo().add(geoKey, new Point(lon, lat), memberKey);
+        stringRedisTemplate.expire(geoKey, Duration.ofMinutes(5));
 
-        // ── Redis 위치 저장 ──────────────────────────────────────
-        try {
-            stringRedisTemplate.opsForGeo().add(geoKey, new Point(lon, lat), memberKey);
-            stringRedisTemplate.expire(geoKey, Duration.ofMinutes(5));
-            log.debug("[현장결제:위치저장] ✅ Redis Geo 저장 완료. key={}, member={}", geoKey, memberKey);
-        } catch (Exception e) {
-            log.error("[현장결제:위치저장] ❌ Redis Geo 저장 실패. groupId={}, userId={}, error={}",
-                    groupId, userId, e.getMessage(), e);
-//            throw new CustomException(ErrorCode.REDIS_OPERATION_FAILED);
-        }
-
-        // ── 총 모임원 수 조회 (MSA) ──────────────────────────────
-        int targetMemberCount = 0;
-        try {
-            Integer totalMembersResult = userServiceClient.getGroupMemberCount(groupId).result();
-            targetMemberCount = (totalMembersResult != null) ? totalMembersResult : 0;
-            log.debug("[현장결제:인원조회] ✅ 총 모임원 수 조회 완료. groupId={}, count={}", groupId, targetMemberCount);
-        } catch (Exception e) {
-            log.error("[현장결제:인원조회] ❌ UserService 통신 실패. groupId={}, error={}", groupId, e.getMessage(), e);
-//            throw new CustomException(ErrorCode.USER_SERVICE_UNAVAILABLE);
-        }
+        Integer totalMembersResult = userServiceClient.getGroupMemberCount(groupId).result();
+        int targetMemberCount = (totalMembersResult != null) ? totalMembersResult : 0;
 
         if (targetMemberCount == 0) {
-            log.warn("[현장결제:인원조회] ⚠️ 모임원이 0명으로 조회됨. 그룹 정보 없음. groupId={}", groupId);
             throw new CustomException(ErrorCode.NOT_FOUND_GROUP_INFO);
         }
 
-        // ── 방장 위치 존재 여부 확인 ─────────────────────────────
-        Boolean leaderExists = stringRedisTemplate.opsForGeo()
-                .position(geoKey, "LEADER")
-                .stream()
-                .anyMatch(p -> p != null);
-
-        if (!leaderExists) {
-            log.warn("[현장결제:방장확인] ⚠️ 방장 위치 미수신 상태. groupId={}, 요청자userId={}. " +
-                    "방장이 아직 앱을 열지 않았거나 위치 전송 전입니다.", groupId, userId);
-            // 방장 위치 없으면 거리 계산 불가 → 현재 인원 0으로 반환 (에러 아님)
-            return new LocationResponseDto(0, targetMemberCount, null);
-        }
-
-        // ── 반경 15m 이내 인원 계산 ──────────────────────────────
         int nearbyMembersCount = 0;
         try {
             GeoResults<RedisGeoCommands.GeoLocation<String>> results = stringRedisTemplate.opsForGeo()
                     .radius(geoKey, "LEADER", new Distance(15, RedisGeoCommands.DistanceUnit.METERS));
             nearbyMembersCount = (results != null) ? results.getContent().size() : 0;
-
-            // 실제로 어떤 멤버들이 근처에 있는지 상세 로그
-            if (results != null) {
-                results.getContent().forEach(r ->
-                        log.debug("[현장결제:반경체크] 👤 근처 멤버 감지. groupId={}, member={}, distance={}m",
-                                groupId, r.getContent().getName(),
-                                r.getDistance() != null ? String.format("%.1f", r.getDistance().getValue()) : "?")
-                );
-            }
         } catch (Exception e) {
-            log.error("[현장결제:반경체크] ❌ Redis Geo radius 연산 실패. groupId={}, error={}",
-                    groupId, e.getMessage(), e);
-//            throw new CustomException(ErrorCode.REDIS_OPERATION_FAILED);
+            log.warn("[현장결제] 아직 방장 위치가 접수되지 않았습니다. groupId={}", groupId);
         }
 
-        log.info("[현장결제:반경체크] 📍 groupId={}, 반경 15m 이내: {}/{}명 ({}% 집결)",
-                groupId, nearbyMembersCount, targetMemberCount,
-                (int)((double) nearbyMembersCount / targetMemberCount * 100));
+        log.info("[현장결제] groupId={}, 반경 15m 이내: {}/{}명", groupId, nearbyMembersCount, targetMemberCount);
 
-        // ── 모임원 접속 현황 경고 로그 ───────────────────────────
-        int notArrivedCount = targetMemberCount - nearbyMembersCount;
-        if (notArrivedCount > 0) {
-            log.info("[현장결제:반경체크] ⏳ 아직 {}명이 15m 밖에 있거나 앱을 열지 않았습니다. groupId={}",
-                    notArrivedCount, groupId);
-        }
+        BarcodeResponseDto existingBarcode = (BarcodeResponseDto) redisTemplate.opsForValue().get(barcodeKey);
 
-        // ── 기존 바코드 조회 ─────────────────────────────────────
-        BarcodeResponseDto existingBarcode = null;
-        try {
-            existingBarcode = (BarcodeResponseDto) redisTemplate.opsForValue().get(barcodeKey);
-            if (existingBarcode != null) {
-                log.debug("[현장결제:바코드조회] 🔖 기존 바코드 존재. groupId={}, barcodeNumber={}",
-                        groupId, existingBarcode.barcodeNumber());
-            }
-        } catch (Exception e) {
-            log.error("[현장결제:바코드조회] ❌ Redis 바코드 조회 실패. groupId={}, error={}",
-                    groupId, e.getMessage(), e);
-            // 바코드 조회 실패는 치명적이지 않으므로 null로 진행
-        }
-
-        // ── 분기: 전원 집결 vs 이탈 ─────────────────────────────
         if (nearbyMembersCount >= targetMemberCount && targetMemberCount > 0) {
-            log.info("[현장결제:집결완료] 🎉 전원 집결! groupId={}, {}명 모두 15m 이내 확인",
-                    groupId, targetMemberCount);
-
             if (existingBarcode != null) {
-                log.info("[현장결제:바코드] ♻️ 기존 바코드 재사용. groupId={}, barcodeNumber={}",
-                        groupId, existingBarcode.barcodeNumber());
+                // 이미 생성된 바코드가 있다면 그대로 유지
                 return new LocationResponseDto(nearbyMembersCount, targetMemberCount, existingBarcode);
             } else {
-                log.info("[현장결제:바코드] 🆕 신규 바코드 발급 시작. groupId={}", groupId);
+                // 없으면 새로 만들어서 내려줌 (3분짜리로 만들지만, 멀어지면 아래 else문에서 강제 삭제됨)
                 BarcodeResponseDto newBarcode = generateAndSaveBarcode(groupId, geoKey, barcodeKey);
                 return new LocationResponseDto(nearbyMembersCount, targetMemberCount, newBarcode);
             }
-
         } else {
-            // 누군가 이탈하거나 아직 덜 모인 경우
+            // [단 한 명이라도 15m 밖으로 나갔을 때]
             if (existingBarcode != null) {
-                log.warn("[현장결제:이탈감지] 🚨 바코드 발급 후 이탈자 발생! 바코드 강제 파기. " +
-                                "groupId={}, 현재인원={}/{}명, barcodeNumber={}",
-                        groupId, nearbyMembersCount, targetMemberCount, existingBarcode.barcodeNumber());
-                try {
-                    redisTemplate.delete(barcodeKey);
-                    redisTemplate.delete("onsite:auth:" + existingBarcode.barcodeNumber());
-                    log.info("[현장결제:이탈감지] ✅ 바코드 및 auth 키 삭제 완료. groupId={}", groupId);
-                } catch (Exception e) {
-                    log.error("[현장결제:이탈감지] ❌ 바코드 삭제 중 오류. groupId={}, error={}",
-                            groupId, e.getMessage(), e);
-                }
-            } else {
-                log.debug("[현장결제:대기중] ⏳ 아직 집결 중. groupId={}, {}/{}명",
-                        groupId, nearbyMembersCount, targetMemberCount);
+                log.info("[현장결제] 누군가 이탈하여 기존 바코드를 강제 파기합니다! groupId={}", groupId);
+                redisTemplate.delete(barcodeKey);
+                redisTemplate.delete("onsite:auth:" + existingBarcode.barcodeNumber());
             }
             return new LocationResponseDto(nearbyMembersCount, targetMemberCount, null);
         }
@@ -177,38 +89,17 @@ public class OnsitePaymentService {
         BarcodeResponseDto newBarcode = generateBarcode();
         String authKey = "onsite:auth:" + newBarcode.barcodeNumber();
 
-        Boolean isSet = false;
-        try {
-            isSet = redisTemplate.opsForValue()
-                    .setIfAbsent(barcodeKey, newBarcode, Duration.ofMinutes(3));
-        } catch (Exception e) {
-            log.error("[현장결제:바코드저장] ❌ Redis setIfAbsent 실패. groupId={}, error={}",
-                    groupId, e.getMessage(), e);
-//            throw new CustomException(ErrorCode.REDIS_OPERATION_FAILED);
-        }
+        Boolean isSet = redisTemplate.opsForValue()
+                .setIfAbsent(barcodeKey, newBarcode, Duration.ofMinutes(3));
 
-        // 동시에 여러 요청이 들어온 경우 (따닥 방지)
         if (Boolean.FALSE.equals(isSet)) {
-            log.warn("[현장결제:바코드저장] ⚠️ 동시 요청 감지 - 이미 생성된 바코드 반환. groupId={}", groupId);
-            BarcodeResponseDto existing = (BarcodeResponseDto) redisTemplate.opsForValue().get(barcodeKey);
-            if (existing == null) {
-                log.error("[현장결제:바코드저장] ❌ setIfAbsent 실패 후 바코드 재조회도 실패. groupId={}", groupId);
-//                throw new CustomException(ErrorCode.BARCODE_GENERATION_FAILED);
-            }
-            return existing;
+            log.info("[현장결제] 이미 생성된 바코드가 있습니다. groupId={}", groupId);
+            return (BarcodeResponseDto) redisTemplate.opsForValue().get(barcodeKey);
         }
 
-        try {
-            redisTemplate.opsForValue().set(authKey, groupId, Duration.ofMinutes(3));
-            log.info("[현장결제:바코드저장] ✅ 바코드 발급 완료. groupId={}, barcodeNumber={}, expiredAt={}",
-                    groupId, newBarcode.barcodeNumber(), newBarcode.expiredAt());
-        } catch (Exception e) {
-            log.error("[현장결제:바코드저장] ❌ auth 키 저장 실패. groupId={}, barcodeNumber={}, error={}",
-                    groupId, newBarcode.barcodeNumber(), e.getMessage(), e);
-            // auth 키 저장 실패 시 바코드도 롤백
-            redisTemplate.delete(barcodeKey);
-//            throw new CustomException(ErrorCode.REDIS_OPERATION_FAILED);
-        }
+        redisTemplate.opsForValue().set(authKey, groupId, Duration.ofMinutes(3));
+
+        log.info("[현장결제] 새 바코드 생성됨. groupId={}, barcodeNumber={}", groupId, newBarcode.barcodeNumber());
 
         return newBarcode;
     }
@@ -216,79 +107,50 @@ public class OnsitePaymentService {
     private BarcodeResponseDto generateBarcode() {
         String barcodeUuid = UUID.randomUUID().toString().replace("-", "");
         String barcodeNumber = barcodeUuid.substring(0, 16).toUpperCase();
+
+        String qrData = barcodeNumber;
+
         String expiredAt = Instant.now().plusSeconds(180).toString();
-        log.debug("[현장결제:바코드생성] 🎲 UUID 기반 바코드 생성. barcodeNumber={}", barcodeNumber);
-        return new BarcodeResponseDto(barcodeNumber, barcodeNumber, expiredAt);
+
+        return new BarcodeResponseDto(barcodeNumber, qrData, expiredAt);
     }
 
     public void startPayment(Long groupId, Long userId) {
-        log.info("[현장결제:시작요청] ▶ groupId={}, 요청자(방장)userId={}", groupId, userId);
-
-        if (groupId == null || userId == null) {
-            log.error("[현장결제:시작요청] ❌ 필수 파라미터 누락. groupId={}, userId={}", groupId, userId);
-//            throw new CustomException(ErrorCode.INVALID_INPUT);
-        }
-
         String initKey = INIT_KEY_PREFIX + groupId;
 
-        Boolean isFirst = false;
-        try {
-            isFirst = stringRedisTemplate.opsForValue()
-                    .setIfAbsent(initKey, "1", Duration.ofSeconds(10));
-        } catch (Exception e) {
-            log.error("[현장결제:시작요청] ❌ Redis 쿨타임 체크 실패. groupId={}, error={}",
-                    groupId, e.getMessage(), e);
-//            throw new CustomException(ErrorCode.REDIS_OPERATION_FAILED);
-        }
+        // 1. 따닥(더블클릭) 방지용 10초 쿨타임 자물쇠
+        Boolean isFirst = stringRedisTemplate.opsForValue()
+                .setIfAbsent(initKey, "1", Duration.ofSeconds(10));
 
         if (Boolean.TRUE.equals(isFirst)) {
-            log.info("[현장결제:시작요청] ✅ 새 결제 세션 시작. 기존 데이터 초기화. groupId={}", groupId);
+            // 2. 하은님 기획대로! 결제 시작 버튼 = "기존 데이터 싹 다 리셋하고 새로 모여!"
+            // 위치 도화지, 바코드, 마스터키를 전부 깨끗하게 지웁니다.
             cleanUpOldSessionData(groupId);
 
-            try {
-                kafkaProducerService.sendOnsitePaymentRequest(groupId, userId, "방장");
-                log.info("[현장결제:시작요청] ✅ Kafka 알림 발송 완료. groupId={}, userId={}", groupId, userId);
-            } catch (Exception e) {
-                log.error("[현장결제:시작요청] ❌ Kafka 발송 실패. groupId={}, userId={}, error={}",
-                        groupId, userId, e.getMessage(), e);
-                // Kafka 실패는 결제 시작 자체를 막지 않음 (알림만 안 가는 것)
-                log.warn("[현장결제:시작요청] ⚠️ 알림 없이 결제 진행됩니다. groupId={}", groupId);
-            }
+            // 3. 알림 발송
+            log.info("[현장결제] 결제 (재)시작. 데이터 초기화 및 알림 발송 완료. groupId={}", groupId);
+            kafkaProducerService.sendOnsitePaymentRequest(groupId, userId, "방장");
         } else {
-            log.warn("[현장결제:시작요청] ⛔ 10초 쿨타임 내 재요청 차단. groupId={}, userId={}. " +
-                    "방장이 결제 시작을 연속으로 눌렀습니다.", groupId, userId);
+            // 10초 안에 또 누르면 너무 빠르다고 튕겨냄
+            log.warn("[현장결제] 잠시 후 다시 시도해주세요. (10초 쿨타임) groupId={}", groupId);
             throw new CustomException(ErrorCode.PAYMENT_ALREADY_IN_PROGRESS);
         }
     }
 
+    // 🧹 새 결제 시작을 위한 완벽한 초기화 메서드 (하은님이 원하신 바로 그 구조!)
     private void cleanUpOldSessionData(Long groupId) {
-        log.info("[현장결제:초기화] 🧹 세션 초기화 시작. groupId={}", groupId);
-
         String geoKey = GEO_KEY_PREFIX + groupId;
         String barcodeKey = BARCODE_KEY_PREFIX + groupId;
 
-        try {
-            Boolean geoDeleted = stringRedisTemplate.delete(geoKey);
-            log.info("[현장결제:초기화] {} 위치 데이터 삭제. groupId={}",
-                    Boolean.TRUE.equals(geoDeleted) ? "✅" : "ℹ️ (없었음)", groupId);
-        } catch (Exception e) {
-            log.error("[현장결제:초기화] ❌ 위치 데이터 삭제 실패. groupId={}, error={}", groupId, e.getMessage(), e);
-        }
+        // 1. 기존 위치 도화지 찢어버리기 (새로 받아야 하니까!)
+        stringRedisTemplate.delete(geoKey);
 
-        try {
-            BarcodeResponseDto existingBarcode = (BarcodeResponseDto) redisTemplate.opsForValue().get(barcodeKey);
-            if (existingBarcode != null) {
-                redisTemplate.delete("onsite:auth:" + existingBarcode.barcodeNumber());
-                redisTemplate.delete(barcodeKey);
-                log.info("[현장결제:초기화] ✅ 기존 바코드 삭제 완료. groupId={}, barcodeNumber={}",
-                        groupId, existingBarcode.barcodeNumber());
-            } else {
-                log.info("[현장결제:초기화] ℹ️ 삭제할 기존 바코드 없음. groupId={}", groupId);
-            }
-        } catch (Exception e) {
-            log.error("[현장결제:초기화] ❌ 바코드 삭제 실패. groupId={}, error={}", groupId, e.getMessage(), e);
+        // 2. 기존 바코드가 있다면 바코드와 auth 키 둘 다 파기
+        BarcodeResponseDto existingBarcode = (BarcodeResponseDto) redisTemplate.opsForValue().get(barcodeKey);
+        if (existingBarcode != null) {
+            redisTemplate.delete("onsite:auth:" + existingBarcode.barcodeNumber());
+            redisTemplate.delete(barcodeKey);
         }
-
-        log.info("[현장결제:초기화] ✅ 세션 초기화 완료. groupId={}", groupId);
+        log.info("[현장결제] 새 세션 시작을 위해 기존 위치/바코드 데이터 정리 완료. groupId={}", groupId);
     }
 }
