@@ -98,29 +98,21 @@ export default function MyPageScreen({ navigation }: any) {
           </View>
           {/* 이름 표시 */}
           <Text variant="bodyLg" weight="bold" color="dark"
-            
            style={{ marginTop: 16 }}>
             {profile?.name ?? '사용자'}
           </Text>
-          {profile?.gender && (
-            <Text variant="caption" color="placeholder"
-              
-             style={{ marginTop: 4 }}>
-              {profile.gender === 'M' ? '남성' : '여성'} · {profile.birthDay ?? ''}
-            </Text>
-          )}
         </View>
 
         {/* 기본 정보 섹션 */}
         <View style={{ paddingHorizontal: 20, gap: 12 }}>
           <InfoCard title="기본정보">
-            <InfoRow label="이름" value={profile?.name ?? '-'} />
-            <Divider />
             <InfoRow label="이메일" value={profile?.email ?? '-'} />
             <Divider />
             <InfoRow label="휴대폰번호" value={profile?.phoneNumber ?? '-'} />
             <Divider />
             <InfoRow label="생년월일" value={profile?.birthDay ?? '-'} />
+            <Divider />
+            <InfoRow label="성별" value={profile?.gender === 'M' ? '남성' : '여성'} />
           </InfoCard>
 
           {/* 집 주소 섹션 */}
@@ -129,7 +121,6 @@ export default function MyPageScreen({ navigation }: any) {
               <InfoRow label="주소" value={profile.address} />
             ) : (
               <Text variant="bodySm" color="placeholder" align="center"
-                
               >
                 등록된 주소가 없어요{'\n'}
                 <Text style={{ fontSize: 12, color: '#C7D2FE' }}>수정을 눌러 추가할 수 있어요</Text>
