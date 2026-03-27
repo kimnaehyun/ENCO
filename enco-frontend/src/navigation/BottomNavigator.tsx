@@ -70,6 +70,7 @@ export default function BottomNavigator() {
         name={ROUTES.TAB_GROUP}
         component={UserStackNavigator}
         options={{
+          popToTopOnBlur: true,
           tabBarIcon: ({ focused, size }) => (
             <Image
               source={images.profileIcon}

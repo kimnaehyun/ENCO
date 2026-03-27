@@ -47,7 +47,6 @@ export async function GetMyPage(): Promise<GetMyPageResponse> {
 export type EditMyPageRequest = {
   phoneNumber?: string;
   address?: string;
-  birthDay?: string;
   profileUrl?: number;
 };
 
