@@ -85,4 +85,19 @@ public class User {
     public void updateFcmToken(String fcmToken) {
         this.fcmToken = fcmToken;
     }
+
+    public void updateMyPage(String phoneNumber, String address, Date birthDay, Integer profileUrl) {
+        if (phoneNumber != null && !phoneNumber.isBlank()) {
+            this.phoneNumber = phoneNumber;
+        }
+        if (address != null && !address.isBlank()) {
+            this.address = address;
+        }
+        if (birthDay != null) {
+            this.birthDay = birthDay;
+        }
+        if (profileUrl != null) {
+            this.profileUrl = profileUrl;
+        }
+    }
 }

@@ -19,30 +19,49 @@ authApi.interceptors.request.use(async config => {
   return config;
 });
 
-// ── 마이페이지 프로필 조회 ──
-export type MyPageResponse = {
-  message: string;
-  result: {
-    name: string;
-    email: string;
-    phoneNumber: string;
-    birthDay: string;
-    gender: 'M' | 'W';
-    address: string;
-    profileUrl: string;
-  };
+// ── 마이페이지 공통 type ──
+export type MyPageInfo = {
+  name: string;
+  email: string;
+  phoneNumber: string;
+  birthDay: string;
+  gender: 'M' | 'W';
+  address: string;
+  profileUrl: number;
 };
 
-export async function fetchMyPage(): Promise<UserProfile> {
-  const response = await authApi.get<MyPageResponse>('/auth/mypage');
-  return response.data.result;
+// ── 마이페이지 조회 (GET /auth-service/api/v1/auth/mypage) ──
+export type GetMyPageResponse = {
+  message: string;
+  result: MyPageInfo;
+};
+
+export async function GetMyPage(): Promise<GetMyPageResponse> {
+  const response = await authApi.get<GetMyPageResponse>(
+    `/auth/mypage`,
+  );
+  return response.data;
 }
 
-// ── 주소 수정 ──
-export type UpdateAddressRequest = {
-  address: string;
+// ── 마이페이지 수정 (PATCH /auth-service/api/v1/auth/mypage) ──
+export type EditMyPageRequest = {
+  phoneNumber?: string;
+  address?: string;
+  birthDay?: string;
+  profileUrl?: number;
 };
 
-export async function updateAddress(payload: UpdateAddressRequest): Promise<void> {
-  await authApi.put('/auth/mypage', payload);
+export type EditMyPageResponse = {
+  message: string;
+  result: MyPageInfo;
+}
+
+export async function EditMyPage(
+  payload: EditMyPageRequest,
+): Promise<EditMyPageResponse> {
+  const response = await authApi.patch<EditMyPageResponse>(
+    `/auth/mypage`,
+    payload,
+  );
+  return response.data;
 }
