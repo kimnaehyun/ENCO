@@ -62,6 +62,7 @@ public class OnsitePaymentController {
                 request.amount(),
                 request.merchantName(),
                 request.cardId(),
+                request.usePoint(),
                 idempotencyKey
         );
 
