@@ -70,7 +70,7 @@ export default function MyPageScreen({ navigation }: any) {
           <Text variant="bodyLg" weight="bold" color="dark" >
             마이페이지
           </Text>
-          <Pressable onPress={() => navigation.navigate('EditAddress')}>
+          <Pressable onPress={() => navigation.navigate('EditMyPage')}>
             <Text variant="bodyMd" color="brand" >
               수정
             </Text>
