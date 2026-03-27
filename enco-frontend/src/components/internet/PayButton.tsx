@@ -1,13 +1,27 @@
-import { Text, Pressable } from 'react-native';
 import React from 'react';
+import { Pressable, StyleSheet } from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 
 export default function PayButton({ onPress }: { onPress: () => void }) {
   return (
-    <Pressable
-      className="w-80 bg-[#1428A0] py-4 rounded-[18px] flex items-center"
-      onPress={onPress}
-    >
-      <Text className="text-white font-bold text-base">결제하기</Text>
+    <Pressable style={styles.button} onPress={onPress}>
+      <Text style={styles.buttonText}>결제하기</Text>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  button: {
+    minWidth: 246,
+    height: 54,
+    borderRadius: 18,
+    backgroundColor: '#1428A0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  buttonText: {
+    fontSize: 24,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
+  },
+});

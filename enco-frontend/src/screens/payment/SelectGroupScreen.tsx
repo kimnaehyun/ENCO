@@ -1,5 +1,5 @@
-import { View } from 'react-native';
 import React, { useEffect, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import GroupSelectItem from '../../components/payment/GroupSelectItem';
 import Header from '../../components/internet/Header';
 import ScreenLayout from '../../components/ScreenLayout';
@@ -25,9 +25,9 @@ export default function SelectGroupScreen({ route }: any) {
   }, []);
 
   return (
-    <ScreenLayout className="gap-4">
+    <ScreenLayout>
       <Header title="모임 목록" />
-      <View className="flex gap-2">
+      <View style={styles.card}>
         {groups.map(item => (
           <GroupSelectItem
             key={item.groupId}
@@ -40,3 +40,9 @@ export default function SelectGroupScreen({ route }: any) {
     </ScreenLayout>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    marginTop: 16,
+  },
+});
