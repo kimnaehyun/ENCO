@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.math.BigDecimal;
 import java.util.List;
 
-@FeignClient(name = "auth-service", url = "${service.auth.url}", fallbackFactory = UserServiceClientFallbackFactory.class)
+@FeignClient(name = "auth-service", url = "${service.auth.url}")
 public interface UserServiceClient {
     @GetMapping("/internal/groups/{groupId}/vote-criteria")
     CommonResponse<Integer> getVoteCriteria(@PathVariable Long groupId);
@@ -40,7 +40,7 @@ public interface UserServiceClient {
             @RequestBody PointUseRequestDto request
     );
 
-    @GetMapping("/api/v1/users/{groupId}/members/{userId}/check")
+    @GetMapping("/api/v1/groups/{groupId}/members/{userId}/check")
     CommonResponse<Boolean> checkGroupMember(
             @PathVariable("groupId") Long groupId,
             @PathVariable("userId") Long userId);
