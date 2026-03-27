@@ -8,6 +8,7 @@ import PayButton from '../../components/internet/PayButton';
 import ScreenLayout from '../../components/ScreenLayout';
 import BarcodeCardRecommendation from '@/components/onsite/Barcode/BarcodeCardRecommendation';
 import { getGroupCards } from '@/services/paymentService';
+import { getPoint } from '@/services/authService';
 
 export default function CardChoiceScreen() {
   const navigation = useNavigation<any>();
@@ -17,18 +18,25 @@ export default function CardChoiceScreen() {
 
   const [cardsInfo, setCardsInfo] = useState<any>();
 
+  const [point, setPoint] = useState<boolean>(true);
+  const [pointUsage, setPointUsage] = useState<boolean>(true);
+
   useEffect(() => {
     const fetchCards = async () => {
       const response = await getGroupCards(params.groupId);
-      console.log(response);
-
       const mapped = response.result.map(item => ({
-        image: images.card1, // 임시 폴백
+        image: item.frontCardImageUrl,
         cardId: item.cardId,
       }));
       setCardsInfo(mapped);
     };
     fetchCards();
+
+    const fetchPoint = async () => {
+      const response = await getPoint(params.groupId);
+      setPoint(response.result);
+    };
+    fetchPoint();
   }, []);
 
   return (
@@ -57,9 +65,12 @@ export default function CardChoiceScreen() {
             <View className="flex-row justify-between items-center ">
               <View className="flex-row items-center">
                 <Text className="text-[20px]">보유 포인트</Text>
-                <Text className="text-[#1428A0] text-[20px]">80P</Text>
+                <Text className="text-[#1428A0] text-[20px]">{point}P</Text>
               </View>
-              <PointToggleButton />
+              <PointToggleButton
+                pointUsage={pointUsage}
+                pointUsageFn={(usage: boolean) => setPointUsage(usage)}
+              />
             </View>
             <KeyValueRow title="가맹점명">
               <Text className="font-bold text-[20px]">여기 엇-혜역</Text>

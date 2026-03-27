@@ -15,8 +15,8 @@ import BarcodeQR from './BarcodeQR';
 import BarcodeCardRecommendation from './BarcodeCardRecommendation';
 import { locationApi } from '@/services/payment/location';
 import { getGroupCards, onsiteBarcodePayment } from '@/services/paymentService';
-import { images } from '@/types/images';
 import { voteApi } from '@/services/payment/vote';
+import { getPoint } from '@/services/authService';
 
 export default function index({ groupId }: { groupId: number }) {
   const [cardNumber, setCardNumber] = useState<number>(0);
@@ -27,6 +27,17 @@ export default function index({ groupId }: { groupId: number }) {
 
   const [cardsInfo, setCardsInfo] = useState<any>();
   const selectedCard = cardsInfo?.[cardNumber];
+
+  const [pointUsage, setPointUsage] = useState<boolean>(true);
+
+  const [point, setPoint] = useState<boolean>(true);
+  useEffect(() => {
+    const fetchPoint = async () => {
+      const response = await getPoint(groupId);
+      setPoint(response.result);
+    };
+    fetchPoint();
+  }, []);
 
   const [barcodeInfo, setBarcodeInfo] = useState<{
     barcodeNumber: string;
@@ -75,9 +86,11 @@ export default function index({ groupId }: { groupId: number }) {
     const fetchCards = async () => {
       const response = await getGroupCards(groupId);
       const mapped = response.result.map(item => ({
-        image: images.card1, // 임시 폴백
+        image: item.frontCardImageUrl,
         cardId: item.cardId,
       }));
+      console.log(response);
+
       setCardsInfo(mapped);
     };
     fetchCards();
@@ -174,6 +187,7 @@ export default function index({ groupId }: { groupId: number }) {
       const response = await onsiteBarcodePayment(
         barcodeInfo.barcodeNumber,
         selectedCard.cardId,
+        pointUsage,
       );
       Alert.alert('결제 성공', JSON.stringify(response));
     } catch (error: any) {
@@ -214,8 +228,14 @@ export default function index({ groupId }: { groupId: number }) {
         )}
       </View>
       <View className="flex-row justify-between items-center bg-white rounded-full py-4 pl-10 pr-4">
-        <Text className="text-xl font-medium">회식주의자</Text>
-        <PointToggleButton />
+        <View className="flex-row">
+          <Text className="text-[20px]">보유 포인트</Text>
+          <Text className="text-[#1428A0] text-[20px]">{point}P</Text>
+        </View>
+        <PointToggleButton
+          pointUsage={pointUsage}
+          pointUsageFn={(usage: boolean) => setPointUsage(usage)}
+        />
       </View>
       <View className="flex-1">
         <BarcodeCardRecommendation
