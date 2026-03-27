@@ -31,6 +31,11 @@ spring:
   cloud:
     compatibility-verifier:
       enabled: false
+    openfeign:
+      circuitbreaker:
+        enabled: true
+        group:
+          enabled: true
 server:
   port: ${PAYMENT_SERVICE_PORT}
   servlet:
@@ -63,11 +68,27 @@ minio:
 app:
   file-base-url: ${FILE_BASE_URL}
 
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        register-health-indicator: true
+        sliding-window-size: 10
+        minimum-number-of-calls: 5
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 30s
+        permitted-number-of-calls-in-half-open-state: 3
+    instances:
+      authServiceClient:
+        base-config: default
+      auth-service:
+        base-config: default
+
 management:
   endpoints:
     web:
       exposure:
-        include: health,info
+        include: health,info,circuitbreakers
   endpoint:
     health:
       show-details: always

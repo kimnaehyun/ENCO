@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import java.math.BigDecimal;
 import java.util.List;
 
-@FeignClient(name = "auth-service", url = "${service.auth.url}")
+@FeignClient(name = "auth-service", url = "${service.auth.url}", fallbackFactory = UserServiceClientFallbackFactory.class)
 public interface UserServiceClient {
     @GetMapping("/internal/groups/{groupId}/vote-criteria")
     CommonResponse<Integer> getVoteCriteria(@PathVariable Long groupId);
