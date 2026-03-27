@@ -31,6 +31,19 @@ function formatMoney(n: number) {
   const sign = n >= 0 ? '+' : '-';
   return `${sign}${Math.abs(n).toLocaleString()}원`;
 }
+function toSafeNumber(value: unknown, fallback = 0) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string') {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return fallback;
+}
+function toSafeDateText(value: unknown) {
+  if (typeof value !== 'string') return '1970-01-01';
+  if (value.length >= 10) return value.slice(0, 10);
+  return '1970-01-01';
+}
 function pad(n: number) {
   return n < 10 ? `0${n}` : `${n}`;
 }
@@ -45,6 +58,29 @@ function addMonths(d: Date, n: number) {
 function shortDate(dateStr: string) {
   const parts = dateStr.split('-');
   return `${parseInt(parts[1])}.${parseInt(parts[2])}`;
+}
+
+type LedgerStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
+
+function getTransactionStatusMeta(status?: LedgerStatus) {
+  switch (status) {
+    case 'PENDING':
+      return { label: '진행중', backgroundColor: '#F59E0B', textColor: '#FFFFFF' };
+    case 'REJECTED':
+      return { label: '거절', backgroundColor: '#EF4444', textColor: '#FFFFFF' };
+    case 'CANCELED':
+      return { label: '취소', backgroundColor: '#9CA3AF', textColor: '#FFFFFF' };
+    case 'APPROVED':
+      return { label: '완료', backgroundColor: '#1428A0', textColor: '#FFFFFF' };
+    default:
+      return null;
+  }
+}
+
+function getDirectionMeta(type: 'DEPOSIT' | 'WITHDRAW') {
+  return type === 'DEPOSIT'
+    ? { label: '입금', backgroundColor: '#DBEAFE', textColor: '#1428A0' }
+    : { label: '출금', backgroundColor: '#FEE2E2', textColor: '#EF4444' };
 }
 
 // ─── 달력 모달 ───
@@ -335,7 +371,7 @@ export default function GroupLedgerScreen() {
     if (!appliedFilter) return transactions;
 
     let filtered = transactions.filter(it => {
-      const txDate = it.transactionDate.slice(0, 10);
+      const txDate = toSafeDateText(it.transactionDate);
       const startStr = fmtDate(appliedFilter.start);
       const endStr = fmtDate(appliedFilter.end);
       return txDate >= startStr && txDate <= endStr;
@@ -404,26 +440,34 @@ export default function GroupLedgerScreen() {
           : '출금';
     const sortLabel = appliedFilter.sort === 'latest' ? '최신순' : '과거순';
 
-    const totalDeposit = filteredTransactions
+    const totalsTargetTransactions = filteredTransactions.filter(it => {
+      if (it.referenceType !== 'TRANSACTION') return true;
+      return it.status !== 'CANCELED';
+    });
+
+    const totalDeposit = totalsTargetTransactions
       .filter(it => it.type === 'DEPOSIT')
-      .reduce((sum, it) => sum + it.amount, 0);
-    const totalWithdraw = filteredTransactions
+      .reduce((sum, it) => sum + toSafeNumber(it.amount), 0);
+    const totalWithdraw = totalsTargetTransactions
       .filter(it => it.type === 'WITHDRAW')
-      .reduce((sum, it) => sum + it.amount, 0);
+      .reduce((sum, it) => sum + toSafeNumber(it.amount), 0);
 
     const rows = filteredTransactions
       .map(it => {
         const isDeposit = it.type === 'DEPOSIT';
-        const signedAmount = isDeposit ? it.amount : -it.amount;
+        const amount = toSafeNumber(it.amount);
+        const signedAmount = isDeposit ? amount : -amount;
+        const txDate = toSafeDateText(it.transactionDate);
+        const balanceAfter = toSafeNumber(it.balanceAfter);
         return `
         <tr>
-          <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#6B7280;">${it.transactionDate.slice(0, 10)}</td>
+          <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#6B7280;">${txDate}</td>
           <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#111827; font-weight:600;">${it.title}</td>
           <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:${isDeposit ? '#1428A0' : '#EF4444'}; text-align:right; font-weight:700;">
             ${formatMoney(signedAmount)}
           </td>
           <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#6B7280; text-align:right;">
-            ${it.balanceAfter.toLocaleString()}원
+            ${balanceAfter.toLocaleString()}원
           </td>
         </tr>`;
       })
@@ -639,7 +683,17 @@ export default function GroupLedgerScreen() {
           ) : (
             filteredTransactions.map(it => {
               const isDeposit = it.type === 'DEPOSIT';
-              const signedAmount = isDeposit ? it.amount : -it.amount;
+              const statusMeta =
+                it.referenceType === 'TRANSACTION'
+                  ? getTransactionStatusMeta(it.status)
+                  : null;
+              const directionMeta = getDirectionMeta(it.type);
+              const isInactiveTransaction =
+                it.referenceType === 'TRANSACTION' && it.status && it.status !== 'APPROVED';
+              const amount = toSafeNumber(it.amount);
+              const signedAmount = isDeposit ? amount : -amount;
+              const txDate = toSafeDateText(it.transactionDate);
+              const balanceAfter = toSafeNumber(it.balanceAfter);
 
               return (
                 <Pressable
@@ -662,13 +716,21 @@ export default function GroupLedgerScreen() {
                         transactionId: it.referenceId,
                         referenceType: it.referenceType,
                         isAdmin,
+                        listItem: {
+                          title: it.title,
+                          amount,
+                          transactionDate: it.transactionDate,
+                          balanceAfter: toSafeNumber(it.balanceAfter),
+                          type: it.type,
+                          status: it.status,
+                        },
                       });
                     } else if (it.referenceType === 'EXPENSE') {
                       navigation.navigate('SettleDetail', {
                         expenseId: it.referenceId,
-                        amount: it.amount,
+                        amount,
                         storeName: it.title,
-                        date: it.transactionDate.slice(0, 10),
+                        date: txDate,
                         memo: '',
                         receiptUri: null,
                         groupName: params.groupName ?? groupName,
@@ -711,20 +773,38 @@ export default function GroupLedgerScreen() {
                     <View style={styles.ledgerItemLeft}>
                       <View style={styles.ledgerItemTopRow}>
                         <Text style={styles.ledgerItemDate}>
-                          {shortDate(it.transactionDate.slice(0, 10))}
+                          {shortDate(txDate)}
                         </Text>
+                        {statusMeta && (
+                          <View
+                            style={[
+                              styles.settleBadge,
+                              { backgroundColor: statusMeta.backgroundColor },
+                            ]}
+                          >
+                            <Text
+                              style={[
+                                styles.settleBadgeText,
+                                { color: statusMeta.textColor },
+                              ]}
+                            >
+                              {statusMeta.label}
+                            </Text>
+                          </View>
+                        )}
                         <View
                           style={[
                             styles.settleBadge,
-                            {
-                              backgroundColor: isDeposit
-                                ? '#1428A0'
-                                : '#EF4444',
-                            },
+                            { backgroundColor: directionMeta.backgroundColor },
                           ]}
                         >
-                          <Text style={styles.settleBadgeText}>
-                            {isDeposit ? '입금' : '출금'}
+                          <Text
+                            style={[
+                              styles.settleBadgeText,
+                              { color: directionMeta.textColor },
+                            ]}
+                          >
+                            {directionMeta.label}
                           </Text>
                         </View>
                       </View>
@@ -735,18 +815,29 @@ export default function GroupLedgerScreen() {
                       >
                         {it.title}
                       </Text>
+                      {statusMeta && it.status !== 'APPROVED' && (
+                        <Text style={styles.ledgerItemStatusNote}>
+                          {statusMeta.label}된 거래입니다.
+                        </Text>
+                      )}
                     </View>
                     <View style={styles.ledgerItemRight}>
                       <Text
                         style={[
                           styles.ledgerItemAmount,
-                          { color: isDeposit ? '#1428A0' : '#EF4444' },
+                          {
+                            color: isInactiveTransaction
+                              ? '#9CA3AF'
+                              : isDeposit
+                                ? '#1428A0'
+                                : '#EF4444',
+                          },
                         ]}
                       >
                         {formatMoney(signedAmount)}
                       </Text>
                       <Text style={styles.ledgerItemBalance}>
-                        {it.balanceAfter.toLocaleString()}원
+                        {balanceAfter.toLocaleString()}원
                       </Text>
                     </View>
                   </View>
@@ -1204,6 +1295,12 @@ const styles = StyleSheet.create({
   ledgerItemMemo: {
     fontSize: 12,
     color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+    marginTop: 4,
+  },
+  ledgerItemStatusNote: {
+    fontSize: 12,
+    color: COLORS.placeholder,
     fontFamily: FONT_FAMILY.medium,
     marginTop: 4,
   },

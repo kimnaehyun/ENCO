@@ -1,7 +1,7 @@
 // src/screens/user/NotificationCenterScreen.tsx
 import React from 'react';
-import { FlatList, Pressable, StyleSheet, View } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
+import { FlatList, Pressable, StyleSheet, View } from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import {
@@ -18,31 +18,46 @@ export default function NotificationCenterScreen() {
 
   const { notifications, markRead, markAllRead, clearAll } = useNotifications();
 
-  const groupName = params.groupName ?? '알림';
+  const navigateToGroupPay = (
+    n: NotificationItem,
+    paySource: 'due' | 'settlement',
+  ) => {
+    navigation.navigate('GroupPay', {
+      groupId: n.groupId,
+      groupName: n.groupName,
+      presetAmount: n.amount,
+      presetMemo: n.memo,
+      presetUnpaidId: n.unpaidItemId,
+      paySource,
+    });
+  };
+
+  const navigateToVote = (n: NotificationItem) => {
+    if (n.voteId) {
+      navigation.navigate('GroupVoteDetail', {
+        voteId: n.voteId,
+        groupId: n.groupId,
+        groupName: n.groupName,
+      });
+      return;
+    }
+
+    navigation.navigate('GroupVotes', {
+      groupId: n.groupId,
+      groupName: n.groupName,
+    });
+  };
 
   const openTarget = (n: NotificationItem) => {
     markRead(n.id);
 
     if (n.type === 'DUE') {
-      navigation.navigate('GroupPay', {
-        groupId: n.groupId,
-        groupName: n.groupName,
-        presetAmount: n.amount,
-        presetMemo: n.memo,
-        presetUnpaidId: n.unpaidItemId,
-        paySource: 'due' as const,
-      });
+      navigateToGroupPay(n, 'due');
       return;
     }
 
     if (n.type === 'SETTLEMENT') {
-      navigation.navigate('GroupPay', {
-        groupId: n.groupId,
-        groupName: n.groupName,
-        presetAmount: n.amount,
-        presetMemo: n.memo,
-        paySource: 'settlement' as const,
-      });
+      navigateToGroupPay(n, 'settlement');
       return;
     }
 
@@ -54,11 +69,12 @@ export default function NotificationCenterScreen() {
       return;
     }
 
-    navigation.navigate('GroupVoteDetail', {
-      voteId: n.voteId ?? 'v1',
-      groupId: n.groupId,
-      groupName: n.groupName,
-    });
+    if (n.type === 'VOTE') {
+      navigateToVote(n);
+      return;
+    }
+
+    navigateToVote(n);
   };
 
   return (

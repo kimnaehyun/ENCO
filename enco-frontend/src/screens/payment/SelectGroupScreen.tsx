@@ -7,7 +7,7 @@ import { authApi } from '@/services/authService';
 import { Group } from '@/types/payment';
 
 export default function SelectGroupScreen({ route }: any) {
-  const { paymentType } = route.params;
+  const { paymentType, amount, storeName, callbackUrl, orderId } = route.params;
   const [groups, setGroups] = useState<Group[]>([]);
 
   useEffect(() => {
@@ -42,6 +42,10 @@ export default function SelectGroupScreen({ route }: any) {
               selectedGroupId={Number(item.groupId)}
               title={item.groupName}
               paymentType={paymentType}
+              amount={amount}
+              storeName={storeName}
+              callbackUrl={callbackUrl}
+              orderId={orderId}
             />
           ))}
         </View>

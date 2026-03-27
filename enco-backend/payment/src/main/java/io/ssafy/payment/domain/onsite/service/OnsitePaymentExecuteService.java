@@ -94,7 +94,7 @@ public class OnsitePaymentExecuteService {
                 .balance(account.getAmount()) // 결제 후 계좌 잔액
                 .counterpartyBankCode("999")
                 .counterpartyBankName("현장 결제")
-                .counterpartyBankAccountNumber(barcodeNumber)
+                .counterpartyBankAccountNumber(generateRandomBankAccountNumber())
                 .counterpartyName(merchantName)
                 .displayName(merchantName)
                 .type(Type.CARD_PAYMENT)
@@ -122,6 +122,13 @@ public class OnsitePaymentExecuteService {
         }
     }
 
+    private String generateRandomBankAccountNumber() {
+        int part1 = java.util.concurrent.ThreadLocalRandom.current().nextInt(100000, 1000000); // 6자리 랜덤
+        int part2 = java.util.concurrent.ThreadLocalRandom.current().nextInt(10000, 100000);  // 5자리 랜덤
+
+        return "222-" + part1 + "-" + part2;
+    }
+
     /**
      * 포인트 조회 및 차감을 전담하는 메서드 (현장 결제용)
      */
@@ -143,7 +150,7 @@ public class OnsitePaymentExecuteService {
                 // 현장 결제는 투표가 아니므로 voteId 자리에 null을 넣습니다.
                 userServiceClient.deductGroupPoint(groupId, new PointUseRequestDto(usedPoints, null));
             }
-
+            log.info("포인트 잔액 : {} 사용 포인트 : {}", pointBalance, usedPoints);
             return usedPoints;
 
         } catch (Exception e) {

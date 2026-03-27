@@ -2,30 +2,45 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
-import { NEXT_SCREEN } from '@/constants/payment';
 
 export default function GroupSelectItem({
   title,
   selectedGroupId,
   paymentType,
+  amount,
+  storeName,
+  callbackUrl,
+  orderId,
 }: {
   title: string;
   selectedGroupId: number;
   paymentType: 'internet' | 'onsite';
+  amount: number;
+  storeName: string;
+  callbackUrl: string;
+  orderId: string;
 }) {
   const navigation = useNavigation<any>();
 
   return (
     <Pressable
-      style={({ pressed }) => [
-        styles.item,
-        pressed && styles.itemPressed,
-      ]}
+      style={({ pressed }) => [styles.item, pressed && styles.itemPressed]}
       onPress={() => {
-        navigation.navigate(NEXT_SCREEN[paymentType], {
-          title,
-          groupId: selectedGroupId,
-        });
+        if (paymentType == 'internet') {
+          navigation.navigate('CardChoiceScreen', {
+            title,
+            groupId: selectedGroupId,
+            amount,
+            storeName,
+            callbackUrl,
+            orderId,
+          });
+        } else {
+          navigation.navigate('PaymentMethod', {
+            title,
+            groupId: selectedGroupId,
+          });
+        }
       }}
     >
       <View style={styles.titleBox}>

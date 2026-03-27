@@ -2,6 +2,7 @@ import { View } from 'react-native';
 import PaymentToggleButton from '../../components/onsite/PaymentToggleButton';
 import Barcode from '../../components/onsite/Barcode/';
 import QR from '../../components/onsite/QR';
+import LocationVerification from '../../components/onsite/LocationVerification';
 import { usePaymentMethod } from '../../hooks/usePaymentMethod';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRoute } from '@react-navigation/native';
@@ -11,7 +12,17 @@ export default function PaymentMethodScreen() {
   const insets = useSafeAreaInsets();
 
   const route = useRoute();
-  const params = route.params as { title: string; groupId: number };
+  const params = route.params as { title: string; groupId: number; isLeader?: boolean };
+
+  const isLeader = params.isLeader ?? true;
+
+  if (!isLeader) {
+    return (
+      <View className="flex-1 bg-[#636363]">
+        <LocationVerification groupId={params.groupId} />
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-[#636363] px-6">
@@ -24,7 +35,7 @@ export default function PaymentMethodScreen() {
         <PaymentToggleButton />
       </View>
       <View className="flex-1">
-        {isBarcode ? <Barcode groupId={params.groupId} /> : <QR />}
+        {isBarcode ? <Barcode groupId={params.groupId} isLeader /> : <QR />}
       </View>
     </View>
   );

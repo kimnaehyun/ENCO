@@ -49,6 +49,7 @@ export function useChat(roomId: string, userId: number) {
   const flatListRef = useRef<FlatList<ChatItem>>(null);
   const nextCursorRef = useRef<number | null>(null);
   const isLoadingMoreRef = useRef(false);
+  const isLoadingOlderRef = useRef(false);
 
   // 최초 메시지 로드
   useEffect(() => {
@@ -105,6 +106,9 @@ export function useChat(roomId: string, userId: number) {
             );
             return [...filtered, chatItem];
           });
+          requestAnimationFrame(() => {
+            flatListRef.current?.scrollToEnd({ animated: true });
+          });
           return;
         }
 
@@ -141,6 +145,7 @@ export function useChat(roomId: string, userId: number) {
   const loadMoreMessages = async () => {
     if (isLoadingMoreRef.current || nextCursorRef.current === null) return;
     isLoadingMoreRef.current = true;
+    isLoadingOlderRef.current = true;
     try {
       const res = await chatService.get(
         `/api/v1/chat-rooms/${roomId}/messages`,
@@ -155,6 +160,10 @@ export function useChat(roomId: string, userId: number) {
       console.error('이전 메시지 조회 실패:', e);
     } finally {
       isLoadingMoreRef.current = false;
+      // 약간의 지연 후 플래그 해제 (onContentSizeChange가 먼저 발동되도록)
+      setTimeout(() => {
+        isLoadingOlderRef.current = false;
+      }, 500);
     }
   };
 
@@ -263,5 +272,6 @@ export function useChat(roomId: string, userId: number) {
     sendMessage,
     retryMessage,
     cancelMessage,
+    isLoadingOlderRef,
   };
 }

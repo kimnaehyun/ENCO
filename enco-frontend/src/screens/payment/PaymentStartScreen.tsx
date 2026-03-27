@@ -1,6 +1,6 @@
 import React from 'react';
 import { Dimensions, Image, StyleSheet, View } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { images } from '../../types/images';
 import PayButton from '../../components/internet/PayButton';
@@ -15,6 +15,14 @@ const CARD_MIN_HEIGHT = Math.min(IMG_SIZE + 120, SCREEN_HEIGHT * 0.75);
 
 export default function PaymentStartScreen() {
   const navigation = useNavigation<any>();
+  const route = useRoute();
+  const { amount, storeName, callbackUrl, orderId } = (route.params ?? {}) as {
+    amount?: number;
+    storeName?: string;
+    callbackUrl?: string;
+    orderId: string;
+  };
+
   return (
     <ScreenLayout>
       <View style={styles.container}>
@@ -24,7 +32,16 @@ export default function PaymentStartScreen() {
             style={styles.image}
             resizeMode="contain"
           />
-          <PayButton onPress={() => navigation.navigate('SelectGroupScreen')} />
+          <PayButton
+            onPress={() =>
+              navigation.navigate('SelectGroupScreen', {
+                amount,
+                storeName,
+                callbackUrl,
+                orderId,
+              })
+            }
+          />
         </View>
       </View>
     </ScreenLayout>

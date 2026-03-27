@@ -33,6 +33,7 @@ export default function GroupChatScreen() {
     sendMessage,
     retryMessage,
     cancelMessage,
+    isLoadingOlderRef,
   } = useChat(String(groupId), userId);
 
   const { pickMode, handleHamcoTrigger, handleActionPress, sendPickMessage, exitPickMode } = useChatbot({
@@ -64,6 +65,10 @@ export default function GroupChatScreen() {
     setMsg('');
   };
 
+  const handleSelectHamcoMention = () => {
+    setMsg('@햄코 ');
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-[#F0F4FF]" edges={['top']}>
       <KeyboardAvoidingView
@@ -88,6 +93,7 @@ export default function GroupChatScreen() {
           onCancel={cancelMessage}
           onActionPress={handleActionPress}
           onLoadMore={loadMoreMessages}
+          isLoadingOlderRef={isLoadingOlderRef}
         />
 
         {pickMode && (
@@ -105,6 +111,7 @@ export default function GroupChatScreen() {
           msg={msg}
           onChangeMsg={setMsg}
           onSend={handleSend}
+          onSelectHamcoMention={handleSelectHamcoMention}
           placeholder={pickMode ? '추천받고 싶은 내용을 입력하세요' : undefined}
         />
       </KeyboardAvoidingView>
