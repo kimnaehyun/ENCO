@@ -117,38 +117,40 @@ public class OnsitePaymentService {
 
     public void startPayment(Long groupId, Long userId) {
         String initKey = INIT_KEY_PREFIX + groupId;
-        String geoKey = GEO_KEY_PREFIX + groupId;
-        String barcodeKey = BARCODE_KEY_PREFIX + groupId;
 
-
-        BarcodeResponseDto existingBarcode = (BarcodeResponseDto) redisTemplate.opsForValue().get(barcodeKey);
-        if (existingBarcode != null) {
-            redisTemplate.delete("onsite:auth:" + existingBarcode.barcodeNumber());
-        }
-
-        cleanupOnsitePaymentData(groupId);
-
+        // 1. 따닥(더블클릭) 방지용 10초 쿨타임 자물쇠
         Boolean isFirst = stringRedisTemplate.opsForValue()
-                .setIfAbsent(initKey, "1", Duration.ofMinutes(5));
+                .setIfAbsent(initKey, "1", Duration.ofSeconds(10));
 
         if (Boolean.TRUE.equals(isFirst)) {
-            log.info("[현장결제] 결제 시작 및 알림 발송. groupId={}", groupId);
+            // 2. 하은님 기획대로! 결제 시작 버튼 = "기존 데이터 싹 다 리셋하고 새로 모여!"
+            // 위치 도화지, 바코드, 마스터키를 전부 깨끗하게 지웁니다.
+            cleanUpOldSessionData(groupId);
+
+            // 3. 알림 발송
+            log.info("[현장결제] 결제 (재)시작. 데이터 초기화 및 알림 발송 완료. groupId={}", groupId);
             kafkaProducerService.sendOnsitePaymentRequest(groupId, userId, "방장");
         } else {
-            log.warn("[현장결제] 이미 진행 중인 결제입니다. groupId={}", groupId);
+            // 10초 안에 또 누르면 너무 빠르다고 튕겨냄
+            log.warn("[현장결제] 잠시 후 다시 시도해주세요. (10초 쿨타임) groupId={}", groupId);
             throw new CustomException(ErrorCode.PAYMENT_ALREADY_IN_PROGRESS);
         }
     }
 
-    public void cleanupOnsitePaymentData(Long groupId) {
+    // 🧹 새 결제 시작을 위한 완벽한 초기화 메서드 (하은님이 원하신 바로 그 구조!)
+    private void cleanUpOldSessionData(Long groupId) {
         String geoKey = GEO_KEY_PREFIX + groupId;
         String barcodeKey = BARCODE_KEY_PREFIX + groupId;
-        String initKey = INIT_KEY_PREFIX + groupId;
 
+        // 1. 기존 위치 도화지 찢어버리기 (새로 받아야 하니까!)
         stringRedisTemplate.delete(geoKey);
-        redisTemplate.delete(barcodeKey);
-        stringRedisTemplate.delete(initKey);
 
-        log.info("[현장결제] 결제 완료로 인한 데이터 싹쓸이 정리 완료. groupId={}", groupId);
+        // 2. 기존 바코드가 있다면 바코드와 auth 키 둘 다 파기
+        BarcodeResponseDto existingBarcode = (BarcodeResponseDto) redisTemplate.opsForValue().get(barcodeKey);
+        if (existingBarcode != null) {
+            redisTemplate.delete("onsite:auth:" + existingBarcode.barcodeNumber());
+            redisTemplate.delete(barcodeKey);
+        }
+        log.info("[현장결제] 새 세션 시작을 위해 기존 위치/바코드 데이터 정리 완료. groupId={}", groupId);
     }
 }
