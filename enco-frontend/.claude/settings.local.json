@@ -3,7 +3,11 @@
     "allow": [
       "Bash(npx eslint:*)",
       "Bash(adb emu:*)",
-      "Bash(xargs grep:*)"
+      "Bash(xargs grep:*)",
+      "Bash(find /c/S14P21E104/enco-frontend/src/screens -type f -name *.tsx)",
+      "Bash(grep -r ONSITE_PAYMENT /c/S14P21E104/enco-frontend/src --include=*.ts --include=*.tsx)",
+      "Bash(grep -r setNotificationNavigationRef /c/S14P21E104/enco-frontend --include=*.ts --include=*.tsx)",
+      "Bash(find /c/S14P21E104/enco-frontend/src/types -name *.ts)"
     ]
   }
 }
