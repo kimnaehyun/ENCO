@@ -5,6 +5,7 @@ type ChatMsgProps = {
   senderId: number;
   senderName?: string;
   senderProfileImage?: number;
+  senderImageUrl?: string;
   isMe: boolean;
   created_at: string;
   status?: 'sending' | 'sent' | 'failed';

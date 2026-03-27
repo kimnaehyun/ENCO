@@ -16,6 +16,8 @@ export default function ChatMessageList({
   onLoadMore,
 }: ChatMessageListProps) {
   const renderItem: ListRenderItem<ChatItem> = ({ item }) => {
+    console.log(item);
+
     if (item.type === 'chat') {
       return (
         <ChatMessage
@@ -24,6 +26,7 @@ export default function ChatMessageList({
           senderId={item.senderId}
           senderName={item.senderName}
           senderProfileImage={item.senderProfileImage}
+          senderImageUrl={item.senderImageUrl}
           isMe={item.senderId === userId}
           created_at={item.createdAt}
           status={item.status}
@@ -81,7 +84,16 @@ export default function ChatMessageList({
       refreshing={false}
       onContentSizeChange={() => {
         const last = messages[messages.length - 1];
-        if (last?.type === 'chat' && last.senderId === userId) {
+        // chat 타입 내 메시지 OR chatbot/user/bot-* 타입일 때 스크롤
+        const shouldScroll =
+          (last?.type === 'chat' && last.senderId === userId) ||
+          last?.type === 'chatbot' ||
+          last?.type === 'user' ||
+          last?.type === 'bot-actions' ||
+          last?.type === 'bot-unpaid-card' ||
+          last?.type === 'bot-ledger-card';
+
+        if (shouldScroll) {
           flatListRef.current?.scrollToEnd({ animated: true });
         }
       }}
