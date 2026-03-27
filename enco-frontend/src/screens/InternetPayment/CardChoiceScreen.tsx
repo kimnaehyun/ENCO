@@ -13,7 +13,14 @@ import { getPoint } from '@/services/authService';
 export default function CardChoiceScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const params = route.params as { title: string; groupId: number };
+  const params = route.params as {
+    title: string;
+    groupId: number;
+    storeName: string;
+    amount: number;
+    callbackUrl: string;
+    orderId: string;
+  };
   const [cardNumber, setCardNumber] = useState<number>(0);
 
   const [cardsInfo, setCardsInfo] = useState<any>();
@@ -29,6 +36,8 @@ export default function CardChoiceScreen() {
         cardId: item.cardId,
       }));
       setCardsInfo(mapped);
+      console.log('카드');
+      console.log(mapped);
     };
     fetchCards();
 
@@ -60,7 +69,7 @@ export default function CardChoiceScreen() {
           </View>
           <View className="flex-1 gap-5">
             <KeyValueRow title="금액">
-              <Text className="font-bold text-[20px]">789,000</Text>
+              <Text className="font-bold text-[20px]">{params.amount}원</Text>
             </KeyValueRow>
             <View className="flex-row justify-between items-center ">
               <View className="flex-row items-center">
@@ -73,7 +82,7 @@ export default function CardChoiceScreen() {
               />
             </View>
             <KeyValueRow title="가맹점명">
-              <Text className="font-bold text-[20px]">여기 엇-혜역</Text>
+              <Text className="font-bold text-[20px]">{params.storeName}</Text>
             </KeyValueRow>
           </View>
           <View className="flex items-center">
@@ -82,6 +91,8 @@ export default function CardChoiceScreen() {
                 navigation.navigate('VoteCreateScreen', {
                   groupId: params.groupId,
                   cardId: cardNumber,
+                  amount: params.amount,
+                  storeName: params.storeName,
                 })
               }
             />
