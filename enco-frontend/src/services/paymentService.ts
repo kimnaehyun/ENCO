@@ -121,7 +121,7 @@ export type DuesPaymentItem = {
   allocatedAmount: number;
   chargeStatus: string;
   remainingAmount: number;
-}
+};
 
 export type DuesPaymentResponse = {
   message: string;
@@ -185,8 +185,7 @@ export type UnpaidItem = {
   amount: number;
   paidAmount: number;
   remainingAmount: number;
-}
-
+};
 
 export type GetUnpaidDuesResponse = {
   message: string;
@@ -213,7 +212,7 @@ export type GroupDashboardItem = {
   unpaidCount: number;
   paidRatio: number;
   unpaidRatio: number;
-}
+};
 
 // 모임 대시보드 조회
 export type GroupDashboardResponse = {
@@ -371,14 +370,14 @@ export type GroupTransactionDetailItem = {
   quantity: number | null;
   amount: number | null;
   options: GroupTransactionDetailItemOption[];
-}
+};
 
 export type GroupTransactionDetailItemOption = {
   name: string;
   unitPrice: number | null;
   quantity: number | null;
   amount: number | null;
-}
+};
 
 export async function getGroupTransactionDetail(
   groupId: number,
@@ -390,6 +389,26 @@ export async function getGroupTransactionDetail(
   return response.data;
 }
 
+export const onsiteBarcodePayment = async (
+  barcodeNumber: string,
+  cardId: number,
+) => {
+  const response = await paymentApi.post(
+    '/payments/pay',
+    {
+      barcodeNumber,
+      amount: 15000, // 추후 실제 금액으로
+      merchantName: '스타벅스', // 추후 실제 가게명으로
+      cardId,
+    },
+    {
+      headers: {
+        'Idempotency-Key': `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      },
+    },
+  );
+  return response.data;
+};
 // ── 모임원 납부 현황 조회 (GET /groups/{groupId}/members/payment-status) ──
 
 export interface PaymentStatusMember {

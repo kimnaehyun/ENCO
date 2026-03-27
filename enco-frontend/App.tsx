@@ -11,15 +11,129 @@ import RootNavigator from './src/navigation/RootNavigator';
 import { NotificationsProvider } from './src/contexts/NotificationsContext';
 import './global.css';
 import type { RootStackParamList } from './src/types/navigation';
-import { BackHandler, Linking, PermissionsAndroid, Platform, ToastAndroid } from 'react-native';
+import {
+  Alert,
+  BackHandler,
+  Linking,
+  PermissionsAndroid,
+  Platform,
+  ToastAndroid,
+} from 'react-native';
 import { ROUTES } from './src/constants/routes';
 import { linking } from '@/config/linking';
+import messaging from '@react-native-firebase/messaging';
+import { useAuthStore } from '@/store/useAuthStore';
+import { locationApi } from '@/services/payment/location';
+import Geolocation from 'react-native-geolocation-service';
 import { setNotificationNavigationRef } from './src/hooks/useNotificationSetup';
 
 function App() {
   const navigationRef = useNavigationContainerRef<RootStackParamList>();
   const backPressedOnce = useRef(false);
 
+  const pendingNotification = useRef<any>(null);
+  const user = useAuthStore(state => state.user); // 인증 상태 구독
+
+  // FCM 알림 저장
+  // 기존 FCM useEffect에 클린업 추가
+  useEffect(() => {
+    messaging()
+      .getInitialNotification()
+      .then(remoteMessage => {
+        if (remoteMessage) pendingNotification.current = remoteMessage;
+      });
+
+    const unsubscribe = messaging().onNotificationOpenedApp(remoteMessage => {
+      pendingNotification.current = remoteMessage;
+    });
+
+    return () => {
+      unsubscribe();
+      // 앱 종료/언마운트 시 인터벌 정리
+      if (locationIntervalRef.current) {
+        clearInterval(locationIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // 로그인 완료 감지 → pending 알림 처리
+  useEffect(() => {
+    if (user && pendingNotification.current) {
+      myFunction(pendingNotification.current);
+      pendingNotification.current = null;
+    }
+  }, [user]); // user가 null → 값으로 바뀌는 순간 실행
+
+  const getCurrentLocation = (): Promise<{
+    latitude: number;
+    longitude: number;
+  }> => {
+    return new Promise((resolve, reject) => {
+      Geolocation.getCurrentPosition(
+        position => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        error => reject(error),
+        { enableHighAccuracy: true, timeout: 10000 },
+      );
+    });
+  };
+
+  const locationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
+
+  async function myFunction(remoteMessage: any) {
+    try {
+      if (Platform.OS === 'android') {
+        const granted = await PermissionsAndroid.request(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        );
+        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+          Alert.alert('❌ 권한 없음', '위치 권한이 거부되었습니다.');
+          return;
+        }
+      }
+
+      const groupId = Number(remoteMessage.data?.groupId);
+      if (!groupId) return;
+
+      // 이미 실행 중인 인터벌 있으면 정리
+      if (locationIntervalRef.current) {
+        clearInterval(locationIntervalRef.current);
+      }
+
+      const sendLocation = async () => {
+        try {
+          const { latitude, longitude } = await getCurrentLocation();
+          const response = await locationApi.check(
+            groupId,
+            latitude,
+            longitude,
+            false,
+          );
+
+          // 서버에서 barcode 반환 시 인터벌 종료
+          if (response.data?.result?.barcode !== null) {
+            Alert.alert('✅ 위치 인증 완료!');
+            clearInterval(locationIntervalRef.current!);
+            locationIntervalRef.current = null;
+          }
+        } catch (error: any) {
+          console.error('위치 전송 실패:', error?.message);
+        }
+      };
+
+      // 즉시 한 번 실행 후 3초마다 반복
+      sendLocation();
+      locationIntervalRef.current = setInterval(sendLocation, 3000);
+    } catch (error: any) {
+      Alert.alert('💥 에러 발생', error?.message ?? JSON.stringify(error));
+    }
+  }
   // 알림 탭 시 네비게이션에 사용할 ref 등록
   useEffect(() => {
     setNotificationNavigationRef(navigationRef);

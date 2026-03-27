@@ -12,4 +12,5 @@ export const voteApi = {
     paymentApi.get(`/votes/${voteId}/groups/${groupId}`),
   vote: (voteId: number, choice: 'APPROVE' | 'REJECT') =>
     paymentApi.post(`/votes/${voteId}/choice`, { choice }),
+  request: (groupId: number) => paymentApi.post(`/payments/${groupId}/start`),
 };

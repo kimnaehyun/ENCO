@@ -1,19 +1,12 @@
-import { Image } from 'react-native';
 import React from 'react';
-import { images } from '@/types/images';
+import QRCode from 'react-native-qrcode-svg';
 
 export default function BarcodeQR({
-  cardNumber,
-  className,
+  cardId,
+  qrData,
 }: {
-  cardNumber: number;
-  className: string;
+  cardId: number;
+  qrData: string;
 }) {
-  return (
-    <Image
-      className={className}
-      source={images.qr[cardNumber]}
-      resizeMode="contain"
-    />
-  );
+  return <QRCode key={cardId} value={qrData} size={300} />;
 }
