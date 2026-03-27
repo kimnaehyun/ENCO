@@ -6,7 +6,7 @@ import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
 import { images, getProfileImage } from '../types/images';
 import { useAuthStore } from '../store/useAuthStore';
-import { fetchMyPage } from '../services/userService';
+import { GetMyPage } from '../services/userService';
 import { getMyGroups } from '../services/groupService';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -33,8 +33,8 @@ export default function HomeScreen() {
   useEffect(() => {
     if (!profile) {
       setLoading(true);
-      fetchMyPage()
-        .then(data => setProfile(data))
+      GetMyPage()
+        .then(({ result }) => setProfile(result))
         .catch(() => {}) // 마이페이지 API 미지원 시 무시 (로그인 응답 데이터 사용)
         .finally(() => setLoading(false));
     }
