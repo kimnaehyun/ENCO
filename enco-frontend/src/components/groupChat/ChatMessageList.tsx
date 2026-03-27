@@ -14,6 +14,7 @@ export default function ChatMessageList({
   onCancel,
   onActionPress,
   onLoadMore,
+  isLoadingOlderRef,
 }: ChatMessageListProps) {
   const renderItem: ListRenderItem<ChatItem> = ({ item }) => {
     console.log(item);
