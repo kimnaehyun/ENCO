@@ -164,8 +164,8 @@ export function useNotificationSetup() {
         amount: data.amount ? Number(data.amount) : undefined,
       });
 
-      // 시스템 푸시 배너도 표시
-      await displayLocalNotification(title, body, data as Record<string, any>);
+      // Firebase SDK가 notification 필드로 자동 배너를 표시하므로
+      // Notifee 수동 표시는 생략 (중복 알림 방지)
     });
 
     // FCM 토큰 갱신 리스너
