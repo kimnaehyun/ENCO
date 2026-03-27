@@ -91,12 +91,12 @@ export default function EditAddressScreen({ navigation }: any) {
                 elevation: 2,
               }}
             >
-              <Text variant="bodyMd" color="dark"Input
+              <TextInput
                 value={address}
                 onChangeText={setAddress}
                 placeholder="예) 서울시 강남구 테헤란로 212"
                 placeholderTextColor="#C7D2FE"
-                
+                style={{ color: '#111827', fontSize: 15, paddingVertical: 12 }}
                 autoFocus
               />
             </View>
