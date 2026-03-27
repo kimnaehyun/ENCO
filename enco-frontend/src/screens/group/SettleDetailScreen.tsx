@@ -595,8 +595,9 @@ export default function SettleDetailScreen() {
         animationType="fade"
         onRequestClose={closeModal}
       >
-        <Pressable style={styles.modalOverlay} onPress={closeModal}>
-          <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={StyleSheet.absoluteFill} onPress={closeModal} />
+          <View style={styles.modalCard}>
             <Pressable onPress={closeModal} style={styles.modalCloseButton}>
               <Text style={styles.modalCloseText}>✕</Text>
             </Pressable>
@@ -630,8 +631,8 @@ export default function SettleDetailScreen() {
                 <Text style={styles.modalConfirmText}>확인</Text>
               </Pressable>
             )}
-          </Pressable>
-        </Pressable>
+          </View>
+        </View>
       </Modal>
     </ScreenLayout>
   );
