@@ -1,5 +1,5 @@
 // src/screens/group/SettleDetailScreen.tsx
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -98,16 +98,33 @@ export default function SettleDetailScreen() {
   );
   const [loadingParticipants, setLoadingParticipants] = useState(false);
   const [sendingReminder, setSendingReminder] = useState(false);
-  const [sentIds, setSentIds] = useState<Set<string>>(new Set());
+  const [sentUserIds, setSentUserIds] = useState<Set<number>>(new Set());
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState<'confirm' | 'done'>('confirm');
   const [modalMessage, setModalMessage] = useState('');
-  const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+  const [pendingAction, setPendingAction] = useState<(() => Promise<void>) | null>(null);
+  const [modalSubmitting, setModalSubmitting] = useState(false);
 
   const closeModal = () => {
+    if (modalSubmitting) {
+      return;
+    }
     setModalVisible(false);
     setPendingAction(null);
   };
+
+  const runPendingAction = useCallback(async () => {
+    if (!pendingAction || modalSubmitting) {
+      return;
+    }
+
+    try {
+      setModalSubmitting(true);
+      await pendingAction();
+    } finally {
+      setModalSubmitting(false);
+    }
+  }, [modalSubmitting, pendingAction]);
 
   useEffect(() => {
     if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
@@ -258,8 +275,8 @@ export default function SettleDetailScreen() {
     setModalMessage(`${member.name}님에게 ${formatKRW(memberAmount)} 입금 요청 알림을 보냅니다.`);
     setPendingAction(() => async () => {
       try {
-        const response = await doSendReminder();
-        setSentIds(prev => new Set(prev).add(member.id));
+        await doSendReminder();
+        setSentUserIds(prev => new Set(prev).add(member.userId));
         setModalMode('done');
         setModalMessage(`${member.name}님에게 알림을 전송했습니다.`);
       } catch (error: any) {
@@ -271,7 +288,7 @@ export default function SettleDetailScreen() {
   };
 
   const onSendAlertAll = () => {
-    const unsent = unpaidMembers.filter(m => !sentIds.has(m.id));
+    const unsent = unpaidMembers.filter(m => !sentUserIds.has(m.userId));
     if (unsent.length === 0) {
       setModalMode('done');
       setModalMessage('모든 미납자에게 이미 알림을 전송했습니다.');
@@ -282,10 +299,10 @@ export default function SettleDetailScreen() {
     setModalMessage(`미납자 ${unsent.length}명에게 입금 요청 알림을 보냅니다.`);
     setPendingAction(() => async () => {
       try {
-        const response = await doSendReminder();
-        const newSet = new Set(sentIds);
-        unsent.forEach(m => newSet.add(m.id));
-        setSentIds(newSet);
+        await doSendReminder();
+        const newSet = new Set(sentUserIds);
+        unsent.forEach(m => newSet.add(m.userId));
+        setSentUserIds(newSet);
         setModalMode('done');
         setModalMessage(`미납자 ${unsent.length}명에게 알림을 전송했습니다.`);
       } catch (error: any) {
@@ -348,7 +365,12 @@ export default function SettleDetailScreen() {
 
   return (
     <ScreenLayout>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <View pointerEvents={modalVisible ? 'none' : 'auto'}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+          scrollEnabled={!modalVisible}
+        >
 
         {/* 헤더 */}
         <View className="flex-row items-center justify-between mb-5">
@@ -448,7 +470,7 @@ export default function SettleDetailScreen() {
             </View>
 
             {unpaidMembers.map((m, index) => {
-              const isSent = sentIds.has(m.id);
+              const isSent = sentUserIds.has(m.userId);
               const memberAmount = m.remainingAmount ?? m.amount ?? perPerson;
               return (
                 <View
@@ -586,19 +608,30 @@ export default function SettleDetailScreen() {
           </Pressable>
         ) : null}
 
-      </ScrollView>
+        </ScrollView>
+      </View>
 
       {/* 확인 / 완료 모달 */}
       <Modal
         visible={modalVisible}
         transparent
         animationType="fade"
+        presentationStyle="overFullScreen"
+        statusBarTranslucent
         onRequestClose={closeModal}
       >
         <View style={styles.modalOverlay}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={closeModal} />
+          <Pressable
+            style={StyleSheet.absoluteFill}
+            onPress={closeModal}
+            disabled={modalSubmitting}
+          />
           <View style={styles.modalCard}>
-            <Pressable onPress={closeModal} style={styles.modalCloseButton}>
+            <Pressable
+              onPress={closeModal}
+              style={styles.modalCloseButton}
+              disabled={modalSubmitting}
+            >
               <Text style={styles.modalCloseText}>✕</Text>
             </Pressable>
 
@@ -616,18 +649,32 @@ export default function SettleDetailScreen() {
 
             {modalMode === 'confirm' ? (
               <View style={styles.modalButtonRow}>
-                <Pressable onPress={closeModal} style={styles.modalCancelButton}>
+                <Pressable
+                  onPress={closeModal}
+                  style={styles.modalCancelButton}
+                  disabled={modalSubmitting}
+                >
                   <Text style={styles.modalCancelText}>취소</Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => pendingAction?.()}
-                  style={styles.modalConfirmButton}
+                  onPress={runPendingAction}
+                  disabled={modalSubmitting}
+                  style={[
+                    styles.modalConfirmButton,
+                    modalSubmitting && styles.modalConfirmButtonDisabled,
+                  ]}
                 >
-                  <Text style={styles.modalConfirmText}>전송하기</Text>
+                  <Text style={styles.modalConfirmText}>
+                    {modalSubmitting ? '전송 중...' : '전송하기'}
+                  </Text>
                 </Pressable>
               </View>
             ) : (
-              <Pressable onPress={closeModal} style={styles.modalDoneButton}>
+              <Pressable
+                onPress={closeModal}
+                style={styles.modalDoneButton}
+                disabled={modalSubmitting}
+              >
                 <Text style={styles.modalConfirmText}>확인</Text>
               </Pressable>
             )}
@@ -999,6 +1046,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#1428A0',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  modalConfirmButtonDisabled: {
+    opacity: 0.5,
   },
   modalConfirmText: {
     fontSize: 15,

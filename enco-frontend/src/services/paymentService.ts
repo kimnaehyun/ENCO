@@ -305,6 +305,7 @@ export type GroupTransactionItem = {
   transactionDate: string;
   title: string;
   type: 'DEPOSIT' | 'WITHDRAW';
+  status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
   amount: number;
   balanceAfter: number;
 };

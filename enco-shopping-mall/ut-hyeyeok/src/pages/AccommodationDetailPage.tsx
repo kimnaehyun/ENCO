@@ -19,24 +19,22 @@ export default function AccommodationDetailPage() {
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [accommodationId]);
+  
+const handleEncoPay = () => {
+  if (!accommodation) return;
+  const orderId = accommodation.id;
+  const price = accommodation.price;
+  const storeName = encodeURIComponent(accommodation.name);
+  const callbackUrl = encodeURIComponent('http://ssafywte.site/payment-success'); // 여기서만
 
-  const handleEncoPay = () => {
-    if (!accommodation) return;
+  const deepLink =
+    `enco://app/pay/success?orderId=${orderId}` +
+    `&amount=${price}` +
+    `&storeName=${storeName}` +
+    `&callbackUrl=${callbackUrl}`; // 추가 인코딩 없이
 
-    const orderId = accommodation.id;
-    const price = accommodation.price;
-
-    const callbackUrl = encodeURIComponent(
-      'http://ssafywte.site/payment-success'
-    );
-
-    const deepLink =
-      `enco://app/pay/success?orderId=${orderId}` +
-      `&amount=${price}` +
-      `&callbackUrl=${callbackUrl}`;
-
-    window.location.href = deepLink;
-  };
+  window.location.href = deepLink;
+};
 
   if (loading) {
     return (

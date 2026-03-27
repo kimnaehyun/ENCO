@@ -138,6 +138,7 @@ export type GroupStackParamList = {
       transactionDate: string;
       balanceAfter: number;
       type: 'DEPOSIT' | 'WITHDRAW';
+      status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
     };
   };
   SettlementReceiptOcr:
@@ -233,6 +234,7 @@ export type HomeStackParamList = {
       transactionDate: string;
       balanceAfter: number;
       type: 'DEPOSIT' | 'WITHDRAW';
+      status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
     };
   };
   SettleDetail: {

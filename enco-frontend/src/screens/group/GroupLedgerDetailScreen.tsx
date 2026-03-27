@@ -22,17 +22,40 @@ type RouteParams = {
     transactionDate: string;
     balanceAfter: number;
     type: 'DEPOSIT' | 'WITHDRAW';
+    status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
   };
 };
 
 type DetailResult = GroupTransactionDetailResponse['result'];
+type LedgerStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
 
 function formatMoney(n: number) {
   const sign = n >= 0 ? '+' : '-';
   return `${sign}${Math.abs(n).toLocaleString()}원`;
 }
 
-function formatDateTime(dateStr: string) {
+function getTransactionStatusMeta(status?: LedgerStatus) {
+  switch (status) {
+    case 'PENDING':
+      return { label: '진행중', color: '#F59E0B' };
+    case 'REJECTED':
+      return { label: '거절', color: '#EF4444' };
+    case 'CANCELED':
+      return { label: '취소', color: '#9CA3AF' };
+    case 'APPROVED':
+      return { label: '완료', color: '#1428A0' };
+    default:
+      return { label: '정상', color: COLORS.dark };
+  }
+}
+
+function toSafeNumber(value: unknown, fallback = 0): number {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  return fallback;
+}
+
+function formatDateTime(dateStr?: string | null) {
+  if (!dateStr) return '-';
   // '2026-03-24T16:04:14.780828' → '2026.03.24 16:04:14'
   const [datePart, timePart] = dateStr.split('T');
   if (!datePart) return dateStr;
@@ -100,13 +123,7 @@ export default function GroupLedgerDetailScreen() {
     }, [fetchDetail]),
   );
 
-  const handleCamera = () =>
-    navigation.navigate('TransactionReceiptOcr', {
-      groupId,
-      groupName,
-      transactionId,
-    });
-  const handleGallery = () =>
+  const handleReceiptProof = () =>
     navigation.navigate('TransactionReceiptOcr', {
       groupId,
       groupName,
@@ -122,12 +139,28 @@ export default function GroupLedgerDetailScreen() {
   // 영수증 이미지: 로컬 촬영 > API 응답 순서로 우선
   const receiptImageUrl = localReceiptUri ?? detail?.receipt?.receiptImageUrl ?? null;
   const receiptContent = detail?.receipt?.receiptContent ?? null;
+  const receiptItems = Array.isArray(receiptContent?.items)
+    ? receiptContent.items
+    : [];
+  const transactionStatus = listItem?.status;
+  const statusMeta = getTransactionStatusMeta(transactionStatus);
+  const isCanceled = transactionStatus === 'CANCELED';
+  const isApproved = !transactionStatus || transactionStatus === 'APPROVED';
 
-  const isDeposit = referenceType === 'POINT'
-    ? listItem?.type === 'DEPOSIT'
-    : detail
-    ? detail.amount >= 0
-    : false;
+  const effectiveType = listItem?.type;
+  const isDeposit = effectiveType
+    ? effectiveType === 'DEPOSIT'
+    : referenceType === 'POINT'
+      ? listItem?.type === 'DEPOSIT'
+      : detail
+        ? detail.amount >= 0
+        : false;
+
+  const signedDetailAmount = detail
+    ? isDeposit
+      ? toSafeNumber(detail.amount)
+      : -toSafeNumber(detail.amount)
+    : 0;
 
   return (
     <ScreenLayout>
@@ -176,7 +209,7 @@ export default function GroupLedgerDetailScreen() {
               {formatMoney(isDeposit ? listItem.amount : -listItem.amount)}
             </Text>
             <Text style={styles.balanceText}>
-              잔액 {listItem.balanceAfter.toLocaleString()}원
+                잔액 {toSafeNumber(listItem.balanceAfter).toLocaleString()}원
             </Text>
 
             <View style={styles.divider} />
@@ -192,7 +225,7 @@ export default function GroupLedgerDetailScreen() {
             </InfoRow>
             <InfoRow label="거래 후 잔액">
               <Text style={styles.infoValueText}>
-                {listItem.balanceAfter.toLocaleString()}원
+                  {toSafeNumber(listItem.balanceAfter).toLocaleString()}원
               </Text>
             </InfoRow>
           </View>
@@ -206,13 +239,24 @@ export default function GroupLedgerDetailScreen() {
               <Text
                 style={[
                   styles.amountText,
-                  { color: isDeposit ? '#1428A0' : '#EF4444' },
+                  {
+                    color: !isApproved
+                      ? statusMeta.color
+                      : isDeposit
+                        ? '#1428A0'
+                        : '#EF4444',
+                  },
                 ]}
               >
-                {formatMoney(detail.amount)}
+                {formatMoney(signedDetailAmount)}
               </Text>
+              {!isApproved && (
+                <Text style={[styles.canceledNotice, { color: statusMeta.color }]}> 
+                  {statusMeta.label} 상태의 거래입니다
+                </Text>
+              )}
               <Text style={styles.balanceText}>
-                잔액 {detail.balanceAfter.toLocaleString()}원
+                잔액 {toSafeNumber(detail.balanceAfter).toLocaleString()}원
               </Text>
 
               <View style={styles.divider} />
@@ -228,6 +272,16 @@ export default function GroupLedgerDetailScreen() {
                   {detail.type === 'CARD_PAYMENT' ? '카드 결제' : '이체'}
                 </Text>
               </InfoRow>
+              <InfoRow label="거래상태">
+                <Text
+                  style={[
+                    styles.infoValueText,
+                    { color: statusMeta.color },
+                  ]}
+                >
+                  {statusMeta.label}
+                </Text>
+              </InfoRow>
               {detail.cardName && (
                 <InfoRow label="사용카드">
                   <Text style={styles.infoValueText}>{detail.cardName}</Text>
@@ -235,7 +289,7 @@ export default function GroupLedgerDetailScreen() {
               )}
               <InfoRow label="거래 후 잔액">
                 <Text style={styles.infoValueText}>
-                  {detail.balanceAfter.toLocaleString()}원
+                  {toSafeNumber(detail.balanceAfter).toLocaleString()}원
                 </Text>
               </InfoRow>
               <InfoRow label="메모">
@@ -293,7 +347,7 @@ export default function GroupLedgerDetailScreen() {
                 {receiptContent.totalAmount != null && (
                   <InfoRow label="합계">
                     <Text style={styles.infoValueText}>
-                      {receiptContent.totalAmount.toLocaleString()}원
+                      {toSafeNumber(receiptContent.totalAmount).toLocaleString()}원
                     </Text>
                   </InfoRow>
                 )}
@@ -304,15 +358,15 @@ export default function GroupLedgerDetailScreen() {
                     </Text>
                   </InfoRow>
                 )}
-                {receiptContent.items.length > 0 && (
+                {receiptItems.length > 0 && (
                   <View style={{ marginTop: 8 }}>
                     <Text style={[styles.infoLabel, { marginBottom: 6 }]}>구매 항목</Text>
-                    {receiptContent.items.map((item, idx) => (
+                    {receiptItems.map((item, idx) => (
                       <View key={idx} style={styles.receiptItem}>
                         <Text style={styles.receiptItemName}>{item.name}</Text>
                         {item.amount != null && (
                           <Text style={styles.receiptItemAmount}>
-                            {item.amount.toLocaleString()}원
+                            {toSafeNumber(item.amount).toLocaleString()}원
                           </Text>
                         )}
                       </View>
@@ -322,22 +376,15 @@ export default function GroupLedgerDetailScreen() {
               </View>
             )}
 
-            {/* 관리자 전용 — 영수증 촬영/첨부 */}
-            {isAdmin && (
+            {/* 관리자 전용 — 영수증 증빙 */}
+            {isAdmin && isApproved && (
               <View style={styles.actionRow}>
                 <Pressable
-                  onPress={handleCamera}
+                  onPress={handleReceiptProof}
                   style={[styles.actionButton, styles.actionButtonShadow]}
                 >
-                  <Text style={styles.actionEmoji}>📷</Text>
-                  <Text style={styles.actionLabel}>영수증 촬영하기</Text>
-                </Pressable>
-                <Pressable
-                  onPress={handleGallery}
-                  style={[styles.actionButton, styles.actionButtonShadow]}
-                >
-                  <Text style={styles.actionEmoji}>🖼️</Text>
-                  <Text style={styles.actionLabel}>사진 첨부하기</Text>
+                  <Text style={styles.actionEmoji}>🧾</Text>
+                  <Text style={styles.actionLabel}>영수증 증빙</Text>
                 </Pressable>
               </View>
             )}
@@ -405,6 +452,13 @@ const styles = StyleSheet.create({
   amountText: {
     fontSize: 32,
     lineHeight: 42,
+    fontFamily: FONT_FAMILY.bold,
+    textAlign: 'right',
+    marginBottom: 4,
+  },
+  canceledNotice: {
+    fontSize: 13,
+    color: '#9CA3AF',
     fontFamily: FONT_FAMILY.bold,
     textAlign: 'right',
     marginBottom: 4,
