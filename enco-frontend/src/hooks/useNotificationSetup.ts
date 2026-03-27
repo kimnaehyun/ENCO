@@ -5,7 +5,12 @@ import { AppState, AppStateStatus } from 'react-native';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNotifications } from '../contexts/NotificationsContext';
 import { getFcmToken, onFcmTokenRefresh } from '../utils/fcm';
-import { getMessaging, onMessage } from '@react-native-firebase/messaging';
+import {
+  getMessaging,
+  onMessage,
+  onNotificationOpenedApp,
+  getInitialNotification,
+} from '@react-native-firebase/messaging';
 import notifee, { AndroidImportance, EventType } from '@notifee/react-native';
 import {
   subscribeSse,
@@ -55,12 +60,27 @@ async function displayLocalNotification(
 }
 
 /**
- * 알림 탭 시 해당 화면으로 네비게이션
+ * 알림 탭 시 타입에 따라 해당 화면으로 네비게이션
  */
 function handleNotificationPress(data: Record<string, any>) {
   if (!_navigationRef?.isReady()) return;
 
-  // 알림 탭 시 알림 센터 화면으로 이동
+  const rawType = String(data.type ?? '');
+  const groupId = data.groupId ? Number(data.groupId) : undefined;
+
+  // 현장결제 요청 알림 → 바코드/QR 결제 화면으로 바로 이동
+  if (rawType === 'ONSITE_PAYMENT_REQUEST' && groupId) {
+    _navigationRef.navigate('App', {
+      screen: 'Account',
+      params: {
+        screen: 'PaymentMethod',
+        params: { title: '현장결제', groupId },
+      },
+    });
+    return;
+  }
+
+  // 그 외 알림 → 알림 센터
   _navigationRef.navigate('App', {
     screen: 'HomeTab',
     params: {
@@ -93,14 +113,32 @@ export function useNotificationSetup() {
       }
     });
 
-    // 앱이 백그라운드에서 알림 탭으로 열렸을 때
+    // 앱이 백그라운드에서 Notifee 알림 탭으로 열렸을 때
     notifee.getInitialNotification().then(initialNotification => {
       if (initialNotification?.notification?.data) {
         handleNotificationPress(initialNotification.notification.data);
       }
     });
 
-    return unsubNotifee;
+    // Firebase 자동 알림 탭 처리 (백그라운드 → 포그라운드)
+    const messaging = getMessaging();
+    const unsubFirebaseOpen = onNotificationOpenedApp(messaging, (remoteMessage) => {
+      if (remoteMessage.data) {
+        handleNotificationPress(remoteMessage.data as Record<string, any>);
+      }
+    });
+
+    // Firebase 자동 알림 탭 처리 (앱이 killed 상태에서 열렸을 때)
+    getInitialNotification(messaging).then(remoteMessage => {
+      if (remoteMessage?.data) {
+        handleNotificationPress(remoteMessage.data as Record<string, any>);
+      }
+    });
+
+    return () => {
+      unsubNotifee();
+      unsubFirebaseOpen();
+    };
   }, []);
 
   useEffect(() => {
@@ -221,6 +259,9 @@ function mapNotificationType(serverType: string): 'DUE' | 'VOTE' | 'LEDGER' | 'S
     case 'LEDGER_UPDATE':
     case 'LEDGER':
       return 'LEDGER';
+    case 'ONSITE_PAYMENT_REQUEST':
+    case 'ONSITE_PAYMENT_COMPLETE':
+      return 'SETTLEMENT';
     case 'CHAT_MESSAGE':
     default:
       return 'DUE'; // 기본 폴백
