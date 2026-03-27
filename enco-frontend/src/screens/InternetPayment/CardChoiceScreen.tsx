@@ -36,8 +36,9 @@ export default function CardChoiceScreen() {
         cardId: item.cardId,
       }));
       setCardsInfo(mapped);
-      console.log('카드');
-      console.log(mapped);
+      if (mapped.length > 0) {
+        setCardNumber(mapped[0].cardId);
+      }
     };
     fetchCards();
 

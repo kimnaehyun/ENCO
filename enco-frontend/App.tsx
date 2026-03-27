@@ -1,5 +1,5 @@
 import 'react-native-gesture-handler';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   CommonActions,
   NavigationContainer,
@@ -56,15 +56,11 @@ function App() {
     };
   }, []);
 
-  // 로그인 완료 감지 → pending 알림 처리
-  useEffect(() => {
-    if (user && pendingNotification.current) {
-      myFunction(pendingNotification.current);
-      pendingNotification.current = null;
-    }
-  }, [user]); // user가 null → 값으로 바뀌는 순간 실행
+  const locationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
+    null,
+  );
 
-  const getCurrentLocation = (): Promise<{
+  const getCurrentLocation = useCallback((): Promise<{
     latitude: number;
     longitude: number;
   }> => {
@@ -80,13 +76,9 @@ function App() {
         { enableHighAccuracy: true, timeout: 10000 },
       );
     });
-  };
+  }, []);
 
-  const locationIntervalRef = useRef<ReturnType<typeof setInterval> | null>(
-    null,
-  );
-
-  async function myFunction(remoteMessage: any) {
+  const myFunction = useCallback(async (remoteMessage: any) => {
     try {
       if (Platform.OS === 'android') {
         const granted = await PermissionsAndroid.request(
@@ -133,7 +125,16 @@ function App() {
     } catch (error: any) {
       Alert.alert('💥 에러 발생', error?.message ?? JSON.stringify(error));
     }
-  }
+  }, [getCurrentLocation]);
+
+  // 로그인 완료 감지 → pending 알림 처리
+  useEffect(() => {
+    if (user && pendingNotification.current) {
+      myFunction(pendingNotification.current);
+      pendingNotification.current = null;
+    }
+  }, [user, myFunction]); // user가 null → 값으로 바뀌는 순간 실행
+
   // 알림 탭 시 네비게이션에 사용할 ref 등록
   useEffect(() => {
     setNotificationNavigationRef(navigationRef);
@@ -163,7 +164,7 @@ function App() {
   }, []);
 
   // ── 딥링크에서 초대 토큰 파싱 ──
-  const handleDeepLink = (url: string | null) => {
+  const handleDeepLink = useCallback((url: string | null) => {
     console.log('[DeepLink] handleDeepLink called with:', url);
     if (!url) return;
 
@@ -232,7 +233,7 @@ function App() {
     } catch (e) {
       console.warn('[DeepLink] 파싱 실패:', e);
     }
-  };
+  }, [navigationRef]);
 
   // ── 딥링크 리스너 ──
   useEffect(() => {
@@ -249,7 +250,7 @@ function App() {
     });
 
     return () => sub.remove();
-  }, []);
+  }, [handleDeepLink]);
 
   useEffect(() => {
     const onBackPress = () => {
@@ -301,14 +302,14 @@ function App() {
       onBackPress,
     );
     return () => subscription.remove();
-  }, []);
+  }, [navigationRef]);
   return (
     <NotificationsProvider>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <NavigationContainer
             linking={linking}
-            onStateChange={state => {}}
+            onStateChange={_state => {}}
             ref={navigationRef}
           >
             <RootNavigator />

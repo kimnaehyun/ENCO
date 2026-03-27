@@ -1,5 +1,5 @@
 // src/screens/group/GroupDashboardScreen.tsx
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Dimensions,
   FlatList,
@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
 import { CommonParams } from '../../types/common';
 import { useNotifications } from '../../contexts/NotificationsContext';
 import { images } from '../../types/images';
@@ -78,7 +78,14 @@ export default function GroupDashboardScreen() {
   const {
     alreadyAttendedToday,
     event: attendanceEvent,
+    refresh: refreshAttendance,
   } = useGroupAttendance(groupId);
+
+  useFocusEffect(
+    useCallback(() => {
+      refreshAttendance();
+    }, [refreshAttendance]),
+  );
 
   const attendedCount = attendanceEvent?.currentMemberCount ?? 0;
   const rewardThreshold =
@@ -247,6 +254,7 @@ export default function GroupDashboardScreen() {
     navigation.navigate('GroupPay', {
       groupId: params.groupId,
       groupName: dashboardGroupName,
+      isAdmin,
       paySource: 'default',
     });
 
@@ -254,6 +262,7 @@ export default function GroupDashboardScreen() {
     navigation.navigate('GroupChat', {
       groupId: params.groupId,
       groupName: dashboardGroupName,
+      isAdmin,
     });
 
   const onPressAdmin = () =>
@@ -278,7 +287,7 @@ export default function GroupDashboardScreen() {
     });
   };
 
-  const onPressInviteEntryTest = () => navigation.navigate('GroupInviteEntry');
+
 
   const renderAnalyticsCard = ({ item }: { item: AnalyticsCardItem }) => {
     return (
@@ -453,14 +462,7 @@ export default function GroupDashboardScreen() {
           </Pressable>
         )}
 
-        {/* 모임초대 진입 테스트 버튼 */}
-        <Pressable
-          onPress={onPressInviteEntryTest}
-          className="rounded-3xl py-4 items-center justify-center"
-          style={styles.inviteTestButton}
-        >
-          <Text style={styles.inviteTestText}>모임초대 진입 테스트</Text>
-        </Pressable>
+
       </ScrollView>
     </View>
   );
@@ -541,14 +543,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: FONT_FAMILY.bold,
     color: '#FFFFFF',
-  },
-  inviteTestButton: {
-    backgroundColor: '#E5E7EB',
-  },
-  inviteTestText: {
-    fontSize: 16,
-    fontFamily: FONT_FAMILY.medium,
-    color: COLORS.primary,
   },
   attendanceCard: {
     borderRadius: 24,

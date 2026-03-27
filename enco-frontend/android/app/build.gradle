@@ -120,7 +120,8 @@ dependencies {
     } else {
         implementation jscFlavor
     }
-    implementation platform('com.google.firebase:firebase-bom:33.0.0') 
-    implementation 'com.google.firebase:firebase-messaging' 
+    implementation platform('com.google.firebase:firebase-bom:33.0.0')
+    implementation 'com.google.firebase:firebase-messaging'
+    implementation project(':notifee_react-native')
 }
 apply plugin: 'com.google.gms.google-services' 

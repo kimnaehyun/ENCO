@@ -144,6 +144,8 @@ export function useGroupAttendance(groupId?: string) {
     }
   };
 
+  const refresh = () => setRefreshKey(prev => prev + 1);
+
   return {
     attendedDates,
     isAttending,
@@ -155,5 +157,6 @@ export function useGroupAttendance(groupId?: string) {
     attendanceError,
     totalAttendanceInEvent,
     hasActiveEvent,
+    refresh,
   };
 }

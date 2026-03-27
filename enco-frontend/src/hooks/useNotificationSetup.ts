@@ -2,6 +2,7 @@
 // 로그인 후 FCM 토큰 발급 → 서버 등록 → SSE 구독을 자동으로 처리하는 훅
 import { useEffect, useCallback } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
+import { CommonActions } from '@react-navigation/native';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNotifications } from '../contexts/NotificationsContext';
 import { getFcmToken, onFcmTokenRefresh } from '../utils/fcm';
@@ -70,23 +71,55 @@ function handleNotificationPress(data: Record<string, any>) {
 
   // 현장결제 요청 알림 → 바코드/QR 결제 화면으로 바로 이동
   if (rawType === 'ONSITE_PAYMENT_REQUEST' && groupId) {
-    _navigationRef.navigate('App', {
-      screen: 'Account',
-      params: {
-        screen: 'PaymentMethod',
-        params: { title: '현장결제', groupId, isLeader: false },
-      },
-    });
+    _navigationRef.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'App',
+            state: {
+              routes: [
+                {
+                  name: 'Account',
+                  state: {
+                    routes: [
+                      { name: 'PaymentMethod', params: { title: '현장결제', groupId, isLeader: false } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    );
     return;
   }
 
   // 그 외 알림 → 알림 센터
-  _navigationRef.navigate('App', {
-    screen: 'HomeTab',
-    params: {
-      screen: 'UserNotifications',
-    },
-  });
+  _navigationRef.dispatch(
+    CommonActions.reset({
+      index: 0,
+      routes: [
+        {
+          name: 'App',
+          state: {
+            routes: [
+              {
+                name: 'HomeTab',
+                state: {
+                  routes: [
+                    { name: 'Home' },
+                    { name: 'UserNotifications' },
+                  ],
+                },
+              },
+            ],
+          },
+        },
+      ],
+    }),
+  );
 }
 
 /**

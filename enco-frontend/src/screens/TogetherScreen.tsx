@@ -6,15 +6,6 @@ import ScreenLayout from '../components/ScreenLayout';
 
 export default function TogetherScreen() {
   const navigation = useNavigation<any>();
-  
-  const group = { id: 'g1', name: '회식주의자' };
-
-  const onPressGroup = () => {
-    navigation.navigate('GroupDashboard', {
-      groupId: group.id,
-      groupName: group.name,
-    });
-  };
 
   const onPressCreateGroup = () => {
     navigation.navigate('GroupCreate');
@@ -23,23 +14,6 @@ export default function TogetherScreen() {
   return (
     <ScreenLayout>
       <Text style={{ fontSize: 22, fontWeight: '800' }}>모임 목록</Text>
-
-      <Pressable
-        onPress={onPressGroup}
-        style={{
-          marginTop: 16,
-          height: 120,
-          borderRadius: 16,
-          backgroundColor: '#E5E7EB',
-          padding: 16,
-          justifyContent: 'center',
-        }}
-      >
-        <Text style={{ fontSize: 18, fontWeight: '700' }}>{group.name}</Text>
-        <Text style={{ marginTop: 6, color: '#6B7280' }}>
-          눌러서 모임 대시보드로 이동
-        </Text>
-      </Pressable>
 
       <Pressable
         onPress={onPressCreateGroup}

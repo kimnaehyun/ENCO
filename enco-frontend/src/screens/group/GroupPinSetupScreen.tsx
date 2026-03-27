@@ -5,6 +5,7 @@ import PinEntry from "../../components/pin/PinEntry";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../types/navigation";
 import { createGroup } from "../../services/authService";
+import { getMyGroups } from "../../services/groupService";
 import { useAuthStore } from "../../store/useAuthStore";
 
 type Props = NativeStackScreenProps<RootStackParamList, "GroupPinSetup">;
@@ -56,6 +57,14 @@ export default function GroupPinSetupScreen({ route, navigation }: Props) {
 
       const { groupId, groupName: resGroupName } = res.result;
 
+      // 내 모임 목록 재조회 → role로 관리자 여부 확인
+      const myGroups = await getMyGroups();
+      const myGroup = myGroups.result.find(g => g.groupId === groupId);
+      const isAdmin =
+        myGroup?.role === 'ADMIN' ||
+        myGroup?.role === 'LEADER' ||
+        myGroup?.role === 'TREASURER';
+
       // 성공 → 홈 + 대시보드로 이동
       navigation.reset({
         index: 0,
@@ -74,6 +83,7 @@ export default function GroupPinSetupScreen({ route, navigation }: Props) {
                         params: {
                           groupId: String(groupId),
                           groupName: resGroupName,
+                          isAdmin,
                         },
                       },
                     ],

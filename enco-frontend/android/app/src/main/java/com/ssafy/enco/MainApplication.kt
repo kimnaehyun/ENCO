@@ -9,6 +9,7 @@ import com.facebook.react.defaults.DefaultReactHost.getDefaultReactHost
 import com.ssafy.enco.docScan.DocumentScannerPackage
 import com.ssafy.enco.image.ImageCompressionPackage
 import com.rnfs.RNFSPackage
+import io.invertase.notifee.NotifeePackage
 
 class MainApplication : Application(), ReactApplication {
 
@@ -22,6 +23,7 @@ class MainApplication : Application(), ReactApplication {
           add(DocumentScannerPackage())
           add(ImageCompressionPackage())
           add(RNFSPackage())
+          add(NotifeePackage())
         },
     )
   }

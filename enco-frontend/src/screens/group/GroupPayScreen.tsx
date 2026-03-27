@@ -352,11 +352,33 @@ export default function GroupPayScreen({
     }
   };
 
-  const onPressNotify = () => {
-    Alert.alert('알림', 'TODO: 송금 완료 알림 보내기');
-    resetAllPayState();
-    setStep('summary');
+  const onPressSuccess = () => {
+    navigation.reset({
+      index: 0,
+      routes: [
+        {
+          name: 'GroupDashboard',
+          params: {
+            groupId: route.params?.groupId,
+            groupName: route.params?.groupName,
+            isAdmin: route.params?.isAdmin,
+          },
+        },
+      ],
+    });
   };
+
+  // PIN 입력 화면은 다른 PIN 화면과 동일하게 full-screen으로 렌더
+  if (step === 'pin') {
+    return (
+      <PinEntry
+        title={isSubmitting ? '납부 처리 중입니다' : '비밀번호를\n입력해주세요'}
+        length={PIN_LEN}
+        resetKey={pinResetKey}
+        onComplete={handleSubmitPayment}
+      />
+    );
+  }
 
   return (
     <KeyboardAvoidingView
@@ -521,15 +543,6 @@ export default function GroupPayScreen({
           </View>
         )}
 
-        {step === 'pin' && (
-          <PinEntry
-            title={isSubmitting ? '납부 처리 중입니다' : '비밀번호를 입력해주세요'}
-            length={PIN_LEN}
-            resetKey={pinResetKey}
-            onComplete={handleSubmitPayment}
-          />
-        )}
-
         {step === 'success' && (
           <View style={styles.successContainer}>
             <Text style={styles.successTitle}>
@@ -539,10 +552,10 @@ export default function GroupPayScreen({
             </Text>
 
             <Pressable
-              onPress={onPressNotify}
+              onPress={onPressSuccess}
               style={[styles.primaryBtn, styles.successButton]}
             >
-              <Text style={styles.primaryBtnText}>송금완료 알림보내기</Text>
+              <Text style={styles.primaryBtnText}>확인</Text>
             </Pressable>
           </View>
         )}

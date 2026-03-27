@@ -38,7 +38,9 @@ export default function BarcodeCardRecommendation({
       onMomentumScrollEnd={event => {
         const offsetX = event.nativeEvent.contentOffset.x;
         const index = Math.round(offsetX / ITEM_SIZE);
-        onSelectCard(index);
+        if (cardsInfo?.[index]) {
+          onSelectCard(cardsInfo[index].cardId);
+        }
       }}
     />
   );

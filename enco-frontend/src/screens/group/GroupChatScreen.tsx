@@ -11,16 +11,14 @@ import { useAuthStore } from '@/store/useAuthStore';
 import ChatInput from '@/components/groupChat/ChatInput';
 import ChatMessageList from '@/components/groupChat/ChatMessageList';
 
-const TEMP_IS_ADMIN = true;
-
 export default function GroupChatScreen() {
   const route = useRoute();
   const navigation = useNavigation<any>();
   const params = (route.params ?? {}) as CommonParams;
 
-  const groupName = params.groupName ?? '회식주의자';
+  const groupName = params.groupName ?? '';
   const groupId = params.groupId;
-  const isAdmin = TEMP_IS_ADMIN;
+  const isAdmin = !!params.isAdmin;
   const storeUserId = useAuthStore(s => s.userId);
   const userId = storeUserId ? Number(storeUserId) : 0;
   const [msg, setMsg] = useState('');
