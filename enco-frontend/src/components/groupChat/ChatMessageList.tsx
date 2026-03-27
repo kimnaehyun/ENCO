@@ -25,6 +25,7 @@ export default function ChatMessageList({
           content={item.content}
           senderId={item.senderId}
           senderName={item.senderName}
+          senderProfileImage={item.senderProfileImage}
           senderImageUrl={item.senderImageUrl}
           isMe={item.senderId === userId}
           created_at={item.createdAt}
