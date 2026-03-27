@@ -35,6 +35,7 @@ function apiMessageToChatItem(m: ApiMessage): ChatItem {
     senderId: m.senderId ?? 0,
     senderName: m.senderName,
     senderImageUrl: m.senderImageUrl,
+    senderProfileImage: m.senderProfileImage,
     content: m.content,
     metadata: null,
     createdAt: m.createdAt,
@@ -53,6 +54,7 @@ export function useChat(roomId: string, userId: number) {
   useEffect(() => {
     const fetchMessages = async () => {
       try {
+        console.log('[useChat] 채팅방 입장 - roomId:', roomId, 'userId:', userId);
         const res = await chatService.get(
           `api/v1/chat-rooms/${roomId}/messages`,
           { params: { size: 50 } },
@@ -61,10 +63,11 @@ export function useChat(roomId: string, userId: number) {
         const rawMessages: ApiMessage[] = Array.isArray(data)
           ? data
           : (data.messages ?? []);
+        console.log('[useChat] 메시지 조회 응답 - 메시지 수:', rawMessages.length, '원본 데이터:', JSON.stringify(rawMessages.slice(0, 3)));
         nextCursorRef.current = data.nextCursor ?? null;
         setMessages(rawMessages.reverse().map(apiMessageToChatItem));
       } catch (e) {
-        console.error('메시지 조회 실패:', e);
+        console.error('[useChat] 메시지 조회 실패:', e);
       }
     };
     fetchMessages();

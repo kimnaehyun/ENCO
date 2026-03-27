@@ -1,12 +1,14 @@
 import { View, Image, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native'
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
 import React from 'react';
-import { images } from '../../types/images';
+import { getProfileImage } from '../../types/images';
 import { ChatMsgProps } from '../../types/chat';
 
 export default function ChatMessage({
   content,
   senderId,
+  senderName,
+  senderProfileImage,
   isMe,
   created_at,
   status = 'sent',
@@ -63,9 +65,9 @@ export default function ChatMessage({
 
   return (
     <View style={styles.otherMessageRow}>
-      <Image style={styles.avatar} source={images.user} resizeMode="contain" />
+      <Image style={styles.avatar} source={getProfileImage(senderProfileImage)} resizeMode="contain" />
       <View>
-        <Text style={styles.senderText}>{senderId}</Text>
+        <Text style={styles.senderText}>{senderName ?? senderId}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
           <View style={styles.otherBubble}>
             <Text style={styles.otherBubbleText}>{content}</Text>

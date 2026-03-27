@@ -3,6 +3,8 @@ import { FlatList } from 'react-native';
 type ChatMsgProps = {
   content: string;
   senderId: number;
+  senderName?: string;
+  senderProfileImage?: number;
   isMe: boolean;
   created_at: string;
   status?: 'sending' | 'sent' | 'failed';
@@ -27,6 +29,7 @@ type ChatItem =
       senderId: number;
       senderName?: string;
       senderImageUrl?: string;
+      senderProfileImage?: number;
       content: string;
       createdAt: string;
       status: 'sending' | 'sent' | 'failed';
@@ -91,6 +94,7 @@ type ApiMessage = {
   type?: 'CHAT' | 'CHATBOT_RESPONSE' | string;
   senderName?: string;
   senderImageUrl?: string;
+  senderProfileImage?: number;
 };
 
 export interface ChatMessageListProps {
