@@ -1,4 +1,4 @@
-import { FlatList, ListRenderItem } from 'react-native';
+npm run androidimport { FlatList, ListRenderItem } from 'react-native';
 import { ChatItem, ChatMessageListProps } from '@/types/chat';
 import ChatMessage from '@/components/groupChat/ChatMessage';
 import Chatbot from '@/components/groupChat/Chatbot';
