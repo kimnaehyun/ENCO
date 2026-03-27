@@ -4,7 +4,7 @@ import Text from '@/components/typography';;
 import { useAuthStore } from '../../store/useAuthStore';
 import { EditMyPage } from '../../services/userService';
 
-export default function EditAddressScreen({ navigation }: any) {
+export default function EditMyPageScreen({ navigation }: any) {
   const profile = useAuthStore(s => s.profile);
   const setProfile = useAuthStore(s => s.setProfile);
 
