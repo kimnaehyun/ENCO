@@ -6,5 +6,6 @@ public record BarcodePaymentRequestDto(
         String barcodeNumber,
         BigDecimal amount,
         String merchantName,
-        Long cardId
+        Long cardId,
+        Boolean usePoint
 ) {}
