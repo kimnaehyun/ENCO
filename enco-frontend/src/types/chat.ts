@@ -106,6 +106,7 @@ export interface ChatMessageListProps {
   onCancel: (id: string) => void;
   onActionPress: (action: ChatAction, label: string) => void;
   onLoadMore: () => void;
+  isLoadingOlderRef: React.RefObject<boolean>;
 }
 
 export type { ChatMsgProps, ChatAction, ChatItem, ApiMessage };
