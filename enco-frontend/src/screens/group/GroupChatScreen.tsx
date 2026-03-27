@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Image, Pressable, View } from 'react-native';
+import { Image, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
 import Text from '@/components/typography';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -66,42 +66,48 @@ export default function GroupChatScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-[#F0F4FF]" edges={['top']}>
-      <View className="flex-row h-14 px-4 border-b border-b-[#D1D5DB] items-center">
-        <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-          <Image source={images.left_arrow} className="mr-3" />
-        </Pressable>
-        <Text weight="bold" className="flex-1 text-lg text-[#1428A0]">
-          {groupName}
-        </Text>
-      </View>
-
-      <ChatMessageList
-        messages={messages}
-        flatListRef={flatListRef}
-        userId={userId}
-        onRetry={retryMessage}
-        onCancel={cancelMessage}
-        onActionPress={handleActionPress}
-        onLoadMore={loadMoreMessages}
-      />
-
-      {pickMode && (
-        <View className="flex-row items-center justify-between px-4 py-2 bg-[#EEF2FF] border-t border-[#C7D2FE]">
-          <Text weight="bold" className="text-sm text-[#1428A0]">
-            🐹 햄코 PICK 모드
-          </Text>
-          <Pressable onPress={exitPickMode} hitSlop={12}>
-            <Text className="text-sm text-[#6B7280]">✕ 종료</Text>
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+      >
+        <View className="flex-row h-14 px-4 border-b border-b-[#D1D5DB] items-center">
+          <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
+            <Image source={images.left_arrow} className="mr-3" />
           </Pressable>
+          <Text weight="bold" className="flex-1 text-lg text-[#1428A0]">
+            {groupName}
+          </Text>
         </View>
-      )}
 
-      <ChatInput
-        msg={msg}
-        onChangeMsg={setMsg}
-        onSend={handleSend}
-        placeholder={pickMode ? '추천받고 싶은 내용을 입력하세요' : undefined}
-      />
+        <ChatMessageList
+          messages={messages}
+          flatListRef={flatListRef}
+          userId={userId}
+          onRetry={retryMessage}
+          onCancel={cancelMessage}
+          onActionPress={handleActionPress}
+          onLoadMore={loadMoreMessages}
+        />
+
+        {pickMode && (
+          <View className="flex-row items-center justify-between px-4 py-2 bg-[#EEF2FF] border-t border-[#C7D2FE]">
+            <Text weight="bold" className="text-sm text-[#1428A0]">
+              🐹 햄코 PICK 모드
+            </Text>
+            <Pressable onPress={exitPickMode} hitSlop={12}>
+              <Text className="text-sm text-[#6B7280]">✕ 종료</Text>
+            </Pressable>
+          </View>
+        )}
+
+        <ChatInput
+          msg={msg}
+          onChangeMsg={setMsg}
+          onSend={handleSend}
+          placeholder={pickMode ? '추천받고 싶은 내용을 입력하세요' : undefined}
+        />
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
