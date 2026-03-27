@@ -27,7 +27,7 @@ export default function PaymentPinScreen() {
     try {
       const body = {
         groupId: params.groupId,
-        cardId: 43,
+        cardId: params.cardId,
         password: pin,
         counterpartyBankName: '온라인 결제',
         counterpartyName: params.storeName,
