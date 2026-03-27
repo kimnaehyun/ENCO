@@ -38,7 +38,7 @@ export default function BarcodeCard({
       }}
     >
       <Image
-        source={item.image}
+        source={{ uri: item.image }}
         style={{
           width: '100%',
           height: 256,
