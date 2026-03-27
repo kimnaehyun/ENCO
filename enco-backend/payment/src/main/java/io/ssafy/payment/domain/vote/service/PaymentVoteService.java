@@ -73,6 +73,8 @@ public class PaymentVoteService {
         Optional<TransactionHistory> existing = transactionHistoryRepository.findByIdempotencyKey(idempotencyKey);
 
         if (existing.isPresent()) {
+            log.warn("중복된 멱등키 요청 발생: {}", idempotencyKey);
+            
             PaymentVote existingVote = voteRepository.findById(existing.get().getVoteId())
                     .orElseThrow(() -> new CustomException(ErrorCode.DUPLICATE_PAYMENTVOTE)
                     );
@@ -227,6 +229,7 @@ public class PaymentVoteService {
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_VOTE));
 
         boolean isMember = userServiceClient.checkGroupMember(vote.getGroupId(), userId).result();
+
         if (!isMember) {
             throw new CustomException(ErrorCode.NOT_GROUP_MEMBER);
         }

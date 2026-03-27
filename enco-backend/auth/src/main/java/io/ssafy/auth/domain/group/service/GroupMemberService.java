@@ -52,4 +52,9 @@ public class GroupMemberService {
                 .updateRole(request.role());
         log.info("타겟 확인 완료");
     }
+
+    @Transactional(readOnly = true)
+    public boolean checkGroupMember(Long groupId, Long userId) {
+        return groupUserRepository.existsByGroupIdAndUserId(groupId, userId);
+    }
 }
