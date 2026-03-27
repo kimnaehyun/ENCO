@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { Alert, ActivityIndicator, Pressable, TextInput, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
 import Text from '@/components/typography';;
 import { useAuthStore } from '../../store/useAuthStore';
-import { updateAddress } from '../../services/userService';
+import { EditMyPage } from '../../services/userService';
 
-export default function EditAddressScreen({ navigation }: any) {
+export default function EditMyPageScreen({ navigation }: any) {
   const profile = useAuthStore(s => s.profile);
   const setProfile = useAuthStore(s => s.setProfile);
 
@@ -20,12 +20,8 @@ export default function EditAddressScreen({ navigation }: any) {
 
     setSaving(true);
     try {
-      await updateAddress({ address: trimmed });
-
-      // store 갱신
-      if (profile) {
-        setProfile({ ...profile, address: trimmed });
-      }
+      const { result } = await EditMyPage({ address: trimmed });
+      setProfile(result);
 
       Alert.alert('완료', '주소가 수정되었어요.', [
         { text: '확인', onPress: () => navigation.goBack() },
