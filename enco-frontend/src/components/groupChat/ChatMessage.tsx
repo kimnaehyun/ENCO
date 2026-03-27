@@ -1,5 +1,11 @@
-import { View, Image, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
+import {
+  View,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import React from 'react';
 import { images } from '../../types/images';
 import { ChatMsgProps } from '../../types/chat';
@@ -95,7 +101,7 @@ const styles = StyleSheet.create({
   userBubbleText: {
     color: COLORS.white,
     fontSize: 16,
-    fontFamily: FONT_FAMILY.bold,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // 상대 메시지
