@@ -52,4 +52,9 @@ public class AuthController {
         LoginResponseDto responseDto = userService.reLogin(reLoginRequestDto);
         return ResponseEntity.ok(CommonResponse.success(responseDto));
     }
+
+    /**
+     * 내 정보 조회 (마이페이지)
+     * @param 
+     */
 }

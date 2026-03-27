@@ -21,13 +21,13 @@ export function useChatbot({
 }: UseChatbotProps) {
   const [pickMode, setPickMode] = useState(false);
 
-  const getNowLabel = () => {
+  const getNowISO = () => {
     const now = new Date();
-    const hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    const meridiem = hours < 12 ? '오전' : '오후';
-    const displayHour = hours % 12 === 0 ? 12 : hours % 12;
-    return `${meridiem} ${displayHour}:${minutes}`;
+    const kstOffset = 9 * 60;
+    const localTime = new Date(
+      now.getTime() + (kstOffset + now.getTimezoneOffset()) * 60000,
+    );
+    return localTime.toISOString();
   };
 
   const buildHamcoActions = (): ChatItem => ({
@@ -36,7 +36,7 @@ export function useChatbot({
     text: isAdmin
       ? '안녕하세요! 어떤 작업을 도와드릴까요?'
       : '안녕하세요! 무엇을 도와드릴까요?',
-    createdAt: getNowLabel(),
+    createdAt: getNowISO(),
     actions: isAdmin
       ? [
           { label: '정산하기', action: 'settlement' },
@@ -54,7 +54,7 @@ export function useChatbot({
     id: `bot-settlement-${Date.now()}`,
     type: 'bot-actions',
     text: '정산을 도와드릴게요!',
-    createdAt: getNowLabel(),
+    createdAt: getNowISO(),
     actions: [
       { label: '미납자 알림 보내기', action: 'notice' },
       { label: '후불 정산하기', action: 'settlement' },
@@ -66,7 +66,7 @@ export function useChatbot({
     id: `bot-unpaid-${Date.now()}`,
     type: 'bot-unpaid-card',
     text: '현재 미납 회원은 1명이에요!',
-    createdAt: getNowLabel(),
+    createdAt: getNowISO(),
     unpaidCount: 1,
     memberName: '김싸피',
     lastPaidAt: '2026-02-03',
@@ -76,7 +76,7 @@ export function useChatbot({
     id: `bot-ledger-${Date.now()}`,
     type: 'bot-ledger-card',
     text: '현재 누락된 증빙을 1건 발견했어요!',
-    createdAt: getNowLabel(),
+    createdAt: getNowISO(),
     missingCount: 1,
     transactionDate: '2026-03-05',
     transactionType: '출금',
@@ -88,7 +88,7 @@ export function useChatbot({
       id: `user-${Date.now()}`,
       type: 'user',
       text: '@햄코',
-      createdAt: getNowLabel(),
+      createdAt: getNowISO(),
     });
     setTimeout(() => appendChatItem(buildHamcoActions()), 120);
   };
@@ -102,7 +102,7 @@ export function useChatbot({
       id: `user-pick-${Date.now()}`,
       type: 'user',
       text: message,
-      createdAt: getNowLabel(),
+      createdAt: getNowISO(),
     });
 
     // 로딩 표시
@@ -113,7 +113,7 @@ export function useChatbot({
       senderName: '햄코',
       senderImageUrl: '',
       content: '추천 결과를 찾고 있어요...',
-      createdAt: getNowLabel(),
+      createdAt: getNowISO(),
     });
 
     try {
@@ -141,7 +141,7 @@ export function useChatbot({
         senderName: '햄코',
         senderImageUrl: '',
         content: '추천 결과를 가져오지 못했어요. 다시 시도해주세요!',
-        createdAt: getNowLabel(),
+        createdAt: getNowISO(),
       });
     }
   };
@@ -151,7 +151,7 @@ export function useChatbot({
       id: `user-${Date.now()}`,
       type: 'user',
       text: label,
-      createdAt: getNowLabel(),
+      createdAt: getNowISO(),
     });
 
     if (action === 'pay') {
@@ -189,8 +189,9 @@ export function useChatbot({
         type: 'chatbot',
         senderName: '햄코',
         senderImageUrl: '',
-        content: '햄코 PICK 모드입니다! 🐹\n원하는 장소나 조건을 자유롭게 말씀해주세요.\n\n예) "부산에서 오션뷰이고 주차 가능한 숙소 추천해줘"',
-        createdAt: getNowLabel(),
+        content:
+          '햄코 PICK 모드입니다! 🐹\n원하는 장소나 조건을 자유롭게 말씀해주세요.\n\n예) "부산에서 오션뷰이고 주차 가능한 숙소 추천해줘"',
+        createdAt: getNowISO(),
       });
     }
   };

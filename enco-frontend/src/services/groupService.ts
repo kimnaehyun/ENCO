@@ -102,6 +102,7 @@ export interface GroupMember {
   userId: number;
   name?: string;
   role: string;
+  profileImage?: string | number | null;
   profileUrl?: string | number | null;
   profileImg?: string | number | null;
   joinedAt?: string;

@@ -389,3 +389,34 @@ export async function getGroupTransactionDetail(
   );
   return response.data;
 }
+
+// ── 모임원 납부 현황 조회 (GET /groups/{groupId}/members/payment-status) ──
+
+export interface PaymentStatusMember {
+  userId: number;
+  name: string;
+  profileImage: number;
+  paymentStatus: 'PAID' | 'UNPAID';
+  unpaidAmount: number;
+}
+
+export interface GroupPaymentStatusResponse {
+  message: string;
+  result: {
+    groupId: number;
+    totalMemberCount: number;
+    unpaidCount: number;
+    paidCount: number;
+    unpaidMembers: PaymentStatusMember[];
+    paidMembers: PaymentStatusMember[];
+  };
+}
+
+export async function getGroupPaymentStatus(
+  groupId: number | string,
+): Promise<GroupPaymentStatusResponse> {
+  const response = await paymentApi.get<GroupPaymentStatusResponse>(
+    `/groups/${groupId}/members/payment-status`,
+  );
+  return response.data;
+}

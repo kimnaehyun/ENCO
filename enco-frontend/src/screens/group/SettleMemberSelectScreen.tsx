@@ -97,7 +97,7 @@ export default function SettleMemberSelectScreen() {
           id: String(member.userId),
           userId: member.userId,
           name: member.name?.trim() || `멤버 ${member.userId}`,
-          profileUrl: member.profileUrl ?? member.profileImg ?? null,
+          profileUrl: member.profileImage ?? member.profileUrl ?? member.profileImg ?? null,
           isPaid: false,
         }));
 

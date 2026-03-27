@@ -427,6 +427,8 @@ const normalizeSettlementDefaultersResponse = (
           return {
             chargeTargetId: toNumber(source.chargeTargetId) ?? 0,
             userId: toNumber(source.userId) ?? 0,
+            name: toText(source.name),
+            profileImage: toNumber(source.profileImage) ?? 0,
             amount: toNumber(source.amount) ?? 0,
             remainingAmount: toNumber(source.remainingAmount) ?? 0,
             status: toText(source.status),
@@ -663,4 +665,34 @@ export async function sendSettlementReminder(
   );
 
   return normalizeSettlementReminderResponse(response.data);
+}
+
+export async function sendDuesReminder(
+  groupId: number | string,
+  userId: number | string,
+): Promise<void> {
+  const normalizedGroupId = toGroupId(groupId);
+  const normalizedUserId = toGroupId(userId);
+
+  if (normalizedGroupId === undefined || normalizedUserId === undefined) {
+    throw new Error('유효한 모임 또는 회원 ID가 없습니다.');
+  }
+
+  await receiptApi.post(
+    `/groups/${normalizedGroupId}/members/${normalizedUserId}/dues/reminder`,
+  );
+}
+
+export async function sendDuesReminderAll(
+  groupId: number | string,
+): Promise<void> {
+  const normalizedGroupId = toGroupId(groupId);
+
+  if (normalizedGroupId === undefined) {
+    throw new Error('유효한 모임 ID가 없습니다.');
+  }
+
+  await receiptApi.post(
+    `/groups/${normalizedGroupId}/dues/reminder`,
+  );
 }
