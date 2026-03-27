@@ -68,7 +68,21 @@ export const NotificationsProvider: React.FC<React.PropsWithChildren> = ({ child
 
   // ✅ 정석 확장: 새 알림을 앞에 추가
   const pushOne = (item: NotificationItem) => {
-    setNotifications(prev => [item, ...prev]);
+    setNotifications(prev => {
+      const existingIndex = prev.findIndex(n => n.id === item.id);
+
+      if (existingIndex === -1) {
+        return [item, ...prev];
+      }
+
+      const merged: NotificationItem = {
+        ...prev[existingIndex],
+        ...item,
+      };
+
+      // 동일 id 알림은 최신 내용으로 갱신하고 맨 앞으로 이동
+      return [merged, ...prev.filter((_, index) => index !== existingIndex)];
+    });
   };
 
   const value = useMemo(

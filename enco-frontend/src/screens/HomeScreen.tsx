@@ -1,7 +1,14 @@
-import React , {useState, useEffect} from 'react';
-import { Dimensions, FlatList, Pressable, StyleSheet, View, Image } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
-import { useNavigation } from '@react-navigation/native';
+import React, { useEffect, useState } from 'react';
+import {
+  FlatList,
+  Image,
+  Pressable,
+  StyleSheet,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { NavigationProp, useNavigation } from '@react-navigation/native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
 import { images, getProfileImage } from '../types/images';
@@ -9,57 +16,51 @@ import { useAuthStore } from '../store/useAuthStore';
 import { GetMyPage } from '../services/userService';
 import { getMyGroups } from '../services/groupService';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const LAYOUT_PADDING = 16; // ScreenLayout paddingHorizontal
-const CARD_ASPECT_RATIO = 800 / 1100; // 가로 / 세로
+type HomeStackParamList = {
+  GroupDashboard: {
+    groupId: string;
+    groupName: string;
+    isAdmin: boolean;
+  };
+  GroupCreate: undefined;
+};
 
-// 한 화면에 전부 들어오도록 이미지 높이 제한
-// 헤더(~90) + 섹션타이틀(~35) + 카드푸터(~70) + 여백(~60) = ~255
-const MAX_CARD_IMG_HEIGHT = SCREEN_HEIGHT - 255;
-const CARD_IMG_WIDTH = Math.min(SCREEN_WIDTH - LAYOUT_PADDING * 2, MAX_CARD_IMG_HEIGHT * CARD_ASPECT_RATIO);
-const CARD_IMG_HEIGHT = CARD_IMG_WIDTH / CARD_ASPECT_RATIO;
+const SCREEN_SIDE_PADDING = 16;
+const CARD_HORIZONTAL_INSET = 28;
+const CARD_ASPECT_RATIO = 800 / 1100;
+const MAX_CARD_WIDTH = 304;
 
 export default function HomeScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<NavigationProp<HomeStackParamList>>();
+  const { width: screenWidth } = useWindowDimensions();
 
-  const user = useAuthStore(s => s.user);
-  const profile = useAuthStore(s => s.profile);
-  const setProfile = useAuthStore(s => s.setProfile);
+  const user = useAuthStore((s) => s.user);
+  const profile = useAuthStore((s) => s.profile);
+  const setProfile = useAuthStore((s) => s.setProfile);
 
-  const [loading, setLoading] = useState(false);
   const [groups, setGroups] = useState<HomeGroupSummary[]>([]);
 
-  // 프로필이 없으면 API에서 가져오기 (로그인 응답에서 이미 저장된 경우 스킵)
   useEffect(() => {
-    if (!profile) {
-      setLoading(true);
-      GetMyPage()
-        .then(({ result }) => setProfile(result))
-        .catch(() => {}) // 마이페이지 API 미지원 시 무시 (로그인 응답 데이터 사용)
-        .finally(() => setLoading(false));
-    }
-  }, [profile]);
+    if (profile) return;
 
-  const displayName = profile?.name ?? user ?? '';
+    GetMyPage()
+      .then(({ result }) => setProfile(result))
+      .catch(() => {});
+  }, [profile, setProfile]);
 
   useEffect(() => {
     const fetchGroups = async () => {
       try {
         const data = await getMyGroups();
-        console.log('내 모임 목록 조회 성공:', data);
-        console.log('내 모임 배열:', data.result);
 
-        const mappedGroups: HomeGroupSummary[] = data.result.map(group => {
-          console.log('[HomeScreen] group.card:', group.card);
-          return {
-            id: String(group.groupId),
-            name: group.groupName,
-            role: group.role,
-            coverImage: group.card?.frontImageUrl
-              ? { uri: group.card.frontImageUrl.replace(/^http:\/\//, 'https://') }
-              : images.card1,
-          };
-        });
+        const mappedGroups: HomeGroupSummary[] = data.result.map((group) => ({
+          id: String(group.groupId),
+          name: group.groupName,
+          role: group.role,
+          coverImage: group.card?.frontImageUrl
+            ? { uri: group.card.frontImageUrl.replace(/^http:\/\//, 'https://') }
+            : images.card1,
+        }));
 
         setGroups(mappedGroups);
       } catch (error: any) {
@@ -72,20 +73,22 @@ export default function HomeScreen() {
     fetchGroups();
   }, []);
 
+  const displayName = profile?.name ?? user ?? '';
+
   const cards: HomeCardItem[] =
     groups.length > 0
-      ? [
-          ...groups.map(group => ({ type: 'group' as const, group })),
-          { type: 'add' as const },
-        ]
+      ? [...groups.map((group) => ({ type: 'group' as const, group })), { type: 'add' as const }]
       : [{ type: 'add' as const }];
 
-  // HomeStack 안에서 직접 push → 뒤로가기 시 HomeScreen으로 복귀
+  const cardWidth = Math.min(screenWidth - CARD_HORIZONTAL_INSET * 2, MAX_CARD_WIDTH);
+  const imageHeight = cardWidth / CARD_ASPECT_RATIO;
+
   const onPressGroupCard = (group: HomeGroupSummary) => {
     navigation.navigate('GroupDashboard', {
       groupId: group.id,
       groupName: group.name,
-      isAdmin: group.role === 'ADMIN' || group.role === 'LEADER' || group.role === 'TREASURER',
+      isAdmin:
+        group.role === 'ADMIN' || group.role === 'LEADER' || group.role === 'TREASURER',
     });
   };
 
@@ -93,71 +96,137 @@ export default function HomeScreen() {
     navigation.navigate('GroupCreate');
   };
 
-  const renderCard = ({ item }: { item: HomeCardItem }) => {
-    if (item.type === 'group') {
-      return (
-        <View style={styles.cardSlide}>
-          <Pressable onPress={() => onPressGroupCard(item.group)} style={styles.groupCard}>
-            <View style={styles.cardImageBox}>
-              <Image source={item.group.coverImage} style={styles.cardBgImage} resizeMode="contain" />
-            </View>
-            <View style={styles.cardFooter}>
-              <Text style={styles.cardGroupName}>{item.group.name}</Text>
-              <View style={styles.cardBottomRow}>
-                <Text style={styles.cardDashboardText}>대시보드 보기</Text>
-                <View style={styles.cardArrowCircle}>
-                  <Image source={images.right_arrow} />
-                </View>
+  const renderGroupCard = (group: HomeGroupSummary) => {
+    return (
+      <View style={[styles.cardSlide, { width: screenWidth }]}>
+        <Pressable
+          onPress={() => onPressGroupCard(group)}
+          style={[styles.groupCard, { width: cardWidth }]}
+        >
+          <View style={[styles.cardImageBox, { height: imageHeight }]}>
+            <Image
+              source={group.coverImage}
+              style={styles.cardBgImage}
+              resizeMode="contain"
+            />
+          </View>
+
+          <View style={styles.cardFooter}>
+            <Text
+              style={styles.cardGroupName}
+              numberOfLines={2}
+              ellipsizeMode="tail"
+              allowFontScaling={false}
+            >
+              {group.name}
+            </Text>
+
+            <View style={styles.cardBottomRow}>
+              <Text
+                style={styles.cardDashboardText}
+                numberOfLines={1}
+                ellipsizeMode="tail"
+                allowFontScaling={false}
+              >
+                대시보드 바로가기
+              </Text>
+
+              <View style={styles.cardArrowCircle}>
+                <Image
+                  source={images.right_arrow}
+                  style={styles.cardArrowIcon}
+                  resizeMode="contain"
+                />
               </View>
             </View>
-          </Pressable>
-        </View>
-      );
-    }
-
-    return (
-      <View style={styles.cardSlide}>
-        <Pressable onPress={onPressCreateGroup} style={styles.addCard}>
-          <View style={styles.addIconCircle}>
-            <Text style={styles.addIconText}>+</Text>
           </View>
-          <Text style={styles.addTitle}>모임 추가하기</Text>
-          <Text style={styles.addSubtitle}>새 모임을 만들어보세요</Text>
         </Pressable>
       </View>
     );
   };
 
+  const renderAddCard = () => {
+    return (
+      <View style={[styles.cardSlide, { width: screenWidth }]}>
+        <Pressable
+          onPress={onPressCreateGroup}
+          style={[styles.groupCard, { width: cardWidth }]}
+        >
+          <View style={[styles.addImageCard, { height: imageHeight }]}>
+            <View style={styles.addIconCircle}>
+              <Text style={styles.addIconText} allowFontScaling={false}>
+                +
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.cardFooter}>
+            <Text style={styles.cardGroupName} allowFontScaling={false}>
+              모임 추가하기
+            </Text>
+
+            <View style={styles.cardBottomRow}>
+              <Text style={styles.cardDashboardText} allowFontScaling={false}>
+                새 모임 만들기
+              </Text>
+
+              <View style={styles.cardArrowCircle}>
+                <Image
+                  source={images.right_arrow}
+                  style={styles.cardArrowIcon}
+                  resizeMode="contain"
+                />
+              </View>
+            </View>
+          </View>
+        </Pressable>
+      </View>
+    );
+  };
+
+  const renderCard = ({ item }: { item: HomeCardItem }) => {
+    if (item.type === 'group') {
+      return renderGroupCard(item.group);
+    }
+
+    return renderAddCard();
+  };
+
   return (
-    <ScreenLayout style={{ backgroundColor: '#F0F4FF' }}>
-      {/* 헤더 */}
+    <ScreenLayout style={styles.screen}>
       <View style={styles.header}>
-        {/* 프로필 아바타 + 인사말 */}
         <View style={styles.profileRow}>
           <View style={styles.avatar}>
             <Image
               source={getProfileImage(profile?.profileUrl)}
-              style={{ width: '100%', height: '100%' }}
+              style={styles.avatarImage}
               resizeMode="cover"
             />
           </View>
-          <View>
-            <Text style={styles.greeting}>안녕하세요 👋</Text>
-            <Text style={styles.username}>
+
+          <View style={styles.profileTextBox}>
+            <Text style={styles.greeting} allowFontScaling={false}>
+              안녕하세요 👋
+            </Text>
+            <Text style={styles.username} allowFontScaling={false} numberOfLines={1}>
               {displayName ? `${displayName}님` : '환영합니다'}
             </Text>
           </View>
         </View>
 
-        {/* 설정 버튼 (추후 구현) */}
         <Pressable style={styles.settingButton}>
-          <Image source={images.settingIcon} style={styles.settingIcon} />
+          <Image
+            source={images.settingIcon}
+            style={styles.settingIcon}
+            resizeMode="contain"
+          />
         </Pressable>
       </View>
 
-      {/* 섹션 타이틀 + 카드 슬라이더 — 남은 공간에서 세로 중앙 정렬 */}
       <View style={styles.cardSection}>
-        <Text style={styles.sectionTitle}>내 모임 카드</Text>
+        <Text style={styles.sectionTitle} allowFontScaling={false}>
+          내 모임 카드
+        </Text>
 
         <FlatList
           data={cards}
@@ -170,19 +239,23 @@ export default function HomeScreen() {
           showsHorizontalScrollIndicator={false}
           overScrollMode="never"
           bounces={false}
-          snapToInterval={SCREEN_WIDTH}
+          snapToInterval={screenWidth}
           decelerationRate="fast"
-          style={{ marginHorizontal: -LAYOUT_PADDING }}
-          ItemSeparatorComponent={undefined}
+          removeClippedSubviews={false}
+          style={styles.cardList}
+          contentContainerStyle={styles.cardListContent}
         />
       </View>
-
     </ScreenLayout>
   );
 }
 
 const styles = StyleSheet.create({
-  // ── 헤더 ──────────────────────────────────────────
+  screen: {
+    backgroundColor: '#F0F4FF',
+    paddingHorizontal: SCREEN_SIDE_PADDING,
+  },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -193,7 +266,9 @@ const styles = StyleSheet.create({
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    flex: 1,
+    minWidth: 0,
+    marginRight: 12,
   },
   avatar: {
     width: 46,
@@ -203,9 +278,16 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 12,
+    flexShrink: 0,
   },
-  avatarEmoji: {
-    fontSize: 20,
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  profileTextBox: {
+    flex: 1,
+    minWidth: 0,
   },
   greeting: {
     fontSize: 13,
@@ -225,19 +307,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#E8EEFF',
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
   },
   settingIcon: {
     width: 25,
     height: 25,
   },
 
-  // ── 카드 섹션 ─────────────────────────────────────
   cardSection: {
     flex: 1,
-    justifyContent: 'center',
+    minHeight: 0,
   },
-
-  // ── 섹션 타이틀 ───────────────────────────────────
   sectionTitle: {
     fontSize: 15,
     fontFamily: FONT_FAMILY.bold,
@@ -245,90 +325,100 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
 
-  // ── 카드 슬라이드 래퍼 ────────────────────────────
+  cardList: {
+    marginHorizontal: -SCREEN_SIDE_PADDING,
+  },
+  cardListContent: {
+    paddingBottom: 24,
+  },
   cardSlide: {
-    width: SCREEN_WIDTH,
     alignItems: 'center',
+    justifyContent: 'flex-start',
   },
 
-  // ── 모임 카드 ─────────────────────────────────────
   groupCard: {
-    width: '100%',
-    alignItems: 'center',
+    alignItems: 'stretch',
+    justifyContent: 'flex-start',
   },
+
   cardImageBox: {
-    width: CARD_IMG_WIDTH,
-    height: CARD_IMG_HEIGHT,
+    width: '100%',
     overflow: 'hidden',
+    borderRadius: 16,
+    // backgroundColor: '#1C2340',
   },
   cardBgImage: {
     width: '100%',
     height: '100%',
   },
+
   cardFooter: {
-    width: CARD_IMG_WIDTH,
-    marginTop: 16,
-    paddingLeft: 23,
+    width: '100%',
+    marginTop: 14,
+    paddingHorizontal: 15,
   },
   cardGroupName: {
-    fontSize: 22,
+    width: '100%',
+    fontSize: 20,
+    lineHeight: 28,
     color: COLORS.dark,
     fontFamily: FONT_FAMILY.bold,
-    marginBottom: 6,
+    marginBottom: 10,
+    textAlign: 'left',
   },
   cardBottomRow: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
   cardDashboardText: {
+    flex: 1,
+    minWidth: 0,
+    marginRight: 12,
     fontSize: 14,
+    lineHeight: 18,
     color: COLORS.muted,
     fontFamily: FONT_FAMILY.medium,
+    textAlign: 'left',
   },
   cardArrowCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     backgroundColor: '#EEF2FF',
     justifyContent: 'center',
     alignItems: 'center',
+    flexShrink: 0,
+  },
+  cardArrowIcon: {
+    width: 16,
+    height: 16,
   },
 
-  // ── 모임 추가 카드 ────────────────────────────────
-  addCard: {
+  addImageCard: {
     width: '100%',
-    aspectRatio: CARD_ASPECT_RATIO,
-    borderRadius: 24,
+    overflow: 'hidden',
+    borderRadius: 16,
     backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
     alignItems: 'center',
+    justifyContent: 'center',
     borderWidth: 2,
     borderStyle: 'dashed',
     borderColor: '#C7D2FE',
   },
   addIconCircle: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: '#EEF2FF',
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    backgroundColor: '#DCE6FF',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 12,
   },
   addIconText: {
-    fontSize: 28,
+    fontSize: 32,
+    lineHeight: 36,
     color: COLORS.brand,
-  },
-  addTitle: {
-    fontSize: 16,
-    color: COLORS.dark,
     fontFamily: FONT_FAMILY.bold,
-  },
-  addSubtitle: {
-    marginTop: 6,
-    fontSize: 13,
-    color: COLORS.placeholder,
-    fontFamily: FONT_FAMILY.medium,
   },
 });
