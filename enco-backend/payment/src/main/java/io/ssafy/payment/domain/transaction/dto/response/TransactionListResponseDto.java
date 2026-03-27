@@ -1,6 +1,7 @@
 package io.ssafy.payment.domain.transaction.dto.response;
 
 import io.ssafy.payment.domain.billing.entity.Expense;
+import io.ssafy.payment.domain.billing.entity.ExpenseStatus;
 import io.ssafy.payment.domain.transaction.entity.Direction;
 import io.ssafy.payment.domain.transaction.entity.TransactionHistory;
 import io.ssafy.payment.infra.client.AuthServiceClient.PointHistoryResponse;
@@ -21,10 +22,16 @@ public record TransactionListResponseDto(
             String title,
             String type,
             BigDecimal amount,
-            BigDecimal balanceAfter
+            BigDecimal balanceAfter,
+            String status
     ) {
         public static ItemDto fromTransaction(TransactionHistory th) {
             String directionType = th.getDirection() == Direction.IN ? "DEPOSIT" : "WITHDRAW";
+            String status = switch (th.getStatus()) {
+                case APPROVED -> "APPROVED";
+                case REJECTED, CANCELED -> "CANCELED";
+                default -> "PENDING";
+            };
             return new ItemDto(
                     "TRANSACTION",
                     th.getId(),
@@ -32,11 +39,13 @@ public record TransactionListResponseDto(
                     th.getDisplayName(),
                     directionType,
                     th.getAmount(),
-                    th.getBalance()
+                    th.getBalance(),
+                    status
             );
         }
 
         public static ItemDto fromExpense(Expense expense, BigDecimal currentBalance) {
+            String status = expense.getStatus() == ExpenseStatus.COMPLETED ? "APPROVED" : "PENDING";
             return new ItemDto(
                     "EXPENSE",
                     expense.getId(),
@@ -44,7 +53,8 @@ public record TransactionListResponseDto(
                     expense.getMerchantName(),
                     "WITHDRAW",
                     expense.getTotalAmount(),
-                    currentBalance
+                    currentBalance,
+                    status
             );
         }
 
@@ -57,7 +67,8 @@ public record TransactionListResponseDto(
                     p.description(),
                     type,
                     p.amount(),
-                    p.balance()
+                    p.balance(),
+                    "APPROVED"
             );
         }
     }
