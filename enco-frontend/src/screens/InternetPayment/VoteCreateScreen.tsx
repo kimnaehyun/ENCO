@@ -11,7 +11,12 @@ export default function VoteCreateScreen() {
   const [description, setDescription] = useState<string>('');
   const navigation = useNavigation<any>();
   const route = useRoute();
-  const params = route.params as { groupId: number; cardId: number };
+  const params = route.params as {
+    groupId: number;
+    cardId: number;
+    amount: number;
+    storeName: string;
+  };
   const onPressDone = () => {
     if (!title) return Alert.alert('확인', '제목을 입력해주세요');
 
@@ -20,6 +25,8 @@ export default function VoteCreateScreen() {
       cardId: params.cardId,
       title: title,
       description: description,
+      amount: params.amount,
+      storeName: params.storeName,
     });
   };
 
@@ -46,14 +53,14 @@ export default function VoteCreateScreen() {
         {/* 금액 */}
         <View className="bg-white rounded-3xl px-5 py-4">
           <KeyValueRow title="금액">
-            <Text className="font-bold text-[20px]">789,000</Text>
+            <Text className="font-bold text-[20px]">{params.amount}원</Text>
           </KeyValueRow>
         </View>
 
         {/* 가맹점명 */}
         <View className="bg-white rounded-3xl px-5 py-4">
           <KeyValueRow title="가맹점명">
-            <Text className="font-bold text-[20px]">여기 엇-혜역</Text>
+            <Text className="font-bold text-[20px]">{params.storeName}</Text>
           </KeyValueRow>
         </View>
 
