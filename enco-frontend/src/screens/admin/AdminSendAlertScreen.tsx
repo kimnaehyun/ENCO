@@ -34,8 +34,10 @@ export default function AdminSendAlertScreen() {
       setUnpaidMembers(res.result.unpaidMembers);
       setPaidMembers(res.result.paidMembers);
     } catch (err: any) {
-      console.log('[AdminSendAlert] fetch error:', JSON.stringify(err?.response?.data ?? err?.message, null, 2));
+      console.log('[AdminSendAlert] groupId:', groupId);
+      console.log('[AdminSendAlert] request URL:', `/groups/${groupId}/members/payment-status`);
       console.log('[AdminSendAlert] status:', err?.response?.status);
+      console.log('[AdminSendAlert] error:', JSON.stringify(err?.response?.data ?? err?.message, null, 2));
       Alert.alert('오류', '납부 현황을 불러오지 못했습니다.');
     } finally {
       setLoading(false);
