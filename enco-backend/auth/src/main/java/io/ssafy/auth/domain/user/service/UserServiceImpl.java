@@ -1,7 +1,10 @@
 package io.ssafy.auth.domain.user.service;
 
+import io.ssafy.auth.domain.user.dto.request.EditMyPageRequestDto;
 import io.ssafy.auth.domain.user.dto.request.ReLoginRequestDto;
 import io.ssafy.auth.domain.user.dto.request.UserJoinRequestDto;
+import io.ssafy.auth.domain.user.dto.response.EditMyPageResponseDto;
+import io.ssafy.auth.domain.user.dto.response.GetMyPageResponseDto;
 import io.ssafy.auth.domain.user.dto.response.LoginResponseDto;
 import io.ssafy.auth.domain.user.dto.response.UserJoinResponseDto;
 import io.ssafy.auth.domain.user.entity.User;
@@ -15,6 +18,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.sql.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -60,6 +64,38 @@ public class UserServiceImpl{
 
     public boolean validateDuplicateEmail(String email){
         return userRepository.existsByEmail(email);
+    }
+
+    @Transactional(readOnly = true)
+    public GetMyPageResponseDto getMyPage(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+
+        return GetMyPageResponseDto.of(user);
+    }
+
+    @Transactional
+    public EditMyPageResponseDto editMyPage(Long userId, EditMyPageRequestDto dto) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
+
+        Date parsedBirthDay = null;
+        if (dto.birthDay() != null && !dto.birthDay().isBlank()) {
+            try {
+                parsedBirthDay = Date.valueOf(dto.birthDay());
+            } catch (IllegalArgumentException e) {
+                throw new CustomException(ErrorCode.BAD_REQUEST);
+            }
+        }
+
+        user.updateMyPage(
+                dto.phoneNumber(),
+                dto.address(),
+                parsedBirthDay,
+                dto.profileUrl()
+        );
+
+        return EditMyPageResponseDto.of(user);
     }
 
     @Transactional

@@ -1,5 +1,32 @@
 package io.ssafy.auth.domain.user.dto.response;
 
-public class EditMyPageResponseDto {
-    
+import io.ssafy.auth.domain.user.entity.User;
+
+import java.text.SimpleDateFormat;
+
+public record EditMyPageResponseDto(
+	String name,
+	String email,
+	String phoneNumber,
+	String birthDay,
+	String gender,
+	String address,
+	Integer profileUrl
+) {
+    public static EditMyPageResponseDto of(User user) {
+	String formattedBirthDay = user.getBirthDay() == null
+		? null
+		: new SimpleDateFormat("yyyy-MM-dd").format(user.getBirthDay());
+
+	return new EditMyPageResponseDto(
+		user.getName(),
+		user.getEmail(),
+		user.getPhoneNumber(),
+		formattedBirthDay,
+		user.getGender() == null ? null : user.getGender().name(),
+		user.getAddress(),
+		user.getProfileUrl()
+	);
+    }
 }
+

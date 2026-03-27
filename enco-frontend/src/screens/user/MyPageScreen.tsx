@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, View } from 'react-native'
 import Text from '@/components/typography';;
-import { images, getProfileImage } from '../../types/images';
+import { getProfileImage } from '../../types/images';
 import { useAuthStore } from '../../store/useAuthStore';
-import { fetchMyPage } from '../../services/userService';
+import { GetMyPage } from '../../services/userService';
 import { clearTokens, clearDeviceToken } from '../../utils/tokenStorage';
 
 export default function MyPageScreen({ navigation }: any) {
@@ -17,8 +17,8 @@ export default function MyPageScreen({ navigation }: any) {
   useEffect(() => {
     if (!profile) {
       setLoading(true);
-      fetchMyPage()
-        .then(data => setProfile(data))
+      GetMyPage()
+        .then(({ result }) => setProfile(result))
         .catch(() => {}) // 마이페이지 API 미지원 시 무시
         .finally(() => setLoading(false));
     }
