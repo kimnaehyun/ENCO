@@ -39,8 +39,8 @@ export default function NotificationCenterScreen() {
       navigation.navigate('GroupPay', {
         groupId: n.groupId,
         groupName: n.groupName,
-        presetAmount: 18000,
-        presetMemo: '감튀정모 후불 정산',
+        presetAmount: n.amount,
+        presetMemo: n.memo,
         paySource: 'settlement' as const,
       });
       return;
