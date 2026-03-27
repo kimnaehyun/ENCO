@@ -36,7 +36,6 @@ public class PointHistory {
     @Column(length = 50)
     private String description;
 
-    @Column(nullable = false)
     private Long referenceId;
 
     @CreatedDate

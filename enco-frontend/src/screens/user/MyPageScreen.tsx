@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, ScrollView, View } from 'react-native'
+import { useFocusEffect } from '@react-navigation/native';
 import Text from '@/components/typography';;
-import { images, getProfileImage } from '../../types/images';
+import { getProfileImage } from '../../types/images';
 import { useAuthStore } from '../../store/useAuthStore';
-import { fetchMyPage } from '../../services/userService';
+import { GetMyPage } from '../../services/userService';
 import { clearTokens, clearDeviceToken } from '../../utils/tokenStorage';
 
 export default function MyPageScreen({ navigation }: any) {
@@ -13,16 +14,15 @@ export default function MyPageScreen({ navigation }: any) {
 
   const [loading, setLoading] = useState(false);
 
-  // 프로필이 store에 없으면 API 호출 (로그인 응답에서 이미 저장된 경우 스킵)
-  useEffect(() => {
-    if (!profile) {
+  useFocusEffect(
+    useCallback(() => {
       setLoading(true);
-      fetchMyPage()
-        .then(data => setProfile(data))
-        .catch(() => {}) // 마이페이지 API 미지원 시 무시
+      GetMyPage()
+        .then(({ result }) => setProfile(result))
+        .catch(() => {})
         .finally(() => setLoading(false));
-    }
-  }, [profile]);
+    }, [setProfile])
+  );
 
   const handleLogout = () => {
     Alert.alert('로그아웃', '정말 로그아웃 하시겠어요?', [
@@ -70,7 +70,7 @@ export default function MyPageScreen({ navigation }: any) {
           <Text variant="bodyLg" weight="bold" color="dark" >
             마이페이지
           </Text>
-          <Pressable onPress={() => navigation.navigate('EditAddress')}>
+          <Pressable onPress={() => navigation.navigate('EditMyPage')}>
             <Text variant="bodyMd" color="brand" >
               수정
             </Text>

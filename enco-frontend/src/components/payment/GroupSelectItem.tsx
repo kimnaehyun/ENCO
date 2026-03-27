@@ -1,6 +1,7 @@
-import { Text, Pressable } from 'react-native';
 import React from 'react';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { NEXT_SCREEN } from '@/constants/payment';
 
 export default function GroupSelectItem({
@@ -13,9 +14,13 @@ export default function GroupSelectItem({
   paymentType: 'internet' | 'onsite';
 }) {
   const navigation = useNavigation<any>();
+
   return (
     <Pressable
-      className="bg-white rounded-[20px] py-4 pl-4"
+      style={({ pressed }) => [
+        styles.item,
+        pressed && styles.itemPressed,
+      ]}
       onPress={() => {
         navigation.navigate(NEXT_SCREEN[paymentType], {
           title,
@@ -23,7 +28,42 @@ export default function GroupSelectItem({
         });
       }}
     >
-      <Text className="font-medium text-xl">{title}</Text>
+      <View style={styles.titleBox}>
+        <Text style={styles.title} numberOfLines={1}>
+          {title}
+        </Text>
+      </View>
     </Pressable>
   );
 }
+
+const styles = StyleSheet.create({
+  item: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginBottom: 12,
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  itemPressed: {
+    opacity: 0.8,
+    transform: [{ scale: 0.98 }],
+  },
+  titleBox: {
+    backgroundColor: '#ffffff',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: '#D9E4FF',
+  },
+  title: {
+    fontSize: 18,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+  },
+});

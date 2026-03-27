@@ -7,20 +7,21 @@ import {
 } from 'react-native';
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import React from 'react';
-import { images } from '../../types/images';
+import { getProfileImage } from '../../types/images';
 import { ChatMsgProps } from '../../types/chat';
 
 export default function ChatMessage({
   content,
+  senderId,
+  senderName,
+  senderProfileImage,
+  senderImageUrl,
   isMe,
   created_at,
   status = 'sent',
-  senderImageUrl,
-  senderName,
   onRetry,
   onCancel,
 }: ChatMsgProps) {
-  console.log(senderImageUrl);
 
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
@@ -75,11 +76,11 @@ export default function ChatMessage({
     <View style={styles.otherMessageRow}>
       <Image
         style={styles.avatar}
-        source={senderImageUrl ? { uri: senderImageUrl } : images.user}
+        source={getProfileImage(senderProfileImage)}
         resizeMode="contain"
       />
       <View>
-        <Text style={styles.senderText}>{senderName}</Text>
+        <Text style={styles.senderText}>{senderName ?? senderId}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
           <View style={styles.otherBubble}>
             <Text style={styles.otherBubbleText}>{content}</Text>

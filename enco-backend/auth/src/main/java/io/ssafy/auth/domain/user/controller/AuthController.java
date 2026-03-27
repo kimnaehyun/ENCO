@@ -1,8 +1,11 @@
 package io.ssafy.auth.domain.user.controller;
 
+import io.ssafy.auth.domain.user.dto.request.EditMyPageRequestDto;
 import io.ssafy.auth.domain.user.dto.request.LoginRequestDto;
 import io.ssafy.auth.domain.user.dto.request.ReLoginRequestDto;
 import io.ssafy.auth.domain.user.dto.request.UserJoinRequestDto;
+import io.ssafy.auth.domain.user.dto.response.EditMyPageResponseDto;
+import io.ssafy.auth.domain.user.dto.response.GetMyPageResponseDto;
 import io.ssafy.auth.domain.user.dto.response.LoginResponseDto;
 import io.ssafy.auth.domain.user.dto.response.UserJoinResponseDto;
 import io.ssafy.auth.domain.user.service.UserServiceImpl;
@@ -55,6 +58,27 @@ public class AuthController {
 
     /**
      * 내 정보 조회 (마이페이지)
-     * @param 
+         * @param userId
+     * @return
      */
+    @GetMapping("/mypage")
+    public ResponseEntity<CommonResponse<GetMyPageResponseDto>> getMyPage(
+            @RequestHeader("X-User-Id") Long userId
+    ) {
+        return ResponseEntity.ok(CommonResponse.success(userService.getMyPage(userId)));
+    }
+
+    /**
+     * 내 정보 수정 (마이페이지)
+     * @param userId
+     * @param editMyPageRequestDto
+     * @return
+     */
+    @PatchMapping("/mypage")
+    public ResponseEntity<CommonResponse<EditMyPageResponseDto>> editMyPage(
+            @RequestHeader("X-User-Id") Long userId,
+            @RequestBody EditMyPageRequestDto editMyPageRequestDto
+    ) {
+        return ResponseEntity.ok(CommonResponse.success(userService.editMyPage(userId, editMyPageRequestDto)));
+    }
 }

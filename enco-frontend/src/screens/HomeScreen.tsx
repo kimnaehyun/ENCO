@@ -6,14 +6,18 @@ import ScreenLayout from '../components/ScreenLayout';
 import { HomeCardItem, HomeGroupSummary } from '../types/screen';
 import { images, getProfileImage } from '../types/images';
 import { useAuthStore } from '../store/useAuthStore';
-import { fetchMyPage } from '../services/userService';
+import { GetMyPage } from '../services/userService';
 import { getMyGroups } from '../services/groupService';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const LAYOUT_PADDING = 16; // ScreenLayout paddingHorizontal
-const HORIZONTAL_PADDING = 24;
-const CARD_WIDTH = SCREEN_WIDTH - HORIZONTAL_PADDING * 2;
-const CARD_HEIGHT = Math.round(CARD_WIDTH * (1100 / 800));
+const CARD_ASPECT_RATIO = 800 / 1100; // 가로 / 세로
+
+// 한 화면에 전부 들어오도록 이미지 높이 제한
+// 헤더(~90) + 섹션타이틀(~35) + 카드푸터(~70) + 여백(~60) = ~255
+const MAX_CARD_IMG_HEIGHT = SCREEN_HEIGHT - 255;
+const CARD_IMG_WIDTH = Math.min(SCREEN_WIDTH - LAYOUT_PADDING * 2, MAX_CARD_IMG_HEIGHT * CARD_ASPECT_RATIO);
+const CARD_IMG_HEIGHT = CARD_IMG_WIDTH / CARD_ASPECT_RATIO;
 
 export default function HomeScreen() {
   const navigation = useNavigation<any>();
@@ -29,8 +33,8 @@ export default function HomeScreen() {
   useEffect(() => {
     if (!profile) {
       setLoading(true);
-      fetchMyPage()
-        .then(data => setProfile(data))
+      GetMyPage()
+        .then(({ result }) => setProfile(result))
         .catch(() => {}) // 마이페이지 API 미지원 시 무시 (로그인 응답 데이터 사용)
         .finally(() => setLoading(false));
     }
@@ -94,7 +98,9 @@ export default function HomeScreen() {
       return (
         <View style={styles.cardSlide}>
           <Pressable onPress={() => onPressGroupCard(item.group)} style={styles.groupCard}>
-            <Image source={item.group.coverImage} style={styles.cardBgImage} resizeMode="contain" />
+            <View style={styles.cardImageBox}>
+              <Image source={item.group.coverImage} style={styles.cardBgImage} resizeMode="contain" />
+            </View>
             <View style={styles.cardFooter}>
               <Text style={styles.cardGroupName}>{item.group.name}</Text>
               <View style={styles.cardBottomRow}>
@@ -247,14 +253,20 @@ const styles = StyleSheet.create({
 
   // ── 모임 카드 ─────────────────────────────────────
   groupCard: {
-    width: CARD_WIDTH,
+    width: '100%',
+    alignItems: 'center',
+  },
+  cardImageBox: {
+    width: CARD_IMG_WIDTH,
+    height: CARD_IMG_HEIGHT,
+    overflow: 'hidden',
   },
   cardBgImage: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT,
+    width: '100%',
+    height: '100%',
   },
   cardFooter: {
-    width: CARD_WIDTH,
+    width: CARD_IMG_WIDTH,
     marginTop: 16,
     paddingLeft: 23,
   },
@@ -285,8 +297,8 @@ const styles = StyleSheet.create({
 
   // ── 모임 추가 카드 ────────────────────────────────
   addCard: {
-    width: CARD_WIDTH,
-    height: CARD_HEIGHT + 62,
+    width: '100%',
+    aspectRatio: CARD_ASPECT_RATIO,
     borderRadius: 24,
     backgroundColor: '#FFFFFF',
     justifyContent: 'center',

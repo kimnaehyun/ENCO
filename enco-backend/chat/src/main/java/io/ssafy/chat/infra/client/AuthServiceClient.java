@@ -4,6 +4,7 @@ import io.ssafy.chat.global.common.response.CommonResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
@@ -15,4 +16,7 @@ public interface AuthServiceClient {
 
     @GetMapping("/internal/groups/{groupId}/members")
     CommonResponse<List<Long>> getGroupMembers(@PathVariable Long groupId);
+
+    @GetMapping("/api/v1/users/internal/batch")
+    CommonResponse<List<UserDetailDto>> getUserDetails(@RequestParam List<Long> userIds);
 }

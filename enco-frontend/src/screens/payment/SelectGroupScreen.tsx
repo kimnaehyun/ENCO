@@ -35,7 +35,7 @@ export default function SelectGroupScreen({ route }: any) {
           </Text>
         </View>
       ) : (
-        <View className="flex gap-2">
+        <View className="flex gap-2 mt-4">
           {groups.map(item => (
             <GroupSelectItem
               key={item.groupId}
