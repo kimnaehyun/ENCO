@@ -1,5 +1,5 @@
 // src/hooks/useGroupAttendance.ts
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Alert } from 'react-native';
 import { postAttend, getMyAttendance } from '../services/authService';
 
@@ -144,7 +144,7 @@ export function useGroupAttendance(groupId?: string) {
     }
   };
 
-  const refresh = () => setRefreshKey(prev => prev + 1);
+  const refresh = useCallback(() => setRefreshKey(prev => prev + 1), []);
 
   return {
     attendedDates,
