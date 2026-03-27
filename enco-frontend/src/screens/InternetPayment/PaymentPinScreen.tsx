@@ -1,7 +1,11 @@
 import { Alert } from 'react-native';
 import React, { useState } from 'react';
 import PinEntry from '../../components/pin/PinEntry';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  CommonActions,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { voteApi } from '@/services/payment/vote';
 import { ROUTES } from '@/constants/routes';
@@ -15,6 +19,8 @@ export default function PaymentPinScreen() {
     cardId: number;
     title: string;
     description: string;
+    storeName: string;
+    amount: number;
   };
 
   const handlePinComplete = async (pin: string) => {
@@ -23,12 +29,12 @@ export default function PaymentPinScreen() {
         groupId: params.groupId,
         cardId: params.cardId,
         password: pin,
-        counterpartyBankName: '국민은행',
-        counterpartyName: '어디엇혜역',
-        counterpartyBankAccountNumber: '111-111',
+        counterpartyBankName: '온라인 결제',
+        counterpartyName: params.storeName,
+        counterpartyBankAccountNumber: '123-456-789012',
         title: params.title,
         description: params.description,
-        amount: 5000,
+        amount: params.amount,
       };
       console.log(body);
 
@@ -37,11 +43,27 @@ export default function PaymentPinScreen() {
       Alert.alert('완료', '투표가 생성되었습니다.', [
         {
           text: '확인',
-          onPress: () => navigation.getParent()?.navigate(ROUTES.TAB_HOME),
+          onPress: () =>
+            navigation.dispatch(
+              CommonActions.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: 'App',
+                    state: { routes: [{ name: ROUTES.TAB_HOME }] },
+                  },
+                ],
+              }),
+            ),
         },
       ]);
     } catch (e: any) {
-      Alert.alert('인증 실패', 'pin 번호가 올바르지 않습니다.');
+      console.log('에러 응답:', e.response?.data);
+      console.log('에러 상태:', e.response?.status);
+      Alert.alert(
+        '인증 실패',
+        JSON.stringify(e.response?.data) ?? 'pin 번호가 올바르지 않습니다.',
+      );
     }
 
     setResetKey(prev => prev + 1);

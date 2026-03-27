@@ -8,15 +8,13 @@ export const linking: LinkingOptions<RootStackParamList> = {
       // 결제 딥링크 (기존)
       InternetPayFlow: {
         screens: {
-          CreateInternetPaymentRequest: 'pay',
-          PaymentApprovalPending: 'pay/pending',
-          InternetPaymentPin: 'pay/pin',
-          PaymentSuccess: {
+          PaymentStartScreen: {
             path: 'pay/success',
             parse: {
               amount: (value: string) => Number(value),
               callbackUrl: (value: string) => value,
               orderId: (value: string) => value,
+              storeName: (value: string) => value,
             },
           },
         },

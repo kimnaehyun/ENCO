@@ -393,6 +393,7 @@ export async function getGroupTransactionDetail(
 export const onsiteBarcodePayment = async (
   barcodeNumber: string,
   cardId: number,
+  usePoint: boolean,
 ) => {
   const response = await paymentApi.post(
     '/payments/pay',
@@ -401,6 +402,7 @@ export const onsiteBarcodePayment = async (
       amount: 15000, // 추후 실제 금액으로
       merchantName: '스타벅스', // 추후 실제 가게명으로
       cardId,
+      usePoint,
     },
     {
       headers: {

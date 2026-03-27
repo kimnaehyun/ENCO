@@ -209,3 +209,8 @@ export async function getMyAttendance(
   );
   return response.data;
 }
+
+export async function getPoint(groupId: number) {
+  const response = await authApi.get(`/users/${groupId}/points`);
+  return response.data;
+}
