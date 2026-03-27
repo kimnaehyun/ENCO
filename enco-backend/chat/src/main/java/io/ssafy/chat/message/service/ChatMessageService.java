@@ -3,6 +3,8 @@ package io.ssafy.chat.message.service;
 import io.ssafy.chat.domain.chatroom.document.LastMessage;
 import io.ssafy.chat.domain.chatroom.repository.ChatRoomRepository;
 import io.ssafy.chat.common.enums.MessageType;
+import io.ssafy.chat.infra.client.AuthServiceClient;
+import io.ssafy.chat.infra.client.UserDetailDto;
 import io.ssafy.chat.message.document.ChatMessage;
 import io.ssafy.chat.message.dto.ChatMessageRequest;
 import io.ssafy.chat.message.dto.ChatMessageResponse;
@@ -13,6 +15,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -21,6 +25,7 @@ public class ChatMessageService {
 
     private final ChatMessageRepository chatMessageRepository;
     private final ChatRoomRepository chatRoomRepository;
+    private final AuthServiceClient authServiceClient;
 
     /**
      * 메시지 저장 + 채팅방 lastMessage 업데이트
@@ -49,7 +54,9 @@ public class ChatMessageService {
             chatRoomRepository.save(room);
         });
 
-        return ChatMessageResponse.from(saved);
+        ChatMessageResponse response = ChatMessageResponse.from(saved);
+        enrichSenderInfo(List.of(response));
+        return response;
     }
 
     /**
@@ -60,9 +67,11 @@ public class ChatMessageService {
         List<ChatMessage> messages = chatMessageRepository
                 .findByRoomIdAndIsDeletedFalseOrderByCreatedAtDesc(roomId, pageable);
 
-        return messages.stream()
+        List<ChatMessageResponse> responses = messages.stream()
                 .map(ChatMessageResponse::from)
                 .toList();
+        enrichSenderInfo(responses);
+        return responses;
     }
 
     /**
@@ -74,9 +83,35 @@ public class ChatMessageService {
                 .findByRoomIdAndIsDeletedFalseAndIdLessThanOrderByCreatedAtDesc(
                         roomId, beforeMessageId, pageable);
 
-        return messages.stream()
+        List<ChatMessageResponse> responses = messages.stream()
                 .map(ChatMessageResponse::from)
                 .toList();
+        enrichSenderInfo(responses);
+        return responses;
+    }
+
+    private void enrichSenderInfo(List<ChatMessageResponse> responses) {
+        List<Long> senderIds = responses.stream()
+                .map(ChatMessageResponse::getSenderId)
+                .distinct()
+                .toList();
+
+        if (senderIds.isEmpty()) return;
+
+        try {
+            Map<Long, UserDetailDto> userMap = authServiceClient.getUserDetails(senderIds)
+                    .result().stream()
+                    .collect(Collectors.toMap(UserDetailDto::getUserId, u -> u));
+
+            for (ChatMessageResponse response : responses) {
+                UserDetailDto user = userMap.get(response.getSenderId());
+                if (user != null) {
+                    response.enrichSenderInfo(user.getName(), user.getProfileImage());
+                }
+            }
+        } catch (Exception e) {
+            log.warn("유저 정보 조회 실패 - senderIds: {}", senderIds, e);
+        }
     }
 
     /**
