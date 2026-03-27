@@ -16,6 +16,8 @@ public class ChatMessageResponse {
     private MessageType messageType;
     private String roomId;
     private Long senderId;
+    private String senderName;
+    private Integer senderProfileImage;
     private String content;
     private Map<String, Object> metadata;
     private LocalDateTime createdAt;
@@ -30,5 +32,10 @@ public class ChatMessageResponse {
                 .metadata(message.getMetadata())
                 .createdAt(message.getCreatedAt())
                 .build();
+    }
+
+    public void enrichSenderInfo(String senderName, Integer senderProfileImage) {
+        this.senderName = senderName;
+        this.senderProfileImage = senderProfileImage;
     }
 }
