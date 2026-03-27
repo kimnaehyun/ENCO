@@ -38,56 +38,8 @@ export const useNotifications = () => {
   return ctx;
 };
 
-// ✅ 임시 seed (나중에 서버 데이터로 교체)
-const seed: NotificationItem[] = [
-  {
-    id: 'n1',
-    type: 'DUE',
-    title: '미납 알림',
-    body: '3월 회비가 아직 미납입니다. 납부를 진행해주세요.',
-    createdAt: '2026-03-09 10:10',
-    isRead: false,
-    groupId: 'g1',
-    groupName: '회식주의자',
-    amount: 10000,
-    memo: '3월 회비',
-    unpaidItemId: 'u1',
-  },
-  {
-    id: 'n2',
-    type: 'VOTE',
-    title: '투표 생성됨',
-    body: '“보일링 씨푸드 결제 승인” 투표가 생성되었습니다.',
-    createdAt: '2026-03-08 21:05',
-    isRead: true,
-    groupId: 'g1',
-    groupName: '회식주의자',
-    voteId: 'v1',
-  },
-  {
-    id: 'n3',
-    type: 'LEDGER',
-    title: '장부 업데이트',
-    body: '새 지출 내역이 등록되었습니다. 장부에서 확인하세요.',
-    createdAt: '2026-03-08 09:12',
-    isRead: false,
-    groupId: 'g1',
-    groupName: '회식주의자',
-  },
-  {
-    id: 'mock-settlement-1',
-    type: 'SETTLEMENT',
-    title: '[ 감튀정모 ] 18,000원',
-    body: '납부 요청이 왔습니다',
-    createdAt: '방금 전',
-    isRead: false,
-    groupId: 'g1',
-    groupName: '회식주의자',
-  }
-];
-
 export const NotificationsProvider: React.FC<React.PropsWithChildren> = ({ children }) => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>(seed);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
   const unreadCount = useMemo(
     () => notifications.reduce((acc, n) => acc + (n.isRead ? 0 : 1), 0),

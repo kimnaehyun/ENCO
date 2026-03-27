@@ -18,7 +18,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Date;
 import java.util.List;
 import java.util.UUID;
 
@@ -79,19 +78,9 @@ public class UserServiceImpl{
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_USER));
 
-        Date parsedBirthDay = null;
-        if (dto.birthDay() != null && !dto.birthDay().isBlank()) {
-            try {
-                parsedBirthDay = Date.valueOf(dto.birthDay());
-            } catch (IllegalArgumentException e) {
-                throw new CustomException(ErrorCode.BAD_REQUEST);
-            }
-        }
-
         user.updateMyPage(
                 dto.phoneNumber(),
                 dto.address(),
-                parsedBirthDay,
                 dto.profileUrl()
         );
 

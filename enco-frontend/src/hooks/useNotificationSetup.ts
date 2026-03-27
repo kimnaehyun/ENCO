@@ -44,7 +44,7 @@ async function displayLocalNotification(
       data,
       android: {
         channelId,
-        smallIcon: 'ic_launcher',
+        smallIcon: 'small_hamco_64',
         pressAction: { id: 'default' },
       },
     });
