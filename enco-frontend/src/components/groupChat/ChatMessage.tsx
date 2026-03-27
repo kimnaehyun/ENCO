@@ -1,20 +1,30 @@
-import { View, Image, TouchableOpacity, ActivityIndicator, StyleSheet } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
+import {
+  View,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  StyleSheet,
+} from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import React from 'react';
 import { images } from '../../types/images';
 import { ChatMsgProps } from '../../types/chat';
 
 export default function ChatMessage({
   content,
-  senderId,
   isMe,
   created_at,
   status = 'sent',
+  senderImageUrl,
+  senderName,
   onRetry,
   onCancel,
 }: ChatMsgProps) {
+  console.log(senderImageUrl);
+
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
+    if (isNaN(date.getTime())) return '';
     return date.toLocaleTimeString('ko-KR', {
       hour: '2-digit',
       minute: '2-digit',
@@ -63,9 +73,13 @@ export default function ChatMessage({
 
   return (
     <View style={styles.otherMessageRow}>
-      <Image style={styles.avatar} source={images.user} resizeMode="contain" />
+      <Image
+        style={styles.avatar}
+        source={senderImageUrl ? { uri: senderImageUrl } : images.user}
+        resizeMode="contain"
+      />
       <View>
-        <Text style={styles.senderText}>{senderId}</Text>
+        <Text style={styles.senderText}>{senderName}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
           <View style={styles.otherBubble}>
             <Text style={styles.otherBubbleText}>{content}</Text>
@@ -95,7 +109,7 @@ const styles = StyleSheet.create({
   userBubbleText: {
     color: COLORS.white,
     fontSize: 16,
-    fontFamily: FONT_FAMILY.bold,
+    fontFamily: FONT_FAMILY.medium,
   },
 
   // 상대 메시지
