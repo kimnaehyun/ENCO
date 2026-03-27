@@ -216,6 +216,9 @@ function mapNotificationType(serverType: string): 'DUE' | 'VOTE' | 'LEDGER' | 'S
     case 'DUE_REMINDER':
       return 'DUE';
     case 'VOTE_CREATED':
+    case 'PAYMENT_APPROVED':
+    case 'PAYMENT_REJECTED':
+    case 'PAYMENT_CANCELED':
     case 'VOTE':
       return 'VOTE';
     case 'LEDGER_UPDATE':
@@ -223,6 +226,6 @@ function mapNotificationType(serverType: string): 'DUE' | 'VOTE' | 'LEDGER' | 'S
       return 'LEDGER';
     case 'CHAT_MESSAGE':
     default:
-      return 'DUE'; // 기본 폴백
+      return 'VOTE'; // 기본 폴백: 결제화면 오탐 방지
   }
 }
