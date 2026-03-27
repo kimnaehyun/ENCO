@@ -41,6 +41,8 @@ public class PaymentVote {
 
     private LocalDateTime deletedAt;
 
+    private boolean usePoint;
+
     private Integer voteCriteria;
 
     private Integer totalMembers;

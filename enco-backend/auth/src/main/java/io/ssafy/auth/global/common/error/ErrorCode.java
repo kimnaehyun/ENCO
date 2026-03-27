@@ -26,6 +26,7 @@ public enum ErrorCode {
     NO_ACTIVE_EVENT(HttpStatus.NOT_FOUND, "현재 진행 중인 출석 이벤트가 없습니다.", "NO_ACTIVE_EVENT"),
     INVALID_ATTENDANCE_TIME(HttpStatus.BAD_REQUEST, "출석 가능한 기간 또는 시간이 아닙니다.", "INVALID_ATTENDANCE_TIME"),
     ALREADY_ATTENDED(HttpStatus.BAD_REQUEST, "오늘은 이미 출석을 완료했습니다.", "ALREADY_ATTENDED"),
+    INSUFFICIENT_POINT(HttpStatus.BAD_REQUEST, "포인트가 존재하지 않습니다.", "INSUFFICIENT_POINT"),
     MIN_MEMBER_LIMIT_NOT_MET(HttpStatus.BAD_REQUEST, "최소 2명 이상인 모임만 참여 가능합니다.", "MIN_MEMBER_LIMIT_NOT_MET");
 
     private final HttpStatus httpStatusCode;
