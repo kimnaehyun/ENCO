@@ -1,10 +1,13 @@
-import { FlatList, ListRenderItem } from 'react-native';
+import { useRef } from 'react';
+import { FlatList, ListRenderItem, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { ChatItem, ChatMessageListProps } from '@/types/chat';
 import ChatMessage from '@/components/groupChat/ChatMessage';
 import Chatbot from '@/components/groupChat/Chatbot';
 import BotUnpaidCard from '@/components/groupChat/BotUnpaidCard';
 import BotActions from '@/components/groupChat/BotActions';
 import BotLedgerCard from '@/components/groupChat/BotLedGerCard';
+
+const AUTO_SCROLL_THRESHOLD = 80;
 
 export default function ChatMessageList({
   messages,
@@ -16,6 +19,15 @@ export default function ChatMessageList({
   onLoadMore,
   isLoadingOlderRef,
 }: ChatMessageListProps) {
+  const isNearBottomRef = useRef(true);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const distanceFromBottom =
+      contentSize.height - (contentOffset.y + layoutMeasurement.height);
+    isNearBottomRef.current = distanceFromBottom <= AUTO_SCROLL_THRESHOLD;
+  };
+
   const renderItem: ListRenderItem<ChatItem> = ({ item }) => {
     console.log(item);
 
@@ -83,18 +95,34 @@ export default function ChatMessageList({
       onScrollToIndexFailed={() => {}}
       onRefresh={onLoadMore}
       refreshing={false}
+      onScroll={handleScroll}
+      scrollEventThrottle={16}
       onContentSizeChange={() => {
+        if (isLoadingOlderRef.current) {
+          return;
+        }
+
         const last = messages[messages.length - 1];
-        // chat 타입 내 메시지 OR chatbot/user/bot-* 타입일 때 스크롤
+        const isOutgoingChat = last?.type === 'chat' && last.senderId === userId;
+        // 챗봇/시스템 카드나 내가 보낸 메시지일 때만 하단 이동 후보
         const shouldScroll =
-          (last?.type === 'chat' && last.senderId === userId) ||
+          isOutgoingChat ||
           last?.type === 'chatbot' ||
           last?.type === 'user' ||
           last?.type === 'bot-actions' ||
           last?.type === 'bot-unpaid-card' ||
           last?.type === 'bot-ledger-card';
 
-        if (shouldScroll) {
+        if (!shouldScroll) {
+          return;
+        }
+
+        // 사용자가 위쪽 메시지를 읽는 중이면 강제 스크롤을 하지 않음
+        if (!isNearBottomRef.current && !isOutgoingChat) {
+          return;
+        }
+
+        if (flatListRef.current) {
           flatListRef.current?.scrollToEnd({ animated: true });
         }
       }}

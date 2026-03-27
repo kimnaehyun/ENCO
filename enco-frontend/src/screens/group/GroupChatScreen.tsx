@@ -33,6 +33,7 @@ export default function GroupChatScreen() {
     sendMessage,
     retryMessage,
     cancelMessage,
+    isLoadingOlderRef,
   } = useChat(String(groupId), userId);
 
   const { pickMode, handleHamcoTrigger, handleActionPress, sendPickMessage, exitPickMode } = useChatbot({
@@ -92,6 +93,7 @@ export default function GroupChatScreen() {
           onCancel={cancelMessage}
           onActionPress={handleActionPress}
           onLoadMore={loadMoreMessages}
+          isLoadingOlderRef={isLoadingOlderRef}
         />
 
         {pickMode && (
