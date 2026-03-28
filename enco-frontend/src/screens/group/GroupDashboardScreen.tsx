@@ -55,7 +55,7 @@ export default function GroupDashboardScreen() {
   const params = (route.params ?? {}) as CommonParams;
   const groupId = params.groupId;
   const isAdmin = !!params.isAdmin;
-  const { unreadCount } = useNotifications();
+  const { unreadCount, notifications } = useNotifications();
 
   const [dashboardGroupName, setDashboardGroupName] = useState(
     params.groupName ?? '모임명'
@@ -117,104 +117,134 @@ export default function GroupDashboardScreen() {
     fetchDashboard();
   }, [groupId]);
 
-  useEffect(() => {
-    const fetchAnalytics = async () => {
-      if (!groupId) return;
-      const gid = Number(groupId);
-      const now = new Date();
-      const thisYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  // ✅ 지출 분석 데이터 새로고침 (useCallback으로 재사용 가능하게)
+  const fetchAnalytics = useCallback(async () => {
+    if (!groupId) return;
+    const gid = Number(groupId);
+    const now = new Date();
+    const thisYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-      const recentMonths: string[] = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        recentMonths.push(
-          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-        );
+    const recentMonths: string[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      recentMonths.push(
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      );
+    }
+    const recentMonthsSet = new Set(recentMonths);
+
+    // 예산 계산
+    try {
+      const [settingsData, membersData] = await Promise.all([
+        getGroupSettings(groupId),
+        getGroupMembers(groupId),
+      ]);
+      const rawResult = settingsData.result as any;
+      const monthlyFee =
+        rawResult.duePolicy?.amount ?? rawResult.policy?.monthlyFee ?? 0;
+      const memberCount = membersData.result.length;
+      setTotalMembersCount(memberCount);
+      setCalculatedMonthlyBudget(monthlyFee * memberCount);
+      console.log('[Analytics] monthlyFee:', monthlyFee, 'memberCount:', memberCount);
+    } catch (error: any) {
+      console.error('[Analytics] budget failed:', error?.response?.status, error?.response?.data);
+    }
+
+    // 거래내역 1번 fetch → 이번달 지출 / top5 / 6개월 트렌드 모두 계산
+    try {
+      const allItems: any[] = [];
+      let cursor: number | undefined;
+      while (true) {
+        const txData = await getGroupTransactions(gid, {
+          sort: 'LATEST' as const,
+          type: 'WITHDRAW' as const,
+          size: 200,
+          cursor,
+        });
+        allItems.push(...txData.result.items);
+        if (!txData.result.hasNext || txData.result.nextCursor == null) break;
+        cursor = txData.result.nextCursor;
       }
-      const recentMonthsSet = new Set(recentMonths);
+      console.log('[Analytics] 전체 WITHDRAW items:', allItems.length);
 
-      // 예산 계산
-      try {
-        const [settingsData, membersData] = await Promise.all([
-          getGroupSettings(groupId),
-          getGroupMembers(groupId),
-        ]);
-        const rawResult = settingsData.result as any;
-        const monthlyFee =
-          rawResult.duePolicy?.amount ?? rawResult.policy?.monthlyFee ?? 0;
-        const memberCount = membersData.result.length;
-        setTotalMembersCount(memberCount);
-        setCalculatedMonthlyBudget(monthlyFee * memberCount);
-        console.log('[Analytics] monthlyFee:', monthlyFee, 'memberCount:', memberCount);
-      } catch (error: any) {
-        console.error('[Analytics] budget failed:', error?.response?.status, error?.response?.data);
-      }
+      const thisMonthItems = allItems.filter(
+        item => item.transactionDate?.slice(0, 7) === thisYM
+      );
 
-      // 거래내역 1번 fetch → 이번달 지출 / top5 / 6개월 트렌드 모두 계산
-      try {
-        const allItems: any[] = [];
-        let cursor: number | undefined;
-        while (true) {
-          const txData = await getGroupTransactions(gid, {
-            sort: 'LATEST' as const,
-            type: 'WITHDRAW' as const,
-            size: 200,
-            cursor,
-          });
-          allItems.push(...txData.result.items);
-          if (!txData.result.hasNext || txData.result.nextCursor == null) break;
-          cursor = txData.result.nextCursor;
-        }
-        console.log('[Analytics] 전체 WITHDRAW items:', allItems.length);
-
-        const thisMonthItems = allItems.filter(
-          item => item.transactionDate?.slice(0, 7) === thisYM
+        // 미확정/취소 건 제외 필터링
+        const confirmedThisMonthItems = thisMonthItems.filter(
+          item => item.status !== 'PENDING' && item.status !== 'CANCELED'
         );
 
         // 이번달 지출 합계
-        setCalculatedMonthlySpent(
-          thisMonthItems.reduce((sum, item) => sum + item.amount, 0)
-        );
+      setCalculatedMonthlySpent(
+          confirmedThisMonthItems.reduce((sum, item) => sum + item.amount, 0)
+      );
 
-        // top 5 결제명
-        const groupedMap: Record<string, number> = {};
-        thisMonthItems.forEach(item => {
-          const key = item.title || '기타';
-          groupedMap[key] = (groupedMap[key] ?? 0) + item.amount;
+      // top 5 결제명
+      const groupedMap: Record<string, number> = {};
+      confirmedThisMonthItems.forEach(item => {
+        const key = item.title || '기타';
+        groupedMap[key] = (groupedMap[key] ?? 0) + item.amount;
+      });
+      const top5 = Object.entries(groupedMap)
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5);
+      setCalculatedTopSpendingTotal(top5.reduce((sum, item) => sum + item.value, 0));
+      setTopSpendingItems(
+        top5.map((item, index) => ({
+          label: item.label,
+          value: item.value,
+          color: TOP_SPENDING_COLORS[index] ?? '#CBD5E1',
+        }))
+      );
+
+      // 최근 6개월 트렌드
+      const groupedByMonth: Record<string, number> = {};
+      allItems
+          .filter(
+            item =>
+              recentMonthsSet.has(item.transactionDate?.slice(0, 7)) &&
+              item.status !== 'PENDING' &&
+              item.status !== 'CANCELED'
+          )
+        .forEach(item => {
+          const ym = item.transactionDate.slice(0, 7);
+          groupedByMonth[ym] = (groupedByMonth[ym] ?? 0) + item.amount;
         });
-        const top5 = Object.entries(groupedMap)
-          .map(([label, value]) => ({ label, value }))
-          .sort((a, b) => b.value - a.value)
-          .slice(0, 5);
-        setCalculatedTopSpendingTotal(top5.reduce((sum, item) => sum + item.value, 0));
-        setTopSpendingItems(
-          top5.map((item, index) => ({
-            label: item.label,
-            value: item.value,
-            color: TOP_SPENDING_COLORS[index] ?? '#CBD5E1',
-          }))
-        );
-
-        // 최근 6개월 트렌드
-        const groupedByMonth: Record<string, number> = {};
-        allItems
-          .filter(item => recentMonthsSet.has(item.transactionDate?.slice(0, 7)))
-          .forEach(item => {
-            const ym = item.transactionDate.slice(0, 7);
-            groupedByMonth[ym] = (groupedByMonth[ym] ?? 0) + item.amount;
-          });
-        setCalculatedMonthlyData(
-          recentMonths.map(ym => ({
-            month: `${parseInt(ym.split('-')[1], 10)}월`,
-            amount: groupedByMonth[ym] ?? 0,
-          }))
-        );
-      } catch (error: any) {
-        console.error('[Analytics] transactions failed:', error?.response?.status, error?.response?.data);
-      }
-    };
-    fetchAnalytics();
+      setCalculatedMonthlyData(
+        recentMonths.map(ym => ({
+          month: `${parseInt(ym.split('-')[1], 10)}월`,
+          amount: groupedByMonth[ym] ?? 0,
+        }))
+      );
+    } catch (error: any) {
+      console.error('[Analytics] transactions failed:', error?.response?.status, error?.response?.data);
+    }
   }, [groupId]);
+
+  // 초기 로드 시 fetchAnalytics 호출
+  useEffect(() => {
+    fetchAnalytics();
+  }, [fetchAnalytics]);
+
+  // ✅ SSE 알림 수신 시 자동으로 지출 데이터 새로고침
+  useEffect(() => {
+    if (!notifications.length) return;
+    
+    // 최신 알림 확인
+    const latestNotification = notifications[0];
+    
+    // 투표/결제 관련 알림이면 새로고침
+    if (
+      latestNotification?.groupId === String(groupId) &&
+      (latestNotification.type === 'VOTE' || latestNotification.type === 'SETTLEMENT')
+    ) {
+      console.log('[Dashboard] SSE 알림으로 인한 자동 새로고침:', latestNotification.type);
+      fetchAnalytics();
+    }
+  }, [notifications, groupId, fetchAnalytics]);
 
   // 3초마다 다음 카드로 자동 스크롤
   useEffect(() => {

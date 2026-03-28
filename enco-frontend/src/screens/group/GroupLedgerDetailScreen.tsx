@@ -203,7 +203,7 @@ export default function GroupLedgerDetailScreen() {
             <Text
               style={[
                 styles.amountText,
-                { color: isDeposit ? '#1428A0' : '#EF4444' },
+                { color: '#F59E0B' },
               ]}
             >
               {formatMoney(isDeposit ? listItem.amount : -listItem.amount)}

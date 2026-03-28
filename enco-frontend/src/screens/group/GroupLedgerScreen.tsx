@@ -455,15 +455,17 @@ export default function GroupLedgerScreen() {
     const rows = filteredTransactions
       .map(it => {
         const isDeposit = it.type === 'DEPOSIT';
+        const isPoint = it.referenceType === 'POINT';
         const amount = toSafeNumber(it.amount);
         const signedAmount = isDeposit ? amount : -amount;
         const txDate = toSafeDateText(it.transactionDate);
         const balanceAfter = toSafeNumber(it.balanceAfter);
+        const amountColor = isPoint ? '#F59E0B' : isDeposit ? '#1428A0' : '#EF4444';
         return `
         <tr>
           <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#6B7280;">${txDate}</td>
           <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#111827; font-weight:600;">${it.title}</td>
-          <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:${isDeposit ? '#1428A0' : '#EF4444'}; text-align:right; font-weight:700;">
+          <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:${amountColor}; text-align:right; font-weight:700;">
             ${formatMoney(signedAmount)}
           </td>
           <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#6B7280; text-align:right;">
@@ -828,6 +830,8 @@ export default function GroupLedgerScreen() {
                           {
                             color: isInactiveTransaction
                               ? '#9CA3AF'
+                              : it.referenceType === 'POINT'
+                                ? '#F59E0B'
                               : isDeposit
                                 ? '#1428A0'
                                 : '#EF4444',

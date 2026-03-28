@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   FlatList,
   LayoutAnimation,
@@ -12,6 +12,7 @@ import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { Vote } from '../../types/vote';
 import { GroupScreenProps } from '../../types/group';
 import { voteApi } from '@/services/payment/vote';
+import { useNotifications } from '../../contexts/NotificationsContext';
 import GroupVoteDetail from '@/components/vote/GroupVoteDetail';
 
 export default function GroupVotesScreen({
@@ -19,25 +20,46 @@ export default function GroupVotesScreen({
 }: GroupScreenProps<'GroupVotes'>) {
   const [votes, setVotes] = useState<Vote[]>([]);
   const [expandedId, setExpandedId] = useState<number | null>(null);
+  const { notifications } = useNotifications();
 
   const groupId = route.params?.groupId;
 
-  useEffect(() => {
-    const fetchVote = async () => {
-      try {
-        const response = await voteApi.list(Number(groupId));
-        const sorted = [...response.data.result].sort(
-          (a, b) => b.voteId - a.voteId,
-        );
-        console.log(response.data);
+  // ✅ 투표 목록 새로고침 (useCallback으로 재사용 가능하게)
+  const fetchVote = useCallback(async () => {
+    try {
+      const response = await voteApi.list(Number(groupId));
+      const sorted = [...response.data.result].sort(
+        (a, b) => b.voteId - a.voteId,
+      );
+      console.log('[GroupVotes] 투표 목록 로드:', response.data);
 
-        setVotes(sorted);
-      } catch (e) {
-        console.log(e);
-      }
-    };
-    fetchVote();
+      setVotes(sorted);
+    } catch (e) {
+      console.log('[GroupVotes] 투표 목록 로드 실패:', e);
+    }
   }, [groupId]);
+
+  // 초기 로드 시 투표 목록 조회
+  useEffect(() => {
+    fetchVote();
+  }, [fetchVote]);
+
+  // ✅ SSE 알림 수신 시 자동으로 투표 목록 새로고침
+  useEffect(() => {
+    if (!notifications.length) return;
+    
+    // 최신 알림 확인
+    const latestNotification = notifications[0];
+    
+    // 투표 관련 알림이면 새로고침
+    if (
+      latestNotification?.groupId === String(groupId) &&
+      latestNotification.type === 'VOTE'
+    ) {
+      console.log('[GroupVotes] SSE 알림으로 인한 자동 새로고침:', latestNotification.type);
+      fetchVote();
+    }
+  }, [notifications, groupId, fetchVote]);
 
   useEffect(() => {
     if (

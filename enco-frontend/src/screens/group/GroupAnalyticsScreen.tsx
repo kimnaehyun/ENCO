@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View, Pressable } from 'react-native';
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
+import { useNotifications } from '../../contexts/NotificationsContext';
 import BudgetGaugeCard from '../../components/analytics/BudgetGaugeCard';
 import ExpenseCategoryCard, {
   ExpenseCategoryItem,
@@ -37,6 +38,7 @@ export default function GroupAnalyticsScreen() {
   const params = (route.params ?? {}) as CommonParams;
   const groupId = params.groupId;
   const groupName = params.groupName ?? '모임명';
+  const { notifications } = useNotifications();
 
   const [totalExpense, setTotalExpense] = useState(0);
   const [totalIncome, setTotalIncome] = useState(0);
@@ -50,126 +52,152 @@ export default function GroupAnalyticsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  useEffect(() => {
+  // ✅ 지출 분석 데이터 새로고침 (useCallback으로 재사용 가능하게)
+  const fetchAll = useCallback(async () => {
     if (!groupId) return;
 
-    const fetchAll = async () => {
-      setIsLoading(true);
-      setFetchError(null);
-      const gid = Number(groupId);
-      const now = new Date();
-      const thisYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    setIsLoading(true);
+    setFetchError(null);
+    const gid = Number(groupId);
+    const now = new Date();
+    const thisYM = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
 
-      // 최근 6개월 YYYY-MM 배열
-      const recentMonths: string[] = [];
-      for (let i = 5; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        recentMonths.push(
-          `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-        );
-      }
-      const recentMonthsSet = new Set(recentMonths);
+    // 최근 6개월 YYYY-MM 배열
+    const recentMonths: string[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      recentMonths.push(
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+      );
+    }
+    const recentMonthsSet = new Set(recentMonths);
 
-      // ── 예산 계산 (settings + members) ──
-      try {
-        const [settingsData, membersData] = await Promise.all([
-          getGroupSettings(groupId),
-          getGroupMembers(groupId),
-        ]);
-        const rawResult = settingsData.result as any;
-        const feePerMember =
-          rawResult.duePolicy?.amount ?? rawResult.policy?.monthlyFee ?? 0;
-        const memberCount = membersData.result.length;
-        const budget = feePerMember * memberCount;
-        console.log('[Analytics] feePerMember:', feePerMember, 'memberCount:', memberCount, 'budget:', budget);
-        setMonthlyBudget(budget);
-      } catch (error: any) {
-        console.error('[Analytics] budget fetch failed:', error?.response?.status, error?.response?.data);
-      }
+    // ── 예산 계산 (settings + members) ──
+    try {
+      const [settingsData, membersData] = await Promise.all([
+        getGroupSettings(groupId),
+        getGroupMembers(groupId),
+      ]);
+      const rawResult = settingsData.result as any;
+      const feePerMember =
+        rawResult.duePolicy?.amount ?? rawResult.policy?.monthlyFee ?? 0;
+      const memberCount = membersData.result.length;
+      const budget = feePerMember * memberCount;
+      console.log('[Analytics] feePerMember:', feePerMember, 'memberCount:', memberCount, 'budget:', budget);
+      setMonthlyBudget(budget);
+    } catch (error: any) {
+      console.error('[Analytics] budget fetch failed:', error?.response?.status, error?.response?.data);
+    }
 
-      // ── 입금 / 잔액 (dashboard report) ──
-      try {
-        const reportData = await getGroupDashboardReport(groupId);
-        console.log('[Analytics] report:', reportData.result);
-        setTotalIncome(reportData.result.paidAmount ?? 0);
-        setCurrentBalance(reportData.result.balance ?? 0);
-      } catch (error: any) {
-        console.error('[Analytics] report fetch failed:', error?.response?.status, error?.response?.data);
-      }
+    // ── 입금 / 잔액 (dashboard report) ──
+    try {
+      const reportData = await getGroupDashboardReport(groupId);
+      console.log('[Analytics] report:', reportData.result);
+      setTotalIncome(reportData.result.paidAmount ?? 0);
+      setCurrentBalance(reportData.result.balance ?? 0);
+    } catch (error: any) {
+      console.error('[Analytics] report fetch failed:', error?.response?.status, error?.response?.data);
+    }
 
-      // ── 거래내역 (WITHDRAW 전체 → 클라이언트 필터) ──
-      try {
-        const allItems: any[] = [];
-        let cursor: number | undefined;
-        while (true) {
-          const txData = await getGroupTransactions(gid, {
-            sort: 'LATEST' as const,
-            type: 'WITHDRAW' as const,
-            size: 200,
-            cursor,
-          });
-          allItems.push(...txData.result.items);
-          if (!txData.result.hasNext || txData.result.nextCursor == null) break;
-          cursor = txData.result.nextCursor;
-        }
-
-        console.log('[Analytics] 전체 WITHDRAW items:', allItems.length);
-
-        // 이번 달 지출 합계
-        const thisMonthItems = allItems.filter(
-          item => item.transactionDate?.slice(0, 7) === thisYM
-        );
-        const spent = thisMonthItems.reduce((sum, item) => sum + item.amount, 0);
-        console.log('[Analytics] 이번 달 지출:', spent);
-        setTotalExpense(spent);
-
-        // 이번 달 상위 5개 결제명
-        const groupedMap: Record<string, number> = {};
-        thisMonthItems.forEach(item => {
-          const key = item.title || '기타';
-          groupedMap[key] = (groupedMap[key] ?? 0) + item.amount;
+    // ── 거래내역 (WITHDRAW 전체 → 클라이언트 필터) ──
+    try {
+      const allItems: any[] = [];
+      let cursor: number | undefined;
+      while (true) {
+        const txData = await getGroupTransactions(gid, {
+          sort: 'LATEST' as const,
+          type: 'WITHDRAW' as const,
+          size: 200,
+          cursor,
         });
-        const top5 = Object.entries(groupedMap)
-          .map(([label, value]) => ({ label, value }))
-          .sort((a, b) => b.value - a.value)
-          .slice(0, 5);
-        console.log('[Analytics] top5:', top5);
-        const top5Total = top5.reduce((sum, item) => sum + item.value, 0);
-        setTopSpendingTotal(top5Total);
-        setTopSpendingItems(
-          top5.map((item, index) => ({
-            label: item.label,
-            value: item.value,
-            color: TOP_SPENDING_COLORS[index] ?? '#CBD5E1',
-          }))
-        );
-
-        // 최근 6개월 월별 그룹핑
-        const recentItems = allItems.filter(item =>
-          recentMonthsSet.has(item.transactionDate?.slice(0, 7))
-        );
-        const groupedByMonth: Record<string, number> = {};
-        recentItems.forEach(item => {
-          const ym = item.transactionDate.slice(0, 7);
-          groupedByMonth[ym] = (groupedByMonth[ym] ?? 0) + item.amount;
-        });
-        console.log('[Analytics] groupedByMonth:', groupedByMonth);
-        const finalMonthly: MonthlyExpense[] = recentMonths.map(ym => ({
-          month: `${parseInt(ym.split('-')[1], 10)}월`,
-          amount: groupedByMonth[ym] ?? 0,
-        }));
-        console.log('[Analytics] finalMonthly:', finalMonthly);
-        setMonthlyData(finalMonthly);
-      } catch (error: any) {
-        console.error('[Analytics] transactions fetch failed:', error?.response?.status, error?.response?.data);
-        setFetchError('데이터를 불러오지 못했습니다.');
-      } finally {
-        setIsLoading(false);
+        allItems.push(...txData.result.items);
+        if (!txData.result.hasNext || txData.result.nextCursor == null) break;
+        cursor = txData.result.nextCursor;
       }
-    };
 
-    fetchAll();
+      console.log('[Analytics] 전체 WITHDRAW items:', allItems.length);
+
+      // 이번 달 지출 합계
+      const thisMonthItems = allItems.filter(
+        item => item.transactionDate?.slice(0, 7) === thisYM
+      );
+      
+      // 미확정/취소 건 제외 필터링
+      const confirmedThisMonthItems = thisMonthItems.filter(
+        item => item.status !== 'PENDING' && item.status !== 'CANCELED'
+      );
+      const spent = confirmedThisMonthItems.reduce((sum, item) => sum + item.amount, 0);
+      console.log('[Analytics] 이번 달 지출:', spent);
+      setTotalExpense(spent);
+
+      // 이번 달 상위 5개 결제명
+      const groupedMap: Record<string, number> = {};
+      confirmedThisMonthItems.forEach(item => {
+        const key = item.title || '기타';
+        groupedMap[key] = (groupedMap[key] ?? 0) + item.amount;
+      });
+      const top5 = Object.entries(groupedMap)
+        .map(([label, value]) => ({ label, value }))
+        .sort((a, b) => b.value - a.value)
+        .slice(0, 5);
+      console.log('[Analytics] top5:', top5);
+      const top5Total = top5.reduce((sum, item) => sum + item.value, 0);
+      setTopSpendingTotal(top5Total);
+      setTopSpendingItems(
+        top5.map((item, index) => ({
+          label: item.label,
+          value: item.value,
+          color: TOP_SPENDING_COLORS[index] ?? '#CBD5E1',
+        }))
+      );
+
+      // 최근 6개월 월별 그룹핑
+      const recentItems = allItems.filter(item =>
+        recentMonthsSet.has(item.transactionDate?.slice(0, 7)) &&
+        item.status !== 'PENDING' &&
+        item.status !== 'CANCELED'
+      );
+      const groupedByMonth: Record<string, number> = {};
+      recentItems.forEach(item => {
+        const ym = item.transactionDate.slice(0, 7);
+        groupedByMonth[ym] = (groupedByMonth[ym] ?? 0) + item.amount;
+      });
+      console.log('[Analytics] groupedByMonth:', groupedByMonth);
+      const finalMonthly: MonthlyExpense[] = recentMonths.map(ym => ({
+        month: `${parseInt(ym.split('-')[1], 10)}월`,
+        amount: groupedByMonth[ym] ?? 0,
+      }));
+      console.log('[Analytics] finalMonthly:', finalMonthly);
+      setMonthlyData(finalMonthly);
+    } catch (error: any) {
+      console.error('[Analytics] transactions fetch failed:', error?.response?.status, error?.response?.data);
+      setFetchError('데이터를 불러오지 못했습니다.');
+    } finally {
+      setIsLoading(false);
+    }
   }, [groupId]);
+
+  // 초기 로드 시 fetchAll 호출
+  useEffect(() => {
+    fetchAll();
+  }, [fetchAll]);
+
+  // ✅ SSE 알림 수신 시 자동으로 지출 데이터 새로고침
+  useEffect(() => {
+    if (!notifications.length) return;
+    
+    // 최신 알림 확인
+    const latestNotification = notifications[0];
+    
+    // 투표/결제 관련 알림이면 새로고침
+    if (
+      latestNotification?.groupId === String(groupId) &&
+      (latestNotification.type === 'VOTE' || latestNotification.type === 'SETTLEMENT')
+    ) {
+      console.log('[Analytics] SSE 알림으로 인한 자동 새로고침:', latestNotification.type);
+      fetchAll();
+    }
+  }, [notifications, groupId, fetchAll]);
 
   return (
     <ScreenLayout>
