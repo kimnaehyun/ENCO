@@ -267,7 +267,7 @@ public class PaymentVoteService {
         int voteCriteria = userServiceClient.getVoteCriteria(vote.getGroupId()).result();
         int approveCount = historyRepository.countByVoteAndChoice(vote, VoteChoice.APPROVE);
 
-        double currentApprovalRate = ((double) approveCount / totalMembers) * 100;
+        double currentApprovalRate = (totalMembers == 0) ? 0.0 : ((double) approveCount / totalMembers) * 100;
 
         if (currentApprovalRate >= voteCriteria) {
             try {
@@ -311,7 +311,7 @@ public class PaymentVoteService {
     }
 
     /**
-     * [추가] 부결 처리를 담당하는 공통 메서드
+     * [추가/수정] 부결 처리를 담당하는 공통 메서드
      */
     private PaymentVoteResultResponseDto processRejection(PaymentVote vote, String message) {
         vote.reject();
@@ -324,6 +324,18 @@ public class PaymentVoteService {
 
         transaction.updateStatus(Status.REJECTED);
         transaction.updateBalance(account.getAmount()); // 부결(취소) 시점의 잔액을 정상적으로 기록
+
+        try {
+            kafkaProducerService.sendVoteNotification(
+                    vote.getGroupId(),
+                    vote.getId(),
+                    "결제 투표 부결 안내",
+                    message,
+                    "VOTE_REJECTED"
+            );
+        } catch (Exception e) {
+            log.error("[PaymentVote] 부결 카프카 알림 전송 실패. voteId={}", vote.getId(), e);
+        }
 
         log.info("[PaymentVote] 투표 부결 및 거래내역 취소 완료: voteId={}", vote.getId());
         return PaymentVoteResultResponseDto.of(vote.getId(), vote.getStatus(), message);
