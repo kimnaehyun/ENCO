@@ -69,7 +69,8 @@ public class OnsitePaymentCompleteConsumer {
 
             Map<String, String> fcmData = Map.of(
                     "type", typeStr,
-                    "groupId", String.valueOf(groupId)
+                    "groupId", String.valueOf(groupId),
+                    "isSuccess", String.valueOf(event.isSuccess())
             );
 
             for (Long memberId : memberIds) {
