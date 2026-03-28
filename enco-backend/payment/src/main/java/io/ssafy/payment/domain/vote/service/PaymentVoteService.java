@@ -60,7 +60,7 @@ public class PaymentVoteService {
      */
     @Transactional
     public PaymentVoteCreateResponseDto createVote(PaymentVoteCreateRequestDto request, String idempotencyKey) {
-        log.info("요청 완료 = {}", request.groupId());
+        log.info("투표 요청 완료 : 그룹 아이디 = {}, 투표 요청= {}", request.groupId(), request.toString());
 
         if (idempotencyKey == null || idempotencyKey.trim().isEmpty()) {
             throw new CustomException(ErrorCode.MISSING_IDEMPOTENCY_KEY);
@@ -225,6 +225,7 @@ public class PaymentVoteService {
      */
     @Transactional
     public PaymentVoteResultResponseDto vote(Long voteId, Long userId, PaymentVoteChoiceRequestDto request) {
+        log.info("투표 진행 : voteId={}, userID={}, request={}", voteId, userId, request.choice());
         PaymentVote vote = voteRepository.findByIdWithPessimisticLock(voteId)
                 .orElseThrow(() -> new CustomException(ErrorCode.NOT_FOUND_VOTE));
 
@@ -279,20 +280,20 @@ public class PaymentVoteService {
                         vote.getGroupId(),
                         vote.getId(),
                         vote.getTitle(),
-                        "투표가 가결되어 결제가 성공적으로 승인되었습니다.",
+                        "투표가 완료되어 결제가 성공적으로 승인되었습니다.",
                         "PAYMENT_APPROVED"
                 );
 
                 return PaymentVoteResultResponseDto.of(
                         vote.getId(),
                         vote.getStatus(),
-                        "투표가 가결되어 결제가 성공적으로 승인되었습니다."
+                        "투표가 완료되어 결제가 성공적으로 승인되었습니다."
                 );
 
             } catch (CustomException e) {
                 if (e.getErrorCode() == ErrorCode.INSUFFICIENT_BALANCE) {
                     log.warn("[PaymentVote] 결제 실패(잔액부족)로 투표 강제 부결 처리: voteId={}", vote.getId());
-                    return processRejection(vote, "잔액 부족으로 결제가 취소(부결)되었습니다.");
+                    return processRejection(vote, "잔액 부족으로 결제가 취소되었습니다.");
                 }
                 throw e;
             }
