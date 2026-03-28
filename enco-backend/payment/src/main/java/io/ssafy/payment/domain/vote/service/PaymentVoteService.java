@@ -267,7 +267,7 @@ public class PaymentVoteService {
         int voteCriteria = userServiceClient.getVoteCriteria(vote.getGroupId()).result();
         int approveCount = historyRepository.countByVoteAndChoice(vote, VoteChoice.APPROVE);
 
-        double currentApprovalRate = ((double) approveCount / totalMembers) * 100;
+        double currentApprovalRate = (totalMembers == 0) ? 0.0 : ((double) approveCount / totalMembers) * 100;
 
         if (currentApprovalRate >= voteCriteria) {
             try {
