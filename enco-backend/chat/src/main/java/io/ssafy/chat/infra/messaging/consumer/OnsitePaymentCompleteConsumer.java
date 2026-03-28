@@ -68,7 +68,7 @@ public class OnsitePaymentCompleteConsumer {
             );
 
             Map<String, String> fcmData = Map.of(
-                    "type", "ONSITE_PAYMENT_COMPLETE",
+                    "type", typeStr,
                     "groupId", String.valueOf(groupId)
             );
 
