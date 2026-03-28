@@ -40,6 +40,8 @@ public class OnsitePaymentExecuteService {
 
     @Transactional
     public void executeBarcodePayment(String barcodeNumber, BigDecimal amount, String merchantName, Long cardId, Boolean usePoint, String idempotencyKey) {
+        log.info("[바코드 결제 실행] 바코드={} 금액 = {} 가계 = {} 카드 아이디 = {} 사용 포인트 {} ", barcodeNumber, amount, merchantName, cardId, usePoint);
+
         // 1. 멱등키 및 요청 금액 검증
         if (idempotencyKey != null && transactionHistoryRepository.existsByIdempotencyKey(idempotencyKey)) {
             log.warn("[현장결제] 이미 처리된 중복 결제 요청입니다. 무시합니다. 멱등키={}", idempotencyKey);
@@ -81,6 +83,8 @@ public class OnsitePaymentExecuteService {
 
                 // 돈이 모자라면 아까 선차감한 포인트 다시 돌려주기! (보상 트랜잭션)
                 rollbackPointPayment(groupId, usedPoints);
+
+                kafkaProducerService.sendOnsitePaymentComplete(groupId, amount, merchantName, false);
                 throw new CustomException(ErrorCode.INSUFFICIENT_BALANCE);
             }
             // 검증 통과했으면 현금 출금!
@@ -116,7 +120,7 @@ public class OnsitePaymentExecuteService {
 
         // 9. 완료 알림 발송
         try {
-            kafkaProducerService.sendOnsitePaymentComplete(groupId, amount, merchantName);
+            kafkaProducerService.sendOnsitePaymentComplete(groupId, amount, merchantName, true);
         } catch (Exception e) {
             log.error("[현장결제] 결제는 성공했지만 카프카 알림 전송에 실패했습니다. groupId={}", groupId, e);
         }

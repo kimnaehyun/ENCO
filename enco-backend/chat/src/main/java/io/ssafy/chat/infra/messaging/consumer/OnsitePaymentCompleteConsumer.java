@@ -1,5 +1,6 @@
 package io.ssafy.chat.infra.messaging.consumer;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.ssafy.chat.common.enums.NotificationType;
 import io.ssafy.chat.infra.client.AuthServiceClient;
@@ -32,7 +33,7 @@ public class OnsitePaymentCompleteConsumer {
     public void consume(String message) {
         try {
             OnsitePaymentCompleteEvent event = objectMapper.readValue(message, OnsitePaymentCompleteEvent.class);
-            log.info("[현장결제] 결제 완료 이벤트 수신 - groupId: {}, 가맹점: {}", event.getGroupId(), event.getMerchantName());
+            log.info("[현장결제] 결제 결과 이벤트 수신 - groupId: {}, 가맹점: {}, 성공여부 : {} ", event.getGroupId(), event.getMerchantName(), event.isSuccess());
 
             Long groupId = event.getGroupId();
             List<Long> memberIds = authServiceClient.getGroupMembers(groupId).result();
@@ -45,13 +46,25 @@ public class OnsitePaymentCompleteConsumer {
             DecimalFormat df = new DecimalFormat("#,###");
             String formattedAmount = df.format(event.getAmount());
 
-            String title = "현장결제 완료";
-            String body = String.format("%s에서 %s원이 결제되었습니다.", event.getMerchantName(), formattedAmount);
+            String title;
+            String body;
+            String typeStr;
+
+            if (event.isSuccess()) {
+                title = "현장결제 완료";
+                body = String.format("%s에서 %s원이 결제되었습니다.", event.getMerchantName(), formattedAmount);
+                typeStr = "ONSITE_PAYMENT_COMPLETE";
+            } else {
+                title = "현장결제 실패";
+                body = String.format("잔액이 부족하여 %s 현장결제(%s원)에 실패했습니다.", event.getMerchantName(), formattedAmount);
+                typeStr = "ONSITE_PAYMENT_FAILED";
+            }
 
             Map<String, Object> extraData = Map.of(
                     "groupId", groupId,
                     "amount", event.getAmount(),
-                    "merchantName", event.getMerchantName()
+                    "merchantName", event.getMerchantName(),
+                    "isSuccess", event.isSuccess()
             );
 
             Map<String, String> fcmData = Map.of(
@@ -63,7 +76,7 @@ public class OnsitePaymentCompleteConsumer {
                 try {
                     notificationService.sendNotification(
                             memberId,
-                            NotificationType.ONSITE_PAYMENT_COMPLETE, // Enum에 ONSITE_PAYMENT_COMPLETE 추가 필요!
+                            NotificationType.valueOf(typeStr), // Enum에 ONSITE_PAYMENT_COMPLETE 추가 필요!
                             title,
                             body,
                             extraData
@@ -93,5 +106,8 @@ public class OnsitePaymentCompleteConsumer {
         private BigDecimal amount;
         private String merchantName;
         private Long timestamp;
+
+        @JsonProperty("isSuccess")
+        private boolean isSuccess;
     }
 }
