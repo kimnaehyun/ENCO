@@ -81,7 +81,6 @@ public class OnsitePaymentExecuteService {
             if (account.getAmount().compareTo(cashToPay) < 0) {
                 log.warn("[현장결제] 잔액 부족: groupId={}, 필요현금={}, 남은잔액={}", groupId, cashToPay, account.getAmount());
 
-                // 돈이 모자라면 아까 선차감한 포인트 다시 돌려주기! (보상 트랜잭션)
                 rollbackPointPayment(groupId, usedPoints);
 
                 kafkaProducerService.sendOnsitePaymentComplete(groupId, amount, merchantName, false);
