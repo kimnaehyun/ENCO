@@ -21,7 +21,7 @@ spring:
       enabled: false
 jwt:
   secret: ${JWT_SECRET}
-  access-expiration: 3600000
+  access-expiration: 10800000
   refresh-expiration: 1209600000
 server:
   port: ${AUTH_SERVICE_PORT}
