@@ -9,6 +9,8 @@ export default function LocationVerification({ groupId }: { groupId: number }) {
   const [verified, setVerified] = useState(false);
   const [latitude, setLatitude] = useState(0);
   const [longitude, setLongitude] = useState(0);
+  const [nearbyCount, setNearbyCount] = useState<number | null>(null);
+  const [totalCount, setTotalCount] = useState<number | null>(null);
   const navigation = useNavigation();
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -61,7 +63,12 @@ export default function LocationVerification({ groupId }: { groupId: number }) {
     const locationCheck = async () => {
       try {
         const response = await locationApi.check(groupId, latitude, longitude, false);
-        if (response.data?.result.barcode !== null) {
+        const result = response.data?.result;
+        if (result) {
+          setNearbyCount(result.nearbyMemberCount);
+          setTotalCount(result.totalMemberCount);
+        }
+        if (result?.barcode !== null) {
           if (intervalRef.current !== null) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
@@ -92,18 +99,19 @@ export default function LocationVerification({ groupId }: { groupId: number }) {
       <View style={styles.card}>
         {verified ? (
           <>
-            <Text style={styles.emoji}>✅</Text>
             <Text style={styles.title}>위치 인증 완료</Text>
             <Text style={styles.description}>현장 결제 인증이 완료되었습니다.</Text>
-            <Pressable onPress={() => navigation.goBack()} style={styles.confirmButton}>
-              <Text style={styles.confirmText}>돌아가기</Text>
-            </Pressable>
           </>
         ) : (
           <>
             <ActivityIndicator size="large" color="#1428A0" style={styles.spinner} />
             <Text style={styles.title}>위치 인증 중...</Text>
             <Text style={styles.description}>현재 위치를 확인하고 있습니다.</Text>
+            {nearbyCount !== null && totalCount !== null && (
+              <Text style={{ marginTop: 16, fontSize: 16, color: COLORS.primary, fontFamily: FONT_FAMILY.bold }}>
+                {`현장 반경 15m 내 인원: ${nearbyCount} / ${totalCount}명`}
+              </Text>
+            )}
           </>
         )}
       </View>

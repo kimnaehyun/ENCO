@@ -120,6 +120,34 @@ function handleNotificationPress(data: Record<string, any>) {
     return;
   }
 
+  // 정산 요청 알림(type: SETTLEMENT_REMINDER)만 정산 페이지로 이동
+  if (rawType === 'SETTLEMENT_REMINDER' && groupId) {
+    _navigationRef.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [
+          {
+            name: 'App',
+            state: {
+              routes: [
+                {
+                  name: 'HomeTab',
+                  state: {
+                    routes: [
+                      { name: 'Home' },
+                      { name: 'GroupSettle', params: { groupId } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      }),
+    );
+    return;
+  }
+
   // 그 외 알림 → 알림 센터
   _navigationRef.dispatch(
     CommonActions.reset({

@@ -110,7 +110,11 @@ function App() {
 
           // 서버에서 barcode 반환 시 인터벌 종료
           if (response.data?.result?.barcode !== null) {
-            Alert.alert('✅ 위치 인증 완료!');
+            if (Platform.OS === 'android') {
+              ToastAndroid.show('위치 인증 완료!', ToastAndroid.SHORT);
+            } else {
+              Alert.alert('위치 인증 완료!');
+            }
             clearInterval(locationIntervalRef.current!);
             locationIntervalRef.current = null;
           }

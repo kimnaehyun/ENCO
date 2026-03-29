@@ -134,7 +134,7 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
         const response = await locationApi.check(groupId, lat, lng, isLeader);
         const result = response.data?.result;
         if (result) {
-          setMemberCount({ nearby: result.nearbyMembersCount, total: result.targetMemberCount });
+          setMemberCount({ nearby: result.nearbyMemberCount, total: result.totalMemberCount });
         }
         if (result?.barcode !== null) {
           if (intervalRef.current !== null) {
@@ -176,14 +176,22 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
     if (!barcodeInfo || !selectedCard) return;
 
     try {
-      const result = await onsiteBarcodePayment(
+      // 실제 결제 금액/매장명 입력값 (임시: 하드코딩)
+      const amount = 149000; // TODO: 실제 결제 금액 입력값으로 대체
+      const merchantName = '아웃백 스테이크하우스 명지 스타필드점'; // TODO: 실제 매장명 입력값으로 대체
+      await onsiteBarcodePayment(
         barcodeInfo.barcodeNumber,
         selectedCard.cardId,
         pointUsage,
+        amount,
+        merchantName
       );
-      (navigation as any).navigate('PaymentSuccess', {
-        storeName: result?.result?.merchantName ?? '매장',
-        amount: result?.result?.amount ?? 0,
+      // 결제 완료 시 스택을 PaymentSuccess만 남기고 리셋
+      navigation.reset({
+        index: 0,
+        routes: [
+          { name: 'PaymentSuccess', params: { storeName: merchantName, amount } },
+        ],
       });
     } catch (error: any) {
       console.log(error.response?.data);

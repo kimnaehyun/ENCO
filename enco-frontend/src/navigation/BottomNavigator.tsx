@@ -13,6 +13,13 @@ const Tab = createBottomTabNavigator();
 export default function BottomNavigator() {
   const { bottom } = useSafeAreaInsets();
 
+  // 각 탭의 실제 스택 루트 스크린 이름 매핑
+  const TAB_ROOT_SCREEN: Record<string, string> = {
+    [ROUTES.TAB_PAYMENT]: 'PaymentStartScreen',
+    [ROUTES.TAB_HOME]: 'Home',
+    [ROUTES.TAB_GROUP]: 'MyPage',
+  };
+
   return (
     <Tab.Navigator
       initialRouteName={ROUTES.TAB_HOME}
@@ -28,12 +35,19 @@ export default function BottomNavigator() {
           paddingBottom: bottom,
         },
       }}
+      screenListeners={({ navigation, route }) => ({
+        tabPress: e => {
+          // 탭을 누르면 해당 스택의 실제 루트로 이동 (stack reset)
+          navigation.navigate(route.name, {
+            screen: TAB_ROOT_SCREEN[route.name],
+          });
+        },
+      })}
     >
       <Tab.Screen
         name={ROUTES.TAB_PAYMENT}
         component={OnsitePaymentNavigator}
         options={{
-          popToTopOnBlur: true,
           tabBarIcon: ({ focused, size }) => (
             <Image
               source={images.walletIcon}
@@ -70,7 +84,6 @@ export default function BottomNavigator() {
         name={ROUTES.TAB_GROUP}
         component={UserStackNavigator}
         options={{
-          popToTopOnBlur: true,
           tabBarIcon: ({ focused, size }) => (
             <Image
               source={images.profileIcon}
