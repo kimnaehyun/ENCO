@@ -5,7 +5,7 @@ import { ActivityIndicator, Alert, Image, StyleSheet, TouchableOpacity, View, Fl
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { getCardList, getCardDetail } from '../../services/paymentService';
+import { getCardList, getCardDetail, getRecommendedCards } from '../../services/paymentService';
 
 type DisplayCard = {
   id: number;
@@ -32,22 +32,41 @@ export default function AdminCardRecommendScreen() {
   useEffect(() => {
     const fetchCards = async () => {
       try {
-        const res = await getCardList();
-        console.log('[AdminCardRecommend] GET /cards 응답:', JSON.stringify(res, null, 2));
+        let cards: DisplayCard[];
 
-        const list = res?.result ?? [];
-        const cards: DisplayCard[] = (Array.isArray(list) ? list : []).map(card => ({
-          id: card.id,
-          name: card.name,
-          brand: '삼성카드',
-          imageUrl: card.frontImageUrl,
-          backImageUrl: card.backImageUrl,
-          summary: card.name,
-          detail: (card.benefits ?? [])
-            .map(b => `${b.categoryName} ${b.discountRate}%`)
-            .join(', '),
-          benefits: card.benefits ?? [],
-        }));
+        if (isRecommendMode) {
+          // GET /cards/recommend?categories=... → { message, result: CardDetailResult[] }
+          const res = await getRecommendedCards(tags);
+          console.log('[AdminCardRecommend] GET /cards/recommend 응답:', JSON.stringify(res, null, 2));
+          const list = res?.result ?? [];
+          cards = (Array.isArray(list) ? list : []).map(card => ({
+            id: card.id,
+            name: card.name,
+            brand: '삼성카드',
+            imageUrl: card.frontImageUrl,
+            backImageUrl: card.backImageUrl,
+            summary: card.description,
+            detail: `기본 실적 ${Number(card.baseSpending).toLocaleString()}원 · 월 최대 혜택 ${Number(card.maxBenefitLimit).toLocaleString()}원 · 한도 ${Number(card.maxLimit).toLocaleString()}원`,
+            benefits: [],
+          }));
+        } else {
+          // GET /cards → { message, result: CardListItem[] }
+          const res = await getCardList();
+          console.log('[AdminCardRecommend] GET /cards 응답:', JSON.stringify(res, null, 2));
+          const list = res?.result ?? [];
+          cards = (Array.isArray(list) ? list : []).map(card => ({
+            id: card.id,
+            name: card.name,
+            brand: '삼성카드',
+            imageUrl: card.frontImageUrl,
+            backImageUrl: card.backImageUrl,
+            summary: card.name,
+            detail: (card.benefits ?? [])
+              .map(b => `${b.categoryName} ${b.discountRate}%`)
+              .join(', '),
+            benefits: card.benefits ?? [],
+          }));
+        }
 
         console.log('[AdminCardRecommend] 변환된 카드 수:', cards.length);
         setAllCards(cards);

@@ -77,6 +77,22 @@ export async function getCardList(): Promise<GetCardListResponse> {
   return response.data;
 }
 
+// ── 카드 추천 조회 (GET /cards/recommend?categories=...) ──
+export type GetRecommendedCardsResponse = {
+  message: string;
+  result: CardDetailResult[];
+};
+
+export async function getRecommendedCards(
+  categories: string[],
+): Promise<GetRecommendedCardsResponse> {
+  const response = await paymentApi.get<GetRecommendedCardsResponse>(
+    '/cards/recommend',
+    { params: { categories } },
+  );
+  return response.data;
+}
+
 // ── 카드 추가 발급 (POST /accounts/card-add) ──
 // 요청: { accountId, cardProductId }
 // 응답: { message, result: { cardId, cardNumber, frontImageUrl } }
