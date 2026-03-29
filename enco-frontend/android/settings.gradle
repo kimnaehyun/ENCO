@@ -3,6 +3,8 @@ pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
 extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
 rootProject.name = 'frontend'
 include ':app'
+include ':react-native-fs'
+project(':react-native-fs').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-fs/android')
 includeBuild('../node_modules/@react-native/gradle-plugin')
 
 include ':react-native-fs'

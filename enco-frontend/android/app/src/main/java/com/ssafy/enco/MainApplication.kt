@@ -20,10 +20,15 @@ class MainApplication : Application(), ReactApplication {
         PackageList(this).packages.apply {
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // add(MyReactNativePackage())
+<<<<<<< Updated upstream:enco-frontend/android/app/src/main/java/com/ssafy/enco/MainApplication.kt
           add(DocumentScannerPackage())
           add(ImageCompressionPackage())
           add(RNFSPackage())
           add(NotifeePackage())
+=======
+          add(OcrPackage())
+          add(RNFSPackage())
+>>>>>>> Stashed changes:enco-frontend/android/app/src/main/java/com/frontend/MainApplication.kt
         },
     )
   }
