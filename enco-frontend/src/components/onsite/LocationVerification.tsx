@@ -1,7 +1,6 @@
 import { View, ActivityIndicator, PermissionsAndroid, Platform } from 'react-native';
 import { Text } from 'react-native-gesture-handler';
-import { useEffect, useState } from 'react';
-import { InteractionManager } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
 import Geolocation from 'react-native-geolocation-service';
 import { locationApi } from '@/services/payment/location';
 import { useNavigation } from '@react-navigation/native';
@@ -11,11 +10,23 @@ export default function LocationVerification({ groupId }: { groupId: number }) {
   const [latitude, setLatitude] = useState(0);
   const [longitude, setLongitude] = useState(0);
   const navigation = useNavigation();
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     let watchId: number;
 
-    const startWatch = () => {
+    const startGPS = () => {
+      // 즉시 현재 위치 획득 (첫 응답 빠름)
+      Geolocation.getCurrentPosition(
+        position => {
+          setLatitude(position.coords.latitude);
+          setLongitude(position.coords.longitude);
+        },
+        error => console.log(error),
+        { enableHighAccuracy: true, timeout: 10000 },
+      );
+
+      // 이후 위치 변화 감지
       watchId = Geolocation.watchPosition(
         position => {
           setLatitude(position.coords.latitude);
@@ -26,22 +37,19 @@ export default function LocationVerification({ groupId }: { groupId: number }) {
       );
     };
 
-    const task = InteractionManager.runAfterInteractions(() => {
-      if (Platform.OS === 'android') {
-        PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        ).then(granted => {
-          if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-            startWatch();
-          }
-        });
-      } else {
-        startWatch();
-      }
-    });
+    if (Platform.OS === 'android') {
+      PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      ).then(granted => {
+        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+          startGPS();
+        }
+      });
+    } else {
+      startGPS();
+    }
 
     return () => {
-      task.cancel();
       if (watchId !== undefined) {
         Geolocation.clearWatch(watchId);
       }
@@ -49,9 +57,9 @@ export default function LocationVerification({ groupId }: { groupId: number }) {
   }, []);
 
   useEffect(() => {
+    // 이미 인증 완료됐으면 더 이상 체크 불필요
+    if (verified) return;
     if (latitude === 0 && longitude === 0) return;
-
-    let intervalId: ReturnType<typeof setInterval>;
 
     const locationCheck = async () => {
       try {
@@ -63,7 +71,10 @@ export default function LocationVerification({ groupId }: { groupId: number }) {
         );
 
         if (response.data?.result.barcode !== null) {
-          clearInterval(intervalId);
+          if (intervalRef.current !== null) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
           setVerified(true);
         }
       } catch (error) {
@@ -71,11 +82,20 @@ export default function LocationVerification({ groupId }: { groupId: number }) {
       }
     };
 
+    // 이전 interval이 남아있으면 먼저 제거
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+    }
     locationCheck();
-    intervalId = setInterval(locationCheck, 3000);
+    intervalRef.current = setInterval(locationCheck, 3000);
 
-    return () => clearInterval(intervalId);
-  }, [latitude, longitude]);
+    return () => {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [latitude, longitude, verified]);
 
   return (
     <View className="flex-1 justify-center items-center px-6">
