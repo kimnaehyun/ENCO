@@ -27,28 +27,28 @@ public record GroupSettingResponseDto(
         }
     }
 
-    public record PolicyDto(Long policyId, Integer dayOfMonth, BigDecimal monthlyFee) {
-        public static PolicyDto from(DuePolicy policy) {
-            return new PolicyDto(policy.getId(), policy.getDayOfMonth(), policy.getAmount());
+    public record PolicyDto(Long policyId, Integer dayOfMonth, BigDecimal monthlyFee, Integer voteCriteria) {
+        public static PolicyDto from(DuePolicy policy, Integer voteCriteria) {
+            return new PolicyDto(policy.getId(), policy.getDayOfMonth(), policy.getAmount(), voteCriteria);
         }
     }
 
     public record CardDto(Long cardId, String cardName, String frontCardImageUrl, String backCardImageUrl, Boolean isBasic) {}
 
-    public static GroupSettingResponseDto of(Group group, DuePolicy policy, CardDto card) {
+        public static GroupSettingResponseDto of(Group group, DuePolicy policy, CardDto card) {
         List<TypeDto> types = group.getGroupTypeList().stream()
-                .map(TypeDto::from)
-                .toList();
+            .map(TypeDto::from)
+            .toList();
 
         return new GroupSettingResponseDto(
-                group.getId(),
-                group.getName(),
-                group.getIntroduction(),
-                types,
-                group.getCreatedAt(),
-                policy != null ? PolicyDto.from(policy) : null,
-                group.getGroundRule(),
-                card
+            group.getId(),
+            group.getName(),
+            group.getIntroduction(),
+            types,
+            group.getCreatedAt(),
+            policy != null ? PolicyDto.from(policy, group.getVoteCriteria()) : null,
+            group.getGroundRule(),
+            card
         );
-    }
+        }
 }
