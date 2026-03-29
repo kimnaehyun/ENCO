@@ -7,6 +7,7 @@ import {
   Alert,
 } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
 import { Text } from 'react-native-gesture-handler';
 import { InteractionManager } from 'react-native';
 import PointToggleButton from '../../payment/PointToggleButton';
@@ -19,6 +20,7 @@ import { voteApi } from '@/services/payment/vote';
 import { getPoint } from '@/services/authService';
 
 export default function index({ groupId, isLeader = true }: { groupId: number; isLeader?: boolean }) {
+  const navigation = useNavigation();
   const [cardNumber, setCardNumber] = useState<number>(0);
   const [isGPS, setIsGPS] = useState<boolean>(false);
 
@@ -44,6 +46,8 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
     expiredAt: string;
     qrData: string;
   } | null>(null);
+
+  const [memberCount, setMemberCount] = useState<{ nearby: number; total: number } | null>(null);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // 최신 lat/lng를 stale closure 없이 참조하기 위한 ref
@@ -128,14 +132,17 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
       if (lat === 0 && lng === 0) return;
       try {
         const response = await locationApi.check(groupId, lat, lng, isLeader);
-        if (response.data?.result.barcode !== null) {
+        const result = response.data?.result;
+        if (result) {
+          setMemberCount({ nearby: result.nearbyMembersCount, total: result.targetMemberCount });
+        }
+        if (result?.barcode !== null) {
           if (intervalRef.current !== null) {
             clearInterval(intervalRef.current);
             intervalRef.current = null;
           }
           setIsGPS(true);
-          setBarcodeInfo(response.data.result.barcode);
-          console.log('qr', response.data);
+          setBarcodeInfo(result.barcode);
         }
       } catch (error) {
         console.log(error);
@@ -169,14 +176,15 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
     if (!barcodeInfo || !selectedCard) return;
 
     try {
-      await onsiteBarcodePayment(
+      const result = await onsiteBarcodePayment(
         barcodeInfo.barcodeNumber,
         selectedCard.cardId,
         pointUsage,
       );
-      setBarcodeInfo(null);
-      setIsGPS(false);
-      Alert.alert('결제 성공');
+      (navigation as any).navigate('PaymentSuccess', {
+        storeName: result?.result?.merchantName ?? '매장',
+        amount: result?.result?.amount ?? 0,
+      });
     } catch (error: any) {
       console.log(error.response?.data);
       Alert.alert(
@@ -221,11 +229,12 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
             <ActivityIndicator size="large" />
             <Text style={{ fontFamily: 'GmarketSansTTFMedium', textAlign: 'center', marginTop: 8 }}>
               주변 모임원 찾는 중...
-              {'\n'}
-              위도:{latitude.toFixed(6) ?? '가져오는 중'}
-              {'\n'}
-              경도: {longitude.toFixed(6) ?? '가져오는 중'}
             </Text>
+            {memberCount && (
+              <Text style={{ fontFamily: 'GmarketSansTTFMedium', textAlign: 'center', marginTop: 4, color: '#1428A0', fontSize: 16 }}>
+                {memberCount.nearby} / {memberCount.total}명
+              </Text>
+            )}
           </View>
         )}
 
