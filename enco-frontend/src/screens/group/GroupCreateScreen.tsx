@@ -59,6 +59,7 @@ export default function GroupCreateScreen() {
   const [selectedTags, setSelectedTags] = useState<string[]>(route.params?.selectedTags ?? []);
   const [selectedCardId, setSelectedCardId] = useState(route.params?.selectedCardId ?? null);
   const [selectedCardImage, setSelectedCardImage] = useState(route.params?.selectedCardImage ?? null);
+  const [selectedCardBackImage, setSelectedCardBackImage] = useState(route.params?.selectedCardBackImage ?? null);
   const [selectedCardName, setSelectedCardName] = useState(route.params?.selectedCardName ?? null);
   const [recommendPressed, setRecommendPressed] = useState(route.params?.recommendPressed ?? false);
   const [viewAllPressed, setViewAllPressed] = useState(route.params?.viewAllPressed ?? false);
@@ -68,6 +69,7 @@ export default function GroupCreateScreen() {
     if (route.params?.selectedCardId) {
       setSelectedCardId(route.params.selectedCardId);
       setSelectedCardImage(route.params.selectedCardImage ?? null);
+      setSelectedCardBackImage(route.params.selectedCardBackImage ?? null);
       setSelectedCardName(route.params.selectedCardName ?? null);
       setRecommendPressed(route.params.recommendPressed ?? false);
       setViewAllPressed(route.params.viewAllPressed ?? false);
@@ -89,6 +91,7 @@ export default function GroupCreateScreen() {
       Alert.alert('안내', '모임 성향을 1개 이상 선택해주세요.');
       return;
     }
+    setRecommendPressed(true);
     navigation.navigate('GroupCardRecommend', {
       groupName,
       address: '',
@@ -101,6 +104,11 @@ export default function GroupCreateScreen() {
   };
 
   const handleViewAll = () => {
+    if (!groupName.trim()) {
+      Alert.alert('안내', '모임명을 입력해주세요.');
+      return;
+    }
+    setViewAllPressed(true);
     navigation.navigate('GroupCardRecommend', {
       groupName,
       address: '',
@@ -202,11 +210,20 @@ export default function GroupCreateScreen() {
         {selectedCardImage && (
           <View style={styles.selectedCardPreview}>
             <Text style={styles.selectedCardLabel}>선택한 카드</Text>
-            <Image
-              source={{ uri: selectedCardImage }}
-              style={styles.selectedCardImage}
-              resizeMode="contain"
-            />
+            <View style={styles.selectedCardImageRow}>
+              <Image
+                source={{ uri: selectedCardImage }}
+                style={styles.selectedCardImage}
+                resizeMode="contain"
+              />
+              {selectedCardBackImage && (
+                <Image
+                  source={{ uri: selectedCardBackImage }}
+                  style={styles.selectedCardImage}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
             <Text style={styles.selectedCardName}>{selectedCardName}</Text>
           </View>
         )}
@@ -215,20 +232,14 @@ export default function GroupCreateScreen() {
         <View style={styles.buttonGroup}>
           <View style={styles.buttonRow}>
             <Pressable
-              onPress={() => {
-                setRecommendPressed(true);
-                handleRecommend();
-              }}
+              onPress={handleRecommend}
               style={[styles.halfButton, recommendPressed && styles.halfButtonPressed]}
             >
               <Text style={styles.halfButtonText}>카드 추천 받기</Text>
             </Pressable>
 
             <Pressable
-              onPress={() => {
-                setViewAllPressed(true);
-                handleViewAll();
-              }}
+              onPress={handleViewAll}
               style={[styles.halfButton, viewAllPressed && styles.halfButtonPressed]}
             >
               <Text style={styles.halfButtonText}>전체 카드 보기</Text>
@@ -382,9 +393,15 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.medium,
     marginBottom: 12,
   },
+  selectedCardImageRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+    justifyContent: 'center',
+  },
   selectedCardImage: {
-    width: '60%',
-    aspectRatio: 2,
+    width: '47%',
+    aspectRatio: 1.58,
     borderRadius: 12,
   },
   selectedCardName: {

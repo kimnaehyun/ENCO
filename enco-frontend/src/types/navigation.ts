@@ -98,6 +98,7 @@ export type GroupStackParamList = {
     | {
         selectedCardId?: string;
         selectedCardImage?: string;
+        selectedCardBackImage?: string;
         selectedCardName?: string;
         groupName?: string;
         selectedTags?: string[];
@@ -269,6 +270,7 @@ export type RootStackParamList = {
     | {
         selectedCardId?: string;
         selectedCardImage?: string;
+        selectedCardBackImage?: string;
         selectedCardName?: string;
         groupName?: string;
         selectedTags?: string[];

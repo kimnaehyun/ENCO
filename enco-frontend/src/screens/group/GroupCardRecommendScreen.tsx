@@ -106,6 +106,7 @@ export default function GroupCardRecommendScreen() {
     navigation.navigate('GroupCreate', {
       selectedCardId: String(selectedCardId),
       selectedCardImage: selected?.imageUrl,
+      selectedCardBackImage: selected?.backImageUrl,
       selectedCardName: selected?.name,
       groupName: route.params?.prevGroupName ?? '',
       selectedTags: route.params?.prevTags ?? [],

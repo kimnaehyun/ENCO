@@ -37,10 +37,10 @@ public class CardProduct {
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    @Column(length = 100)
+    @Column(length = 150)
     private String frontImageUrl;
 
-    @Column(length = 100)
+    @Column(length = 150)
     private String backImageUrl;
 
     @Builder.Default
