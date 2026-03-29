@@ -1,5 +1,5 @@
-import { View, ActivityIndicator, PermissionsAndroid, Platform } from 'react-native';
-import { Text } from 'react-native-gesture-handler';
+import { View, ActivityIndicator, PermissionsAndroid, Platform, Pressable, StyleSheet } from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { useEffect, useRef, useState } from 'react';
 import Geolocation from 'react-native-geolocation-service';
 import { locationApi } from '@/services/payment/location';
@@ -16,7 +16,6 @@ export default function LocationVerification({ groupId }: { groupId: number }) {
     let watchId: number;
 
     const startGPS = () => {
-      // 즉시 현재 위치 획득 (첫 응답 빠름)
       Geolocation.getCurrentPosition(
         position => {
           setLatitude(position.coords.latitude);
@@ -26,7 +25,6 @@ export default function LocationVerification({ groupId }: { groupId: number }) {
         { enableHighAccuracy: true, timeout: 10000 },
       );
 
-      // 이후 위치 변화 감지
       watchId = Geolocation.watchPosition(
         position => {
           setLatitude(position.coords.latitude);
@@ -57,19 +55,12 @@ export default function LocationVerification({ groupId }: { groupId: number }) {
   }, []);
 
   useEffect(() => {
-    // 이미 인증 완료됐으면 더 이상 체크 불필요
     if (verified) return;
     if (latitude === 0 && longitude === 0) return;
 
     const locationCheck = async () => {
       try {
-        const response = await locationApi.check(
-          groupId,
-          latitude,
-          longitude,
-          false,
-        );
-
+        const response = await locationApi.check(groupId, latitude, longitude, false);
         if (response.data?.result.barcode !== null) {
           if (intervalRef.current !== null) {
             clearInterval(intervalRef.current);
@@ -82,7 +73,6 @@ export default function LocationVerification({ groupId }: { groupId: number }) {
       }
     };
 
-    // 이전 interval이 남아있으면 먼저 제거
     if (intervalRef.current !== null) {
       clearInterval(intervalRef.current);
     }
@@ -98,30 +88,84 @@ export default function LocationVerification({ groupId }: { groupId: number }) {
   }, [latitude, longitude, verified]);
 
   return (
-    <View className="flex-1 justify-center items-center px-6">
-      <View className="bg-white rounded-[20px] w-full py-16 items-center">
+    <View style={styles.overlay}>
+      <View style={styles.card}>
         {verified ? (
           <>
-            <Text className="text-5xl mb-4">✅</Text>
-            <Text className="text-xl font-bold text-gray-800">위치 인증 완료</Text>
-            <Text className="text-sm text-gray-500 mt-2">현장 결제 인증이 완료되었습니다.</Text>
-            <Text
-              className="text-base text-blue-500 mt-6"
-              onPress={() => navigation.goBack()}
-            >
-              돌아가기
-            </Text>
+            <Text style={styles.emoji}>✅</Text>
+            <Text style={styles.title}>위치 인증 완료</Text>
+            <Text style={styles.description}>현장 결제 인증이 완료되었습니다.</Text>
+            <Pressable onPress={() => navigation.goBack()} style={styles.confirmButton}>
+              <Text style={styles.confirmText}>돌아가기</Text>
+            </Pressable>
           </>
         ) : (
           <>
-            <ActivityIndicator size="large" className="mb-4" />
-            <Text className="text-lg font-bold text-gray-800">위치 인증 중...</Text>
-            <Text className="text-sm text-gray-500 mt-2">
-              현재 위치를 확인하고 있습니다.
-            </Text>
+            <ActivityIndicator size="large" color="#1428A0" style={styles.spinner} />
+            <Text style={styles.title}>위치 인증 중...</Text>
+            <Text style={styles.description}>현재 위치를 확인하고 있습니다.</Text>
           </>
         )}
       </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(17, 24, 39, 0.18)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 36,
+    alignItems: 'center',
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.08,
+    shadowRadius: 14,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
+  },
+  spinner: {
+    marginBottom: 16,
+  },
+  emoji: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  title: {
+    fontSize: 19,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+    textAlign: 'center',
+  },
+  description: {
+    marginTop: 10,
+    fontSize: 14,
+    lineHeight: 22,
+    fontFamily: FONT_FAMILY.medium,
+    color: COLORS.muted,
+    textAlign: 'center',
+  },
+  confirmButton: {
+    marginTop: 24,
+    width: '100%',
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: '#1428A0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  confirmText: {
+    fontSize: 15,
+    fontFamily: FONT_FAMILY.bold,
+    color: '#FFFFFF',
+  },
+});

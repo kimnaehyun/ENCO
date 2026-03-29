@@ -45,6 +45,7 @@ export default function AdminMembersScreen() {
   const [selectedMemberId, setSelectedMemberId] = useState<number | null>(null);
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
   const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState('');
 
   // 역할 변경
   const [roleTarget, setRoleTarget] = useState<GroupMember | null>(null);
@@ -95,10 +96,11 @@ export default function AdminMembersScreen() {
 
       // 2) 딥링크 URL 생성 (커스텀 스킴)
       const encodedName = encodeURIComponent(groupName);
-      const inviteUrl = `${DEEP_LINK_BASE}?token=${token}&groupName=${encodedName}`;
+      const url = `${DEEP_LINK_BASE}?token=${token}&groupName=${encodedName}`;
+      setInviteUrl(url);
 
       // 3) 클립보드에 복사
-      Clipboard.setString(inviteUrl);
+      Clipboard.setString(url);
 
       // 4) 모달 표시
       setInviteModalVisible(true);
@@ -317,6 +319,15 @@ export default function AdminMembersScreen() {
               <Text style={styles.modalDescription}>
                 원하는 곳에 붙여넣어{'\n'}멤버를 초대해보세요.
               </Text>
+              <Pressable
+                onPress={() => {
+                  Clipboard.setString(inviteUrl);
+                  Alert.alert('복사됨', '링크가 다시 복사되었습니다.');
+                }}
+                style={styles.linkBox}
+              >
+                <Text style={styles.linkText} numberOfLines={2}>{inviteUrl}</Text>
+              </Pressable>
             </Pressable>
           </Pressable>
         </Modal>
@@ -548,6 +559,23 @@ const styles = StyleSheet.create({
     color: COLORS.dark,
     textAlign: 'center',
     fontFamily: FONT_FAMILY.bold,
+  },
+  linkBox: {
+    marginTop: 14,
+    width: '100%',
+    backgroundColor: '#F0F4FF',
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  linkText: {
+    fontSize: 12,
+    color: '#1428A0',
+    fontFamily: FONT_FAMILY.medium,
+    textDecorationLine: 'underline',
+    textAlign: 'center',
   },
   modalDescription: {
     marginTop: 10,
