@@ -188,17 +188,29 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
 
   return (
     <View className="flex-1 gap-3">
-      <View className="rounded-[20px] py-6 px-6 bg-white justify-center items-center self-center">
+      {/* QR + 포인트를 하나의 모듈 카드로 묶음 */}
+      <View style={{
+        backgroundColor: '#FFFFFF',
+        borderRadius: 24,
+        paddingHorizontal: 24,
+        paddingTop: 28,
+        paddingBottom: 20,
+        alignItems: 'center',
+        shadowColor: '#1428A0',
+        shadowOpacity: 0.08,
+        shadowRadius: 14,
+        shadowOffset: { width: 0, height: 4 },
+        elevation: 4,
+      }}>
+        {/* QR 코드 영역 */}
         {isGPS ? (
           selectedCard && barcodeInfo ? (
-            <View className="items-center">
-              <Pressable onPress={handlePayment}>
-                <BarcodeQR
-                  cardId={selectedCard.cardId}
-                  qrData={barcodeInfo.qrData}
-                />
-              </Pressable>
-            </View>
+            <Pressable onPress={handlePayment}>
+              <BarcodeQR
+                cardId={selectedCard.cardId}
+                qrData={barcodeInfo.qrData}
+              />
+            </Pressable>
           ) : (
             <View style={{ width: 210, height: 210, justifyContent: 'center', alignItems: 'center' }}>
               <ActivityIndicator size="large" />
@@ -216,17 +228,24 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
             </Text>
           </View>
         )}
-      </View>
-      <View className="flex-row justify-between items-center bg-white rounded-full py-4 pl-10 pr-4">
-        <View className="flex-row">
-          <Text className="text-[20px]" style={{ fontFamily: 'GmarketSansTTFMedium' }}>보유 포인트</Text>
-          <Text className="text-[#1428A0] text-[20px]" style={{ fontFamily: 'GmarketSansTTFMedium' }}>{point}P</Text>
+
+        {/* 구분선 */}
+        <View style={{ width: '100%', height: 1, backgroundColor: '#F0F4FF', marginVertical: 16 }} />
+
+        {/* 포인트 영역 */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFMedium' }}>보유 포인트</Text>
+            <Text style={{ fontSize: 16, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium' }}>{point}P</Text>
+          </View>
+          <PointToggleButton
+            pointUsage={pointUsage}
+            pointUsageFn={(usage: boolean) => setPointUsage(usage)}
+          />
         </View>
-        <PointToggleButton
-          pointUsage={pointUsage}
-          pointUsageFn={(usage: boolean) => setPointUsage(usage)}
-        />
       </View>
+
+      {/* 카드 캐러셀 */}
       <View className="flex-1">
         <BarcodeCardRecommendation
           onSelectCard={setCardNumber}
