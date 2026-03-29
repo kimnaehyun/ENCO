@@ -18,14 +18,14 @@ export default function PaymentMethodScreen() {
 
   if (!isLeader) {
     return (
-      <View className="flex-1 bg-[#636363]">
+      <View className="flex-1 bg-[#DAEEFF]">
         <LocationVerification groupId={params.groupId} />
       </View>
     );
   }
 
   return (
-    <View className="flex-1 bg-[#636363] px-6">
+    <View className="flex-1 bg-[#DAEEFF] px-6">
       <View
         style={{ paddingTop: insets.top }}
         className={
