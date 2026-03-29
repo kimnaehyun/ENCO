@@ -698,7 +698,7 @@ export default function ReceiptOcrEditor({
         {loading ? (
           <View style={styles.loadingCard}>
             <ActivityIndicator color={COLORS.brand} />
-            <Text style={styles.loadingText}>Clova OCR 분석 중입니다...</Text>
+            <Text style={styles.loadingText}>영수증 분석 중입니다...</Text>
           </View>
         ) : null}
 
@@ -1033,6 +1033,14 @@ const styles = StyleSheet.create({
     fontFamily: FONT_FAMILY.bold,
     color: '#334155',
     marginBottom: 6,
+  },
+  helperText: {
+    fontSize: 12,
+    lineHeight: 18,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+    marginTop: -4,
+    marginBottom: 4,
   },
   totalAmountCard: {
     backgroundColor: '#F8FAFC',

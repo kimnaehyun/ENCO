@@ -263,7 +263,7 @@ export default function SettleMemberSelectScreen() {
                 participants: selectedParticipantIds,
               });
 
-              Alert.alert('완료', '사후 정산이 등록되었습니다.', [
+              Alert.alert('완료', '정산 내역이 등록되었습니다.', [
                 {
                   text: '확인',
                   onPress: () => {
