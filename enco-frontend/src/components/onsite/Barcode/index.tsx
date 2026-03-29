@@ -205,7 +205,7 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
       // 결제 성공 후 사용된 바코드 즉시 초기화 → 재사용 방지
       setBarcodeInfo(null);
       setIsGPS(false);
-      Alert.alert('결제 성공', JSON.stringify(response));
+      Alert.alert('결제 성공');
     } catch (error: any) {
       console.log(error.response?.data);
       Alert.alert(
