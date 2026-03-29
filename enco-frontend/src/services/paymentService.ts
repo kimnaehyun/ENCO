@@ -442,3 +442,21 @@ export async function getGroupPaymentStatus(
   );
   return response.data;
 }
+
+export async function getPaymentStatus(groupId: number) {
+  console.log('[미납알림] API 호출 시작:', groupId);
+  try {
+    const response = await paymentApi.get(
+      `/groups/${groupId}/members/payment-status`,
+    );
+    console.log('[미납알림] API 응답:', JSON.stringify(response.data));
+    return response.data;
+  } catch (err: any) {
+    console.error(
+      '[미납알림] API 에러:',
+      err?.response?.status,
+      err?.response?.data,
+    );
+    throw err;
+  }
+}

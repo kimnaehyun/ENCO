@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ChatAction, ChatItem } from '@/types/chat';
 import { askChatbot } from '@/services/chatService';
+import { getPaymentStatus } from '@/services/paymentService';
 
 interface UseChatbotProps {
   isAdmin: boolean;
@@ -62,14 +63,16 @@ export function useChatbot({
     ],
   });
 
-  const buildUnpaidNoticeCard = (): ChatItem => ({
+  const buildUnpaidNoticeCard = (
+    unpaidMembers: { name: string; unpaidAmount: number }[],
+    unpaidCount: number,
+  ): ChatItem => ({
     id: `bot-unpaid-${Date.now()}`,
     type: 'bot-unpaid-card',
-    text: '현재 미납 회원은 1명이에요!',
+    text: `현재 미납 회원은 ${unpaidCount}명이에요!`,
     createdAt: getNowISO(),
-    unpaidCount: 1,
-    memberName: '김싸피',
-    lastPaidAt: '2026-02-03',
+    unpaidCount,
+    unpaidMembers,
   });
 
   const buildLedgerCard = (): ChatItem => ({
@@ -146,7 +149,7 @@ export function useChatbot({
     }
   };
 
-  const handleActionPress = (action: ChatAction, label: string) => {
+  const handleActionPress = async (action: ChatAction, label: string) => {
     appendChatItem({
       id: `user-${Date.now()}`,
       type: 'user',
@@ -179,7 +182,39 @@ export function useChatbot({
       return;
     }
     if (action === 'notice') {
-      appendChatItem(buildUnpaidNoticeCard());
+      console.log('[미납알림] groupId:', groupId, typeof groupId);
+      // 로딩 메시지 먼저 표시
+      appendChatItem({
+        id: `bot-notice-loading-${Date.now()}`,
+        type: 'chatbot',
+        senderName: '햄코',
+        senderImageUrl: '',
+        content: '미납 회원 정보를 조회하고 있어요...',
+        createdAt: getNowISO(),
+      });
+
+      try {
+        const data = await getPaymentStatus(Number(groupId));
+        console.log(123123123123123123123);
+
+        console.log(data);
+
+        appendChatItem(
+          buildUnpaidNoticeCard(
+            data.result.unpaidMembers,
+            data.result.unpaidCount,
+          ),
+        );
+      } catch (err: any) {
+        appendChatItem({
+          id: `bot-notice-error-${Date.now()}`,
+          type: 'chatbot',
+          senderName: '햄코',
+          senderImageUrl: '',
+          content: '미납 정보를 불러오지 못했어요. 다시 시도해주세요!',
+          createdAt: getNowISO(),
+        });
+      }
       return;
     }
     if (action === 'pick') {
