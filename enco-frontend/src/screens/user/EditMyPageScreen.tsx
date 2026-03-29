@@ -20,23 +20,14 @@ export default function EditMyPageScreen({ navigation }: any) {
     const trimmedPhoneNumber = phoneNumber.trim();
     const trimmedAddress = address.trim();
 
-    if (!trimmedPhoneNumber) {
-      Alert.alert('알림', '휴대폰번호를 입력해주세요.');
-      return;
-    }
-
-    if (!trimmedAddress) {
-      Alert.alert('알림', '주소를 입력해주세요.');
-      return;
-    }
+    // phoneNumber, address가 비어있으면 payload에서 제외
+    const payload: any = { profileUrl };
+    if (trimmedPhoneNumber) payload.phoneNumber = trimmedPhoneNumber;
+    if (trimmedAddress) payload.address = trimmedAddress;
 
     setSaving(true);
     try {
-      const { result } = await EditMyPage({
-        phoneNumber: trimmedPhoneNumber,
-        address: trimmedAddress,
-        profileUrl,
-      });
+      const { result } = await EditMyPage(payload);
       setProfile(result);
 
       Alert.alert('완료', '내 정보가 수정되었어요.', [
