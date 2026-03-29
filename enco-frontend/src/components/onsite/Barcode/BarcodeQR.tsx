@@ -8,5 +8,5 @@ export default function BarcodeQR({
   cardId: number;
   qrData: string;
 }) {
-  return <QRCode key={cardId} value={qrData} size={300} />;
+  return <QRCode key={cardId} value={qrData} size={210} />;
 }

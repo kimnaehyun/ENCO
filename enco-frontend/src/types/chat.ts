@@ -65,7 +65,8 @@ type ChatItem =
       text: string;
       createdAt: string;
       unpaidCount: number;
-      unpaidMembers: { name: string; unpaidAmount: number }[];
+      groupId: number; // 추가
+      unpaidMembers: { userId: number; name: string; unpaidAmount: number }[]; // userId 추가
     }
   | {
       id: string;

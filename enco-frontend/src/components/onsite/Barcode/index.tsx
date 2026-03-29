@@ -216,7 +216,7 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
   };
   return (
     <View className="flex-1 gap-3">
-      <View className="flex-1 rounded-[20px] py-8 bg-white justify-center">
+      <View className="rounded-[20px] py-6 px-6 bg-white justify-center items-center self-center">
         {isGPS ? (
           selectedCard && barcodeInfo ? (
             <View className="items-center">
@@ -233,7 +233,7 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
         ) : (
           <View className="items-center">
             <ActivityIndicator size="large" />
-            <Text>
+            <Text style={{ fontFamily: 'GmarketSansTTFMedium' }}>
               주변 모임원 찾는 중...
               {'\n'}
               위도:{latitude.toFixed(6) ?? '가져오는 중'}
@@ -245,8 +245,8 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
       </View>
       <View className="flex-row justify-between items-center bg-white rounded-full py-4 pl-10 pr-4">
         <View className="flex-row">
-          <Text className="text-[20px]">보유 포인트</Text>
-          <Text className="text-[#1428A0] text-[20px]">{point}P</Text>
+          <Text className="text-[20px]" style={{ fontFamily: 'GmarketSansTTFMedium' }}>보유 포인트</Text>
+          <Text className="text-[#1428A0] text-[20px]" style={{ fontFamily: 'GmarketSansTTFMedium' }}>{point}P</Text>
         </View>
         <PointToggleButton
           pointUsage={pointUsage}

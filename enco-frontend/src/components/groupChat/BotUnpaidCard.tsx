@@ -1,6 +1,7 @@
 import { View, Image, Pressable, Alert } from 'react-native';
 import Text from '@/components/typography';
 import React from 'react';
+import { sendNonPaymentNotification } from '@/services/paymentService';
 import {
   botAvatar,
   botCard,
@@ -13,8 +14,13 @@ import {
 } from '@/assets/styles/chatStyles';
 
 export default function BotUnpaidCard({ item }: { item: any }) {
-  const handleSendReminder = (memberName: string) => {
-    Alert.alert('알림', `${memberName}님에게 미납 알림을 보냈습니다. (임시)`);
+  const handleSendReminder = async (memberName: string, userId: number) => {
+    try {
+      await sendNonPaymentNotification(item.groupId, userId);
+      Alert.alert('알림', `${memberName}님에게 미납 알림을 보냈습니다.`);
+    } catch (error) {
+      Alert.alert('오류', '알림 전송에 실패했어요. 다시 시도해주세요.');
+    }
   };
 
   return (
@@ -45,8 +51,12 @@ export default function BotUnpaidCard({ item }: { item: any }) {
           </View>
         ) : (
           item.unpaidMembers.map(
-            (member: { name: string; unpaidAmount: number }) => (
-              <View key={member.name} className="mb-2">
+            (member: {
+              userId: number;
+              name: string;
+              unpaidAmount: number;
+            }) => (
+              <View key={member.userId} className="mb-2">
                 <View className="border border-[#7A7A7A] rounded-2xl p-3 flex-row items-center bg-[#FFFFFF]">
                   <Image
                     source={require('../../assets/icons/nomal_hamco.png')}
@@ -66,7 +76,7 @@ export default function BotUnpaidCard({ item }: { item: any }) {
                   </View>
                 </View>
                 <Pressable
-                  onPress={() => handleSendReminder(member.name)}
+                  onPress={() => handleSendReminder(member.name, member.userId)}
                   className={remindButton}
                 >
                   <Text weight="bold" className={remindButtonText}>
