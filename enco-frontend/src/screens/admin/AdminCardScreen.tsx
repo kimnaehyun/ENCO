@@ -80,6 +80,9 @@ export default function AdminCardScreen() {
   const [selectedCardImage, setSelectedCardImage] = useState<string | null>(
     params.selectedCardImage ?? null
   );
+  const [selectedCardBackImage, setSelectedCardBackImage] = useState<string | null>(
+    params.selectedCardBackImage ?? null
+  );
   const [selectedCardName, setSelectedCardName] = useState<string | null>(
     params.selectedCardName ?? null
   );
@@ -96,6 +99,7 @@ export default function AdminCardScreen() {
     if (route.params?.selectedCardId) {
       setSelectedCardId(route.params.selectedCardId);
       setSelectedCardImage(route.params.selectedCardImage ?? null);
+      setSelectedCardBackImage(route.params.selectedCardBackImage ?? null);
       setSelectedCardName(route.params.selectedCardName ?? null);
       setRecommendPressed(route.params.recommendPressed ?? false);
       setViewAllPressed(route.params.viewAllPressed ?? false);
@@ -308,11 +312,20 @@ export default function AdminCardScreen() {
             <Text variant="caption" color="placeholder" style={{ marginBottom: 12 }}>
               선택한 카드
             </Text>
-            <Image
-              source={{ uri: selectedCardImage }}
-              style={{ width: '60%', aspectRatio: 2, borderRadius: 12 }}
-              resizeMode="contain"
-            />
+            <View style={{ flexDirection: 'row', gap: 10, width: '100%', justifyContent: 'center' }}>
+              <Image
+                source={{ uri: selectedCardImage }}
+                style={{ width: '47%', aspectRatio: 1.58, borderRadius: 12 }}
+                resizeMode="contain"
+              />
+              {selectedCardBackImage && (
+                <Image
+                  source={{ uri: selectedCardBackImage }}
+                  style={{ width: '47%', aspectRatio: 1.58, borderRadius: 12 }}
+                  resizeMode="contain"
+                />
+              )}
+            </View>
             <Text variant="bodySm" weight="bold" color="dark" style={{ marginTop: 10 }}>
               {selectedCardName}
             </Text>

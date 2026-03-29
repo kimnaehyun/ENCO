@@ -109,6 +109,7 @@ export default function AdminCardRecommendScreen() {
       accountId,
       selectedCardId: String(selectedCardId),
       selectedCardImage: selected?.imageUrl,
+      selectedCardBackImage: selected?.backImageUrl,
       selectedCardName: selected?.name,
       selectedTags: route.params?.prevTags ?? [],
       recommendPressed: route.params?.prevRecommendPressed ?? false,

@@ -6,7 +6,7 @@ import {
   Pressable,
   Alert,
 } from 'react-native';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Text } from 'react-native-gesture-handler';
 import { InteractionManager } from 'react-native';
 import PointToggleButton from '../../payment/PointToggleButton';
@@ -44,8 +44,15 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
     expiredAt: string;
     qrData: string;
   } | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // 최신 lat/lng를 stale closure 없이 참조하기 위한 ref
+  const latRef = useRef(0);
+  const lngRef = useRef(0);
+  latRef.current = latitude;
+  lngRef.current = longitude;
+
+  // GPS watchPosition (단일 등록)
   useEffect(() => {
     let watchId: number;
 
@@ -60,7 +67,6 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
       );
     };
 
-    // 화면 전환/렌더링이 완전히 끝난 뒤 실행
     const task = InteractionManager.runAfterInteractions(() => {
       if (Platform.OS === 'android') {
         PermissionsAndroid.request(
@@ -91,7 +97,6 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
         cardId: item.cardId,
       }));
       console.log(response);
-
       setCardsInfo(mapped);
     };
     fetchCards();
@@ -107,24 +112,22 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
         console.log(error);
       }
     };
-
     locationRequestNotification();
   }, []);
 
-  useEffect(() => {
-    if (latitude === 0 && longitude === 0) return;
-
-    let intervalId: ReturnType<typeof setInterval>;
+  // 폴링 시작 함수 — latRef/lngRef로 최신 좌표를 참조해 stale closure 방지
+  const startPolling = useCallback(() => {
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
 
     const locationCheck = async () => {
+      const lat = latRef.current;
+      const lng = lngRef.current;
+      if (lat === 0 && lng === 0) return;
       try {
-        const response = await locationApi.check(
-          groupId,
-          latitude,
-          longitude,
-          isLeader,
-        );
-
+        const response = await locationApi.check(groupId, lat, lng, isLeader);
         if (response.data?.result.barcode !== null) {
           if (intervalRef.current !== null) {
             clearInterval(intervalRef.current);
@@ -132,21 +135,21 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
           }
           setIsGPS(true);
           setBarcodeInfo(response.data.result.barcode);
-          console.log('qr');
-          console.log(response.data);
+          console.log('qr', response.data);
         }
       } catch (error) {
         console.log(error);
       }
     };
 
-    // 이전 interval이 남아있으면 먼저 제거
-    if (intervalRef.current !== null) {
-      clearInterval(intervalRef.current);
-    }
     locationCheck();
     intervalRef.current = setInterval(locationCheck, 3000);
+  }, [groupId, isLeader]);
 
+  // 위치가 처음 잡히거나 변경될 때 폴링 시작
+  useEffect(() => {
+    if (latitude === 0 && longitude === 0) return;
+    startPolling();
     return () => {
       if (intervalRef.current !== null) {
         clearInterval(intervalRef.current);
@@ -155,54 +158,22 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
     };
   }, [latitude, longitude]);
 
+  // 카드가 변경되면 QR 재생성
   useEffect(() => {
-    let watchId: number;
+    if (!isGPS) return;
+    setBarcodeInfo(null);
+    startPolling();
+  }, [cardNumber]);
 
-    const startWatch = () => {
-      watchId = Geolocation.watchPosition(
-        position => {
-          const { latitude, longitude } = position.coords;
-          setLatitude(latitude);
-          setLongitude(longitude);
-        },
-        error => {
-          console.log(error);
-        },
-        {
-          enableHighAccuracy: true,
-          distanceFilter: 0,
-        },
-      );
-    };
-
-    if (Platform.OS === 'android') {
-      PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-      ).then(granted => {
-        if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-          startWatch();
-        }
-      });
-    } else {
-      startWatch();
-    }
-
-    return () => {
-      if (watchId !== undefined) {
-        Geolocation.clearWatch(watchId);
-      }
-    };
-  }, []);
   const handlePayment = async () => {
     if (!barcodeInfo || !selectedCard) return;
 
     try {
-      const response = await onsiteBarcodePayment(
+      await onsiteBarcodePayment(
         barcodeInfo.barcodeNumber,
         selectedCard.cardId,
         pointUsage,
       );
-      // 결제 성공 후 사용된 바코드 즉시 초기화 → 재사용 방지
       setBarcodeInfo(null);
       setIsGPS(false);
       Alert.alert('결제 성공');
@@ -214,6 +185,7 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
       );
     }
   };
+
   return (
     <View className="flex-1 gap-3">
       <View className="rounded-[20px] py-6 px-6 bg-white justify-center items-center self-center">
@@ -228,12 +200,14 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
               </Pressable>
             </View>
           ) : (
-            <ActivityIndicator size="large" />
+            <View style={{ width: 210, height: 210, justifyContent: 'center', alignItems: 'center' }}>
+              <ActivityIndicator size="large" />
+            </View>
           )
         ) : (
-          <View className="items-center">
+          <View style={{ width: 210, height: 210, justifyContent: 'center', alignItems: 'center' }}>
             <ActivityIndicator size="large" />
-            <Text style={{ fontFamily: 'GmarketSansTTFMedium' }}>
+            <Text style={{ fontFamily: 'GmarketSansTTFMedium', textAlign: 'center', marginTop: 8 }}>
               주변 모임원 찾는 중...
               {'\n'}
               위도:{latitude.toFixed(6) ?? '가져오는 중'}

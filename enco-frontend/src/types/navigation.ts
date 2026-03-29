@@ -65,6 +65,7 @@ export type GroupStackParamList = {
         accountId?: number;
         selectedCardId?: string;
         selectedCardImage?: string;
+        selectedCardBackImage?: string;
         selectedCardName?: string;
         selectedTags?: string[];
         recommendPressed?: boolean;
@@ -180,6 +181,7 @@ export type HomeStackParamList = {
         accountId?: number;
         selectedCardId?: string;
         selectedCardImage?: string;
+        selectedCardBackImage?: string;
         selectedCardName?: string;
         selectedTags?: string[];
         recommendPressed?: boolean;

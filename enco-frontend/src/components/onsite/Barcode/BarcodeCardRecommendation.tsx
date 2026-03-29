@@ -22,9 +22,10 @@ export default function BarcodeCardRecommendation({
       showsHorizontalScrollIndicator={false}
       snapToInterval={ITEM_SIZE}
       decelerationRate="fast"
+      scrollEnabled={(cardsInfo?.length ?? 0) > 1}
       contentContainerStyle={{
         alignItems: 'center',
-        paddingHorizontal: (width - CARD_WIDTH) / 2,
+        paddingHorizontal: (width - ITEM_SIZE) / 2,
       }}
       keyExtractor={(_, index) => index.toString()}
       onScroll={Animated.event(
@@ -38,8 +39,8 @@ export default function BarcodeCardRecommendation({
       onMomentumScrollEnd={event => {
         const offsetX = event.nativeEvent.contentOffset.x;
         const index = Math.round(offsetX / ITEM_SIZE);
-        if (cardsInfo?.[index]) {
-          onSelectCard(cardsInfo[index].cardId);
+        if (cardsInfo?.[index] !== undefined) {
+          onSelectCard(index);
         }
       }}
     />
