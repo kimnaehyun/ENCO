@@ -25,7 +25,7 @@ import messaging from '@react-native-firebase/messaging';
 import { useAuthStore } from '@/store/useAuthStore';
 import { locationApi } from '@/services/payment/location';
 import Geolocation from 'react-native-geolocation-service';
-import { setNotificationNavigationRef } from './src/hooks/useNotificationSetup';
+import { setNotificationNavigationRef, flushPendingNotificationNavigation } from './src/hooks/useNotificationSetup';
 
 function App() {
   const navigationRef = useNavigationContainerRef<RootStackParamList>();
@@ -136,9 +136,7 @@ function App() {
   }, [user, myFunction]); // user가 null → 값으로 바뀌는 순간 실행
 
   // 알림 탭 시 네비게이션에 사용할 ref 등록
-  useEffect(() => {
-    setNotificationNavigationRef(navigationRef);
-  }, [navigationRef]);
+  // onReady로 이동 → killed 상태 pending 알림 자동 flush
 
   // 앱 시작 시 권한 요청 (알림, 카메라, 위치)
   useEffect(() => {
@@ -311,6 +309,10 @@ function App() {
             linking={linking}
             onStateChange={_state => {}}
             ref={navigationRef}
+            onReady={() => {
+              setNotificationNavigationRef(navigationRef);
+              flushPendingNotificationNavigation();
+            }}
           >
             <RootNavigator />
           </NavigationContainer>

@@ -1,7 +1,7 @@
 // src/hooks/useNotificationSetup.ts
 // 로그인 후 FCM 토큰 발급 → 서버 등록 → SSE 구독을 자동으로 처리하는 훅
 import { useEffect, useCallback } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
+import { AppState, AppStateStatus, InteractionManager } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import { useAuthStore } from '../store/useAuthStore';
 import { useNotifications } from '../contexts/NotificationsContext';
@@ -22,9 +22,22 @@ import {
 
 // navigationRef를 외부에서 주입받기 위한 holder
 let _navigationRef: any = null;
+// navigator 준비 전 수신된 알림 데이터 임시 보관
+let _pendingNavData: Record<string, any> | null = null;
 
 export function setNotificationNavigationRef(ref: any) {
   _navigationRef = ref;
+}
+
+/**
+ * NavigationContainer onReady 콜백에서 호출 → killed 상태 알림 네비게이션 처리
+ */
+export function flushPendingNotificationNavigation() {
+  if (_pendingNavData) {
+    const data = _pendingNavData;
+    _pendingNavData = null;
+    handleNotificationPress(data);
+  }
 }
 
 /**
@@ -64,7 +77,18 @@ async function displayLocalNotification(
  * 알림 탭 시 타입에 따라 해당 화면으로 네비게이션
  */
 function handleNotificationPress(data: Record<string, any>) {
-  if (!_navigationRef?.isReady()) return;
+  if (!_navigationRef?.isReady()) {
+    // navigator 준비 전이면 저장해두고 onReady 때 flush
+    _pendingNavData = data;
+    return;
+  }
+
+  // 로그인 상태가 아니면 로그인 완료 후 처리
+  const user = useAuthStore.getState().user;
+  if (!user) {
+    _pendingNavData = data;
+    return;
+  }
 
   const rawType = String(data.type ?? '');
   const groupId = data.groupId ? Number(data.groupId) : undefined;
@@ -136,6 +160,15 @@ export function useNotificationSetup() {
   const user = useAuthStore(s => s.user);
   const userId = useAuthStore(s => s.userId);
   const { pushOne } = useNotifications();
+
+  // 로그인 완료 후 → 모든 네비게이션 전환 애니메이션이 끝난 뒤 pending 알림 처리
+  useEffect(() => {
+    if (!user) return;
+    const task = InteractionManager.runAfterInteractions(() => {
+      flushPendingNotificationNavigation();
+    });
+    return () => task.cancel();
+  }, [user]);
 
   // notifee 이벤트 리스너 (알림 탭 처리)
   useEffect(() => {
