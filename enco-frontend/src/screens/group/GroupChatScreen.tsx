@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Image, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
 import Text from '@/components/typography';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { CommonParams } from '../../types/common';
 import { images } from '@/types/images';
@@ -22,6 +22,7 @@ export default function GroupChatScreen() {
   const storeUserId = useAuthStore(s => s.userId);
   const userId = storeUserId ? Number(storeUserId) : 0;
   const [msg, setMsg] = useState('');
+  const { bottom } = useSafeAreaInsets();
 
   const {
     messages,
@@ -71,8 +72,8 @@ export default function GroupChatScreen() {
     <SafeAreaView className="flex-1 bg-[#F0F4FF]" edges={['top']}>
       <KeyboardAvoidingView
         className="flex-1"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'android' ? bottom : 0}
       >
         <View className="flex-row h-14 px-4 border-b border-b-[#D1D5DB] items-center">
           <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
