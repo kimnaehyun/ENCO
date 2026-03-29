@@ -64,8 +64,9 @@ export function useChatbot({
   });
 
   const buildUnpaidNoticeCard = (
-    unpaidMembers: { name: string; unpaidAmount: number }[],
+    unpaidMembers: { userId: number; name: string; unpaidAmount: number }[],
     unpaidCount: number,
+    groupId: number,
   ): ChatItem => ({
     id: `bot-unpaid-${Date.now()}`,
     type: 'bot-unpaid-card',
@@ -73,8 +74,8 @@ export function useChatbot({
     createdAt: getNowISO(),
     unpaidCount,
     unpaidMembers,
+    groupId,
   });
-
   const buildLedgerCard = (): ChatItem => ({
     id: `bot-ledger-${Date.now()}`,
     type: 'bot-ledger-card',
@@ -195,14 +196,11 @@ export function useChatbot({
 
       try {
         const data = await getPaymentStatus(Number(groupId));
-        console.log(123123123123123123123);
-
-        console.log(data);
-
         appendChatItem(
           buildUnpaidNoticeCard(
             data.result.unpaidMembers,
             data.result.unpaidCount,
+            Number(groupId),
           ),
         );
       } catch (err: any) {

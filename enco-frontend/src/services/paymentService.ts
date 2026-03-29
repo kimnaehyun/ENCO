@@ -460,3 +460,17 @@ export async function getPaymentStatus(groupId: number) {
     throw err;
   }
 }
+
+export async function sendNonPaymentNotification(
+  groupId: number,
+  userId: number,
+) {
+  try {
+    const response = await paymentApi.post(
+      `/groups/${groupId}/members/${userId}/dues/reminder`,
+    );
+    return response.data;
+  } catch (error) {
+    console.log(error);
+  }
+}

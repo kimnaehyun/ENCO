@@ -6,7 +6,7 @@ import {
   Pressable,
   Alert,
 } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Text } from 'react-native-gesture-handler';
 import { InteractionManager } from 'react-native';
 import PointToggleButton from '../../payment/PointToggleButton';
@@ -44,6 +44,7 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
     expiredAt: string;
     qrData: string;
   } | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     let watchId: number;
@@ -125,11 +126,13 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
         );
 
         if (response.data?.result.barcode !== null) {
-          clearInterval(intervalId);
+          if (intervalRef.current !== null) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
           setIsGPS(true);
           setBarcodeInfo(response.data.result.barcode);
           console.log('qr');
-
           console.log(response.data);
         }
       } catch (error) {
@@ -137,10 +140,19 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
       }
     };
 
+    // 이전 interval이 남아있으면 먼저 제거
+    if (intervalRef.current !== null) {
+      clearInterval(intervalRef.current);
+    }
     locationCheck();
-    intervalId = setInterval(locationCheck, 3000);
+    intervalRef.current = setInterval(locationCheck, 3000);
 
-    return () => clearInterval(intervalId);
+    return () => {
+      if (intervalRef.current !== null) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
   }, [latitude, longitude]);
 
   useEffect(() => {
@@ -190,6 +202,9 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
         selectedCard.cardId,
         pointUsage,
       );
+      // 결제 성공 후 사용된 바코드 즉시 초기화 → 재사용 방지
+      setBarcodeInfo(null);
+      setIsGPS(false);
       Alert.alert('결제 성공', JSON.stringify(response));
     } catch (error: any) {
       console.log(error.response?.data);
