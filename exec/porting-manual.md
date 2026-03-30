@@ -114,26 +114,38 @@ package com.frontend
 
 ## 7. 사전 설치
 ### 7.1 공통 패키지
+```bash
 sudo apt update
 sudo apt install -y git curl vim unzip build-essential
+```
 ### 7.2 Java 17 설치
+```bash
 sudo apt install -y openjdk-17-jdk
 java -version
+```
 ### 7.3 Docker 설치
+```bash
 sudo apt install -y docker.io
 sudo systemctl enable docker
 sudo systemctl start docker
 docker --version
+````
 ### 7.4 Docker Compose 확인
+```bash
 docker compose version
+```
 ### 7.5 Python 설치
+```bash
 sudo apt install -y python3 python3-pip python3-venv
 python3 --version
+```
 ### 7.6 Node.js 설치
+```bash
 curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
 sudo apt install -y nodejs
 node -v
 npm -v
+```
 ## 8. 환경변수 및 외부 설정
 
 ENCO는 다수의 외부 연동 요소를 사용하므로 환경변수 및 설정 파일이 반드시 필요하다.
@@ -292,10 +304,12 @@ Docker Compose 실행
 DB 연결 및 외부 연동 확인
 모바일 앱에서 API 연동 확인
 ### 14.2 재배포 예시
+```bash
 git pull origin develop
 cd ~/backend-infra
 docker compose down
 docker compose up -d --build
+```
 ## 15. 실행 확인 절차
 ### 15.1 MySQL 확인
 docker exec -it auth-mysql mysql -uroot -p
@@ -341,10 +355,14 @@ docker exec -it auth-mysql mysql -uroot -p
 ### 16.4 MongoDB 접속
 docker exec -it chat-mongo mongosh -u root -p ssafy1234 --authenticationDatabase admin
 ### 16.5 디스크 용량 확인
+```bash
 df -h
 du -sh /home/ubuntu/chroma/data
+```
 ### 16.6 Docker 볼륨 확인
+```bash
 docker volume ls
+```
 ## 17. 트러블슈팅
 ### 17.1 npm run android 실행 후 반응이 없는 경우
 
@@ -367,11 +385,11 @@ cd android
 ### 17.2 MongoDB 초기화 또는 재생성 문제
 
 실제 작업에서 다음 흐름이 사용되었다.
-
+```bash
 docker stop chat-mongo
 docker rm chat-mongo
 docker compose up -d chat-mongo
-
+```
 단, 볼륨명이 예상과 다를 수 있으므로 docker volume ls로 실제 볼륨명을 확인한 뒤 삭제해야 한다.
 
 ### 17.3 MySQL 데이터는 비었는데 서버 오류가 발생하는 경우
