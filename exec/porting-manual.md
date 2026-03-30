@@ -53,7 +53,7 @@ Reverse Proxy 기반 API 라우팅
 
 로컬 개발 환경에서는 다음 프론트엔드 프로젝트가 사용되었다.
 
-C:\test\S14P21E104\enco-frontend
+\S14P21E104\enco-frontend
 ## 4. 사용 기술 및 실행 환경
 ### 4.1 Backend
 Java 17
@@ -198,18 +198,18 @@ travel_db 추정 사용
 ### 10.2 MongoDB
 
 채팅 관련 데이터 저장소로 MongoDB가 사용되며, 실제 접속 예시는 다음과 같다.
-
+```bash
 docker exec -it chat-mongo mongosh -u root -p ssafy1234 --authenticationDatabase admin
 10.3 ChromaDB
-
+```
 벡터 검색을 위한 컬렉션으로 다음이 확인되었다.
 
 lodgings
 
 컬렉션 조회 예시는 다음과 같다.
-
+```bash
 docker exec -it chat sh -c "curl -s http://chroma:8000/api/v2/tenants/default_tenant/databases/default_database/collections"
-
+```
 ## 11. 백엔드 실행 방법
 ### 11.1 인프라 컨테이너 실행
 cd ~/backend-infra
