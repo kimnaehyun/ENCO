@@ -42,7 +42,7 @@ Reverse Proxy 기반 API 라우팅
 ## 3. 실제 프로젝트 구조
 
 이전 작업 기록 기준으로 확인된 디렉토리 구조는 다음과 같다.
-
+```
 /home/ubuntu/
 ├─ auth/                  # auth-service
 ├─ chat/                  # chat-service
@@ -50,7 +50,7 @@ Reverse Proxy 기반 API 라우팅
 ├─ backend-infra/         # docker compose 및 인프라 컨테이너 관리
 ├─ minio/                 # MinIO 데이터 저장 경로
 └─ ...
-
+```
 로컬 개발 환경에서는 다음 프론트엔드 프로젝트가 사용되었다.
 
 \S14P21E104\enco-frontend
