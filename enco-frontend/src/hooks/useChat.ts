@@ -106,9 +106,9 @@ export function useChat(roomId: string, userId: number) {
             );
             return [...filtered, chatItem];
           });
-          requestAnimationFrame(() => {
+          setTimeout(() => {
             flatListRef.current?.scrollToEnd({ animated: true });
-          });
+          }, 150);
           return;
         }
 

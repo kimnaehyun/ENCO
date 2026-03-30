@@ -43,10 +43,7 @@ export default function SignupCompleteScreen({
         }
         className="bg-[#1428A0] rounded-2xl h-14 px-16 items-center justify-center mt-16"
       >
-        <Text weight="bold"
-          className="text-white text-xl"
-          
-        >
+        <Text weight="bold" color="white" className="text-xl">
           로그인하러 가기
         </Text>
       </Pressable>

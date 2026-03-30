@@ -104,21 +104,20 @@ export default function ChatMessageList({
 
         const last = messages[messages.length - 1];
         const isOutgoingChat = last?.type === 'chat' && last.senderId === userId;
-        // 챗봇/시스템 카드나 내가 보낸 메시지일 때만 하단 이동 후보
-        const shouldScroll =
-          isOutgoingChat ||
+        const isBotMessage =
           last?.type === 'chatbot' ||
-          last?.type === 'user' ||
           last?.type === 'bot-actions' ||
           last?.type === 'bot-unpaid-card' ||
           last?.type === 'bot-ledger-card';
+        // 챗봇/시스템 카드나 내가 보낸 메시지일 때만 하단 이동 후보
+        const shouldScroll = isOutgoingChat || last?.type === 'user' || isBotMessage;
 
         if (!shouldScroll) {
           return;
         }
 
-        // 사용자가 위쪽 메시지를 읽는 중이면 강제 스크롤을 하지 않음
-        if (!isNearBottomRef.current && !isOutgoingChat) {
+        // 챗봇 메시지는 항상 스크롤, 일반 메시지는 사용자가 아래쪽에 있을 때만 스크롤
+        if (!isBotMessage && !isNearBottomRef.current && !isOutgoingChat) {
           return;
         }
 

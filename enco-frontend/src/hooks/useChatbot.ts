@@ -58,7 +58,7 @@ export function useChatbot({
     createdAt: getNowISO(),
     actions: [
       { label: '미납자 알림 보내기', action: 'notice' },
-      { label: '후불 정산하기', action: 'settlement' },
+      { label: '후불 정산하기', action: 'deferred-settlement' },
       { label: '장부 관리하기', action: 'ledger-unproof' },
     ],
   });
@@ -180,6 +180,10 @@ export function useChatbot({
     }
     if (action === 'settlement') {
       appendChatItem(buildSettlementActions());
+      return;
+    }
+    if (action === 'deferred-settlement') {
+      navigation.navigate('SettlementReceiptOcr', { groupId, groupName });
       return;
     }
     if (action === 'notice') {

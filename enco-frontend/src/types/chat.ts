@@ -19,6 +19,7 @@ type ChatAction =
   | 'votes'
   | 'pick'
   | 'settlement'
+  | 'deferred-settlement'
   | 'admin'
   | 'ledger-unproof'
   | 'ledger-go';
