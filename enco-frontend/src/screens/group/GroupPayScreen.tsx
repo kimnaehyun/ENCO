@@ -86,14 +86,14 @@ export default function GroupPayScreen({
   const [step, setStep] = useState<GroupPayStep>('summary');
   const [pinResetKey, setPinResetKey] = useState(0);
   const [isSettlementLocked, setIsSettlementLocked] = useState(
-    paySource === 'settlement'
+    paySource === 'settlement',
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedUnpaidIds, setSelectedUnpaidIds] = useState<string[]>(
-    presetUnpaidId ? [presetUnpaidId] : []
+    presetUnpaidId ? [presetUnpaidId] : [],
   );
   const [amountText, setAmountText] = useState<string>(
-    presetAmount ? String(presetAmount) : ''
+    presetAmount ? String(presetAmount) : '',
   );
   const [selectedAccount, setSelectedAccount] =
     useState<SelectedAccount>(DEFAULT_ACCOUNT);
@@ -110,10 +110,11 @@ export default function GroupPayScreen({
   }, [groupIdParam]);
 
   const selectedChargeTargetIds = useMemo(
-    () => unpaidItems
-      .filter(item => selectedUnpaidIds.includes(String(item.chargeTargetId)))
-      .map(item => item.chargeTargetId),
-    [selectedUnpaidIds, unpaidItems]
+    () =>
+      unpaidItems
+        .filter(item => selectedUnpaidIds.includes(String(item.chargeTargetId)))
+        .map(item => item.chargeTargetId),
+    [selectedUnpaidIds, unpaidItems],
   );
 
   const parsedAmount = useMemo(() => {
@@ -164,7 +165,9 @@ export default function GroupPayScreen({
     if (isSettlementLocked || selectedUnpaidIds.length === 0) return;
 
     const nextAmount = unpaidItems
-      .filter(unpaid => selectedUnpaidIds.includes(String(unpaid.chargeTargetId)))
+      .filter(unpaid =>
+        selectedUnpaidIds.includes(String(unpaid.chargeTargetId)),
+      )
       .reduce((sum, unpaid) => sum + unpaid.remainingAmount, 0);
 
     setAmountText(nextAmount > 0 ? String(nextAmount) : '');
@@ -311,15 +314,16 @@ export default function GroupPayScreen({
       console.log('[DuesPayment] groupId:', numericGroupId);
       console.log('[DuesPayment] requestBody:', requestBody);
 
-      const result = selectedChargeTargetIds.length > 0
-        ? await selectedDuesPayment(numericGroupId, {
-            amount: parsedAmount,
-            targetChargeTargetIds: selectedChargeTargetIds,
-            withdrawDisplayName: requestBody.withdrawDisplayName,
-            depositDisplayName: requestBody.depositDisplayName,
-            memo: requestBody.memo,
-          })
-        : await duesPayment(numericGroupId, requestBody);
+      const result =
+        selectedChargeTargetIds.length > 0
+          ? await selectedDuesPayment(numericGroupId, {
+              amount: parsedAmount,
+              targetChargeTargetIds: selectedChargeTargetIds,
+              withdrawDisplayName: requestBody.withdrawDisplayName,
+              depositDisplayName: requestBody.depositDisplayName,
+              memo: requestBody.memo,
+            })
+          : await duesPayment(numericGroupId, requestBody);
 
       console.log('[DuesPayment] success response:', result);
       console.log('[DuesPayment] paymentId:', result.result.paymentId);
@@ -327,23 +331,16 @@ export default function GroupPayScreen({
       console.log('[DuesPayment] allocations:', result.result.allocations);
 
       setStep('success');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[DuesPayment] failed:', error);
-      console.error('[DuesPayment] status:', error?.response?.status);
-      console.error('[DuesPayment] data:', error?.response?.data);
-
-      const status = error?.response?.status;
-      const code = error?.response?.data?.result?.code;
-      const message =
-        error?.response?.data?.result?.message ||
-        error?.response?.data?.message ||
-        '회비 납부 중 오류가 발생했습니다.';
-
-      if (status === 409 && code === 'INSUFFICIENT_BALANCE') {
-        Alert.alert('잔액 부족', '출금 계좌 잔액이 부족합니다.');
-      } else {
-        Alert.alert('납부 실패', message);
-      }
+      console.error(
+        '[DuesPayment] status:',
+        (error as { response?: { status?: number } })?.response?.status,
+      );
+      console.error(
+        '[DuesPayment] data:',
+        (error as { response?: { data?: unknown } })?.response?.data,
+      );
 
       setStep('form');
       setPinResetKey(prev => prev + 1);
@@ -434,14 +431,20 @@ export default function GroupPayScreen({
 
               <View style={styles.unpaidList}>
                 {isLoadingUnpaidItems ? (
-                  <Text style={styles.unpaidStateText}>미납 내역을 불러오는 중입니다.</Text>
+                  <Text style={styles.unpaidStateText}>
+                    미납 내역을 불러오는 중입니다.
+                  </Text>
                 ) : unpaidLoadError ? (
                   <Text style={styles.unpaidStateText}>{unpaidLoadError}</Text>
                 ) : unpaidItems.length === 0 ? (
-                  <Text style={styles.unpaidStateText}>미납 내역이 없습니다.</Text>
+                  <Text style={styles.unpaidStateText}>
+                    미납 내역이 없습니다.
+                  </Text>
                 ) : (
                   unpaidItems.map(item => {
-                    const selected = selectedUnpaidIds.includes(String(item.chargeTargetId));
+                    const selected = selectedUnpaidIds.includes(
+                      String(item.chargeTargetId),
+                    );
 
                     return (
                       <Pressable
@@ -522,11 +525,7 @@ export default function GroupPayScreen({
               onChangeText={setGroupAccountLabel}
             />
 
-            <InfoInputBox
-              label="메모"
-              value={memo}
-              onChangeText={setMemo}
-            />
+            <InfoInputBox label="메모" value={memo} onChangeText={setMemo} />
 
             <Pressable
               onPress={onPressGoPin}
