@@ -1,6 +1,6 @@
 import { View, Text, Pressable, Image } from 'react-native';
 import React, { useEffect, useState } from 'react';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { images } from '../../types/images';
 import KeyValueRow from '../../components/common/KeyValueRow';
 import PointToggleButton from '../../components/payment/PointToggleButton';
@@ -9,21 +9,27 @@ import ScreenLayout from '../../components/ScreenLayout';
 import BarcodeCardRecommendation from '@/components/onsite/Barcode/BarcodeCardRecommendation';
 import { getGroupCards } from '@/services/paymentService';
 import { getPoint } from '@/services/authService';
+import { RootStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type CardChoiceNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'CardChoiceScreen'
+>;
+type CardChoiceRouteProp = RouteProp<RootStackParamList, 'CardChoiceScreen'>;
 
 export default function CardChoiceScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const params = route.params as {
-    title: string;
-    groupId: number;
-    storeName: string;
-    amount: number;
-    callbackUrl: string;
-    orderId: string;
-  };
+  const navigation = useNavigation<CardChoiceNavigationProp>();
+  const route = useRoute<CardChoiceRouteProp>();
+  const params = route.params;
   const [cardNumber, setCardNumber] = useState<number>(0);
 
-  const [cardsInfo, setCardsInfo] = useState<any>();
+  const [cardsInfo, setCardsInfo] = useState<
+    {
+      image: string;
+      cardId: number;
+    }[]
+  >([]);
 
   const [point, setPoint] = useState<boolean>(true);
   const [pointUsage, setPointUsage] = useState<boolean>(true);
