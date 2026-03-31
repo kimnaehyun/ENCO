@@ -34,9 +34,9 @@ export default function HomeScreen() {
   const navigation = useNavigation<NavigationProp<HomeStackParamList>>();
   const { width: screenWidth } = useWindowDimensions();
 
-  const user = useAuthStore((s) => s.user);
-  const profile = useAuthStore((s) => s.profile);
-  const setProfile = useAuthStore((s) => s.setProfile);
+  const user = useAuthStore(s => s.user);
+  const profile = useAuthStore(s => s.profile);
+  const setProfile = useAuthStore(s => s.setProfile);
 
   const [groups, setGroups] = useState<HomeGroupSummary[]>([]);
 
@@ -53,20 +53,27 @@ export default function HomeScreen() {
       try {
         const data = await getMyGroups();
 
-        const mappedGroups: HomeGroupSummary[] = data.result.map((group) => ({
+        const mappedGroups: HomeGroupSummary[] = data.result.map(group => ({
           id: String(group.groupId),
           name: group.groupName,
           role: group.role,
           coverImage: group.card?.frontImageUrl
-            ? { uri: group.card.frontImageUrl.replace(/^http:\/\//, 'https://') }
+            ? {
+                uri: group.card.frontImageUrl.replace(/^http:\/\//, 'https://'),
+              }
             : images.card1,
         }));
 
         setGroups(mappedGroups);
-      } catch (error: any) {
-        console.error('내 모임 목록 조회 실패:', error);
-        console.error('error.response?.status:', error?.response?.status);
-        console.error('error.response?.data:', error?.response?.data);
+      } catch (error: unknown) {
+        console.error(
+          'error.response?.status:',
+          (error as { response?: { status?: number } })?.response?.status,
+        );
+        console.error(
+          'error.response?.data:',
+          (error as { response?: { data?: unknown } })?.response?.data,
+        );
       }
     };
 
@@ -77,10 +84,16 @@ export default function HomeScreen() {
 
   const cards: HomeCardItem[] =
     groups.length > 0
-      ? [...groups.map((group) => ({ type: 'group' as const, group })), { type: 'add' as const }]
+      ? [
+          ...groups.map(group => ({ type: 'group' as const, group })),
+          { type: 'add' as const },
+        ]
       : [{ type: 'add' as const }];
 
-  const cardWidth = Math.min(screenWidth - CARD_HORIZONTAL_INSET * 2, MAX_CARD_WIDTH);
+  const cardWidth = Math.min(
+    screenWidth - CARD_HORIZONTAL_INSET * 2,
+    MAX_CARD_WIDTH,
+  );
   const imageHeight = cardWidth / CARD_ASPECT_RATIO;
 
   const onPressGroupCard = (group: HomeGroupSummary) => {
@@ -88,7 +101,9 @@ export default function HomeScreen() {
       groupId: group.id,
       groupName: group.name,
       isAdmin:
-        group.role === 'ADMIN' || group.role === 'LEADER' || group.role === 'TREASURER',
+        group.role === 'ADMIN' ||
+        group.role === 'LEADER' ||
+        group.role === 'TREASURER',
     });
   };
 
@@ -208,7 +223,11 @@ export default function HomeScreen() {
             <Text style={styles.greeting} allowFontScaling={false}>
               안녕하세요 👋
             </Text>
-            <Text style={styles.username} allowFontScaling={false} numberOfLines={1}>
+            <Text
+              style={styles.username}
+              allowFontScaling={false}
+              numberOfLines={1}
+            >
               {displayName ? `${displayName}님` : '환영합니다'}
             </Text>
           </View>
