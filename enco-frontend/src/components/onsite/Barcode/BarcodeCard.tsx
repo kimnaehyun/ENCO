@@ -6,7 +6,7 @@ export default function BarcodeCard({
   index,
   scrollX,
 }: {
-  item: any;
+  item: { image: string; cardId: string | number };
   index: number;
   scrollX: Animated.Value;
 }) {
