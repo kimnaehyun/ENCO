@@ -1,14 +1,31 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { useAuthStore } from '../../store/useAuthStore';
 import { getGroupType, GroupTypeItem } from '../../services/authService';
+import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
+import { RootStackParamList } from '@/types/navigation';
+
+type GroupCreateRouteProp = RouteProp<RootStackParamList, 'GroupCreate'>;
+type GroupCreateNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'GroupCreate'
+>;
 
 export default function GroupCreateScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
+  const navigation = useNavigation<GroupCreateNavigationProp>();
+  const route = useRoute<GroupCreateRouteProp>();
 
   // ── 프로필 정보 (store에서 가져오기) ──
   const user = useAuthStore(s => s.user);
@@ -39,7 +56,10 @@ export default function GroupCreateScreen() {
   useEffect(() => {
     getGroupType()
       .then(res => {
-        console.log('[GroupCreate] GET /groups/types 응답:', JSON.stringify(res, null, 2));
+        console.log(
+          '[GroupCreate] GET /groups/types 응답:',
+          JSON.stringify(res, null, 2),
+        );
         const list = res?.result;
         if (Array.isArray(list) && list.length > 0) {
           setTagOptions(list);
@@ -56,13 +76,27 @@ export default function GroupCreateScreen() {
   }, []);
 
   const [groupName, setGroupName] = useState(route.params?.groupName ?? '');
-  const [selectedTags, setSelectedTags] = useState<string[]>(route.params?.selectedTags ?? []);
-  const [selectedCardId, setSelectedCardId] = useState(route.params?.selectedCardId ?? null);
-  const [selectedCardImage, setSelectedCardImage] = useState(route.params?.selectedCardImage ?? null);
-  const [selectedCardBackImage, setSelectedCardBackImage] = useState(route.params?.selectedCardBackImage ?? null);
-  const [selectedCardName, setSelectedCardName] = useState(route.params?.selectedCardName ?? null);
-  const [recommendPressed, setRecommendPressed] = useState(route.params?.recommendPressed ?? false);
-  const [viewAllPressed, setViewAllPressed] = useState(route.params?.viewAllPressed ?? false);
+  const [selectedTags, setSelectedTags] = useState<string[]>(
+    route.params?.selectedTags ?? [],
+  );
+  const [selectedCardId, setSelectedCardId] = useState(
+    route.params?.selectedCardId ?? null,
+  );
+  const [selectedCardImage, setSelectedCardImage] = useState(
+    route.params?.selectedCardImage ?? null,
+  );
+  const [selectedCardBackImage, setSelectedCardBackImage] = useState(
+    route.params?.selectedCardBackImage ?? null,
+  );
+  const [selectedCardName, setSelectedCardName] = useState(
+    route.params?.selectedCardName ?? null,
+  );
+  const [recommendPressed, setRecommendPressed] = useState(
+    route.params?.recommendPressed ?? false,
+  );
+  const [viewAllPressed, setViewAllPressed] = useState(
+    route.params?.viewAllPressed ?? false,
+  );
 
   // 카드 선택 후 돌아왔을 때 params 동기화
   useEffect(() => {
@@ -77,8 +111,10 @@ export default function GroupCreateScreen() {
   }, [route.params?.selectedCardId]);
 
   const toggleTag = (tagName: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tagName) ? prev.filter((item) => item !== tagName) : [...prev, tagName]
+    setSelectedTags(prev =>
+      prev.includes(tagName)
+        ? prev.filter(item => item !== tagName)
+        : [...prev, tagName],
     );
   };
 
@@ -189,13 +225,16 @@ export default function GroupCreateScreen() {
           />
         ) : (
           <View style={styles.tagGrid}>
-            {tagOptions.map((tag) => {
+            {tagOptions.map(tag => {
               const selected = selectedTags.includes(tag.typeName);
               return (
                 <Pressable
                   key={tag.typeId}
                   onPress={() => toggleTag(tag.typeName)}
-                  style={[styles.tagButton, selected && styles.tagButtonSelected]}
+                  style={[
+                    styles.tagButton,
+                    selected && styles.tagButtonSelected,
+                  ]}
                 >
                   <Text style={styles.tagButtonText}>{tag.typeName}</Text>
                 </Pressable>
@@ -233,14 +272,20 @@ export default function GroupCreateScreen() {
           <View style={styles.buttonRow}>
             <Pressable
               onPress={handleRecommend}
-              style={[styles.halfButton, recommendPressed && styles.halfButtonPressed]}
+              style={[
+                styles.halfButton,
+                recommendPressed && styles.halfButtonPressed,
+              ]}
             >
               <Text style={styles.halfButtonText}>카드 추천 받기</Text>
             </Pressable>
 
             <Pressable
               onPress={handleViewAll}
-              style={[styles.halfButton, viewAllPressed && styles.halfButtonPressed]}
+              style={[
+                styles.halfButton,
+                viewAllPressed && styles.halfButtonPressed,
+              ]}
             >
               <Text style={styles.halfButtonText}>전체 카드 보기</Text>
             </Pressable>
