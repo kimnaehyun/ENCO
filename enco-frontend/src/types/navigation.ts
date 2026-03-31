@@ -6,7 +6,7 @@ import {
 } from '@react-navigation/native';
 import { CommonParams } from './common';
 import { GroupPayParams } from './group';
-import type {ReceiptDraft} from './receipt';
+import type { ReceiptDraft } from './receipt';
 
 // Auth
 export type AuthStackParamList = {
@@ -93,7 +93,9 @@ export type GroupStackParamList = {
   VoteCreate: CommonParams | undefined;
   GroupInviteEntry: { inviteToken?: string; groupName?: string } | undefined;
   GroupInviteDecision: { inviteToken?: string; groupName?: string } | undefined;
-  GroupInviteSuccess: { groupId?: number | string; groupName?: string } | undefined;
+  GroupInviteSuccess:
+    | { groupId?: number | string; groupName?: string }
+    | undefined;
 
   GroupCreate:
     | {
@@ -133,7 +135,12 @@ export type GroupStackParamList = {
     | { imageUri?: string; groupName?: string; groupId?: string }
     | undefined;
   TransactionReceiptOcr:
-    | { imageUri?: string; groupName?: string; groupId?: string; transactionId: number }
+    | {
+        imageUri?: string;
+        groupName?: string;
+        groupId?: string;
+        transactionId: number;
+      }
     | undefined;
   SettleDetail: {
     expenseId?: number;
@@ -207,12 +214,19 @@ export type HomeStackParamList = {
   AdminSettle: CommonParams | undefined;
   GroupInviteEntry: { inviteToken?: string; groupName?: string } | undefined;
   GroupInviteDecision: { inviteToken?: string; groupName?: string } | undefined;
-  GroupInviteSuccess: { groupId?: number | string; groupName?: string } | undefined;
+  GroupInviteSuccess:
+    | { groupId?: number | string; groupName?: string }
+    | undefined;
   SettlementReceiptOcr:
     | { imageUri?: string; groupName?: string; groupId?: string }
     | undefined;
   TransactionReceiptOcr:
-    | { imageUri?: string; groupName?: string; groupId?: string; transactionId: number }
+    | {
+        imageUri?: string;
+        groupName?: string;
+        groupId?: string;
+        transactionId: number;
+      }
     | undefined;
   GroupLedgerDetail: {
     item: any;
@@ -257,6 +271,18 @@ export type RootStackParamList = {
   Splash: undefined;
   Auth: NavigatorScreenParams<AuthStackParamList>;
   App: undefined;
+
+  SettleMemberSelect: {
+    amount: number | null;
+    storeName: string;
+    date: string;
+    memo: string;
+    receiptUri: string | null;
+    receiptDraft: ReceiptDraft;
+    groupName: string;
+    groupId?: string;
+    isNewSettle: boolean;
+  };
 
   GroupCardRecommend: {
     groupName: string;
@@ -303,4 +329,11 @@ export type GroupScreenProps<T extends keyof GroupStackParamList> =
     BottomTabScreenProps<BottomTabParamList>
   >;
 
-export type SignupStep = 'name' | 'birth' | 'phone' | 'email' | 'gender' | 'profile' | 'done';
+export type SignupStep =
+  | 'name'
+  | 'birth'
+  | 'phone'
+  | 'email'
+  | 'gender'
+  | 'profile'
+  | 'done';
