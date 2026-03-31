@@ -1,6 +1,5 @@
-// src/hooks/useNotificationSetup.ts
 // 로그인 후 FCM 토큰 발급 → 서버 등록 → SSE 구독을 자동으로 처리하는 훅
-import { useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { AppState, AppStateStatus, InteractionManager } from 'react-native';
 import { CommonActions } from '@react-navigation/native';
 import { useAuthStore } from '../store/useAuthStore';
@@ -19,13 +18,16 @@ import {
   registerFcmToken,
   SseNotification,
 } from '../services/notificationService';
+import { AppNavigationRef } from '@/types/navigation';
+
+type FcmData = { [key: string]: string | number | object };
 
 // navigationRef를 외부에서 주입받기 위한 holder
-let _navigationRef: any = null;
+let _navigationRef: AppNavigationRef = null;
 // navigator 준비 전 수신된 알림 데이터 임시 보관
-let _pendingNavData: Record<string, any> | null = null;
+let _pendingNavData: FcmData | null = null;
 
-export function setNotificationNavigationRef(ref: any) {
+export function setNotificationNavigationRef(ref: AppNavigationRef) {
   _navigationRef = ref;
 }
 
@@ -46,7 +48,7 @@ export function flushPendingNotificationNavigation() {
 async function displayLocalNotification(
   title: string,
   body: string,
-  data: Record<string, any>,
+  data: FcmData,
 ) {
   try {
     console.log('[Notifee] 로컬 알림 표시 시도:', title);
@@ -76,7 +78,10 @@ async function displayLocalNotification(
 /**
  * 알림 탭 시 타입에 따라 해당 화면으로 네비게이션
  */
-function handleNotificationPress(data: Record<string, any>) {
+function handleNotificationPress(data: FcmData) {
+  // data.type, data.groupId 접근 시 string으로 변환
+  const rawType = String(data.type ?? '');
+  const groupId = data.groupId ? Number(String(data.groupId)) : undefined;
   if (!_navigationRef?.isReady()) {
     // navigator 준비 전이면 저장해두고 onReady 때 flush
     _pendingNavData = data;
@@ -89,9 +94,6 @@ function handleNotificationPress(data: Record<string, any>) {
     _pendingNavData = data;
     return;
   }
-
-  const rawType = String(data.type ?? '');
-  const groupId = data.groupId ? Number(data.groupId) : undefined;
 
   // 현장결제 요청 알림 → 바코드/QR 결제 화면으로 바로 이동
   if (rawType === 'ONSITE_PAYMENT_REQUEST' && groupId) {
@@ -107,7 +109,10 @@ function handleNotificationPress(data: Record<string, any>) {
                   name: 'Account',
                   state: {
                     routes: [
-                      { name: 'PaymentMethod', params: { title: '현장결제', groupId, isLeader: false } },
+                      {
+                        name: 'PaymentMethod',
+                        params: { title: '현장결제', groupId, isLeader: false },
+                      },
                     ],
                   },
                 },
@@ -160,10 +165,7 @@ function handleNotificationPress(data: Record<string, any>) {
               {
                 name: 'HomeTab',
                 state: {
-                  routes: [
-                    { name: 'Home' },
-                    { name: 'UserNotifications' },
-                  ],
+                  routes: [{ name: 'Home' }, { name: 'UserNotifications' }],
                 },
               },
             ],
@@ -202,30 +204,32 @@ export function useNotificationSetup() {
   useEffect(() => {
     // 앱이 포그라운드일 때 알림 탭
     const unsubNotifee = notifee.onForegroundEvent(({ type, detail }) => {
+      // 수정 전: remoteMessage, title, body, data 등 없는 변수 참조
+      // 수정 후: detail.notification.data를 직접 사용
       if (type === EventType.PRESS && detail.notification?.data) {
         handleNotificationPress(detail.notification.data);
       }
     });
 
-    // 앱이 백그라운드에서 Notifee 알림 탭으로 열렸을 때
     notifee.getInitialNotification().then(initialNotification => {
       if (initialNotification?.notification?.data) {
         handleNotificationPress(initialNotification.notification.data);
       }
     });
 
-    // Firebase 자동 알림 탭 처리 (백그라운드 → 포그라운드)
     const messaging = getMessaging();
-    const unsubFirebaseOpen = onNotificationOpenedApp(messaging, (remoteMessage) => {
-      if (remoteMessage.data) {
-        handleNotificationPress(remoteMessage.data as Record<string, any>);
-      }
-    });
+    const unsubFirebaseOpen = onNotificationOpenedApp(
+      messaging,
+      remoteMessage => {
+        if (remoteMessage.data) {
+          handleNotificationPress(remoteMessage.data);
+        }
+      },
+    );
 
-    // Firebase 자동 알림 탭 처리 (앱이 killed 상태에서 열렸을 때)
     getInitialNotification(messaging).then(remoteMessage => {
       if (remoteMessage?.data) {
-        handleNotificationPress(remoteMessage.data as Record<string, any>);
+        handleNotificationPress(remoteMessage.data);
       }
     });
 
@@ -266,7 +270,7 @@ export function useNotificationSetup() {
               amount: data.amount,
             });
           },
-          onError: (err) => {
+          onError: err => {
             console.warn('[NotificationSetup] SSE 에러:', err);
           },
         });
@@ -278,10 +282,10 @@ export function useNotificationSetup() {
     setup();
 
     // FCM 포그라운드 메시지 리스너
-    const unsubFcm = onMessage(getMessaging(), async (remoteMessage) => {
-      console.log('[NotificationSetup] FCM 포그라운드 메시지:', JSON.stringify(remoteMessage, null, 2));
+    const unsubFcm = onMessage(getMessaging(), async remoteMessage => {
       const data = remoteMessage.data ?? {};
-      const title = remoteMessage.notification?.title ?? String(data.type ?? '알림');
+      const title =
+        remoteMessage.notification?.title ?? String(data.type ?? '알림');
       const body = remoteMessage.notification?.body ?? '';
 
       // 인앱 알림 목록에 추가
@@ -298,11 +302,11 @@ export function useNotificationSetup() {
 
       // 포그라운드에서는 Firebase SDK가 자동 배너를 표시하지 않으므로
       // Notifee로 직접 시스템 알림 표시 (백그라운드/killed에서는 onMessage가 호출되지 않아 중복 없음)
-      await displayLocalNotification(title, body, data as Record<string, any>);
+      await displayLocalNotification(title, body, data);
     });
 
     // FCM 토큰 갱신 리스너
-    const unsubToken = onFcmTokenRefresh(async (newToken) => {
+    const unsubToken = onFcmTokenRefresh(async newToken => {
       console.log('[NotificationSetup] FCM 토큰 갱신됨');
       await registerFcmToken(newToken);
     });
@@ -341,7 +345,9 @@ export function useNotificationSetup() {
 /**
  * 서버 알림 타입 → 프론트 NotiType 매핑
  */
-function mapNotificationType(serverType: string): 'DUE' | 'VOTE' | 'LEDGER' | 'SETTLEMENT' {
+function mapNotificationType(
+  serverType: string,
+): 'DUE' | 'VOTE' | 'LEDGER' | 'SETTLEMENT' {
   switch (serverType) {
     case 'SETTLEMENT_REMINDER':
       return 'SETTLEMENT';
