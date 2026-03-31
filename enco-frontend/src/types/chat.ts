@@ -110,4 +110,18 @@ export interface ChatMessageListProps {
   isLoadingOlderRef: React.RefObject<boolean>;
 }
 
-export type { ChatMsgProps, ChatAction, ChatItem, ApiMessage };
+type BotUnpaidCardItem = Extract<ChatItem, { type: 'bot-unpaid-card' }>;
+type BotLedgerCardItem = Extract<ChatItem, { type: 'bot-ledger-card' }>;
+type ChatbotItem = Extract<ChatItem, { type: 'chatbot' }>;
+type BotActionsItem = Extract<ChatItem, { type: 'bot-actions' }>;
+
+export type {
+  ChatMsgProps,
+  ChatAction,
+  ChatItem,
+  ApiMessage,
+  BotActionsItem,
+  BotUnpaidCardItem,
+  BotLedgerCardItem,
+  ChatbotItem,
+};

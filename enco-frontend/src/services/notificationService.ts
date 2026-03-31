@@ -19,7 +19,7 @@ export type SseNotification = {
 
 type SseCallbacks = {
   onNotification: (data: SseNotification) => void;
-  onError?: (error: any) => void;
+  onError?: (error: unknown) => void;
 };
 
 let eventSource: any = null;
@@ -65,7 +65,7 @@ export function subscribeSse(userId: number, callbacks: SseCallbacks) {
       // keep-alive, 무시
     });
 
-    eventSource.addEventListener('error', (error: any) => {
+    eventSource.addEventListener('error', (error: unknown) => {
       console.warn('[SSE] 에러:', error);
       callbacks.onError?.(error);
     });

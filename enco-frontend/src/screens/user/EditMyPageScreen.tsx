@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
-import { Alert, ActivityIndicator, Image, Pressable, TextInput, View, KeyboardAvoidingView, Platform, ScrollView } from 'react-native'
-import Text from '@/components/typography';;
+import {
+  Alert,
+  ActivityIndicator,
+  Image,
+  Pressable,
+  TextInput,
+  View,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+} from 'react-native';
+import Text from '@/components/typography';
 import { useAuthStore } from '../../store/useAuthStore';
 import { EditMyPage } from '../../services/userService';
 import { getProfileImage } from '../../types/images';
@@ -13,7 +23,9 @@ export default function EditMyPageScreen({ navigation }: any) {
 
   const [phoneNumber, setPhoneNumber] = useState(profile?.phoneNumber ?? '');
   const [address, setAddress] = useState(profile?.address ?? '');
-  const [profileUrl, setProfileUrl] = useState(Number(profile?.profileUrl) || 1);
+  const [profileUrl, setProfileUrl] = useState(
+    Number(profile?.profileUrl) || 1,
+  );
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -33,8 +45,10 @@ export default function EditMyPageScreen({ navigation }: any) {
       Alert.alert('완료', '내 정보가 수정되었어요.', [
         { text: '확인', onPress: () => navigation.goBack() },
       ]);
-    } catch (err: any) {
-      const message = err?.response?.data?.message || '내 정보 수정에 실패했습니다.';
+    } catch (err: unknown) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || '내 정보 수정에 실패했습니다.';
       Alert.alert('오류', message);
     } finally {
       setSaving(false);
@@ -63,11 +77,11 @@ export default function EditMyPageScreen({ navigation }: any) {
             }}
           >
             <Pressable onPress={() => navigation.goBack()}>
-              <Text variant="bodyMd" color="muted" >
+              <Text variant="bodyMd" color="muted">
                 취소
               </Text>
             </Pressable>
-            <Text weight="bold" color="dark"  style={{ fontSize: 18 }}>
+            <Text weight="bold" color="dark" style={{ fontSize: 18 }}>
               내 정보 수정
             </Text>
             <View style={{ width: 30 }} />
@@ -75,7 +89,11 @@ export default function EditMyPageScreen({ navigation }: any) {
 
           {/* 입력 영역 */}
           <View style={{ paddingHorizontal: 20, marginTop: 32 }}>
-            <Text variant="caption" color="placeholder" style={{ marginBottom: 10 }}>
+            <Text
+              variant="caption"
+              color="placeholder"
+              style={{ marginBottom: 10 }}
+            >
               프로필 이미지
             </Text>
 
@@ -101,7 +119,14 @@ export default function EditMyPageScreen({ navigation }: any) {
                 />
               </View>
 
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  flexWrap: 'wrap',
+                  gap: 12,
+                  justifyContent: 'center',
+                }}
+              >
                 {PROFILE_OPTIONS.map(option => {
                   const selected = profileUrl === option;
 
@@ -130,7 +155,11 @@ export default function EditMyPageScreen({ navigation }: any) {
               </View>
             </View>
 
-            <Text variant="caption" color="placeholder" style={{ marginBottom: 10 }}>
+            <Text
+              variant="caption"
+              color="placeholder"
+              style={{ marginBottom: 10 }}
+            >
               휴대폰번호
             </Text>
 
@@ -158,8 +187,11 @@ export default function EditMyPageScreen({ navigation }: any) {
               />
             </View>
 
-            <Text variant="caption" color="placeholder"
-             style={{ marginBottom: 10 }}>
+            <Text
+              variant="caption"
+              color="placeholder"
+              style={{ marginBottom: 10 }}
+            >
               집 주소
             </Text>
 
@@ -188,7 +220,9 @@ export default function EditMyPageScreen({ navigation }: any) {
           </View>
 
           {/* 저장 버튼 */}
-          <View style={{ paddingHorizontal: 20, marginTop: 'auto', paddingTop: 32 }}>
+          <View
+            style={{ paddingHorizontal: 20, marginTop: 'auto', paddingTop: 32 }}
+          >
             <Pressable
               onPress={handleSave}
               disabled={saving}
@@ -203,7 +237,7 @@ export default function EditMyPageScreen({ navigation }: any) {
               {saving ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
-                <Text weight="bold" color="white" >
+                <Text weight="bold" color="white">
                   저장하기
                 </Text>
               )}

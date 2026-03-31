@@ -1,10 +1,18 @@
 // src/screens/group/GroupVoteCreateScreen.tsx
 import { useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import Header from '../../components/internet/Header';
 import KeyValueRow from '../../components/common/KeyValueRow';
+import { RootStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type VoteCreateNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'VoteCreateScreen'
+>;
+type VoteCreateRouteProp = RouteProp<RootStackParamList, 'VoteCreateScreen'>;
 
 export default function VoteCreateScreen() {
   const [title, setTitle] = useState<string>('');
