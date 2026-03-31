@@ -1,13 +1,28 @@
 // src/screens/group/GroupLedgerDetailScreen.tsx
 import React, { useCallback, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
-import { useFocusEffect, useNavigation, useRoute } from '@react-navigation/native';
+import {
+  RouteProp,
+  useFocusEffect,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import {
   getGroupTransactionDetail,
   GroupTransactionDetailResponse,
 } from '../../services/paymentService';
+
+import { GroupStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type RouteParams = {
   groupId?: string;
@@ -28,6 +43,15 @@ type RouteParams = {
 
 type DetailResult = GroupTransactionDetailResponse['result'];
 type LedgerStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
+
+type GroupLedgerDetailRouteProp = RouteProp<
+  GroupStackParamList,
+  'GroupLedgerDetail'
+>;
+type GroupLedgerDetailNavigationProp = NativeStackNavigationProp<
+  GroupStackParamList,
+  'GroupLedgerDetail'
+>;
 
 function formatMoney(n: number) {
   const sign = n >= 0 ? '+' : '-';
@@ -60,10 +84,18 @@ function formatDateTime(dateStr?: string | null) {
   const [datePart, timePart] = dateStr.split('T');
   if (!datePart) return dateStr;
   const time = timePart ? timePart.slice(0, 8) : '';
-  return time ? `${datePart.replace(/-/g, '.')} ${time}` : datePart.replace(/-/g, '.');
+  return time
+    ? `${datePart.replace(/-/g, '.')} ${time}`
+    : datePart.replace(/-/g, '.');
 }
 
-function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
+function InfoRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>
@@ -73,10 +105,17 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 }
 
 export default function GroupLedgerDetailScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const { groupId, groupName, isAdmin, transactionId, referenceType, pointId, listItem } =
-    (route.params ?? {}) as RouteParams;
+  const navigation = useNavigation<GroupLedgerDetailNavigationProp>();
+  const route = useRoute<GroupLedgerDetailRouteProp>();
+  const {
+    groupId,
+    groupName,
+    isAdmin,
+    transactionId,
+    referenceType,
+    pointId,
+    listItem,
+  } = route.params ?? {};
 
   const [detail, setDetail] = useState<DetailResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -104,13 +143,22 @@ export default function GroupLedgerDetailScreen() {
     setIsLoading(true);
     setError(null);
     try {
-      const result = await getGroupTransactionDetail(numericGroupId, transactionId);
+      const result = await getGroupTransactionDetail(
+        numericGroupId,
+        transactionId,
+      );
       console.log('[TransactionDetail] success:', result);
       setDetail(result.result);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[TransactionDetail] failed:', err);
-      console.error('[TransactionDetail] status:', err?.response?.status);
-      console.error('[TransactionDetail] data:', err?.response?.data);
+      console.error(
+        '[TransactionDetail] status:',
+        (err as { response?: { status?: number } })?.response?.status,
+      );
+      console.error(
+        '[TransactionDetail] data:',
+        (err as { response?: { data?: unknown } })?.response?.data,
+      );
       setError('거래 상세 내역을 불러오지 못했습니다.');
     } finally {
       setIsLoading(false);
@@ -123,21 +171,29 @@ export default function GroupLedgerDetailScreen() {
     }, [fetchDetail]),
   );
 
-  const handleReceiptProof = () =>
+  const handleReceiptProof = () => {
+    if (!transactionId) return;
     navigation.navigate('TransactionReceiptOcr', {
       groupId,
       groupName,
-      transactionId,
+      transactionId, // number로 좁혀짐
     });
+  };
+
   const handleDeleteReceipt = () => {
     Alert.alert('삭제', '영수증을 삭제할까요?', [
       { text: '취소', style: 'cancel' },
-      { text: '삭제', style: 'destructive', onPress: () => setLocalReceiptUri(null) },
+      {
+        text: '삭제',
+        style: 'destructive',
+        onPress: () => setLocalReceiptUri(null),
+      },
     ]);
   };
 
   // 영수증 이미지: 로컬 촬영 > API 응답 순서로 우선
-  const receiptImageUrl = localReceiptUri ?? detail?.receipt?.receiptImageUrl ?? null;
+  const receiptImageUrl =
+    localReceiptUri ?? detail?.receipt?.receiptImageUrl ?? null;
   const receiptContent = detail?.receipt?.receiptContent ?? null;
   const receiptItems = Array.isArray(receiptContent?.items)
     ? receiptContent.items
@@ -179,7 +235,9 @@ export default function GroupLedgerDetailScreen() {
         {/* 로딩 */}
         {isLoading && (
           <View style={styles.statusCard}>
-            <Text style={styles.statusText}>거래 상세 내역을 불러오는 중...</Text>
+            <Text style={styles.statusText}>
+              거래 상세 내역을 불러오는 중...
+            </Text>
           </View>
         )}
 
@@ -200,16 +258,11 @@ export default function GroupLedgerDetailScreen() {
         {/* POINT 상세 — listItem 기반 표시 (API 미연결) */}
         {referenceType === 'POINT' && listItem && (
           <View style={[styles.card, styles.shadowCard]}>
-            <Text
-              style={[
-                styles.amountText,
-                { color: '#F59E0B' },
-              ]}
-            >
+            <Text style={[styles.amountText, { color: '#F59E0B' }]}>
               {formatMoney(isDeposit ? listItem.amount : -listItem.amount)}
             </Text>
             <Text style={styles.balanceText}>
-                잔액 {toSafeNumber(listItem.balanceAfter).toLocaleString()}원
+              잔액 {toSafeNumber(listItem.balanceAfter).toLocaleString()}원
             </Text>
 
             <View style={styles.divider} />
@@ -218,14 +271,16 @@ export default function GroupLedgerDetailScreen() {
               <Text style={styles.infoValueText}>{listItem.title}</Text>
             </InfoRow>
             <InfoRow label="거래일시">
-              <Text style={styles.infoValueText}>{formatDateTime(listItem.transactionDate)}</Text>
+              <Text style={styles.infoValueText}>
+                {formatDateTime(listItem.transactionDate)}
+              </Text>
             </InfoRow>
             <InfoRow label="거래유형">
               <Text style={styles.infoValueText}>포인트</Text>
             </InfoRow>
             <InfoRow label="거래 후 잔액">
               <Text style={styles.infoValueText}>
-                  {toSafeNumber(listItem.balanceAfter).toLocaleString()}원
+                {toSafeNumber(listItem.balanceAfter).toLocaleString()}원
               </Text>
             </InfoRow>
           </View>
@@ -251,7 +306,9 @@ export default function GroupLedgerDetailScreen() {
                 {formatMoney(signedDetailAmount)}
               </Text>
               {!isApproved && (
-                <Text style={[styles.canceledNotice, { color: statusMeta.color }]}> 
+                <Text
+                  style={[styles.canceledNotice, { color: statusMeta.color }]}
+                >
                   {statusMeta.label} 상태의 거래입니다
                 </Text>
               )}
@@ -265,7 +322,9 @@ export default function GroupLedgerDetailScreen() {
                 <Text style={styles.infoValueText}>{detail.displayName}</Text>
               </InfoRow>
               <InfoRow label="거래일시">
-                <Text style={styles.infoValueText}>{formatDateTime(detail.transactionDate)}</Text>
+                <Text style={styles.infoValueText}>
+                  {formatDateTime(detail.transactionDate)}
+                </Text>
               </InfoRow>
               <InfoRow label="거래유형">
                 <Text style={styles.infoValueText}>
@@ -274,10 +333,7 @@ export default function GroupLedgerDetailScreen() {
               </InfoRow>
               <InfoRow label="거래상태">
                 <Text
-                  style={[
-                    styles.infoValueText,
-                    { color: statusMeta.color },
-                  ]}
+                  style={[styles.infoValueText, { color: statusMeta.color }]}
                 >
                   {statusMeta.label}
                 </Text>
@@ -322,7 +378,9 @@ export default function GroupLedgerDetailScreen() {
                     </View>
                   ) : (
                     <Text style={styles.noReceiptText}>
-                      {isAdmin ? '영수증을 등록하세요' : '등록된 영수증 없습니다'}
+                      {isAdmin
+                        ? '영수증을 등록하세요'
+                        : '등록된 영수증 없습니다'}
                     </Text>
                   )}
                 </View>
@@ -334,20 +392,29 @@ export default function GroupLedgerDetailScreen() {
               <View style={[styles.card, styles.shadowCard, { marginTop: 12 }]}>
                 <Text style={styles.sectionTitle}>영수증 내용</Text>
                 <InfoRow label="가맹점">
-                  <Text style={styles.infoValueText}>{receiptContent.merchantName}</Text>
+                  <Text style={styles.infoValueText}>
+                    {receiptContent.merchantName}
+                  </Text>
                 </InfoRow>
                 {receiptContent.address ? (
                   <InfoRow label="주소">
-                    <Text style={styles.infoValueText}>{receiptContent.address}</Text>
+                    <Text style={styles.infoValueText}>
+                      {receiptContent.address}
+                    </Text>
                   </InfoRow>
                 ) : null}
                 <InfoRow label="결제일시">
-                  <Text style={styles.infoValueText}>{receiptContent.paidAt}</Text>
+                  <Text style={styles.infoValueText}>
+                    {receiptContent.paidAt}
+                  </Text>
                 </InfoRow>
                 {receiptContent.totalAmount != null && (
                   <InfoRow label="합계">
                     <Text style={styles.infoValueText}>
-                      {toSafeNumber(receiptContent.totalAmount).toLocaleString()}원
+                      {toSafeNumber(
+                        receiptContent.totalAmount,
+                      ).toLocaleString()}
+                      원
                     </Text>
                   </InfoRow>
                 )}
@@ -360,7 +427,9 @@ export default function GroupLedgerDetailScreen() {
                 )}
                 {receiptItems.length > 0 && (
                   <View style={{ marginTop: 8 }}>
-                    <Text style={[styles.infoLabel, { marginBottom: 6 }]}>구매 항목</Text>
+                    <Text style={[styles.infoLabel, { marginBottom: 6 }]}>
+                      구매 항목
+                    </Text>
                     {receiptItems.map((item, idx) => (
                       <View key={idx} style={styles.receiptItem}>
                         <Text style={styles.receiptItemName}>{item.name}</Text>
