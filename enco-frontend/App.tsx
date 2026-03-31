@@ -21,17 +21,24 @@ import {
 } from 'react-native';
 import { ROUTES } from './src/constants/routes';
 import { linking } from '@/config/linking';
-import messaging from '@react-native-firebase/messaging';
+import messaging, {
+  FirebaseMessagingTypes,
+} from '@react-native-firebase/messaging';
 import { useAuthStore } from '@/store/useAuthStore';
 import { locationApi } from '@/services/payment/location';
 import Geolocation from 'react-native-geolocation-service';
-import { setNotificationNavigationRef, flushPendingNotificationNavigation } from './src/hooks/useNotificationSetup';
+import {
+  setNotificationNavigationRef,
+  flushPendingNotificationNavigation,
+} from './src/hooks/useNotificationSetup';
+import type { Permission } from 'react-native';
 
 function App() {
   const navigationRef = useNavigationContainerRef<RootStackParamList>();
   const backPressedOnce = useRef(false);
 
-  const pendingNotification = useRef<any>(null);
+  const pendingNotification =
+    useRef<FirebaseMessagingTypes.RemoteMessage | null>(null);
   const user = useAuthStore(state => state.user); // 인증 상태 구독
 
   // FCM 알림 저장
@@ -78,58 +85,69 @@ function App() {
     });
   }, []);
 
-  const myFunction = useCallback(async (remoteMessage: any) => {
-    try {
-      if (Platform.OS === 'android') {
-        const granted = await PermissionsAndroid.request(
-          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-        );
-        if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
-          Alert.alert('❌ 권한 없음', '위치 권한이 거부되었습니다.');
-          return;
-        }
-      }
-
-      const groupId = Number(remoteMessage.data?.groupId);
-      if (!groupId) return;
-
-      // 이미 실행 중인 인터벌 있으면 정리
-      if (locationIntervalRef.current) {
-        clearInterval(locationIntervalRef.current);
-      }
-
-      const sendLocation = async () => {
-        try {
-          const { latitude, longitude } = await getCurrentLocation();
-          const response = await locationApi.check(
-            groupId,
-            latitude,
-            longitude,
-            false,
+  const myFunction = useCallback(
+    async (remoteMessage: FirebaseMessagingTypes.RemoteMessage | null) => {
+      try {
+        if (Platform.OS === 'android') {
+          const granted = await PermissionsAndroid.request(
+            PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
           );
-
-          // 서버에서 barcode 반환 시 인터벌 종료
-          if (response.data?.result?.barcode !== null) {
-            if (Platform.OS === 'android') {
-              ToastAndroid.show('위치 인증 완료!', ToastAndroid.SHORT);
-            } else {
-              Alert.alert('위치 인증 완료!');
-            }
-            clearInterval(locationIntervalRef.current!);
-            locationIntervalRef.current = null;
+          if (granted !== PermissionsAndroid.RESULTS.GRANTED) {
+            Alert.alert('권한 없음', '위치 권한이 거부되었습니다.');
+            return;
           }
-        } catch (error: any) {
-          console.error('위치 전송 실패:', error?.message);
         }
-      };
 
-      // 즉시 한 번 실행 후 3초마다 반복
-      sendLocation();
-      locationIntervalRef.current = setInterval(sendLocation, 3000);
-    } catch (error: any) {
-      Alert.alert('💥 에러 발생', error?.message ?? JSON.stringify(error));
-    }
-  }, [getCurrentLocation]);
+        const groupId = Number(remoteMessage?.data?.groupId);
+        if (!groupId) return;
+
+        // 이미 실행 중인 인터벌 있으면 정리
+        if (locationIntervalRef.current) {
+          clearInterval(locationIntervalRef.current);
+        }
+
+        const sendLocation = async () => {
+          try {
+            const { latitude, longitude } = await getCurrentLocation();
+            const response = await locationApi.check(
+              groupId,
+              latitude,
+              longitude,
+              false,
+            );
+
+            // 서버에서 barcode 반환 시 인터벌 종료
+            if (response.data?.result?.barcode !== null) {
+              if (Platform.OS === 'android') {
+                ToastAndroid.show('위치 인증 완료!', ToastAndroid.SHORT);
+              } else {
+                Alert.alert('위치 인증 완료!');
+              }
+              if (locationIntervalRef.current) {
+                clearInterval(locationIntervalRef.current);
+                locationIntervalRef.current = null;
+              }
+            }
+          } catch (error: unknown) {
+            if (error instanceof Error) {
+              console.error('위치 전송 실패:', error.message);
+            } else {
+              console.error('위치 전송 실패:', error);
+            }
+          }
+        };
+
+        // 즉시 한 번 실행 후 3초마다 반복
+        sendLocation();
+        locationIntervalRef.current = setInterval(sendLocation, 3000);
+      } catch (error: unknown) {
+        const message =
+          error instanceof Error ? error.message : JSON.stringify(error);
+        Alert.alert('💥 에러 발생', message);
+      }
+    },
+    [getCurrentLocation],
+  );
 
   // 로그인 완료 감지 → pending 알림 처리
   useEffect(() => {
@@ -148,17 +166,29 @@ function App() {
 
     const requestPermissions = async () => {
       try {
-        const permissions: string[] = [
+        const permissions: Permission[] = [
           PermissionsAndroid.PERMISSIONS.CAMERA,
           PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         ];
-        // POST_NOTIFICATIONS는 Android 13(API 33) 이상에서만 필요
+
         if (Number(Platform.Version) >= 33) {
           permissions.push(PermissionsAndroid.PERMISSIONS.POST_NOTIFICATIONS);
         }
-        await PermissionsAndroid.requestMultiple(permissions as any);
-      } catch (err) {
-        console.warn('[Permissions] 권한 요청 실패:', err);
+
+        const result = await PermissionsAndroid.requestMultiple(permissions);
+
+        // 결과 체크
+        Object.entries(result).forEach(([permission, status]) => {
+          if (status !== PermissionsAndroid.RESULTS.GRANTED) {
+            console.warn(`❌ ${permission} 권한 거부됨`);
+          }
+        });
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          console.warn('[Permissions] 권한 요청 실패:', error.message);
+        } else {
+          console.warn('[Permissions] 권한 요청 실패:', error);
+        }
       }
     };
 
@@ -166,76 +196,79 @@ function App() {
   }, []);
 
   // ── 딥링크에서 초대 토큰 파싱 ──
-  const handleDeepLink = useCallback((url: string | null) => {
-    console.log('[DeepLink] handleDeepLink called with:', url);
-    if (!url) return;
+  const handleDeepLink = useCallback(
+    (url: string | null) => {
+      console.log('[DeepLink] handleDeepLink called with:', url);
+      if (!url) return;
 
-    try {
-      // enco://app/invite?token=xxx&groupName=xxx 형태 파싱
-      const tokenMatch = url.match(/invite\?token=([^&]+)/);
-      const nameMatch = url.match(/groupName=([^&]+)/);
-      console.log('[DeepLink] tokenMatch:', tokenMatch);
+      try {
+        // enco://app/invite?token=xxx&groupName=xxx 형태 파싱
+        const tokenMatch = url.match(/invite\?token=([^&]+)/);
+        const nameMatch = url.match(/groupName=([^&]+)/);
+        console.log('[DeepLink] tokenMatch:', tokenMatch);
 
-      if (tokenMatch && tokenMatch[1]) {
-        const inviteToken = tokenMatch[1];
-        const groupName = nameMatch
-          ? decodeURIComponent(nameMatch[1])
-          : undefined;
-        console.log(
-          '[DeepLink] inviteToken:',
-          inviteToken,
-          'groupName:',
-          groupName,
-        );
-        console.log(
-          '[DeepLink] navigationRef.isReady():',
-          navigationRef.isReady(),
-        );
+        if (tokenMatch && tokenMatch[1]) {
+          const inviteToken = tokenMatch[1];
+          const groupName = nameMatch
+            ? decodeURIComponent(nameMatch[1])
+            : undefined;
+          console.log(
+            '[DeepLink] inviteToken:',
+            inviteToken,
+            'groupName:',
+            groupName,
+          );
+          console.log(
+            '[DeepLink] navigationRef.isReady():',
+            navigationRef.isReady(),
+          );
 
-        const doNavigate = () => {
-          if (navigationRef.isReady()) {
-            console.log('[DeepLink] Navigating to GroupInviteEntry');
-            navigationRef.dispatch(
-              CommonActions.reset({
-                index: 0,
-                routes: [
-                  {
-                    name: 'App',
-                    state: {
-                      routes: [
-                        {
-                          name: 'HomeTab',
-                          state: {
-                            routes: [
-                              { name: 'Home' },
-                              {
-                                name: 'GroupInviteEntry',
-                                params: { inviteToken, groupName },
-                              },
-                            ],
+          const doNavigate = () => {
+            if (navigationRef.isReady()) {
+              console.log('[DeepLink] Navigating to GroupInviteEntry');
+              navigationRef.dispatch(
+                CommonActions.reset({
+                  index: 0,
+                  routes: [
+                    {
+                      name: 'App',
+                      state: {
+                        routes: [
+                          {
+                            name: 'HomeTab',
+                            state: {
+                              routes: [
+                                { name: 'Home' },
+                                {
+                                  name: 'GroupInviteEntry',
+                                  params: { inviteToken, groupName },
+                                },
+                              ],
+                            },
                           },
-                        },
-                      ],
+                        ],
+                      },
                     },
-                  },
-                ],
-              }),
-            );
-          } else {
-            console.log(
-              '[DeepLink] Navigation not ready, retrying in 500ms...',
-            );
-            setTimeout(doNavigate, 500);
-          }
-        };
+                  ],
+                }),
+              );
+            } else {
+              console.log(
+                '[DeepLink] Navigation not ready, retrying in 500ms...',
+              );
+              setTimeout(doNavigate, 500);
+            }
+          };
 
-        // 약간의 딜레이 후 시도, 준비 안 되면 재시도
-        setTimeout(doNavigate, 300);
+          // 약간의 딜레이 후 시도, 준비 안 되면 재시도
+          setTimeout(doNavigate, 300);
+        }
+      } catch (e) {
+        console.warn('[DeepLink] 파싱 실패:', e);
       }
-    } catch (e) {
-      console.warn('[DeepLink] 파싱 실패:', e);
-    }
-  }, [navigationRef]);
+    },
+    [navigationRef],
+  );
 
   // ── 딥링크 리스너 ──
   useEffect(() => {
