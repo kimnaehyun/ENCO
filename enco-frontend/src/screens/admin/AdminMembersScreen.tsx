@@ -1,13 +1,26 @@
 // src/screens/admin/AdminMembersScreen.tsx
 import React, { useEffect, useMemo, useState } from 'react';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, View, Image, ActivityIndicator } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
+import {
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  Image,
+  ActivityIndicator,
+} from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import Clipboard from '@react-native-clipboard/clipboard';
 import { useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
 import { AdminMember } from '../../types/admin';
-import { getGroupMembers, updateGroupMemberRole, type GroupMember } from '../../services/groupService';
+import {
+  getGroupMembers,
+  updateGroupMemberRole,
+  type GroupMember,
+} from '../../services/groupService';
 import { createInviteToken } from '../../services/inviteService';
 
 // 딥링크 스킴
@@ -30,8 +43,12 @@ export default function AdminMembersScreen() {
         setLoadingMembers(true);
         const data = await getGroupMembers(groupId!);
         setMembers(data.result);
-      } catch (error: any) {
-        console.error('멤버 목록 조회 실패:', error?.response?.data ?? error.message);
+      } catch (error: unknown) {
+        console.error(
+          '멤버 목록 조회 실패:',
+          (error as { response?: { data?: unknown } })?.response?.data ??
+            (error as Error).message,
+        );
       } finally {
         setLoadingMembers(false);
       }
@@ -65,16 +82,26 @@ export default function AdminMembersScreen() {
     if (!roleTarget || !groupId) return;
     try {
       setRoleLoading(true);
-      await updateGroupMemberRole(groupId, roleTarget.userId, { role: newRole });
+      await updateGroupMemberRole(groupId, roleTarget.userId, {
+        role: newRole,
+      });
       // 로컬 상태 업데이트
       setMembers(prev =>
-        prev.map(m => m.userId === roleTarget.userId ? { ...m, role: newRole } : m),
+        prev.map(m =>
+          m.userId === roleTarget.userId ? { ...m, role: newRole } : m,
+        ),
       );
       setRoleTarget(null);
-      Alert.alert('완료', `${roleTarget.name ?? '멤버'}님의 역할이 변경되었습니다.`);
-    } catch (error: any) {
-      console.error('역할 변경 실패:', error?.response?.data ?? error.message);
-      Alert.alert('오류', error?.response?.data?.message ?? '역할 변경에 실패했습니다.');
+      Alert.alert(
+        '완료',
+        `${roleTarget.name ?? '멤버'}님의 역할이 변경되었습니다.`,
+      );
+    } catch (error: unknown) {
+      console.error(
+        '역할 변경 실패:',
+        (error as { response?: { data?: unknown } })?.response?.data ??
+          (error as Error).message,
+      );
     } finally {
       setRoleLoading(false);
     }
@@ -104,12 +131,12 @@ export default function AdminMembersScreen() {
 
       // 4) 모달 표시
       setInviteModalVisible(true);
-    } catch (error: any) {
-      console.error('초대 토큰 생성 실패:', error?.response?.data ?? error.message);
-
-      const errorMessage =
-        error?.response?.data?.message ?? '초대 링크 생성 중 오류가 발생했습니다.';
-      Alert.alert('오류', errorMessage);
+    } catch (error: unknown) {
+      console.error(
+        '초대 토큰 생성 실패:',
+        (error as { response?: { data?: unknown } })?.response?.data ??
+          (error as Error).message,
+      );
     } finally {
       setInviteLoading(false);
     }
@@ -151,7 +178,7 @@ export default function AdminMembersScreen() {
             setKickMode(false);
           },
         },
-      ]
+      ],
     );
   };
 
@@ -213,12 +240,21 @@ export default function AdminMembersScreen() {
             elevation: 2,
           }}
         >
-          <Text variant="bodyMd" weight="bold" color="dark" style={{ marginBottom: 16 }}>
+          <Text
+            variant="bodyMd"
+            weight="bold"
+            color="dark"
+            style={{ marginBottom: 16 }}
+          >
             전체 멤버
           </Text>
 
           {loadingMembers ? (
-            <ActivityIndicator size="large" color="#1428A0" style={{ paddingVertical: 40 }} />
+            <ActivityIndicator
+              size="large"
+              color="#1428A0"
+              style={{ paddingVertical: 40 }}
+            />
           ) : members.length === 0 ? (
             <Text style={styles.emptyText}>모임원이 없습니다.</Text>
           ) : (
@@ -252,8 +288,8 @@ export default function AdminMembersScreen() {
                       {member.role === 'ADMIN' || member.role === 'LEADER'
                         ? '관리자'
                         : member.role === 'TREASURER'
-                        ? '총무'
-                        : '멤버'}
+                          ? '총무'
+                          : '멤버'}
                       {member.joinedAt || member.joined_at
                         ? ` · 가입일 ${(member.joinedAt ?? member.joined_at ?? '').replace(/-/g, '.').slice(0, 10)}`
                         : ''}
@@ -326,7 +362,9 @@ export default function AdminMembersScreen() {
                 }}
                 style={styles.linkBox}
               >
-                <Text style={styles.linkText} numberOfLines={2}>{inviteUrl}</Text>
+                <Text style={styles.linkText} numberOfLines={2}>
+                  {inviteUrl}
+                </Text>
               </Pressable>
             </Pressable>
           </Pressable>
@@ -341,9 +379,18 @@ export default function AdminMembersScreen() {
           animationType="fade"
           onRequestClose={() => setRoleTarget(null)}
         >
-          <Pressable style={styles.modalOverlay} onPress={() => setRoleTarget(null)}>
-            <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
-              <Pressable onPress={() => setRoleTarget(null)} style={styles.modalCloseButton}>
+          <Pressable
+            style={styles.modalOverlay}
+            onPress={() => setRoleTarget(null)}
+          >
+            <Pressable
+              style={styles.modalCard}
+              onPress={e => e.stopPropagation()}
+            >
+              <Pressable
+                onPress={() => setRoleTarget(null)}
+                style={styles.modalCloseButton}
+              >
                 <Text style={styles.modalCloseText}>✕</Text>
               </Pressable>
 
@@ -351,7 +398,8 @@ export default function AdminMembersScreen() {
                 {roleTarget.name ?? `유저 ${roleTarget.userId}`}
               </Text>
               <Text style={[styles.modalDescription, { marginBottom: 20 }]}>
-                현재 역할: {roleTarget.role === 'TREASURER' ? '총무' : '일반 회원'}
+                현재 역할:{' '}
+                {roleTarget.role === 'TREASURER' ? '총무' : '일반 회원'}
               </Text>
 
               <Pressable
@@ -363,10 +411,13 @@ export default function AdminMembersScreen() {
                   roleLoading && { opacity: 0.5 },
                 ]}
               >
-                <Text style={[
-                  styles.roleButtonText,
-                  roleTarget.role === 'TREASURER' && styles.roleButtonTextActive,
-                ]}>
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    roleTarget.role === 'TREASURER' &&
+                      styles.roleButtonTextActive,
+                  ]}
+                >
                   총무
                 </Text>
               </Pressable>
@@ -381,10 +432,12 @@ export default function AdminMembersScreen() {
                   roleLoading && { opacity: 0.5 },
                 ]}
               >
-                <Text style={[
-                  styles.roleButtonText,
-                  roleTarget.role === 'USER' && styles.roleButtonTextActive,
-                ]}>
+                <Text
+                  style={[
+                    styles.roleButtonText,
+                    roleTarget.role === 'USER' && styles.roleButtonTextActive,
+                  ]}
+                >
                   일반 회원
                 </Text>
               </Pressable>
