@@ -29,10 +29,11 @@ import {
 } from '../../types/receipt';
 import { RootStackParamList } from '@/types/navigation';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { ParamListBase } from '@react-navigation/native';
 
 const { DocumentScanner } = NativeModules;
 
-type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type NavigationProp = NativeStackNavigationProp<ParamListBase>;
 
 type DocumentScanResult = {
   status?: string;
