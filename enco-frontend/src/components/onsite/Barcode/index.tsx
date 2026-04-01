@@ -7,7 +7,7 @@ import {
   Alert,
 } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useRoute } from '@react-navigation/native';
 import { Text } from 'react-native-gesture-handler';
 import { InteractionManager } from 'react-native';
 import PointToggleButton from '../../payment/PointToggleButton';
@@ -21,13 +21,12 @@ import { getPoint } from '@/services/authService';
 import { RootStackParamList } from '@/types/navigation';
 import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
 
-export default function index({
-  groupId,
-  isLeader = true,
-}: {
-  groupId: number;
-  isLeader?: boolean;
-}) {
+export default function index() {
+  const route = useRoute();
+  const { groupId, isLeader } = route.params as {
+    groupId: number;
+    isLeader: boolean;
+  };
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [cardNumber, setCardNumber] = useState<number>(0);
