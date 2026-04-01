@@ -1,7 +1,7 @@
 // src/services/notificationService.ts
 // SSE(Server-Sent Events) 알림 구독 + 알림 API
 import { getCachedAccessToken } from '../utils/tokenStorage';
-import EventSource from 'react-native-sse';
+import EventSource, { CustomEvent, EventSourceOptions } from 'react-native-sse';
 
 const CHAT_BASE_URL = 'https://api.ssafywte.site/chat-service';
 const AUTH_BASE_URL = 'https://api.ssafywte.site/auth-service';
@@ -22,7 +22,7 @@ type SseCallbacks = {
   onError?: (error: unknown) => void;
 };
 
-let eventSource: any = null;
+let eventSource: InstanceType<typeof EventSource> | null = null;
 
 /**
  * SSE 알림 구독
@@ -48,18 +48,19 @@ export function subscribeSse(userId: number, callbacks: SseCallbacks) {
         Accept: 'text/event-stream',
       },
       method: 'GET',
-      reconnect: false,
-    });
+    } satisfies EventSourceOptions);
 
-    eventSource.addEventListener('notification', (event: any) => {
-      try {
-        const data: SseNotification = JSON.parse(event.data);
-        console.log('[SSE] 알림 수신:', data.type, data.title);
-        callbacks.onNotification(data);
-      } catch (e) {
-        console.warn('[SSE] 알림 파싱 실패:', e);
-      }
-    });
+    eventSource.addEventListener(
+      'notification',
+      (event: CustomEvent<'notification'>) => {
+        try {
+          const data: SseNotification = JSON.parse(event.data ?? '');
+          callbacks.onNotification(data);
+        } catch (e) {
+          console.warn('[SSE] 알림 파싱 실패:', e);
+        }
+      },
+    );
 
     eventSource.addEventListener('heartbeat', () => {
       // keep-alive, 무시
