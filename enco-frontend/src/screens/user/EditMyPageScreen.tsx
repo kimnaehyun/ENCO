@@ -14,10 +14,22 @@ import Text from '@/components/typography';
 import { useAuthStore } from '../../store/useAuthStore';
 import { EditMyPage } from '../../services/userService';
 import { getProfileImage } from '../../types/images';
+import { RootStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useNavigation } from '@react-navigation/native';
+
+type EditMyPageNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+type EditMyPagePayload = {
+  profileUrl: number;
+  phoneNumber?: string;
+  address?: string;
+};
 
 const PROFILE_OPTIONS = Array.from({ length: 10 }, (_, index) => index + 1);
 
-export default function EditMyPageScreen({ navigation }: any) {
+export default function EditMyPageScreen() {
+  const navigation = useNavigation<EditMyPageNavigationProp>();
   const profile = useAuthStore(s => s.profile);
   const setProfile = useAuthStore(s => s.setProfile);
 
@@ -33,7 +45,7 @@ export default function EditMyPageScreen({ navigation }: any) {
     const trimmedAddress = address.trim();
 
     // phoneNumber, address가 비어있으면 payload에서 제외
-    const payload: any = { profileUrl };
+    const payload: EditMyPagePayload = { profileUrl };
     if (trimmedPhoneNumber) payload.phoneNumber = trimmedPhoneNumber;
     if (trimmedAddress) payload.address = trimmedAddress;
 
