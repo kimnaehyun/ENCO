@@ -98,8 +98,8 @@ export default function CardChoiceScreen() {
                 navigation.navigate('VoteCreateScreen', {
                   groupId: params.groupId,
                   cardId: cardNumber,
-                  amount: params.amount,
-                  storeName: params.storeName,
+                  amount: params.amount ?? 0,
+                  storeName: params.storeName ?? '',
                 })
               }
             />
