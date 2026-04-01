@@ -26,7 +26,7 @@ export default function AdminCardPinScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
+    <View className="flex-1 bg-[#F0F4FF]">
       <PinEntry
         title="결제 비밀번호를\n입력해주세요"
         onComplete={handleComplete}
