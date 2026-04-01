@@ -123,36 +123,16 @@ export async function getGroupDashboard(
 }
 
 export async function getGroupDashboardReport(groupId: number | string) {
-  const token = getCachedAccessToken();
-
-  const response = await axios.get<GroupDashboardReportResponse>(
-    `https://api.ssafywte.site/payment-service/api/v1/groups/${groupId}/dashboard/report`,
-    {
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token ? `Bearer ${token}` : '',
-      },
-    },
+  const response = await paymentApi.get<GroupDashboardReportResponse>(
+    `/groups/${groupId}/dashboard/report`,
   );
-
   return response.data;
 }
 
 export async function getGroupCards(groupId: number | string) {
-  const token = getCachedAccessToken();
-
-  const response = await axios.get<GroupCardsResponse>(
-    `https://api.ssafywte.site/payment-service/api/v1/cards/groups/${groupId}/cards`,
-    {
-      timeout: 10000,
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: token ? `Bearer ${token}` : '',
-      },
-    },
+  const response = await paymentApi.get<GroupCardsResponse>(
+    `/cards/groups/${groupId}/cards`,
   );
-
   return response.data;
 }
 
