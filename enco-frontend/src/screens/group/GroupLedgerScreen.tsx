@@ -22,12 +22,12 @@ import { CommonParams } from '../../types/common';
 import {
   getGroupDashboardReport,
   getGroupTransactions,
-  GroupTransactionItem,
 } from '../../services/paymentService';
 import { generatePDF } from 'react-native-html-to-pdf';
 import RNFS from 'react-native-fs';
 import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
 import { GroupStackParamList } from '@/types/navigation';
+import { GroupTransactionItem } from '@/types/payment';
 
 // ─── helpers ───
 function formatMoney(n: number) {

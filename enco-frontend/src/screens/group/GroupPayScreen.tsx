@@ -15,12 +15,11 @@ import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import ScreenLayout from '../../components/ScreenLayout';
 import PinEntry from '../../components/pin/PinEntry';
 import { GroupPayStep, GroupProps } from '../../types/group';
-import { SelectedAccount } from '../../types/payment';
+import { SelectedAccount, UnpaidItem } from '../../types/payment';
 import {
   duesPayment,
   getUnpaidDues,
   selectedDuesPayment,
-  type UnpaidItem,
 } from '../../services/paymentService';
 
 const PIN_LEN = 4;

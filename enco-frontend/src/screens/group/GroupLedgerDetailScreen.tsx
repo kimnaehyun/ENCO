@@ -16,30 +16,11 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import {
-  getGroupTransactionDetail,
-  GroupTransactionDetailResponse,
-} from '../../services/paymentService';
+import { getGroupTransactionDetail } from '../../services/paymentService';
 
 import { GroupStackParamList } from '@/types/navigation';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
-type RouteParams = {
-  groupId?: string;
-  groupName?: string;
-  isAdmin?: boolean;
-  transactionId?: number;
-  referenceType?: 'TRANSACTION' | 'EXPENSE' | 'POINT';
-  pointId?: number;
-  listItem?: {
-    title: string;
-    amount: number;
-    transactionDate: string;
-    balanceAfter: number;
-    type: 'DEPOSIT' | 'WITHDRAW';
-    status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
-  };
-};
+import { GroupTransactionDetailResponse } from '@/types/payment';
 
 type DetailResult = GroupTransactionDetailResponse['result'];
 type LedgerStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';

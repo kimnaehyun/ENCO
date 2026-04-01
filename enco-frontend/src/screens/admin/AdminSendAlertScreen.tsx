@@ -18,11 +18,9 @@ import {
   sendDuesReminder,
   sendDuesReminderAll,
 } from '../../services/receiptService';
-import {
-  getGroupPaymentStatus,
-  type PaymentStatusMember,
-} from '../../services/paymentService';
+import { getGroupPaymentStatus } from '../../services/paymentService';
 import { getProfileImage } from '../../types/images';
+import { PaymentStatusMember } from '@/types/payment';
 
 const formatKRW = (n: number) =>
   `₩ ${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
