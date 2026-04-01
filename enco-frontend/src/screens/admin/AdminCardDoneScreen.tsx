@@ -25,57 +25,30 @@ export default function AdminCardDoneScreen() {
   };
 
   return (
-    <View
-      style={{
-        flex: 1,
-        backgroundColor: '#FFFFFF',
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 32,
-      }}
-    >
+    <View className="flex-1 bg-white justify-center items-center px-8">
       {/* 발급된 카드 이미지 */}
       {frontImageUrl ? (
         <Image
           source={{ uri: frontImageUrl }}
-          style={{
-            width: 280,
-            height: 170,
-            borderRadius: 16,
-            marginBottom: 24,
-          }}
+          className="w-[280px] h-[170px] rounded-2xl mb-6"
           resizeMode="contain"
         />
       ) : (
         <Image
           source={images.cardDone}
-          style={{
-            width: 220,
-            height: 220,
-            marginBottom: 24,
-          }}
+          className="w-[220px] h-[220px] mb-6"
           resizeMode="contain"
         />
       )}
 
       {/* 완료 텍스트 */}
-      <Text
-        weight="bold"
-        color="dark"
-        align="center"
-        style={{ marginBottom: 12, fontSize: 24 }}
-      >
+      <Text weight="bold" color="dark" align="center" className="mb-3 text-2xl">
         카드 발급 완료!
       </Text>
 
       {/* 카드 번호 표시 */}
       {cardNumber && (
-        <Text
-          variant="bodyMd"
-          color="muted"
-          align="center"
-          style={{ marginBottom: 8 }}
-        >
+        <Text variant="bodyMd" color="muted" align="center" className="mb-2">
           카드번호: {cardNumber}
         </Text>
       )}
@@ -85,7 +58,7 @@ export default function AdminCardDoneScreen() {
           variant="bodySm"
           color="placeholder"
           align="center"
-          style={{ marginBottom: 40 }}
+          className="mb-10"
         >
           {groupName}
         </Text>
@@ -94,12 +67,7 @@ export default function AdminCardDoneScreen() {
       {/* 홈으로 버튼 */}
       <Pressable
         onPress={goHome}
-        style={{
-          paddingHorizontal: 40,
-          paddingVertical: 16,
-          borderRadius: 30,
-          backgroundColor: '#1428A0',
-        }}
+        className="py-4 px-10 rounded-[30px] bg-[#1428A0]"
       >
         <Text weight="bold" color="white">
           홈으로
