@@ -1,13 +1,22 @@
 import React from 'react';
-import {useNavigation, useRoute} from '@react-navigation/native';
-import ReceiptOcrEditor, {
-  type ReceiptOcrEditorParams,
-} from '../../components/common/ReceiptOcrEditor';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+import ReceiptOcrEditor from '../../components/common/ReceiptOcrEditor';
+import { GroupStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type SettlementReceiptOcrRouteProp = RouteProp<
+  GroupStackParamList,
+  'SettlementReceiptOcr'
+>;
+type SettlementReceiptOcrNavigationProp = NativeStackNavigationProp<
+  GroupStackParamList,
+  'SettlementReceiptOcr'
+>;
 
 export default function SettlementReceiptOcrScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const params = (route.params ?? {}) as ReceiptOcrEditorParams;
+  const navigation = useNavigation<SettlementReceiptOcrNavigationProp>();
+  const route = useRoute<SettlementReceiptOcrRouteProp>();
+  const params = route.params ?? {};
 
   return (
     <ReceiptOcrEditor
