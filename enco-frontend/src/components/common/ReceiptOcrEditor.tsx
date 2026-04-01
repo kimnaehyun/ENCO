@@ -27,7 +27,6 @@ import {
   type ReceiptItemDraft,
   type ReceiptOptionDraft,
 } from '../../types/receipt';
-import { RootStackParamList } from '@/types/navigation';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { ParamListBase } from '@react-navigation/native';
 
