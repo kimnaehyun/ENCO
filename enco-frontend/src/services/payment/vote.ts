@@ -1,7 +1,18 @@
 import { paymentApi } from '@/services/paymentService';
 
 export const voteApi = {
-  create: (payload: any) =>
+  create: (payload: {
+    groupId: number;
+    cardId: number;
+    password: string;
+    counterpartyBankName: string;
+    counterpartyName: string;
+    counterpartyBankAccountNumber: string;
+    title: string;
+    description: string;
+    amount: number;
+    usePoint: boolean;
+  }) =>
     paymentApi.post('/votes', payload, {
       headers: {
         'Idempotency-Key': `${Date.now()}-${Math.random().toString(36).slice(2)}`,
