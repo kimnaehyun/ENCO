@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -12,13 +12,13 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import {launchImageLibrary} from 'react-native-image-picker';
+import { launchImageLibrary } from 'react-native-image-picker';
 import {
   requestReceiptOcr,
   submitTransactionReceipt,
 } from '../../services/receiptService';
 import ScreenLayout from '../ScreenLayout';
-import {FONT_FAMILY, COLORS} from '../typography';
+import { FONT_FAMILY, COLORS } from '../typography';
 import {
   createEmptyReceiptDraft,
   resolveReceiptTotalAmount,
@@ -27,8 +27,12 @@ import {
   type ReceiptItemDraft,
   type ReceiptOptionDraft,
 } from '../../types/receipt';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { ParamListBase } from '@react-navigation/native';
 
-const {DocumentScanner} = NativeModules;
+const { DocumentScanner } = NativeModules;
+
+type NavigationProp = NativeStackNavigationProp<ParamListBase>;
 
 type DocumentScanResult = {
   status?: string;
@@ -46,7 +50,7 @@ export type ReceiptOcrEditorParams = {
 
 type ReceiptOcrEditorProps = {
   mode: 'settlement' | 'transaction';
-  navigation: any;
+  navigation: NavigationProp;
   params: ReceiptOcrEditorParams;
 };
 
@@ -57,7 +61,9 @@ export default function ReceiptOcrEditor({
 }: ReceiptOcrEditorProps) {
   const numericTransactionId =
     typeof params.transactionId === 'number' ? params.transactionId : NaN;
-  const [imageUri, setImageUri] = useState<string | null>(params.imageUri ?? null);
+  const [imageUri, setImageUri] = useState<string | null>(
+    params.imageUri ?? null,
+  );
   const [receiptDraft, setReceiptDraft] = useState<ReceiptDraft | null>(null);
   const [statusMessage, setStatusMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -74,10 +80,12 @@ export default function ReceiptOcrEditor({
   const editorStatusText = loading
     ? 'OCR 분석 중'
     : receiptDraft
-    ? '검수 준비 완료'
-    : '영수증 준비 필요';
+      ? '검수 준비 완료'
+      : '영수증 준비 필요';
 
-  const screenTitle = isTransactionMode ? '거래 영수증 증빙' : '정산 영수증 검수';
+  const screenTitle = isTransactionMode
+    ? '거래 영수증 증빙'
+    : '정산 영수증 검수';
   const screenDescription = isTransactionMode
     ? '영수증 이미지를 압축 후 백엔드 OCR로 분석하고, 거래 증빙용 내용으로 검수한 뒤 제출합니다.'
     : '영수증 이미지를 압축 후 백엔드 OCR로 분석하고, 사후 정산용 내용으로 검수한 뒤 다음 단계로 진행합니다.';
@@ -126,7 +134,10 @@ export default function ReceiptOcrEditor({
   const resolvedTotalAmount = useMemo(
     () =>
       receiptDraft
-        ? resolveReceiptTotalAmount(receiptDraft.totalAmount, receiptDraft.items)
+        ? resolveReceiptTotalAmount(
+            receiptDraft.totalAmount,
+            receiptDraft.items,
+          )
         : null,
     [receiptDraft],
   );
@@ -346,10 +357,17 @@ export default function ReceiptOcrEditor({
 
       setReceiptDraft(response.receipt);
       setStatusMessage(response.message);
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert(
         'OCR 실패',
-        error?.response?.data?.message || error?.message || '알 수 없는 오류',
+        (
+          error as {
+            response?: { data?: { message?: string } };
+            message?: string;
+          }
+        )?.response?.data?.message ||
+          (error as { message?: string })?.message ||
+          '알 수 없는 오류',
       );
     } finally {
       setLoading(false);
@@ -358,13 +376,17 @@ export default function ReceiptOcrEditor({
 
   const startDocumentScan = async (successMessage: string) => {
     if (!DocumentScanner?.startDocumentScan) {
-      Alert.alert('문서 스캔 사용 불가', 'Document Scanner 네이티브 모듈을 찾을 수 없습니다.');
+      Alert.alert(
+        '문서 스캔 사용 불가',
+        'Document Scanner 네이티브 모듈을 찾을 수 없습니다.',
+      );
       return;
     }
 
     try {
       setLoading(true);
-      const result = (await DocumentScanner.startDocumentScan()) as DocumentScanResult;
+      const result =
+        (await DocumentScanner.startDocumentScan()) as DocumentScanResult;
       const uri = result?.firstImageUri ?? result?.imageUris?.[0] ?? null;
 
       if (!uri) {
@@ -373,14 +395,15 @@ export default function ReceiptOcrEditor({
       }
 
       await runReceiptOcr(uri, successMessage);
-    } catch (error: any) {
-      if (error?.code === 'DOCUMENT_SCAN_CANCELLED') {
+    } catch (error: unknown) {
+      if ((error as { code?: string })?.code === 'DOCUMENT_SCAN_CANCELLED') {
         return;
       }
 
       Alert.alert(
         '문서 스캔 실패',
-        error?.message || '문서 스캔을 시작하지 못했습니다.',
+        (error as { message?: string })?.message ||
+          '문서 스캔을 시작하지 못했습니다.',
       );
     } finally {
       setLoading(false);
@@ -410,7 +433,7 @@ export default function ReceiptOcrEditor({
           void handlePickImageFromGallery();
         },
       },
-      {text: '취소', style: 'cancel'},
+      { text: '취소', style: 'cancel' },
     ]);
   };
 
@@ -433,7 +456,10 @@ export default function ReceiptOcrEditor({
       }
 
       if (result.errorCode) {
-        Alert.alert('이미지 선택 실패', result.errorMessage || result.errorCode);
+        Alert.alert(
+          '이미지 선택 실패',
+          result.errorMessage || result.errorCode,
+        );
         return;
       }
 
@@ -443,27 +469,43 @@ export default function ReceiptOcrEditor({
         return;
       }
 
-      await runReceiptOcr(uri, '갤러리에서 이미지를 선택했습니다. OCR을 실행 중입니다.');
-    } catch (error: any) {
+      await runReceiptOcr(
+        uri,
+        '갤러리에서 이미지를 선택했습니다. OCR을 실행 중입니다.',
+      );
+    } catch (error: unknown) {
       Alert.alert(
         '갤러리 선택 실패',
-        error?.message || '이미지를 불러오지 못했습니다.',
+        (error as { message?: string })?.message ||
+          '이미지를 불러오지 못했습니다.',
       );
     }
   };
 
   const goToSettleMemberSelect = () => {
-    if (!validateVerifiedDraft()) {
+    if (!receiptDraft) {
+      Alert.alert('안내', '먼저 영수증을 분석하고 내용을 검증하세요.');
+      return;
+    }
+
+    // 이 아래부터 receiptDraft는 ReceiptDraft (null 제거됨)
+    if (!receiptDraft.merchantName.trim()) {
+      Alert.alert('안내', '가맹점명을 확인해 주세요.');
+      return;
+    }
+
+    if (!receiptDraft.totalAmount || receiptDraft.totalAmount <= 0) {
+      Alert.alert('안내', '총 결제 금액을 확인해 주세요.');
       return;
     }
 
     navigation.navigate('SettleMemberSelect', {
-      amount: receiptDraft!.totalAmount,
-      storeName: receiptDraft!.merchantName,
-      date: formatSettlementDate(receiptDraft!.paidAt),
+      amount: receiptDraft.totalAmount,
+      storeName: receiptDraft.merchantName,
+      date: formatSettlementDate(receiptDraft.paidAt),
       memo: '',
       receiptUri: imageUri,
-      receiptDraft,
+      receiptDraft, // ReceiptDraft 타입으로 좁혀짐
       groupName: params.groupName ?? '모임명',
       groupId: params.groupId,
       isNewSettle: true,
@@ -481,7 +523,10 @@ export default function ReceiptOcrEditor({
     }
 
     const numericGroupId = params.groupId ? Number(params.groupId) : NaN;
-    if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericTransactionId)) {
+    if (
+      !Number.isFinite(numericGroupId) ||
+      !Number.isFinite(numericTransactionId)
+    ) {
       Alert.alert('안내', '거래 증빙에 필요한 모임 또는 거래 ID가 없습니다.');
       return;
     }
@@ -501,11 +546,10 @@ export default function ReceiptOcrEditor({
           onPress: () => navigation.goBack(),
         },
       ]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert(
         '등록 실패',
-        error?.response?.data?.message ||
-          error?.message ||
+        (error as { message?: string })?.message ||
           '영수증 증빙 등록 중 오류가 발생했습니다.',
       );
     } finally {
@@ -524,7 +568,9 @@ export default function ReceiptOcrEditor({
 
       <TextInput
         value={option.name}
-        onChangeText={value => updateOptionField(itemId, option.id, 'name', value)}
+        onChangeText={value =>
+          updateOptionField(itemId, option.id, 'name', value)
+        }
         placeholder="옵션명"
         placeholderTextColor="#9CA3AF"
         style={styles.input}
@@ -534,7 +580,12 @@ export default function ReceiptOcrEditor({
         <TextInput
           value={option.unitPrice?.toString() ?? ''}
           onChangeText={value =>
-            updateOptionField(itemId, option.id, 'unitPrice', parseNumberInput(value))
+            updateOptionField(
+              itemId,
+              option.id,
+              'unitPrice',
+              parseNumberInput(value),
+            )
           }
           placeholder="단가"
           placeholderTextColor="#9CA3AF"
@@ -544,7 +595,12 @@ export default function ReceiptOcrEditor({
         <TextInput
           value={option.quantity?.toString() ?? ''}
           onChangeText={value =>
-            updateOptionField(itemId, option.id, 'quantity', parseNumberInput(value))
+            updateOptionField(
+              itemId,
+              option.id,
+              'quantity',
+              parseNumberInput(value),
+            )
           }
           placeholder="수량"
           placeholderTextColor="#9CA3AF"
@@ -554,7 +610,12 @@ export default function ReceiptOcrEditor({
         <TextInput
           value={option.amount?.toString() ?? ''}
           onChangeText={value =>
-            updateOptionField(itemId, option.id, 'amount', parseNumberInput(value))
+            updateOptionField(
+              itemId,
+              option.id,
+              'amount',
+              parseNumberInput(value),
+            )
           }
           placeholder="금액"
           placeholderTextColor="#9CA3AF"
@@ -628,7 +689,8 @@ export default function ReceiptOcrEditor({
       <ScrollView
         style={styles.container}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.pageScrollContent}>
+        contentContainerStyle={styles.pageScrollContent}
+      >
         <View style={styles.headerRow}>
           <View>
             <Text style={styles.headerEyebrow}>
@@ -674,7 +736,8 @@ export default function ReceiptOcrEditor({
           <Pressable
             style={[styles.button, loading && styles.buttonDisabled]}
             onPress={handleReceiptEntryPress}
-            disabled={loading}>
+            disabled={loading}
+          >
             <Text style={styles.buttonText}>
               {loading && !imageUri
                 ? '영수증 준비 중...'
@@ -683,7 +746,7 @@ export default function ReceiptOcrEditor({
           </Pressable>
 
           {imageUri ? (
-            <Image source={{uri: imageUri}} style={styles.image} />
+            <Image source={{ uri: imageUri }} style={styles.image} />
           ) : (
             <View style={styles.placeholder}>
               <Text style={styles.placeholderEmoji}>🧾</Text>
@@ -704,117 +767,141 @@ export default function ReceiptOcrEditor({
 
         {receiptDraft ? (
           <View style={styles.editorSection}>
-          <Text style={styles.sectionTitle}>검증할 영수증 데이터</Text>
+            <Text style={styles.sectionTitle}>검증할 영수증 데이터</Text>
 
-          <View style={styles.totalAmountCard}>
-            <Text style={styles.totalAmountTitle}>총 결제 금액 확인</Text>
-            <Text style={styles.totalAmountValue}>
-              {resolvedTotalAmount && resolvedTotalAmount > 0
-                ? `${resolvedTotalAmount.toLocaleString()}원`
-                : '총액 확인 필요'}
-            </Text>
-            <Text style={styles.totalAmountHelper}>
-              OCR 총액: {receiptDraft.totalAmount && receiptDraft.totalAmount > 0
-                ? `${receiptDraft.totalAmount.toLocaleString()}원`
-                : '미인식 또는 0원'}
-            </Text>
-            <Text style={styles.totalAmountHelper}>
-              품목 합계: {recognizedItemAmountSum > 0
-                ? `${recognizedItemAmountSum.toLocaleString()}원`
-                : '계산 불가'}
-            </Text>
-            <Text style={styles.totalAmountNotice}>
-              {totalAmountNeedsReview
-                ? '총액이 0원으로 인식되어 품목 합계로 자동 보정했습니다. 아래 입력창에서 직접 수정할 수 있습니다.'
-                : '영수증 총액을 눈으로 확인하고 필요하면 아래 입력창에서 수정하세요.'}
-            </Text>
-          </View>
-
-          <View style={styles.metaCard}>
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>매장명</Text>
-              <TextInput
-                value={receiptDraft.merchantName}
-                onChangeText={value => updateDraftField('merchantName', value)}
-                placeholder="매장명 입력"
-                placeholderTextColor="#9CA3AF"
-                style={styles.input}
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>주소</Text>
-              <TextInput
-                value={receiptDraft.address}
-                onChangeText={value => updateDraftField('address', value)}
-                placeholder="주소 입력"
-                placeholderTextColor="#9CA3AF"
-                style={styles.input}
-              />
-            </View>
-
-            <View style={styles.fieldGroup}>
-              <Text style={styles.fieldLabel}>결제 날짜</Text>
-              <TextInput
-                value={formatSettlementDate(receiptDraft.paidAt)}
-                onChangeText={updateSettlementPaidAtDate}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor="#9CA3AF"
-                style={styles.input}
-              />
-              <Text style={styles.helperText}>정산 날짜를 수정하면 영수증 결제일에도 반영됩니다.</Text>
-            </View>
-
-            <View style={styles.inlineRow}>
-              <View style={[styles.fieldGroup, styles.inlineFieldGroup]}>
-                <Text style={styles.fieldLabel}>총 결제 금액</Text>
-                <TextInput
-                  value={receiptDraft.totalAmount?.toString() ?? ''}
-                  onChangeText={value =>
-                    updateDraftField('totalAmount', parseNumberInput(value))
-                  }
-                  placeholder="총 결제 금액 입력"
-                  placeholderTextColor="#9CA3AF"
-                  keyboardType="number-pad"
-                  style={[styles.input, styles.inlineInput, styles.compactInput]}
-                />
-              </View>
-              <View style={[styles.fieldGroup, styles.inlineFieldGroup]}>
-                <Text style={styles.fieldLabel}>사업자번호</Text>
-                <TextInput
-                  value={receiptDraft.businessNumber}
-                  onChangeText={value => updateDraftField('businessNumber', value)}
-                  placeholder="사업자번호 입력"
-                  placeholderTextColor="#9CA3AF"
-                  style={[styles.input, styles.inlineInput, styles.compactInput]}
-                />
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.itemSectionHeader}>
-            <Text style={styles.sectionTitle}>품목 목록</Text>
-            <Pressable style={styles.subtleButton} onPress={addItem}>
-              <Text style={styles.subtleButtonText}>품목 추가</Text>
-            </Pressable>
-          </View>
-
-          {receiptDraft.items.length > 0 ? (
-            receiptDraft.items.map(renderItemEditor)
-          ) : (
-            <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>
-                인식된 품목이 없습니다. 직접 추가할 수 있습니다.
+            <View style={styles.totalAmountCard}>
+              <Text style={styles.totalAmountTitle}>총 결제 금액 확인</Text>
+              <Text style={styles.totalAmountValue}>
+                {resolvedTotalAmount && resolvedTotalAmount > 0
+                  ? `${resolvedTotalAmount.toLocaleString()}원`
+                  : '총액 확인 필요'}
+              </Text>
+              <Text style={styles.totalAmountHelper}>
+                OCR 총액:{' '}
+                {receiptDraft.totalAmount && receiptDraft.totalAmount > 0
+                  ? `${receiptDraft.totalAmount.toLocaleString()}원`
+                  : '미인식 또는 0원'}
+              </Text>
+              <Text style={styles.totalAmountHelper}>
+                품목 합계:{' '}
+                {recognizedItemAmountSum > 0
+                  ? `${recognizedItemAmountSum.toLocaleString()}원`
+                  : '계산 불가'}
+              </Text>
+              <Text style={styles.totalAmountNotice}>
+                {totalAmountNeedsReview
+                  ? '총액이 0원으로 인식되어 품목 합계로 자동 보정했습니다. 아래 입력창에서 직접 수정할 수 있습니다.'
+                  : '영수증 총액을 눈으로 확인하고 필요하면 아래 입력창에서 수정하세요.'}
               </Text>
             </View>
-          )}
-        </View>
-      ) : null}
+
+            <View style={styles.metaCard}>
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>매장명</Text>
+                <TextInput
+                  value={receiptDraft.merchantName}
+                  onChangeText={value =>
+                    updateDraftField('merchantName', value)
+                  }
+                  placeholder="매장명 입력"
+                  placeholderTextColor="#9CA3AF"
+                  style={styles.input}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>주소</Text>
+                <TextInput
+                  value={receiptDraft.address}
+                  onChangeText={value => updateDraftField('address', value)}
+                  placeholder="주소 입력"
+                  placeholderTextColor="#9CA3AF"
+                  style={styles.input}
+                />
+              </View>
+
+              <View style={styles.fieldGroup}>
+                <Text style={styles.fieldLabel}>결제 날짜</Text>
+                <TextInput
+                  value={formatSettlementDate(receiptDraft.paidAt)}
+                  onChangeText={updateSettlementPaidAtDate}
+                  placeholder="YYYY-MM-DD"
+                  placeholderTextColor="#9CA3AF"
+                  style={styles.input}
+                />
+                <Text style={styles.helperText}>
+                  정산 날짜를 수정하면 영수증 결제일에도 반영됩니다.
+                </Text>
+              </View>
+
+              <View style={styles.inlineRow}>
+                <View style={[styles.fieldGroup, styles.inlineFieldGroup]}>
+                  <Text style={styles.fieldLabel}>총 결제 금액</Text>
+                  <TextInput
+                    value={receiptDraft.totalAmount?.toString() ?? ''}
+                    onChangeText={value =>
+                      updateDraftField('totalAmount', parseNumberInput(value))
+                    }
+                    placeholder="총 결제 금액 입력"
+                    placeholderTextColor="#9CA3AF"
+                    keyboardType="number-pad"
+                    style={[
+                      styles.input,
+                      styles.inlineInput,
+                      styles.compactInput,
+                    ]}
+                  />
+                </View>
+                <View style={[styles.fieldGroup, styles.inlineFieldGroup]}>
+                  <Text style={styles.fieldLabel}>사업자번호</Text>
+                  <TextInput
+                    value={receiptDraft.businessNumber}
+                    onChangeText={value =>
+                      updateDraftField('businessNumber', value)
+                    }
+                    placeholder="사업자번호 입력"
+                    placeholderTextColor="#9CA3AF"
+                    style={[
+                      styles.input,
+                      styles.inlineInput,
+                      styles.compactInput,
+                    ]}
+                  />
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.itemSectionHeader}>
+              <Text style={styles.sectionTitle}>품목 목록</Text>
+              <Pressable style={styles.subtleButton} onPress={addItem}>
+                <Text style={styles.subtleButtonText}>품목 추가</Text>
+              </Pressable>
+            </View>
+
+            {receiptDraft.items.length > 0 ? (
+              receiptDraft.items.map(renderItemEditor)
+            ) : (
+              <View style={styles.emptyCard}>
+                <Text style={styles.emptyText}>
+                  인식된 품목이 없습니다. 직접 추가할 수 있습니다.
+                </Text>
+              </View>
+            )}
+          </View>
+        ) : null}
 
         <Pressable
-          style={[styles.completeButton, !hasVerifiedDraft && styles.buttonDisabled]}
+          style={[
+            styles.completeButton,
+            !hasVerifiedDraft && styles.buttonDisabled,
+          ]}
           disabled={!hasVerifiedDraft}
-          onPress={isTransactionMode ? handleSubmitTransactionReceipt : goToSettleMemberSelect}>
+          onPress={
+            isTransactionMode
+              ? handleSubmitTransactionReceipt
+              : goToSettleMemberSelect
+          }
+        >
           <Text style={styles.completeButtonText}>{completeButtonText}</Text>
         </Pressable>
       </ScrollView>

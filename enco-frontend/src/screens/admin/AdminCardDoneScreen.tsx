@@ -3,20 +3,22 @@
 import React from 'react';
 import { Image, Pressable, View } from 'react-native';
 import Text from '@/components/typography';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { images } from '../../types/images';
+import { GroupStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
+
+type AdminCardDoneRouteProp = RouteProp<GroupStackParamList, 'AdminCardDone'>;
+type AdminCardDoneNavigationProp = NativeStackNavigationProp<
+  GroupStackParamList,
+  'AdminCardDone'
+>;
 
 export default function AdminCardDoneScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
+  const navigation = useNavigation<AdminCardDoneNavigationProp>();
+  const route = useRoute<AdminCardDoneRouteProp>();
 
-  const {
-    groupId,
-    groupName,
-    cardId,
-    cardNumber,
-    frontImageUrl,
-  } = route.params ?? {};
+  const { groupName, cardNumber, frontImageUrl } = route.params ?? {};
 
   const goHome = () => {
     navigation.popToTop();
@@ -57,19 +59,34 @@ export default function AdminCardDoneScreen() {
       )}
 
       {/* 완료 텍스트 */}
-      <Text weight="bold" color="dark" align="center" style={{ marginBottom: 12, fontSize: 24 }}>
+      <Text
+        weight="bold"
+        color="dark"
+        align="center"
+        style={{ marginBottom: 12, fontSize: 24 }}
+      >
         카드 발급 완료!
       </Text>
 
       {/* 카드 번호 표시 */}
       {cardNumber && (
-        <Text variant="bodyMd" color="muted" align="center" style={{ marginBottom: 8 }}>
+        <Text
+          variant="bodyMd"
+          color="muted"
+          align="center"
+          style={{ marginBottom: 8 }}
+        >
           카드번호: {cardNumber}
         </Text>
       )}
 
       {groupName && (
-        <Text variant="bodySm" color="placeholder" align="center" style={{ marginBottom: 40 }}>
+        <Text
+          variant="bodySm"
+          color="placeholder"
+          align="center"
+          style={{ marginBottom: 40 }}
+        >
           {groupName}
         </Text>
       )}

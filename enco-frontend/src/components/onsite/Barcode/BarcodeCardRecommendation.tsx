@@ -1,7 +1,7 @@
 import { Animated, Dimensions } from 'react-native';
 import { useRef } from 'react';
 import BarcodeCard from './BarcodeCard';
-import { CARD_WIDTH, ITEM_SIZE } from '@/constants/carousel';
+import { ITEM_SIZE } from '@/constants/carousel';
 
 const { width } = Dimensions.get('window');
 
@@ -10,7 +10,7 @@ export default function BarcodeCardRecommendation({
   cardsInfo,
 }: {
   onSelectCard: React.Dispatch<React.SetStateAction<number>>;
-  cardsInfo: any;
+  cardsInfo: { image: string; cardId: string | number }[];
 }) {
   const scrollX = useRef(new Animated.Value(0)).current;
 

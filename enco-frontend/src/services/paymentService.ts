@@ -469,12 +469,13 @@ export async function getPaymentStatus(groupId: number) {
     );
     console.log('[미납알림] API 응답:', JSON.stringify(response.data));
     return response.data;
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error(
-      '[미납알림] API 에러:',
-      err?.response?.status,
-      err?.response?.data,
+      '[미납알림] API 호출 실패:',
+      (err as { response?: { data?: { message?: string } } })?.response?.data ??
+        err,
     );
+
     throw err;
   }
 }

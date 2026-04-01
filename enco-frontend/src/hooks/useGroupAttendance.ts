@@ -53,21 +53,35 @@ export function useGroupAttendance(groupId?: string) {
       console.log('[MyAttendance] groupId 없음 → 스킵');
       return;
     }
-    console.log('[MyAttendance] groupId:', numericGroupId, 'refreshKey:', refreshKey);
+    console.log(
+      '[MyAttendance] groupId:',
+      numericGroupId,
+      'refreshKey:',
+      refreshKey,
+    );
     setIsLoadingAttendance(true);
     setAttendanceError(null);
     getMyAttendance(numericGroupId)
       .then(res => {
         console.log('[MyAttendance] success:', res);
         console.log('[MyAttendance] event:', res.result.event);
-        console.log('[MyAttendance] rewardPoint:', res.result.event.rewardPoint);
+        console.log(
+          '[MyAttendance] rewardPoint:',
+          res.result.event.rewardPoint,
+        );
         console.log('[MyAttendance] streakDays:', res.result.streakDays);
-        console.log('[MyAttendance] totalAttendanceInEvent:', res.result.totalAttendanceInEvent);
+        console.log(
+          '[MyAttendance] totalAttendanceInEvent:',
+          res.result.totalAttendanceInEvent,
+        );
         console.log('[MyAttendance] stamps:', res.result.stamps);
         const converted = stampsToDateNumbers(res.result.stamps);
         const today = todayISODate();
         console.log('[MyAttendance] 오늘 날짜:', today);
-        console.log('[MyAttendance] 오늘 출석 여부:', res.result.stamps.includes(today));
+        console.log(
+          '[MyAttendance] 오늘 출석 여부:',
+          res.result.stamps.includes(today),
+        );
         console.log('[MyAttendance] 이번달 출석일 변환 결과:', converted);
         setStamps(res.result.stamps);
         setStreak(res.result.streakDays);
@@ -114,7 +128,10 @@ export function useGroupAttendance(groupId?: string) {
       console.log('[Attend] attendanceId:', res.result.attendanceId);
       console.log('[Attend] attendedAt:', res.result.attendedAt);
       console.log('[Attend] streakDays:', res.result.streakDays);
-      console.log('[Attend] totalAttendanceInEvent:', res.result.totalAttendanceInEvent);
+      console.log(
+        '[Attend] totalAttendanceInEvent:',
+        res.result.totalAttendanceInEvent,
+      );
       console.log('[Attend] isRewardGranted:', res.result.isRewardGranted);
 
       const rewardLine = res.result.isRewardGranted
@@ -126,17 +143,16 @@ export function useGroupAttendance(groupId?: string) {
       );
       // 서버 최신 데이터 전체 재조회 (currentMemberCount 등 포함)
       setRefreshKey(prev => prev + 1);
-    } catch (error: any) {
-      console.error('[Attend] failed:', error);
-      console.error('[Attend] status:', error?.response?.status);
-      console.error('[Attend] data:', error?.response?.data);
-      const errorCode = error?.response?.data?.code;
+    } catch (error: unknown) {
+      const errorCode = (error as { response?: { data?: { code?: string } } })
+        ?.response?.data?.code;
       if (errorCode === 'NO_ACTIVE_EVENT') {
         console.log('[Attend] NO_ACTIVE_EVENT → 활성 이벤트 없음');
         Alert.alert('출석 불가', '현재 진행 중인 출석 이벤트가 없습니다.');
       } else {
         const message =
-          error?.response?.data?.message ?? '출석 처리 중 오류가 발생했습니다.';
+          (error as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message ?? '출석 처리 중 오류가 발생했습니다.';
         Alert.alert('출석 실패', message);
       }
     } finally {

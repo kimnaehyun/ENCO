@@ -6,6 +6,8 @@ import {
   useCodeScanner,
 } from 'react-native-vision-camera';
 import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '@/types/navigation';
 
 const { width, height } = Dimensions.get('window');
 
@@ -14,7 +16,8 @@ const boxX = (width - BOX_SIZE) / 2;
 const boxY = (height - BOX_SIZE) / 2;
 
 export default function QRScanner() {
-  const navigation = useNavigation<any>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const device = useCameraDevice('back');
 
   const [hasPermission, setHasPermission] = useState(false);

@@ -1,17 +1,30 @@
 // src/screens/group/GroupInviteSuccessScreen.tsx
 import React from 'react';
-import { Image, Pressable, StyleSheet, View } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
-import { CommonActions, useNavigation, useRoute } from '@react-navigation/native';
+import { Image, Pressable, StyleSheet, View } from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
+import {
+  CommonActions,
+  RouteProp,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
+import { GroupStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type GroupInviteSuccessRouteProp = RouteProp<
+  GroupStackParamList,
+  'GroupInviteSuccess'
+>;
+type GroupInviteSuccessNavigationProp = NativeStackNavigationProp<
+  GroupStackParamList,
+  'GroupInviteSuccess'
+>;
 
 export default function GroupInviteSuccessScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const params = (route.params ?? {}) as {
-    groupId?: number | string;
-    groupName?: string;
-  };
+  const navigation = useNavigation<GroupInviteSuccessNavigationProp>();
+  const route = useRoute<GroupInviteSuccessRouteProp>();
+  const params = route.params ?? {};
 
   const groupId = params.groupId;
   const groupName = params.groupName ?? '모임명';

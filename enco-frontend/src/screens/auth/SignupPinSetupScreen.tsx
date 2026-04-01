@@ -1,24 +1,24 @@
-import React, { useState } from "react";
-import { View, Alert, ActivityIndicator } from "react-native"
-import Text from '@/components/typography';;
-import type { AuthScreenProps } from "../../types/navigation";
-import PinEntry from "../../components/pin/PinEntry";
-import { signupService } from "../../services/authService";
-import { saveDeviceToken } from "../../utils/tokenStorage";
+import React, { useState } from 'react';
+import { View, Alert, ActivityIndicator } from 'react-native';
+import Text from '@/components/typography';
+import type { AuthScreenProps } from '../../types/navigation';
+import PinEntry from '../../components/pin/PinEntry';
+import { signupService } from '../../services/authService';
+import { saveDeviceToken } from '../../utils/tokenStorage';
 
 export default function SignupPinSetupScreen({
   route,
   navigation,
-}: AuthScreenProps<"SignupPinSetup">) {
+}: AuthScreenProps<'SignupPinSetup'>) {
   const { name, birth, phone, email, gender, profileUrl } = route.params;
 
-  const [step, setStep] = useState<"set" | "confirm">("set");
+  const [step, setStep] = useState<'set' | 'confirm'>('set');
   const [firstPin, setFirstPin] = useState<string | null>(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [resetKey, setResetKey] = useState(0);
   const [loading, setLoading] = useState(false);
 
-  const resetPinEntry = () => setResetKey((k) => k + 1);
+  const resetPinEntry = () => setResetKey(k => k + 1);
 
   // 생년월일 포맷: 20000101 → 2000-01-01
   const formatBirthDay = (raw: string): string => {
@@ -44,21 +44,35 @@ export default function SignupPinSetupScreen({
         await saveDeviceToken(response.result.deviceToken);
       }
 
-      navigation.replace("SignupComplete", { userName: name });
-    } catch (err: any) {
-      console.log("====== 회원가입 실패 ======");
-      console.log("Status:", err?.response?.status);
-      console.log("Response Data:", JSON.stringify(err?.response?.data, null, 2));
-      console.log("Request Data:", JSON.stringify(err?.config?.data, null, 2));
-      console.log("Error Message:", err?.message);
-      console.log("===========================");
+      navigation.replace('SignupComplete', { userName: name });
+    } catch (err: unknown) {
+      console.log('====== 회원가입 실패 ======');
+      console.log(
+        'Status:',
+        (err as { response?: { status?: number } })?.response?.status,
+      );
+      console.log(
+        'Response Data:',
+        JSON.stringify(
+          (err as { response?: { data?: unknown } })?.response?.data,
+          null,
+          2,
+        ),
+      );
+      console.log(
+        'Request Data:',
+        JSON.stringify(
+          (err as { config?: { data?: unknown } })?.config?.data,
+          null,
+          2,
+        ),
+      );
+      console.log('Error Message:', (err as { message?: string }).message);
+      console.log('===========================');
 
-      const message =
-        err?.response?.data?.message || "회원가입에 실패했습니다. 다시 시도해주세요.";
-      Alert.alert("회원가입 실패", message);
       // PIN 입력 초기화
       setFirstPin(null);
-      setStep("set");
+      setStep('set');
       resetPinEntry();
     } finally {
       setLoading(false);
@@ -66,19 +80,19 @@ export default function SignupPinSetupScreen({
   };
 
   const handleComplete = (pin: string) => {
-    if (step === "set") {
+    if (step === 'set') {
       setFirstPin(pin);
-      setError("");
-      setStep("confirm");
+      setError('');
+      setStep('confirm');
       resetPinEntry();
       return;
     }
 
     // confirm 단계
     if (pin !== firstPin) {
-      setError("비밀번호가 일치하지 않아요");
+      setError('비밀번호가 일치하지 않아요');
       setFirstPin(null);
-      setStep("set");
+      setStep('set');
       resetPinEntry();
       return;
     }
@@ -91,12 +105,7 @@ export default function SignupPinSetupScreen({
     return (
       <View className="flex-1 bg-[#F0F4FF] items-center justify-center">
         <ActivityIndicator size="large" color="#1428A0" />
-        <Text
-          className="text-[#374151] text-lg mt-4"
-          
-        >
-          회원가입 중...
-        </Text>
+        <Text className="text-[#374151] text-lg mt-4">회원가입 중...</Text>
       </View>
     );
   }
@@ -110,9 +119,9 @@ export default function SignupPinSetupScreen({
       <PinEntry
         key={`${step}-${resetKey}`}
         title={
-          step === "set"
-            ? "간편 비밀번호를\n입력해주세요"
-            : "한번 더\n입력해주세요"
+          step === 'set'
+            ? '간편 비밀번호를\n입력해주세요'
+            : '한번 더\n입력해주세요'
         }
         resetKey={resetKey}
         onComplete={handleComplete}

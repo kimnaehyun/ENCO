@@ -1,11 +1,14 @@
 // src/screens/TogetherScreen.tsx
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, Text } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../components/ScreenLayout';
+import { RootStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 export default function TogetherScreen() {
-  const navigation = useNavigation<any>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const onPressCreateGroup = () => {
     navigation.navigate('GroupCreate');

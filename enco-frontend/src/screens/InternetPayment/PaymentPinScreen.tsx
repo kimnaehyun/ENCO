@@ -6,22 +6,27 @@ import {
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RouteProp } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { voteApi } from '@/services/payment/vote';
 import { ROUTES } from '@/constants/routes';
+import type {
+  InternetPayStackParamList,
+  RootStackParamList,
+} from '@/types/navigation';
+
+type PaymentPinNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+type PaymentPinRouteProp = RouteProp<
+  InternetPayStackParamList,
+  'InternetPaymentPin'
+>;
 
 export default function PaymentPinScreen() {
   const [resetKey, setResetKey] = useState(0);
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const params = route.params as {
-    groupId: number;
-    cardId: number;
-    title: string;
-    description: string;
-    storeName: string;
-    amount: number;
-  };
+  const navigation = useNavigation<PaymentPinNavigationProp>();
+  const route = useRoute<PaymentPinRouteProp>();
+  const params = route.params;
 
   const handlePinComplete = async (pin: string) => {
     try {
@@ -36,10 +41,8 @@ export default function PaymentPinScreen() {
         description: params.description,
         amount: params.amount,
       };
-      console.log(body);
 
       await voteApi.create(body);
-      console.log('handlePinComplete 호출됨');
       Alert.alert('완료', '투표가 생성되었습니다.', [
         {
           text: '확인',
@@ -57,17 +60,18 @@ export default function PaymentPinScreen() {
             ),
         },
       ]);
-    } catch (e: any) {
-      console.log('에러 응답:', e.response?.data);
-      console.log('에러 상태:', e.response?.status);
+    } catch (e: unknown) {
+      const errorData = (e as { response?: { data?: unknown } })?.response
+        ?.data;
       Alert.alert(
         '인증 실패',
-        JSON.stringify(e.response?.data) ?? 'pin 번호가 올바르지 않습니다.',
+        JSON.stringify(errorData) ?? 'pin 번호가 올바르지 않습니다.',
       );
     }
 
     setResetKey(prev => prev + 1);
   };
+
   return (
     <ScreenLayout className="p-4">
       <PinEntry

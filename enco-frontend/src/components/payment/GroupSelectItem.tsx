@@ -2,6 +2,8 @@ import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { RootStackParamList } from '@/types/navigation';
 
 export default function GroupSelectItem({
   title,
@@ -14,13 +16,14 @@ export default function GroupSelectItem({
 }: {
   title: string;
   selectedGroupId: number;
-  paymentType: 'internet' | 'onsite';
-  amount: number;
-  storeName: string;
-  callbackUrl: string;
-  orderId: string;
+  paymentType?: 'internet' | 'onsite';
+  amount?: number;
+  storeName?: string;
+  callbackUrl?: string;
+  orderId?: string;
 }) {
-  const navigation = useNavigation<any>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   return (
     <Pressable

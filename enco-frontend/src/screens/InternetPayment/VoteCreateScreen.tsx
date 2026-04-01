@@ -1,30 +1,33 @@
 // src/screens/group/GroupVoteCreateScreen.tsx
 import { useState } from 'react';
 import { Alert, Pressable, Text, TextInput, View } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import Header from '../../components/internet/Header';
 import KeyValueRow from '../../components/common/KeyValueRow';
+import { RootStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type VoteCreateNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'VoteCreateScreen'
+>;
+type VoteCreateRouteProp = RouteProp<RootStackParamList, 'VoteCreateScreen'>;
 
 export default function VoteCreateScreen() {
   const [title, setTitle] = useState<string>('');
   const [description, setDescription] = useState<string>('');
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const params = route.params as {
-    groupId: number;
-    cardId: number;
-    amount: number;
-    storeName: string;
-  };
+  const navigation = useNavigation<VoteCreateNavigationProp>();
+  const route = useRoute<VoteCreateRouteProp>();
+  const params = route.params ?? {};
   const onPressDone = () => {
     if (!title) return Alert.alert('확인', '제목을 입력해주세요');
 
     return navigation.navigate('PaymentPinScreen', {
       groupId: params.groupId,
       cardId: params.cardId,
-      title: title,
-      description: description,
+      title,
+      description,
       amount: params.amount,
       storeName: params.storeName,
     });

@@ -1,10 +1,28 @@
 // src/screens/group/GroupInviteEntryScreen.tsx
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, StyleSheet, View } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  StyleSheet,
+  View,
+} from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { acceptInvite } from '../../services/inviteService';
+import { GroupStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+type GroupInviteEntryRouteProp = RouteProp<
+  GroupStackParamList,
+  'GroupInviteEntry'
+>;
+type GroupInviteEntryNavigationProp = NativeStackNavigationProp<
+  GroupStackParamList,
+  'GroupInviteEntry'
+>;
 
 /**
  * 초대 딥링크로 진입했을 때 보여주는 화면.
@@ -15,9 +33,9 @@ import { acceptInvite } from '../../services/inviteService';
  *   GroupInviteEntry 화면에 { inviteToken } params로 전달됩니다.
  */
 export default function GroupInviteEntryScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const params = (route.params ?? {}) as { inviteToken?: string; groupName?: string };
+  const navigation = useNavigation<GroupInviteEntryNavigationProp>();
+  const route = useRoute<GroupInviteEntryRouteProp>();
+  const params = route.params ?? {};
 
   const inviteToken = params.inviteToken ?? '';
   const groupName = params.groupName ?? '모임';
@@ -42,19 +60,12 @@ export default function GroupInviteEntryScreen() {
         groupId,
         groupName: joinedGroupName,
       });
-    } catch (error: any) {
-      console.error('초대 수락 실패:', error?.response?.data ?? error.message);
-
-      const status = error?.response?.status;
-      const errorMessage = error?.response?.data?.message;
-
-      if (status === 409) {
-        Alert.alert('알림', errorMessage ?? '이미 가입된 모임입니다.');
-      } else if (status === 404) {
-        Alert.alert('오류', errorMessage ?? '만료되었거나 유효하지 않은 초대 링크입니다.');
-      } else {
-        Alert.alert('오류', errorMessage ?? '초대 수락 중 오류가 발생했습니다.');
-      }
+    } catch (error: unknown) {
+      console.error(
+        '초대 수락 실패:',
+        (error as { response?: { data?: unknown } })?.response?.data ??
+          (error as { message?: string }).message,
+      );
     } finally {
       setLoading(false);
     }

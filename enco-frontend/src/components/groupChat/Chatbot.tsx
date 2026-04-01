@@ -1,5 +1,5 @@
-import { View } from 'react-native'
-import Text from '@/components/typography';;
+import { View } from 'react-native';
+import Text from '@/components/typography';
 import React from 'react';
 import {
   botAvatar,
@@ -8,8 +8,9 @@ import {
   botText,
 } from '@/assets/styles/chatStyles';
 import { Image } from 'react-native';
+import { ChatbotItem } from '@/types/chat';
 
-export default function Chatbot({ item }: { item: any }) {
+export default function Chatbot({ item }: { item: ChatbotItem }) {
   return (
     <View className={botRow}>
       <Image
@@ -22,7 +23,7 @@ export default function Chatbot({ item }: { item: any }) {
         resizeMode="contain"
       />
       <View className={botCard}>
-        <Text weight="bold" className={botText} >
+        <Text weight="bold" className={botText}>
           {item.content}
         </Text>
       </View>

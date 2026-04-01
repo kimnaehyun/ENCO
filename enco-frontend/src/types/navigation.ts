@@ -2,11 +2,13 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import {
   CompositeScreenProps,
+  NavigationContainerRef,
   NavigatorScreenParams,
+  ParamListBase,
 } from '@react-navigation/native';
 import { CommonParams } from './common';
-import { GroupPayParams } from './group';
-import type {ReceiptDraft} from './receipt';
+import { GroupPayParams, SettleMember } from './group';
+import type { ReceiptDraft } from './receipt';
 
 // Auth
 export type AuthStackParamList = {
@@ -35,7 +37,15 @@ export type AuthStackParamList = {
 export type InternetPayStackParamList = {
   CreateInternetPaymentRequest: undefined;
   PaymentApprovalPending: undefined;
-  InternetPaymentPin: { screen?: string } | undefined;
+  InternetPaymentPin: {
+    groupId: number;
+    cardId: number;
+    title: string;
+    description: string;
+    storeName: string;
+    amount: number;
+  };
+
   PaymentSuccess:
     | {
         amount?: number;
@@ -43,18 +53,50 @@ export type InternetPayStackParamList = {
         orderId?: string;
       }
     | undefined;
+
+  PaymentStartScreen: {
+    amount?: number;
+    storeName?: string;
+    callbackUrl?: string;
+    orderId: string;
+  };
+
+  SelectGroupScreen: {
+    paymentType?: 'internet' | 'onsite';
+    amount?: number;
+    storeName?: string;
+    callbackUrl?: string;
+    orderId?: string;
+  };
 };
 
 // Group
 export type GroupStackParamList = {
+  GroupVoteDetail: { voteId: string; groupId?: string; groupName?: string };
+  GroupInfo: (CommonParams & { isAdmin?: boolean }) | undefined;
+  GroupAnalytics: CommonParams | undefined;
+  GroupLedger: (CommonParams & { isAdmin?: boolean }) | undefined;
   GroupList: undefined;
   GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
-  GroupInfo: CommonParams | undefined;
   GroupVotes: CommonParams | undefined;
   GroupPay: GroupPayParams | undefined;
   GroupChat: CommonParams | undefined;
-  GroupLedger: CommonParams | undefined;
   GroupAttendance: CommonParams | undefined;
+
+  VoteCreate:
+    | {
+        groupId: number;
+        cardId: number;
+        amount: number;
+        storeName: string;
+      }
+    | undefined;
+
+  AdminCardPin: {
+    groupId?: string;
+    groupName: string;
+    selectedCardId: string;
+  };
 
   AdminMenu: CommonParams | undefined;
   AdminReceipt: CommonParams | undefined;
@@ -87,13 +129,15 @@ export type GroupStackParamList = {
     cardId?: number;
     cardNumber?: string;
     frontImageUrl?: string;
+    selectedCardId?: string; // 추가
   };
   AdminSettle: CommonParams | undefined;
-  GroupVoteDetail: { voteId: string } & CommonParams;
-  VoteCreate: CommonParams | undefined;
+
   GroupInviteEntry: { inviteToken?: string; groupName?: string } | undefined;
   GroupInviteDecision: { inviteToken?: string; groupName?: string } | undefined;
-  GroupInviteSuccess: { groupId?: number | string; groupName?: string } | undefined;
+  GroupInviteSuccess:
+    | { groupId?: number | string; groupName?: string }
+    | undefined;
 
   GroupCreate:
     | {
@@ -124,16 +168,31 @@ export type GroupStackParamList = {
   };
   UserNotifications: CommonParams | undefined;
   GroupLedgerDetail: {
-    item: any;
-    balance: number;
-    isAdmin: boolean;
-    groupName: string;
+    groupId?: string;
+    groupName?: string;
+    isAdmin?: boolean;
+    transactionId?: number;
+    referenceType?: 'TRANSACTION' | 'EXPENSE' | 'POINT';
+    pointId?: number;
+    listItem?: {
+      title: string;
+      amount: number;
+      transactionDate: string;
+      balanceAfter: number;
+      type: 'DEPOSIT' | 'WITHDRAW';
+      status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
+    };
   };
   SettlementReceiptOcr:
     | { imageUri?: string; groupName?: string; groupId?: string }
     | undefined;
   TransactionReceiptOcr:
-    | { imageUri?: string; groupName?: string; groupId?: string; transactionId: number }
+    | {
+        imageUri?: string;
+        groupName?: string;
+        groupId?: string;
+        transactionId: number;
+      }
     | undefined;
   SettleDetail: {
     expenseId?: number;
@@ -144,6 +203,8 @@ export type GroupStackParamList = {
     receiptUri: string | null;
     groupName: string;
     groupId?: string;
+    settleMembers?: SettleMember[];
+    isSettled?: boolean;
   };
   SettleMemberSelect: {
     amount: number;
@@ -154,23 +215,24 @@ export type GroupStackParamList = {
     receiptDraft?: ReceiptDraft | null;
     groupName: string;
     groupId?: string;
-    settleMembers?: any[];
+    settleMembers?: SettleMember[];
     isNewSettle?: boolean;
+    expenseId?: number;
   };
 };
 
 // Home
 export type HomeStackParamList = {
+  GroupVoteDetail: { voteId: string; groupId?: string; groupName?: string };
+  GroupInfo: (CommonParams & { isAdmin?: boolean }) | undefined;
   Home: undefined;
   GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
-  GroupInfo: CommonParams | undefined;
   GroupVotes: CommonParams | undefined;
   GroupPay: GroupPayParams | undefined;
   GroupChat: CommonParams | undefined;
-  GroupLedger: CommonParams | undefined;
+  GroupLedger: (CommonParams & { isAdmin?: boolean }) | undefined;
   GroupAttendance: CommonParams | undefined;
   GroupAnalytics: CommonParams | undefined;
-  GroupVoteDetail: { voteId: string } & CommonParams;
   VoteCreate: CommonParams | undefined;
   AdminMenu: CommonParams | undefined;
   AdminReceipt: CommonParams | undefined;
@@ -203,22 +265,40 @@ export type HomeStackParamList = {
     cardId?: number;
     cardNumber?: string;
     frontImageUrl?: string;
+    selectedCardId?: string;
   };
   AdminSettle: CommonParams | undefined;
   GroupInviteEntry: { inviteToken?: string; groupName?: string } | undefined;
   GroupInviteDecision: { inviteToken?: string; groupName?: string } | undefined;
-  GroupInviteSuccess: { groupId?: number | string; groupName?: string } | undefined;
+  GroupInviteSuccess:
+    | { groupId?: number | string; groupName?: string }
+    | undefined;
   SettlementReceiptOcr:
     | { imageUri?: string; groupName?: string; groupId?: string }
     | undefined;
   TransactionReceiptOcr:
-    | { imageUri?: string; groupName?: string; groupId?: string; transactionId: number }
+    | {
+        imageUri?: string;
+        groupName?: string;
+        groupId?: string;
+        transactionId: number;
+      }
     | undefined;
   GroupLedgerDetail: {
-    item: any;
-    balance: number;
-    isAdmin: boolean;
-    groupName: string;
+    groupId?: string;
+    groupName?: string;
+    isAdmin?: boolean;
+    transactionId?: number;
+    referenceType?: 'TRANSACTION' | 'EXPENSE' | 'POINT';
+    pointId?: number;
+    listItem?: {
+      title: string;
+      amount: number;
+      transactionDate: string;
+      balanceAfter: number;
+      type: 'DEPOSIT' | 'WITHDRAW';
+      status?: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
+    };
   };
   SettleDetail: {
     expenseId?: number;
@@ -229,6 +309,8 @@ export type HomeStackParamList = {
     receiptUri: string | null;
     groupName: string;
     groupId?: string;
+    settleMembers?: SettleMember[];
+    isSettled?: boolean;
   };
   SettleMemberSelect: {
     amount: number;
@@ -239,8 +321,9 @@ export type HomeStackParamList = {
     receiptDraft?: ReceiptDraft | null;
     groupName: string;
     groupId?: string;
-    settleMembers?: any[];
+    settleMembers?: SettleMember[];
     isNewSettle?: boolean;
+    expenseId?: number;
   };
   UserNotifications: CommonParams | undefined;
 };
@@ -254,9 +337,58 @@ export type BottomTabParamList = {
 
 // Root
 export type RootStackParamList = {
+  EditMyPage: undefined;
   Splash: undefined;
   Auth: NavigatorScreenParams<AuthStackParamList>;
   App: undefined;
+
+  VoteCreateScreen: {
+    groupId?: number;
+    cardId?: number;
+    amount?: number;
+    storeName?: string;
+  };
+
+  PaymentPinScreen: {
+    groupId?: number;
+    cardId?: number;
+    title?: string;
+    description?: string;
+    amount?: number;
+    storeName?: string;
+  };
+
+  CardChoiceScreen: {
+    title: string;
+    groupId: number;
+    amount?: number;
+    storeName?: string;
+    callbackUrl?: string;
+    orderId?: string;
+  };
+
+  PaymentMethod: {
+    title: string;
+    groupId: number;
+  };
+
+  PaymentSuccess: {
+    storeName: string;
+    amount: number;
+    card?: string;
+  };
+
+  SettleMemberSelect: {
+    amount: number | null;
+    storeName: string;
+    date: string;
+    memo: string;
+    receiptUri: string | null;
+    receiptDraft: ReceiptDraft;
+    groupName: string;
+    groupId?: string;
+    isNewSettle: boolean;
+  };
 
   GroupCardRecommend: {
     groupName: string;
@@ -303,4 +435,13 @@ export type GroupScreenProps<T extends keyof GroupStackParamList> =
     BottomTabScreenProps<BottomTabParamList>
   >;
 
-export type SignupStep = 'name' | 'birth' | 'phone' | 'email' | 'gender' | 'profile' | 'done';
+export type SignupStep =
+  | 'name'
+  | 'birth'
+  | 'phone'
+  | 'email'
+  | 'gender'
+  | 'profile'
+  | 'done';
+
+export type AppNavigationRef = NavigationContainerRef<ParamListBase> | null;

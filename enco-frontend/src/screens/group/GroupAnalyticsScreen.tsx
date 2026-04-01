@@ -1,9 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View, Pressable } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  View,
+  Pressable,
+} from 'react-native';
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { CommonParams } from '../../types/common';
 import { useNotifications } from '../../contexts/NotificationsContext';
 import BudgetGaugeCard from '../../components/analytics/BudgetGaugeCard';
 import ExpenseCategoryCard, {
@@ -16,13 +21,26 @@ import {
   getGroupDashboardReport,
   getGroupTransactions,
 } from '../../services/paymentService';
-import {
-  getGroupSettings,
-  getGroupMembers,
-} from '../../services/groupService';
-
+import { getGroupSettings, getGroupMembers } from '../../services/groupService';
 import { TOP_SPENDING_COLORS } from '../../constants/analyticsColors';
+import { HomeStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
+type GroupAnalyticsRouteProp = RouteProp<HomeStackParamList, 'GroupAnalytics'>;
+type GroupAnalyticsNavigationProp = NativeStackNavigationProp<
+  HomeStackParamList,
+  'GroupAnalytics'
+>;
+type GroupSettingsResult = {
+  duePolicy?: { amount?: number };
+  policy?: { monthlyFee?: number };
+};
+type TransactionItem = {
+  transactionDate: string;
+  amount: number;
+  title?: string;
+  status?: string;
+};
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
     <View style={styles.statCard}>
@@ -33,9 +51,9 @@ function StatCard({ label, value }: { label: string; value: string }) {
 }
 
 export default function GroupAnalyticsScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const params = (route.params ?? {}) as CommonParams;
+  const navigation = useNavigation<GroupAnalyticsNavigationProp>();
+  const route = useRoute<GroupAnalyticsRouteProp>();
+  const params = route.params ?? {};
   const groupId = params.groupId;
   const groupName = params.groupName ?? '모임명';
   const { notifications } = useNotifications();
@@ -45,7 +63,9 @@ export default function GroupAnalyticsScreen() {
   const [currentBalance, setCurrentBalance] = useState(0);
   const [monthlyBudget, setMonthlyBudget] = useState(0);
 
-  const [topSpendingItems, setTopSpendingItems] = useState<ExpenseCategoryItem[]>([]);
+  const [topSpendingItems, setTopSpendingItems] = useState<
+    ExpenseCategoryItem[]
+  >([]);
   const [topSpendingTotal, setTopSpendingTotal] = useState(0);
 
   const [monthlyData, setMonthlyData] = useState<MonthlyExpense[]>([]);
@@ -67,7 +87,7 @@ export default function GroupAnalyticsScreen() {
     for (let i = 5; i >= 0; i--) {
       const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
       recentMonths.push(
-        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
       );
     }
     const recentMonthsSet = new Set(recentMonths);
@@ -78,15 +98,25 @@ export default function GroupAnalyticsScreen() {
         getGroupSettings(groupId),
         getGroupMembers(groupId),
       ]);
-      const rawResult = settingsData.result as any;
+      const rawResult = settingsData.result as GroupSettingsResult;
       const feePerMember =
         rawResult.duePolicy?.amount ?? rawResult.policy?.monthlyFee ?? 0;
       const memberCount = membersData.result.length;
       const budget = feePerMember * memberCount;
-      console.log('[Analytics] feePerMember:', feePerMember, 'memberCount:', memberCount, 'budget:', budget);
+      console.log(
+        '[Analytics] feePerMember:',
+        feePerMember,
+        'memberCount:',
+        memberCount,
+        'budget:',
+        budget,
+      );
       setMonthlyBudget(budget);
-    } catch (error: any) {
-      console.error('[Analytics] budget fetch failed:', error?.response?.status, error?.response?.data);
+    } catch (error: unknown) {
+      console.error(
+        '[Analytics] budget fetch failed:',
+        (error as { response?: { data?: unknown } })?.response?.data,
+      );
     }
 
     // ── 입금 / 잔액 (dashboard report) ──
@@ -95,13 +125,16 @@ export default function GroupAnalyticsScreen() {
       console.log('[Analytics] report:', reportData.result);
       setTotalIncome(reportData.result.paidAmount ?? 0);
       setCurrentBalance(reportData.result.balance ?? 0);
-    } catch (error: any) {
-      console.error('[Analytics] report fetch failed:', error?.response?.status, error?.response?.data);
+    } catch (error: unknown) {
+      console.error(
+        '[Analytics] report fetch failed:',
+        (error as { response?: { data?: unknown } })?.response?.data,
+      );
     }
 
     // ── 거래내역 (WITHDRAW 전체 → 클라이언트 필터) ──
     try {
-      const allItems: any[] = [];
+      const allItems: TransactionItem[] = [];
       let cursor: number | undefined;
       while (true) {
         const txData = await getGroupTransactions(gid, {
@@ -119,14 +152,17 @@ export default function GroupAnalyticsScreen() {
 
       // 이번 달 지출 합계
       const thisMonthItems = allItems.filter(
-        item => item.transactionDate?.slice(0, 7) === thisYM
+        item => item.transactionDate?.slice(0, 7) === thisYM,
       );
-      
+
       // 미확정/취소 건 제외 필터링
       const confirmedThisMonthItems = thisMonthItems.filter(
-        item => item.status !== 'PENDING' && item.status !== 'CANCELED'
+        item => item.status !== 'PENDING' && item.status !== 'CANCELED',
       );
-      const spent = confirmedThisMonthItems.reduce((sum, item) => sum + item.amount, 0);
+      const spent = confirmedThisMonthItems.reduce(
+        (sum, item) => sum + item.amount,
+        0,
+      );
       console.log('[Analytics] 이번 달 지출:', spent);
       setTotalExpense(spent);
 
@@ -148,14 +184,15 @@ export default function GroupAnalyticsScreen() {
           label: item.label,
           value: item.value,
           color: TOP_SPENDING_COLORS[index] ?? '#CBD5E1',
-        }))
+        })),
       );
 
       // 최근 6개월 월별 그룹핑
-      const recentItems = allItems.filter(item =>
-        recentMonthsSet.has(item.transactionDate?.slice(0, 7)) &&
-        item.status !== 'PENDING' &&
-        item.status !== 'CANCELED'
+      const recentItems = allItems.filter(
+        item =>
+          recentMonthsSet.has(item.transactionDate?.slice(0, 7)) &&
+          item.status !== 'PENDING' &&
+          item.status !== 'CANCELED',
       );
       const groupedByMonth: Record<string, number> = {};
       recentItems.forEach(item => {
@@ -169,8 +206,11 @@ export default function GroupAnalyticsScreen() {
       }));
       console.log('[Analytics] finalMonthly:', finalMonthly);
       setMonthlyData(finalMonthly);
-    } catch (error: any) {
-      console.error('[Analytics] transactions fetch failed:', error?.response?.status, error?.response?.data);
+    } catch (error: unknown) {
+      console.error(
+        '[Analytics] transactions fetch failed:',
+        (error as { response?: { data?: unknown } })?.response?.data,
+      );
       setFetchError('데이터를 불러오지 못했습니다.');
     } finally {
       setIsLoading(false);
@@ -185,16 +225,20 @@ export default function GroupAnalyticsScreen() {
   // ✅ SSE 알림 수신 시 자동으로 지출 데이터 새로고침
   useEffect(() => {
     if (!notifications.length) return;
-    
+
     // 최신 알림 확인
     const latestNotification = notifications[0];
-    
+
     // 투표/결제 관련 알림이면 새로고침
     if (
       latestNotification?.groupId === String(groupId) &&
-      (latestNotification.type === 'VOTE' || latestNotification.type === 'SETTLEMENT')
+      (latestNotification.type === 'VOTE' ||
+        latestNotification.type === 'SETTLEMENT')
     ) {
-      console.log('[Analytics] SSE 알림으로 인한 자동 새로고침:', latestNotification.type);
+      console.log(
+        '[Analytics] SSE 알림으로 인한 자동 새로고침:',
+        latestNotification.type,
+      );
       fetchAll();
     }
   }, [notifications, groupId, fetchAll]);
@@ -217,7 +261,11 @@ export default function GroupAnalyticsScreen() {
         </View>
 
         {isLoading && (
-          <ActivityIndicator size="large" color={COLORS.brand} style={styles.loader} />
+          <ActivityIndicator
+            size="large"
+            color={COLORS.brand}
+            style={styles.loader}
+          />
         )}
 
         {fetchError && !isLoading && (
@@ -225,16 +273,22 @@ export default function GroupAnalyticsScreen() {
         )}
 
         <View style={styles.statRow}>
-          <StatCard label="총지출" value={`${totalExpense.toLocaleString()}원`} />
-          <StatCard label="총입금" value={`${totalIncome.toLocaleString()}원`} />
-          <StatCard label="현재 잔액" value={`${currentBalance.toLocaleString()}원`} />
+          <StatCard
+            label="총지출"
+            value={`${totalExpense.toLocaleString()}원`}
+          />
+          <StatCard
+            label="총입금"
+            value={`${totalIncome.toLocaleString()}원`}
+          />
+          <StatCard
+            label="현재 잔액"
+            value={`${currentBalance.toLocaleString()}원`}
+          />
         </View>
 
         <View style={styles.cardWrap}>
-          <BudgetGaugeCard
-            budget={monthlyBudget}
-            spent={totalExpense}
-          />
+          <BudgetGaugeCard budget={monthlyBudget} spent={totalExpense} />
         </View>
 
         <View style={styles.cardWrap}>

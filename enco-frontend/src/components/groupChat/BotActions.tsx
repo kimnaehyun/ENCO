@@ -7,13 +7,13 @@ import {
   botText,
 } from '@/assets/styles/chatStyles';
 import ActionButton from './ActionButton';
-import { ChatAction } from '@/types/chat';
+import { BotActionsItem, ChatAction } from '@/types/chat';
 
 export default function BotActions({
   item,
   onPress,
 }: {
-  item: any;
+  item: BotActionsItem;
   onPress: (action: ChatAction, label: string) => void;
 }) {
   return (

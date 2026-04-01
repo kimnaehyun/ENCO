@@ -2,13 +2,15 @@ import { useState } from 'react';
 import { ChatAction, ChatItem } from '@/types/chat';
 import { askChatbot } from '@/services/chatService';
 import { getPaymentStatus } from '@/services/paymentService';
+import { GroupStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
 
 interface UseChatbotProps {
   isAdmin: boolean;
   userId: number;
   groupId: string | undefined;
   groupName: string;
-  navigation: any;
+  navigation: NativeStackNavigationProp<GroupStackParamList>;
   appendChatItem: (item: ChatItem) => void;
 }
 
@@ -135,8 +137,12 @@ export function useChatbot({
       // 로딩 메시지 제거는 WebSocket 응답이 오면 자연스럽게 밀려남
 
       console.log('[햄코PICK] 요청 전송 완료, WebSocket 응답 대기 중');
-    } catch (err: any) {
-      console.error('[햄코PICK] 요청 실패:', err?.response?.data ?? err);
+    } catch (err: unknown) {
+      console.error(
+        '[햄코PICK] 요청 실패:',
+        (err as { response?: { data?: { message?: string } } })?.response
+          ?.data ?? err,
+      );
 
       // 에러 시 안내 메시지
       appendChatItem({
@@ -207,7 +213,7 @@ export function useChatbot({
             Number(groupId),
           ),
         );
-      } catch (err: any) {
+      } catch (err: unknown) {
         appendChatItem({
           id: `bot-notice-error-${Date.now()}`,
           type: 'chatbot',
