@@ -16,11 +16,11 @@ export default function GroupSelectItem({
 }: {
   title: string;
   selectedGroupId: number;
-  paymentType: 'internet' | 'onsite';
-  amount: number;
-  storeName: string;
-  callbackUrl: string;
-  orderId: string;
+  paymentType?: 'internet' | 'onsite';
+  amount?: number;
+  storeName?: string;
+  callbackUrl?: string;
+  orderId?: string;
 }) {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
