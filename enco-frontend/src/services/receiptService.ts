@@ -1,6 +1,6 @@
 import axios from 'axios';
-import {compressReceiptImage} from './imageCompressionService';
-import {getCachedAccessToken} from '../utils/tokenStorage';
+import { compressReceiptImage } from './imageCompressionService';
+import { getCachedAccessToken } from '../utils/tokenStorage';
 import {
   createEmptyReceiptDraft,
   resolveReceiptTotalAmount,
@@ -32,6 +32,12 @@ const receiptApi = axios.create({
     Accept: 'application/json',
   },
 });
+
+type ReactNativeFile = {
+  uri: string;
+  name: string;
+  type: string;
+};
 
 receiptApi.interceptors.request.use(config => {
   const token = getCachedAccessToken();
@@ -98,18 +104,6 @@ const toNumber = (value: unknown): number | null => {
   return null;
 };
 
-const toBoolean = (value: unknown): boolean => {
-  if (typeof value === 'boolean') {
-    return value;
-  }
-
-  if (typeof value === 'string') {
-    return value.toLowerCase() === 'true';
-  }
-
-  return false;
-};
-
 const toGroupId = (value: unknown): number | undefined => {
   const normalized = toNumber(value);
   return normalized ?? undefined;
@@ -128,13 +122,12 @@ const toCandidates = (value: unknown): ReceiptOcrCandidateMap => {
     return {};
   }
 
-  return Object.entries(value as Record<string, unknown>).reduce<ReceiptOcrCandidateMap>(
-    (acc, [key, candidateValue]) => {
-      acc[key] = toCandidateArray(candidateValue);
-      return acc;
-    },
-    {},
-  );
+  return Object.entries(
+    value as Record<string, unknown>,
+  ).reduce<ReceiptOcrCandidateMap>((acc, [key, candidateValue]) => {
+    acc[key] = toCandidateArray(candidateValue);
+    return acc;
+  }, {});
 };
 
 const toOcrMeta = (value: unknown): ReceiptOcrMeta | null => {
@@ -202,7 +195,9 @@ const serializeItems = (items: ReceiptItemDraft[]): ReceiptItemDto[] =>
     options: serializeOptions(item.options),
   }));
 
-const serializeReceiptDraft = (receipt: ReceiptDraft): ReceiptSubmissionDto => ({
+const serializeReceiptDraft = (
+  receipt: ReceiptDraft,
+): ReceiptSubmissionDto => ({
   merchantName: receipt.merchantName,
   address: receipt.address,
   paidAt: receipt.paidAt,
@@ -262,7 +257,9 @@ const resolveReceiptPayload = (responseData: unknown): unknown => {
   return source;
 };
 
-const extractResultObject = (responseData: unknown): Record<string, unknown> | null => {
+const extractResultObject = (
+  responseData: unknown,
+): Record<string, unknown> | null => {
   if (!responseData || typeof responseData !== 'object') {
     return null;
   }
@@ -291,7 +288,7 @@ const buildReceiptFilePart = (
   imageUri: string,
   fileName?: string,
   mimeType?: string,
-) => ({
+): ReactNativeFile => ({
   uri: imageUri,
   name: fileName ?? `receipt-${Date.now()}.jpg`,
   type: mimeType ?? 'image/jpeg',
@@ -311,7 +308,11 @@ const prepareReceiptImageForUpload = async (
   };
 };
 
-const appendMultipartData = (formData: FormData, key: string, value: unknown) => {
+const appendMultipartData = (
+  formData: FormData,
+  key: string,
+  value: unknown,
+) => {
   formData.append(key, JSON.stringify(value));
 };
 
@@ -328,9 +329,14 @@ const normalizeTransactionReceiptSubmitResponse = (
 ): TransactionReceiptContentResponse => {
   const result = extractResultObject(responseData);
 
+  const resultText =
+    typeof responseData === 'object' && responseData !== null
+      ? toText((responseData as Record<string, unknown>).result)
+      : '';
+
   return {
     message: getResponseMessage(responseData, '영수증 증빙이 등록되었습니다.'),
-    receiptImageUrl: toText(result) || toText((responseData as Record<string, unknown> | null)?.result),
+    receiptImageUrl: toText(result) || resultText,
     rawResponse: responseData,
   };
 };
@@ -339,7 +345,9 @@ const normalizeSettlementCreateResponse = (
   responseData: unknown,
 ): SettlementCreateResponse => {
   const result = extractResultObject(responseData);
-  const paymentInfo = (result?.paymentInfo ?? result?.receipt ?? null) as unknown;
+  const paymentInfo = (result?.paymentInfo ??
+    result?.receipt ??
+    null) as unknown;
 
   return {
     expenseId: toNumber(result?.expenseId) ?? 0,
@@ -358,11 +366,17 @@ const normalizeSettlementCreateResponse = (
     receiverBankCode: toText(result?.receiverBankCode),
     receiverBankName: toText(result?.receiverBankName),
     paymentInfo: {
-      merchantName: toText((paymentInfo as Record<string, unknown> | null)?.merchantName),
+      merchantName: toText(
+        (paymentInfo as Record<string, unknown> | null)?.merchantName,
+      ),
       address: toText((paymentInfo as Record<string, unknown> | null)?.address),
       paidAt: toText((paymentInfo as Record<string, unknown> | null)?.paidAt),
-      businessNumber: toText((paymentInfo as Record<string, unknown> | null)?.businessNumber),
-      totalAmount: toNumber((paymentInfo as Record<string, unknown> | null)?.totalAmount),
+      businessNumber: toText(
+        (paymentInfo as Record<string, unknown> | null)?.businessNumber,
+      ),
+      totalAmount: toNumber(
+        (paymentInfo as Record<string, unknown> | null)?.totalAmount,
+      ),
       items: serializeItems(normalizeReceipt(paymentInfo).items),
     },
     participants: Array.isArray(result?.participants)
@@ -401,11 +415,17 @@ const normalizeSettlementDetailResponse = (
     paymentInfo:
       paymentInfo && typeof paymentInfo === 'object'
         ? {
-            merchantName: toText((paymentInfo as Record<string, unknown>).merchantName),
+            merchantName: toText(
+              (paymentInfo as Record<string, unknown>).merchantName,
+            ),
             address: toText((paymentInfo as Record<string, unknown>).address),
             paidAt: toText((paymentInfo as Record<string, unknown>).paidAt),
-            businessNumber: toText((paymentInfo as Record<string, unknown>).businessNumber),
-            totalAmount: toNumber((paymentInfo as Record<string, unknown>).totalAmount),
+            businessNumber: toText(
+              (paymentInfo as Record<string, unknown>).businessNumber,
+            ),
+            totalAmount: toNumber(
+              (paymentInfo as Record<string, unknown>).totalAmount,
+            ),
             items: serializeItems(normalizeReceipt(paymentInfo).items),
           }
         : null,
@@ -444,11 +464,14 @@ const buildGroupTransactionReceiptEndpoint = (
   transactionId: number,
 ) => `/groups/${groupId}/transactions/${transactionId}/receipts/contents`;
 
-const buildSettlementEndpoint = (groupId: number) => `/groups/${groupId}/settlements`;
+const buildSettlementEndpoint = (groupId: number) =>
+  `/groups/${groupId}/settlements`;
 const buildSettlementDetailEndpoint = (groupId: number, expenseId: number) =>
   `/groups/${groupId}/settlements/${expenseId}`;
-const buildSettlementDefaultersEndpoint = (groupId: number, expenseId: number) =>
-  `/groups/${groupId}/settlements/${expenseId}/defaulters`;
+const buildSettlementDefaultersEndpoint = (
+  groupId: number,
+  expenseId: number,
+) => `/groups/${groupId}/settlements/${expenseId}/defaulters`;
 
 const normalizeSettlementReminderResponse = (
   responseData: unknown,
@@ -481,7 +504,7 @@ export async function requestReceiptOcr(
       preparedImage.imageUri,
       preparedImage.fileName,
       preparedImage.mimeType,
-    ) as any,
+    ) as unknown as Blob,
   );
 
   const groupId = toGroupId(payload.groupId);
@@ -520,7 +543,7 @@ export async function submitTransactionReceipt(
       preparedImage.imageUri,
       preparedImage.fileName,
       preparedImage.mimeType,
-    ) as any,
+    ) as unknown as Blob,
   );
 
   const groupId = toGroupId(payload.groupId);
@@ -566,7 +589,7 @@ export async function createSettlement(
       preparedImage.imageUri,
       preparedImage.fileName,
       preparedImage.mimeType,
-    ) as any,
+    ) as unknown as Blob,
   );
 
   appendMultipartData(formData, 'data', {
@@ -692,7 +715,5 @@ export async function sendDuesReminderAll(
     throw new Error('유효한 모임 ID가 없습니다.');
   }
 
-  await receiptApi.post(
-    `/groups/${normalizedGroupId}/dues/reminder`,
-  );
+  await receiptApi.post(`/groups/${normalizedGroupId}/dues/reminder`);
 }
