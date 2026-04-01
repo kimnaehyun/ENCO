@@ -89,7 +89,7 @@ type ApiMessage = {
   roomId: number | string;
   senderId?: number;
   content: string;
-  metadata?: null | Record<string, any>;
+  metadata?: null | Record<string, unknown>;
   createdAt: string;
   // 레거시 호환 필드
   messageId?: string;
