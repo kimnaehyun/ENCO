@@ -217,27 +217,20 @@ export default function AdminCardScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* 헤더 */}
-        <Text variant="h2" color="dark" style={{ marginBottom: 6 }}>
+        <Text variant="h2" color="dark" className="mb-1.5">
           카드 추가 발급
         </Text>
-        <Text
-          variant="caption"
-          color="placeholder"
-          style={{ marginBottom: 28 }}
-        >
+        <Text variant="caption" color="placeholder" className="mb-7">
           {groupName}
         </Text>
 
         {/* 총무 정보(자동 입력) */}
-        <Text variant="bodySm" color="muted" style={{ marginBottom: 8 }}>
+        <Text variant="bodySm" color="muted" className="mb-2">
           총무 정보(자동 입력)
         </Text>
         <View
+          className="bg-white rouded-[20px] px-[18px] mb-5 "
           style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: 20,
-            paddingHorizontal: 18,
-            marginBottom: 20,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 1 },
             shadowOpacity: 0.05,
@@ -252,11 +245,8 @@ export default function AdminCardScreen() {
           ].map((item, i) => (
             <View
               key={item.label}
+              className="flex-row justify-between items-center py-3.5"
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                paddingVertical: 14,
                 borderBottomWidth: i < 2 ? 1 : 0,
                 borderBottomColor: '#F3F4F6',
               }}
@@ -272,30 +262,19 @@ export default function AdminCardScreen() {
         </View>
 
         {/* 모임 성향 태그 */}
-        <Text variant="bodySm" color="muted" style={{ marginBottom: 12 }}>
+        <Text variant="bodySm" color="muted" className="mb-3">
           모임 성향(옵션 태그)
         </Text>
-        <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            gap: 10,
-            marginBottom: 6,
-          }}
-        >
+        <View className="flex-row flex-wrap mb-1.5 gap-[10px]">
           {TAG_OPTIONS.map(tag => {
             const selected = selectedTags.includes(tag);
             return (
               <Pressable
                 key={tag}
                 onPress={() => toggleTag(tag)}
+                className="rouded-[18px] py-[18px] w-[30%] justify-center items-center"
                 style={{
-                  width: '31%',
-                  paddingVertical: 18,
-                  borderRadius: 18,
                   backgroundColor: selected ? '#1428A0' : '#C7D2FE',
-                  justifyContent: 'center',
-                  alignItems: 'center',
                   shadowColor: selected ? '#1428A0' : '#000',
                   shadowOffset: { width: 0, height: selected ? 4 : 1 },
                   shadowOpacity: selected ? 0.25 : 0.05,
@@ -314,7 +293,7 @@ export default function AdminCardScreen() {
           variant="tiny"
           color="placeholder"
           align="center"
-          style={{ marginBottom: 28 }}
+          className="mb-7"
         >
           중복 선택 가능
         </Text>
@@ -322,12 +301,8 @@ export default function AdminCardScreen() {
         {/* 선택된 카드 프리뷰 */}
         {selectedCardImage && (
           <View
+            className="bg-white rounded-[20px] p-[18px] items-center mb-5 "
             style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: 20,
-              padding: 18,
-              alignItems: 'center',
-              marginBottom: 20,
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: 0.05,
@@ -335,23 +310,19 @@ export default function AdminCardScreen() {
               elevation: 1,
             }}
           >
-            <Text
-              variant="caption"
-              color="placeholder"
-              style={{ marginBottom: 12 }}
-            >
+            <Text variant="caption" color="placeholder" className="mb-3">
               선택한 카드
             </Text>
             <Image
               source={{ uri: selectedCardImage }}
-              style={{ width: '60%', aspectRatio: 2, borderRadius: 12 }}
+              className="w-[60%] rounded-xl aspect-[2/1]"
               resizeMode="contain"
             />
             <Text
               variant="bodySm"
               weight="bold"
               color="dark"
-              style={{ marginTop: 10 }}
+              className="mt-[10px]"
             >
               {selectedCardName}
             </Text>
@@ -360,33 +331,25 @@ export default function AdminCardScreen() {
 
         {/* accountId 로딩 표시 */}
         {accountLoading && (
-          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+          <View className="items-center mb-4">
             <ActivityIndicator size="small" color="#1428A0" />
-            <Text
-              variant="caption"
-              color="placeholder"
-              style={{ marginTop: 6 }}
-            >
+            <Text variant="caption" color="placeholder" className="mt-[6px]">
               계좌 정보 확인 중...
             </Text>
           </View>
         )}
 
         {/* 버튼 */}
-        <View style={{ gap: 10 }}>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+        <View className="gap-[10px]">
+          <View className="flex-row gap-[10px] ">
             <Pressable
               onPress={() => {
                 setRecommendPressed(true);
                 handleRecommend();
               }}
+              className="flex-1 h-[54px] rounded-2xl justify-center items-center"
               style={{
-                flex: 1,
-                height: 54,
-                borderRadius: 16,
                 backgroundColor: recommendPressed ? '#C7D2FE' : '#1428A0',
-                justifyContent: 'center',
-                alignItems: 'center',
               }}
             >
               <Text variant="bodySm" weight="bold" color="white">
@@ -399,13 +362,9 @@ export default function AdminCardScreen() {
                 setViewAllPressed(true);
                 handleViewAll();
               }}
+              className="flex-1 h-[54px] rounded-2xl justify-center items-center"
               style={{
-                flex: 1,
-                height: 54,
-                borderRadius: 16,
                 backgroundColor: viewAllPressed ? '#C7D2FE' : '#1428A0',
-                justifyContent: 'center',
-                alignItems: 'center',
               }}
             >
               <Text variant="bodySm" weight="bold" color="white">
@@ -419,12 +378,8 @@ export default function AdminCardScreen() {
             <Pressable
               onPress={handleSubmit}
               disabled={submitting || accountLoading}
+              className="h-[54px] rounded-2xl justify-center items-center bg-[#1428A0]"
               style={{
-                height: 54,
-                borderRadius: 16,
-                backgroundColor: '#1428A0',
-                justifyContent: 'center',
-                alignItems: 'center',
                 opacity: submitting || accountLoading ? 0.5 : 1,
               }}
             >
