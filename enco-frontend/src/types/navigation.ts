@@ -53,10 +53,26 @@ export type InternetPayStackParamList = {
         orderId?: string;
       }
     | undefined;
+
+  PaymentStartScreen: {
+    amount?: number;
+    storeName?: string;
+    callbackUrl?: string;
+    orderId: string;
+  };
+
+  SelectGroupScreen: {
+    paymentType?: 'internet' | 'onsite';
+    amount?: number;
+    storeName?: string;
+    callbackUrl?: string;
+    orderId?: string;
+  };
 };
 
 // Group
 export type GroupStackParamList = {
+  GroupVoteDetail: { voteId: string; groupId?: string; groupName?: string };
   GroupInfo: (CommonParams & { isAdmin?: boolean }) | undefined;
   GroupAnalytics: CommonParams | undefined;
   GroupLedger: (CommonParams & { isAdmin?: boolean }) | undefined;
@@ -66,6 +82,15 @@ export type GroupStackParamList = {
   GroupPay: GroupPayParams | undefined;
   GroupChat: CommonParams | undefined;
   GroupAttendance: CommonParams | undefined;
+
+  VoteCreate:
+    | {
+        groupId: number;
+        cardId: number;
+        amount: number;
+        storeName: string;
+      }
+    | undefined;
 
   AdminCardPin: {
     groupId?: string;
@@ -107,8 +132,7 @@ export type GroupStackParamList = {
     selectedCardId?: string; // 추가
   };
   AdminSettle: CommonParams | undefined;
-  GroupVoteDetail: { voteId: string } & CommonParams;
-  VoteCreate: CommonParams | undefined;
+
   GroupInviteEntry: { inviteToken?: string; groupName?: string } | undefined;
   GroupInviteDecision: { inviteToken?: string; groupName?: string } | undefined;
   GroupInviteSuccess:
@@ -199,6 +223,7 @@ export type GroupStackParamList = {
 
 // Home
 export type HomeStackParamList = {
+  GroupVoteDetail: { voteId: string; groupId?: string; groupName?: string };
   GroupInfo: (CommonParams & { isAdmin?: boolean }) | undefined;
   Home: undefined;
   GroupDashboard: (CommonParams & { selectedCard?: string }) | undefined;
@@ -208,7 +233,6 @@ export type HomeStackParamList = {
   GroupLedger: (CommonParams & { isAdmin?: boolean }) | undefined;
   GroupAttendance: CommonParams | undefined;
   GroupAnalytics: CommonParams | undefined;
-  GroupVoteDetail: { voteId: string } & CommonParams;
   VoteCreate: CommonParams | undefined;
   AdminMenu: CommonParams | undefined;
   AdminReceipt: CommonParams | undefined;
@@ -313,24 +337,34 @@ export type BottomTabParamList = {
 
 // Root
 export type RootStackParamList = {
+  EditMyPage: undefined;
   Splash: undefined;
   Auth: NavigatorScreenParams<AuthStackParamList>;
   App: undefined;
 
   VoteCreateScreen: {
-    groupId: number;
-    cardId: number;
-    amount: number;
-    storeName: string;
+    groupId?: number;
+    cardId?: number;
+    amount?: number;
+    storeName?: string;
+  };
+
+  PaymentPinScreen: {
+    groupId?: number;
+    cardId?: number;
+    title?: string;
+    description?: string;
+    amount?: number;
+    storeName?: string;
   };
 
   CardChoiceScreen: {
     title: string;
     groupId: number;
-    amount: number;
-    storeName: string;
-    callbackUrl: string;
-    orderId: string;
+    amount?: number;
+    storeName?: string;
+    callbackUrl?: string;
+    orderId?: string;
   };
 
   PaymentMethod: {
