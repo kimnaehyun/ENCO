@@ -8,7 +8,7 @@ import {
 } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation, useRoute } from '@react-navigation/native';
-import { Text } from 'react-native-gesture-handler';
+import Text from '../../typography/Text';
 import { InteractionManager } from 'react-native';
 import PointToggleButton from '../../payment/PointToggleButton';
 import Geolocation from 'react-native-geolocation-service';
@@ -225,13 +225,8 @@ export default function index() {
     <View className="flex-1 gap-3">
       {/* QR + 포인트를 하나의 모듈 카드로 묶음 */}
       <View
+        className="bg-white rounded-3xl px-6 pt-7 pb-5 items-center"
         style={{
-          backgroundColor: '#FFFFFF',
-          borderRadius: 24,
-          paddingHorizontal: 24,
-          paddingTop: 28,
-          paddingBottom: 20,
-          alignItems: 'center',
           shadowColor: '#1428A0',
           shadowOpacity: 0.08,
           shadowRadius: 14,
@@ -249,46 +244,18 @@ export default function index() {
               />
             </Pressable>
           ) : (
-            <View
-              style={{
-                width: 210,
-                height: 210,
-                justifyContent: 'center',
-                alignItems: 'center',
-              }}
-            >
+            <View className=" justify-center items-center w-[210px] h-[210px]">
               <ActivityIndicator size="large" />
             </View>
           )
         ) : (
-          <View
-            style={{
-              width: 210,
-              height: 210,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
-          >
+          <View className=" justify-center items-center w-[210px] h-[210px]">
             <ActivityIndicator size="large" />
-            <Text
-              style={{
-                fontFamily: 'GmarketSansTTFMedium',
-                textAlign: 'center',
-                marginTop: 8,
-              }}
-            >
+            <Text align="center" className="mt-2">
               주변 모임원 찾는 중...
             </Text>
             {memberCount && (
-              <Text
-                style={{
-                  fontFamily: 'GmarketSansTTFMedium',
-                  textAlign: 'center',
-                  marginTop: 4,
-                  color: '#1428A0',
-                  fontSize: 16,
-                }}
-              >
+              <Text align="center" color="brand" className="mt-1">
                 {memberCount.nearby} / {memberCount.total}명
               </Text>
             )}
@@ -296,37 +263,13 @@ export default function index() {
         )}
 
         {/* 구분선 */}
-        <View
-          style={{
-            width: '100%',
-            height: 1,
-            backgroundColor: '#F0F4FF',
-            marginVertical: 16,
-          }}
-        />
+        <View className="w-full bg-[#F0F4FF] my-4 h-[1px]" />
 
         {/* 포인트 영역 */}
-        <View
-          style={{
-            flexDirection: 'row',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            width: '100%',
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFMedium' }}>
-              보유 포인트
-            </Text>
-            <Text
-              style={{
-                fontSize: 16,
-                color: '#1428A0',
-                fontFamily: 'GmarketSansTTFMedium',
-              }}
-            >
-              {point}P
-            </Text>
+        <View className="flex-row w-full items-center justify-between">
+          <View className="flex-row items-center gap-1">
+            <Text>보유 포인트</Text>
+            <Text color="brand">{point}P</Text>
           </View>
           <PointToggleButton
             pointUsage={pointUsage}
