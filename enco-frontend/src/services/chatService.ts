@@ -29,7 +29,7 @@ export type AskChatbotRequest = {
 
 export type AskChatbotResponse = {
   message: string;
-  result?: any;
+  result?: unknown;
 };
 
 export async function askChatbot(
