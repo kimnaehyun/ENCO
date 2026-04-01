@@ -1,7 +1,7 @@
 type HomeGroupSummary = {
   id: string;
   name: string;
-  coverImage?: any;
+  coverImage?: string;
   role?: string;
 };
 
@@ -9,4 +9,4 @@ type HomeCardItem =
   | { type: 'group'; group: HomeGroupSummary }
   | { type: 'add' };
 
-export type {HomeGroupSummary, HomeCardItem}
+export type { HomeGroupSummary, HomeCardItem };
