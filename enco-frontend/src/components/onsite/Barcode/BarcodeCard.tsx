@@ -39,10 +39,7 @@ export default function BarcodeCard({
     >
       <Image
         source={{ uri: item.image }}
-        style={{
-          width: '100%',
-          height: 256,
-        }}
+        className="w-full h-64"
         resizeMode="contain"
       />
     </Animated.View>
