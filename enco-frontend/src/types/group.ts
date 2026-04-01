@@ -12,9 +12,10 @@ export type GroupPayStep = 'summary' | 'form' | 'pin' | 'success';
 export type GroupPaySource = 'default' | 'due' | 'settlement';
 
 export type GroupPayParams = CommonParams & {
+  isAdmin?: boolean;
+  paySource?: 'default' | 'due' | 'settlement';
   presetAmount?: number;
   presetMemo?: string;
-  paySource?: GroupPaySource;
   presetUnpaidId?: string;
 };
 
@@ -171,7 +172,7 @@ export type GroupStackParamList = {
     receiptDraft?: ReceiptDraft | null;
     groupName: string;
     groupId?: string;
-    settleMembers?: any[];
+    settleMembers?: SettleMember[];
     isNewSettle?: boolean;
   };
 };
@@ -266,7 +267,7 @@ export type HomeStackParamList = {
     receiptDraft?: ReceiptDraft | null;
     groupName: string;
     groupId?: string;
-    settleMembers?: any[];
+    settleMembers?: SettleMember[];
     isNewSettle?: boolean;
   };
   UserNotifications: CommonParams | undefined;
