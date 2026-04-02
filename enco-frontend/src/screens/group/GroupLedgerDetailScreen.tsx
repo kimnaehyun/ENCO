@@ -407,8 +407,8 @@ export default function GroupLedgerDetailScreen() {
                   </InfoRow>
                 )}
                 {receiptItems.length > 0 && (
-                  <View style={{ marginTop: 8 }}>
-                    <Text style={[styles.infoLabel, { marginBottom: 6 }]}>
+                  <View className="mt-2">
+                    <Text className="mb-1.5" style={[styles.infoLabel]}>
                       구매 항목
                     </Text>
                     {receiptItems.map((item, idx) => (
