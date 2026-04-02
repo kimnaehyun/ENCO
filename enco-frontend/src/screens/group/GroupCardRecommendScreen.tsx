@@ -15,7 +15,6 @@ import {
   getCardList,
   getCardDetail,
   getRecommendedCards,
-  CardListItem,
 } from '../../services/paymentService';
 import { RootStackParamList } from '@/types/navigation';
 import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
