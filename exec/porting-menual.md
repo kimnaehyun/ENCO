@@ -1,446 +1,529 @@
-# ENCO 포팅 매뉴얼
-## 1. 프로젝트 개요
-### 1.1 프로젝트명
+# 서버 포팅 매뉴얼
 
-ENCO
+## 1. 개요
 
-### 1.2 프로젝트 소개
+본 문서는 현재 운영 중인 ENCO 서버 구성 및 포팅 절차를 정리한 문서이다.
+서비스는 Docker 기반으로 구성되어 있으며, 애플리케이션 컨테이너와 공용 인프라를 개별 디렉터리의 `docker-compose.yml`로 운영한다.
 
-ENCO는 모임 자금 관리 과정에서 발생하는 불투명한 지출, 거래내역 확인의 불편함, 증빙 누락 문제를 개선하기 위한 스마트 모임통장 서비스이다.
-사용자는 모임 자금을 투명하게 공유할 수 있으며, OCR 기반 영수증 증빙, 거래내역 시각화, AI 기반 추천 기능을 통해 보다 편리하게 모임 자금을 관리할 수 있다.
+현재 확인된 운영 특성은 다음과 같다.
 
-### 1.3 주요 기능
-모임 생성 및 모임통장 관리
-모임원 참여 및 자금 공유
-거래내역 조회 및 시각화
-영수증 OCR 기반 증빙 등록
-카드 이미지 및 프로필 이미지 관리
-실시간 알림 및 채팅
-벡터 검색 기반 추천 기능
-## 2. 시스템 구성
+- 백엔드 서비스는 개별 Docker Compose로 실행된다.
+- 공용 인프라는 별도 Compose로 관리된다.
+- 외부 진입점은 Nginx가 담당한다.
+- Jenkins는 별도 Compose 서비스가 아니라 Jenkins Job 내부 Pipeline Script로 빌드 및 배포된다.
+- 모니터링은 Grafana, Loki, Alloy 조합으로 구성된다.
+- 일부 볼륨 경로가 `/home/ubuntu/...` 절대경로에 의존하므로 신규 서버에서도 동일 경로를 유지하는 것이 안전하다.
 
-ENCO 프로젝트는 다음과 같이 구성되어 있다.
+---
 
-Frontend
-React Native 기반 Android 애플리케이션
-Backend
-auth-service: 인증 및 회원 관리
-payment-service: 모임, 결제, 거래내역, 카드/이미지 관리
-chat-service: 채팅 및 실시간 알림 관련 기능
-Database
-MySQL
-MongoDB
-Storage
-MinIO
-AI / 검색
-ChromaDB
-임베딩 적재 스크립트
-Infra
-Docker / Docker Compose
-Cloudflare Proxy
-Reverse Proxy 기반 API 라우팅
-## 3. 실제 프로젝트 구조
+## 2. 전체 아키텍처
 
-이전 작업 기록 기준으로 확인된 디렉토리 구조는 다음과 같다.
+### 2.1 서비스 구성
 
-/home/ubuntu/
-├─ auth/                  # auth-service
-├─ chat/                  # chat-service
-├─ chroma/                # ChromaDB 적재 및 관련 코드
-├─ backend-infra/         # docker compose 및 인프라 컨테이너 관리
-├─ minio/                 # MinIO 데이터 저장 경로
-└─ ...
+| 구분 | 서비스명 | 역할 | 내부 포트 | 비고 |
+|---|---|---|---|---|
+| API Gateway | apigateway | 백엔드 진입점, 서비스 라우팅 | 8081 | 외부 API 요청 수신 |
+| Auth | auth | 인증/인가 | 8082 | MySQL, Redis, Kafka 의존 |
+| Payment | payment | 결제/카드 관련 기능 | 8083 | MySQL, MinIO 의존 |
+| Chat | chat | 채팅 및 AI 연동 | 8084 | MongoDB, Chroma, Firebase 의존 |
+| Travel | travel | 여행 상품 기능 | 8085 | MySQL, MinIO 의존 |
+| Website | website | 정적 웹 서비스 | 80 | Nginx 뒤에서 프록시 |
+| MinIO | minio | 객체 스토리지 | 9000, 9001 | 업로드 파일 저장 |
+| Chroma | chroma | 벡터 DB | 8000 | Chat 서비스 연동 |
+| MySQL | auth-mysql | 인증 DB | 3306 | 호스트 127.0.0.1:3306 바인딩 |
+| MySQL | payment-mysql | 결제 DB | 3306 | 호스트 127.0.0.1:3307 바인딩 |
+| MySQL | travel-mysql | 여행 DB | 3306 | 호스트 127.0.0.1:3308 바인딩 |
+| MongoDB | chat-mongo | 채팅 DB | 27017 | 호스트 127.0.0.1:27017 바인딩 |
+| Redis | redis | 캐시/세션 | 6379 | 호스트 127.0.0.1:6379 바인딩 |
+| Kafka | kafka | 이벤트 브로커 | 9092 | 내부 통신용 |
+| Nginx | nginx | 리버스 프록시, TLS 종단 | 80, 443 | 도메인 라우팅 |
+| Grafana | grafana | 로그 대시보드 | 3000 | logs 도메인 연결 |
+| Loki | loki | 로그 저장소 | 3100 | Alloy가 전송 |
+| Alloy | alloy | Docker 로그 수집기 | - | Docker socket 사용 |
 
-로컬 개발 환경에서는 다음 프론트엔드 프로젝트가 사용되었다.
+### 2.2 네트워크 구성
 
-C:\test\S14P21E104\enco-frontend
-## 4. 사용 기술 및 실행 환경
-### 4.1 Backend
-Java 17
-Spring Boot 3.5.11
-Gradle 기반 빌드
-### 4.2 Frontend
-React Native
-Android Studio
-Node.js / npm
-### 4.3 Database / Storage / Infra
-MySQL
-MongoDB 7.0.x
-MinIO
-Docker Compose
-ChromaDB
-Cloudflare
-### 4.4 권장 서버 환경
-Ubuntu 22.04 LTS
-Docker / Docker Compose 설치 완료 상태
-OpenJDK 17
-Node.js 18 이상
-Python 3.10 이상
-## 5. 백엔드 서비스 구성
+- `app-net`
+  - 백엔드 서비스, 데이터 스토리지, Nginx가 연결되는 공용 네트워크
+- `monitoring`
+  - Grafana, Loki, Alloy, Nginx가 연결되는 모니터링 네트워크
 
-현재 대화에서 확인된 실제 서비스 및 컨테이너는 다음과 같다.
+주의사항:
 
-구분	이름	비고
-인증 서비스	auth-service	Spring Boot
-결제 서비스	payment-service	Spring Boot
-채팅 서비스	chat-service	Spring Boot
-MySQL 컨테이너	auth-mysql	인증 DB 연결 시 사용 확인
-MongoDB 컨테이너	chat-mongo	채팅 DB 연결 시 사용 확인
-Chroma 관련 컨테이너	chroma	API 호출 주소에서 확인
-채팅 컨테이너	chat	docker logs -f chat로 확인
+- 일부 Compose는 `app-net`, `monitoring` 을 external network로 가정한다.
+- 신규 서버에서 Docker network를 사전에 생성해야 한다.
 
-payment-service용 MySQL 컨테이너명은 대화에서 명확히 확정되지 않았으므로, 실제 docker ps 결과 기준으로 반영해야 한다.
+---
 
-## 6. 프론트엔드 실제 패키지 구조
+## 3. 운영 디렉터리 구조
 
-대화에서 확인된 Android 패키지 경로는 다음과 같다.
+운영 기준 주요 디렉터리는 다음과 같다.
 
-android/app/src/main/java/com/enco/docScan/DocumentScannerLauncher.kt
-android/app/src/main/java/com/enco/docScan/DocumentScannerModule.kt
-android/app/src/main/java/com/enco/docScan/DocumentScannerPackage.kt
-android/app/src/main/java/com/enco/image/ImageCompressionModule.kt
-android/app/src/main/java/com/enco/image/ImageCompressionPackage.kt
-android/app/src/main/java/com/enco/MainActivity.kt
-android/app/src/main/java/com/enco/MainApplication.kt
+| 경로 | 설명 |
+|---|---|
+| `/home/ubuntu/apigateway` | API Gateway 배포 디렉터리 |
+| `/home/ubuntu/auth` | Auth 배포 디렉터리 |
+| `/home/ubuntu/payment` | Payment 배포 디렉터리 |
+| `/home/ubuntu/chat` | Chat 배포 디렉터리 |
+| `/home/ubuntu/travel` | Travel 배포 디렉터리 |
+| `/home/ubuntu/minio` | MinIO 배포 디렉터리 |
+| `/home/ubuntu/chroma` | Chroma 배포 디렉터리 |
+| `/home/ubuntu/backend-infra` | 공용 인프라 배포 디렉터리 |
+| `/home/ubuntu/backend-infra/monitoring` | 모니터링 배포 디렉터리 |
+| `/home/ubuntu/nginx` | Nginx 설정 및 인증서 디렉터리 |
+| `/home/ubuntu/secrets` | Firebase 등 민감정보 파일 저장 위치 |
+| `/home/ubuntu/jenkins-data` | Jenkins 홈 데이터 및 Job 설정 |
 
-실제 선언된 package는 다음과 같이 확인되었다.
+---
 
-package com.frontend.docScan
-package com.frontend.image
-package com.frontend
+## 4. 사전 준비 사항
 
-즉, 디렉토리명에 com/enco가 포함되어 있으나 실제 package 선언은 com.frontend 기준으로 관리되고 있다.
-포팅 시 이 불일치가 빌드 문제를 유발하지 않도록 반드시 확인해야 한다.
+### 4.1 서버 기본 패키지
 
-## 7. 사전 설치
-### 7.1 공통 패키지
-sudo apt update
-sudo apt install -y git curl vim unzip build-essential
-### 7.2 Java 17 설치
-sudo apt install -y openjdk-17-jdk
-java -version
-### 7.3 Docker 설치
-sudo apt install -y docker.io
-sudo systemctl enable docker
-sudo systemctl start docker
-docker --version
-### 7.4 Docker Compose 확인
-docker compose version
-### 7.5 Python 설치
-sudo apt install -y python3 python3-pip python3-venv
-python3 --version
-### 7.6 Node.js 설치
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install -y nodejs
-node -v
-npm -v
-## 8. 환경변수 및 외부 설정
+신규 서버에는 아래 구성요소가 필요하다.
 
-ENCO는 다수의 외부 연동 요소를 사용하므로 환경변수 및 설정 파일이 반드시 필요하다.
+- Docker Engine
+- Docker Compose Plugin
+- Git
+- SSL 인증서 배치용 디렉터리
+- Jenkins 운영 시 Java 및 Jenkins 런타임
+- 필요 시 Node.js 20 이상
+- 필요 시 Gradle Wrapper 실행 가능 환경
 
-### 8.1 주요 설정 항목
-MySQL 계정 및 비밀번호
-MongoDB root 계정 및 비밀번호
-JWT Secret
-MinIO Access Key / Secret Key
-Firebase 설정 파일
-OCR / AI API Key
-ChromaDB 연결 주소
-8.2 Firebase
+### 4.2 필수 디렉터리 생성
 
-모바일 푸시 알림 기능을 위해 Firebase 설정이 필요하다.
+아래 경로를 운영 서버와 동일하게 준비하는 것을 권장한다.
 
-Android 앱 내부: google-services.json
-서버 측: Firebase Service Account Key
+- `/home/ubuntu/secrets`
+- `/home/ubuntu/travel/upload`
+- `/home/ubuntu/payment/upload/cards`
+- `/home/ubuntu/minio/data`
+- `/home/ubuntu/chroma/data`
+- `/home/ubuntu/nginx/certs`
+- `/home/ubuntu/nginx/conf.d`
 
-누락 시 FCM 알림 수신 및 서버 발송 기능이 정상 동작하지 않는다.
+### 4.3 Docker Network 생성
 
-### 8.3 Cloudflare
+```bash
+docker network create app-net
+docker network create monitoring
+```
 
-대화상 확인된 외부 설정은 다음과 같다.
+### 4.4 환경변수 및 Secret 준비
 
-DDoS 공격 방어 활성화
-크롤링 봇 차단
-Cloudflare Proxy를 통해 원본 서버로 요청 전달
+현재 운영 구조상 각 서비스 디렉터리에 `.env` 파일이 존재한다.
+문서 작성 시에는 실제 민감값을 노출하지 않고, 키 목록만 관리하는 것을 권장한다.
 
-즉, 사용자 요청은 Cloudflare를 먼저 거친 뒤 원본 서버로 프록시된다.
+주요 관리 대상은 다음과 같다.
 
-## 9. 실제 저장소 및 파일 경로
-### 9.1 MinIO 저장 경로
+- DB 접속 정보
+- JWT Secret
+- Redis 접속 정보
+- Kafka 접속 정보
+- MinIO 계정 정보
+- Firebase 서비스 계정 JSON
+- OCR API 정보
+- GMS API 정보
+- 도메인별 외부 URL
 
-대화에서 확인된 카드 이미지 저장 경로는 다음과 같다.
+추가 준비 파일:
 
-/home/ubuntu/minio/data/enco/card/
+- `/home/ubuntu/secrets/firebase-admin.json`
+- `/home/ubuntu/nginx/certs/origin.crt`
+- `/home/ubuntu/nginx/certs/origin.key`
 
-예시 URL은 다음과 같은 형식을 사용하였다.
+---
 
-http://api.ssafywte.site/payment-service/api/v1/files/image/card/{filename}
+## 5. 서비스 의존성
 
-즉, MinIO 내부 파일은 payment-service의 파일 조회 API를 통해 외부로 제공되는 구조이다.
+### 5.1 공용 인프라
 
-### 9.2 카드 이미지 URL 예시
+공용 인프라는 다음 서비스를 포함한다.
 
-다음과 같은 실제 URL 형식이 사용되었다.
+- auth-mysql
+- payment-mysql
+- travel-mysql
+- chat-mongo
+- redis
+- kafka
 
-http://api.ssafywte.site/payment-service/api/v1/files/image/card/c3bd4738-ecfe-46bd-8b0d-257a834f16ca_travel_1.png
+### 5.2 백엔드 애플리케이션 의존성
 
-## 10. 데이터베이스 구성
-### 10.1 MySQL
+| 서비스 | 주요 의존성 |
+|---|---|
+| apigateway | auth, payment, chat, travel |
+| auth | auth-mysql, redis, kafka |
+| payment | payment-mysql, minio, kafka |
+| chat | chat-mongo, chroma, kafka, firebase-admin.json |
+| travel | travel-mysql, minio, kafka |
 
-대화에서 다음 DB명이 확인되었다.
+### 5.3 외부 노출 구조
 
-auth_db
-travel_db 추정 사용
+Nginx 기준 도메인 매핑은 다음과 같다.
 
-또한 card_products 테이블과 back_image_url 컬럼 수정 작업이 수행되었다.
-따라서 payment-service에서는 카드, 모임, 거래, 이미지 URL 등의 정형 데이터를 MySQL에서 관리하는 것으로 볼 수 있다.
+| 도메인 | 대상 |
+|---|---|
+| `ssafywte.site` | website |
+| `www.ssafywte.site` | website |
+| `api.ssafywte.site` | apigateway |
+| `jenkins.ssafywte.site` | jenkins |
+| `logs.ssafywte.site` | grafana |
 
-### 10.2 MongoDB
+추가 노출 구조:
 
-채팅 관련 데이터 저장소로 MongoDB가 사용되며, 실제 접속 예시는 다음과 같다.
+- `/ws-stomp` 는 API Gateway로 WebSocket 프록시된다.
+- `/images/products/` 는 `/home/ubuntu/travel/upload/` 를 alias로 노출한다.
+- `/images/cards/` 는 `/home/ubuntu/payment/upload/cards` 를 alias로 노출한다.
 
-docker exec -it chat-mongo mongosh -u root -p ssafy1234 --authenticationDatabase admin
-10.3 ChromaDB
+---
 
-벡터 검색을 위한 컬렉션으로 다음이 확인되었다.
+## 6. 포팅 절차
 
-lodgings
+### 6.1 운영 파일 및 디렉터리 이관
 
-컬렉션 조회 예시는 다음과 같다.
+아래 디렉터리를 신규 서버로 복사한다.
 
-docker exec -it chat sh -c "curl -s http://chroma:8000/api/v2/tenants/default_tenant/databases/default_database/collections"
+- `/home/ubuntu/apigateway`
+- `/home/ubuntu/auth`
+- `/home/ubuntu/payment`
+- `/home/ubuntu/chat`
+- `/home/ubuntu/travel`
+- `/home/ubuntu/minio`
+- `/home/ubuntu/chroma`
+- `/home/ubuntu/backend-infra`
+- `/home/ubuntu/nginx`
+- `/home/ubuntu/secrets`
+- `/home/ubuntu/jenkins-data`
+- 웹사이트 배포 스크립트 또는 프론트 배포 산출물
 
-## 11. 백엔드 실행 방법
-### 11.1 인프라 컨테이너 실행
-cd ~/backend-infra
+주의사항:
+
+- 절대경로 기반 volume mount가 많으므로 기존 경로를 유지하는 것이 가장 안전하다.
+- 경로를 변경하면 compose와 nginx 설정을 함께 수정해야 한다.
+
+### 6.2 공용 인프라 기동
+
+먼저 데이터베이스와 메시징 인프라를 기동한다.
+
+```bash
+cd /home/ubuntu/backend-infra
 docker compose up -d
-### 11.2 특정 컨테이너 재실행 예시
-docker compose up -d chat-mongo
-### 11.3 실행 컨테이너 확인
+```
+
+기동 대상:
+
+- MySQL 3개
+- MongoDB
+- Redis
+- Kafka
+
+### 6.3 스토리지 및 부가 서비스 기동
+
+```bash
+cd /home/ubuntu/minio
+docker compose up -d
+
+cd /home/ubuntu/chroma
+docker compose up -d
+```
+
+### 6.4 백엔드 서비스 기동
+
+권장 기동 순서는 다음과 같다.
+
+1. auth
+2. payment
+3. travel
+4. chat
+5. apigateway
+
+실행 예시:
+
+```bash
+cd /home/ubuntu/auth
+docker compose up -d
+
+cd /home/ubuntu/payment
+docker compose up -d
+
+cd /home/ubuntu/travel
+docker compose up -d
+
+cd /home/ubuntu/chat
+docker compose up -d
+
+cd /home/ubuntu/apigateway
+docker compose up -d
+```
+
+### 6.5 Website 배포
+
+현재 확인된 구조상 Nginx는 `website:80` 으로 웹 컨테이너를 프록시한다.
+하지만 워크스페이스 루트에는 website용 `docker-compose.yml` 이 없고, Jenkins `webpage` Job이 `deploy-shopping-mall.sh` 스크립트를 직접 실행하는 방식이다.
+
+즉 신규 서버 포팅 시 website는 다음 둘 중 하나로 처리해야 한다.
+
+1. 기존 Jenkins Job과 `deploy-shopping-mall.sh` 를 함께 이관하여 동일 방식으로 배포
+2. 별도 `docker-compose.yml` 또는 `docker run` 기반 방식으로 website 배포 표준화
+
+정리하면, website는 소스만 옮기는 것으로 끝나지 않고 실제 배포 스크립트까지 함께 확보해야 한다.
+
+### 6.6 Nginx 기동
+
+인증서와 설정 파일을 준비한 뒤 Nginx를 실행한다.
+
+```bash
+cd /home/ubuntu/nginx
+docker compose up -d
+```
+
+필수 확인 항목:
+
+- `/home/ubuntu/nginx/conf.d/default.conf`
+- `/home/ubuntu/nginx/certs/origin.crt`
+- `/home/ubuntu/nginx/certs/origin.key`
+
+### 6.7 모니터링 기동
+
+```bash
+cd /home/ubuntu/backend-infra/monitoring
+docker compose up -d
+```
+
+모니터링 구성:
+
+- Grafana
+- Loki
+- Alloy
+
+Alloy는 Docker socket을 읽어 각 컨테이너 로그를 Loki로 전달한다.
+
+---
+
+## 7. Jenkins 포팅
+
+### 7.1 운영 방식
+
+Jenkins는 별도 Compose 서비스 정의로 확인되지 않았으며, Jenkins Job 내부 Pipeline Script를 통해 빌드와 배포를 수행한다.
+
+현재 확인된 배포 흐름은 다음과 같다.
+
+- GitLab 특정 브랜치 변경 감지
+- 지정 경로 변경 여부 확인
+- Gradle 빌드 수행
+- Docker 이미지 빌드
+- 대상 디렉터리에서 `docker compose up -d` 또는 `docker compose up -d --force-recreate` 실행
+- 필요 시 Mattermost 알림 전송
+
+### 7.2 신규 서버 이관 대상
+
+신규 서버로 아래 항목을 함께 이관해야 한다.
+
+- Jenkins 홈 데이터 전체
+- Job 설정 XML
+- Jenkins Credentials
+- GitLab Webhook 및 Plugin 설정
+- Mattermost Webhook 설정
+- Jenkins가 사용하는 배포 디렉터리
+- Jenkins Docker 이미지 또는 설치 방식
+
+권장 이관 대상 경로:
+
+- `/home/ubuntu/jenkins-data`
+- `/home/ubuntu/jenkins-docker`
+
+### 7.3 Jenkins 관련 주의사항
+
+현재 Nginx는 `jenkins` 라는 업스트림 이름으로 Jenkins에 프록시한다.
+따라서 신규 서버에서는 아래 둘 중 하나가 만족되어야 한다.
+
+1. `jenkins` 라는 이름의 컨테이너 또는 네트워크 별칭으로 Jenkins를 운영
+2. Nginx 설정에서 Jenkins 대상 주소를 실제 런타임 주소로 수정
+
+---
+
+## 8. 데이터 이관
+
+### 8.1 데이터베이스
+
+이관 대상:
+
+- auth DB
+- payment DB
+- travel DB
+- chat MongoDB
+
+권장 절차:
+
+1. 기존 서버에서 dump 생성
+2. 신규 서버 DB 컨테이너 기동
+3. dump import 수행
+4. 서비스 연결 확인
+
+참고:
+
+- 루트 경로에 `payment_db_before_schema_recovery.sql` 파일이 존재하므로 필요 시 결제 DB 복구 기준 자료로 활용 가능하다.
+
+### 8.2 업로드 파일
+
+이관 대상:
+
+- `/home/ubuntu/travel/upload`
+- `/home/ubuntu/payment/upload`
+- `/home/ubuntu/minio/data`
+
+이미지 업로드와 정적 파일 노출은 Nginx alias 및 MinIO에 의존하므로, 데이터베이스만 복구해서는 정상 동작하지 않는다.
+
+### 8.3 Chroma 데이터
+
+이관 대상:
+
+- `/home/ubuntu/chroma/data`
+
+해당 데이터가 없으면 기존 임베딩 및 벡터 인덱스가 유실될 수 있다.
+
+---
+
+## 9. 검증 절차
+
+### 9.1 컨테이너 상태 확인
+
+```bash
 docker ps
-### 11.4 로그 확인
-docker logs -f auth
-docker logs -f chat
-docker logs -f payment
-docker logs -f nginx
-
-대화에서 실제로 사용한 로그 확인 방식은 다음과 같다.
-
-docker logs -f chat
-## 12. 프론트엔드 실행 방법
-### 12.1 프로젝트 이동
-cd C:\test\S14P21E104\enco-frontend
-### 12.2 의존성 설치
-npm install
-### 12.3 Android 실행
-npm run android
-### 12.4 Metro 수동 실행
-npm start
-### 12.5 Android 관련 주의사항
-Android Studio 설치 필요
-Emulator 또는 실제 Android 단말 연결 필요
-google-services.json 배치 필요
-Gradle 캐시 충돌 시 clean 필요
-cd android
-./gradlew clean
-
-Windows 환경에서는 다음과 같이 실행할 수 있다.
-
-cd android
-gradlew clean
-## 13. AI / OCR / 임베딩 포팅
-### 13.1 OCR
-
-대화 기준으로 OCR 흐름에는 다음 요소가 포함되어 있다.
-
-영수증 이미지 선택
-ML Kit / Doc Scanner 관련 모듈 사용
-OCR 결과 검수
-거래내역 등록
-
-프론트엔드 네이티브 모듈은 다음과 같이 구성되어 있다.
-
-DocumentScannerLauncher.kt
-DocumentScannerModule.kt
-DocumentScannerPackage.kt
-ImageCompressionModule.kt
-ImageCompressionPackage.kt
-### 13.2 Chroma 임베딩 적재
-
-/home/ubuntu/chroma 경로에서 Python 스크립트 기반 적재 작업이 수행되었다.
-
-실행 예시는 다음과 같다.
-
-cd ~/chroma
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-python embedding.py
-### 13.3 Chroma 데이터 확인
-curl http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections
-
-또는 컨테이너 내부에서:
-
-docker exec -it chat sh -c "curl -s http://chroma:8000/api/v2/tenants/default_tenant/databases/default_database/collections"
-
-## 14. 배포 및 재배포 절차
-### 14.1 기본 절차
-서버에 소스코드 반영
-환경변수 및 설정 파일 반영
-Docker Compose 실행
-서비스 로그 확인
-DB 연결 및 외부 연동 확인
-모바일 앱에서 API 연동 확인
-### 14.2 재배포 예시
-git pull origin develop
-cd ~/backend-infra
-docker compose down
-docker compose up -d --build
-## 15. 실행 확인 절차
-### 15.1 MySQL 확인
-docker exec -it auth-mysql mysql -uroot -p
-
-DB 목록 확인:
-
-SHOW DATABASES;
-
-특정 DB 확인:
-
-SHOW DATABASES LIKE 'auth_db';
-### 15.2 MongoDB 확인
-docker exec -it chat-mongo mongosh -u root -p ssafy1234 --authenticationDatabase admin
-### 15.3 Chroma 확인
-curl http://localhost:8000/api/v2/tenants/default_tenant/databases/default_database/collections
-### 15.4 MinIO 파일 확인
-
-MinIO 내부 저장 경로 또는 서비스 API를 통해 확인한다.
-
-예시:
-
-/home/ubuntu/minio/data/enco/card/
-http://api.ssafywte.site/payment-service/api/v1/files/image/card/...
-### 15.5 프론트 기능 확인
-
-다음 기능이 정상 동작하는지 점검한다.
-
-로그인
-모임 생성
-거래내역 조회
-카드 이미지 조회
-영수증 OCR
-채팅 및 알림
-대시보드 시각화
-## 16. 운영 중 자주 사용하는 명령어
-### 16.1 컨테이너 상태 확인
-docker ps
-docker ps -a
-### 16.2 로그 확인
-docker logs -f <container_name>
-### 16.3 MySQL 접속
-docker exec -it auth-mysql mysql -uroot -p
-### 16.4 MongoDB 접속
-docker exec -it chat-mongo mongosh -u root -p ssafy1234 --authenticationDatabase admin
-### 16.5 디스크 용량 확인
-df -h
-du -sh /home/ubuntu/chroma/data
-### 16.6 Docker 볼륨 확인
-docker volume ls
-## 17. 트러블슈팅
-### 17.1 npm run android 실행 후 반응이 없는 경우
-
-원인 후보:
-
-Metro 서버 미실행
-Android Emulator 미연결
-Gradle 빌드 정지
-환경변수 또는 Android SDK 문제
-
-조치:
-
-npm start
-npm run android
-
-필요 시:
-
-cd android
-./gradlew clean
-### 17.2 MongoDB 초기화 또는 재생성 문제
-
-실제 작업에서 다음 흐름이 사용되었다.
-
-docker stop chat-mongo
-docker rm chat-mongo
-docker compose up -d chat-mongo
-
-단, 볼륨명이 예상과 다를 수 있으므로 docker volume ls로 실제 볼륨명을 확인한 뒤 삭제해야 한다.
-
-### 17.3 MySQL 데이터는 비었는데 서버 오류가 발생하는 경우
-
-가능한 원인:
-
-테이블 자체 삭제
-초기 데이터 누락
-다른 서비스의 외래키 참조 실패
-환경변수 기준 DB가 실제와 다름
-JPA 스키마와 실제 DB 불일치
-
-확인 항목:
-
-DB 스키마 존재 여부
-필수 테이블 존재 여부
-더미 데이터 필요 여부
-애플리케이션 로그
-### 17.4 drop collection 의미
-
-MongoDB에서 drop collection은 문서만 삭제하는 것이 아니라 컬렉션 자체를 제거한다.
-즉, SQL의 DELETE FROM이 아니라 DROP TABLE에 가깝다.
-
-### 17.5 SSE 오류 예시
-
-다음 로그가 확인된 바 있다.
-
-[NotificationSetup] SSE 에러:
-stream was reset: INTERNAL_ERROR
-xhrStatus: 200
-xhrState: 4
-
-가능 원인:
-
-서버가 SSE 스트림을 중간에 종료
-프록시 또는 로드밸런서 타임아웃
-HTTP/2 설정 충돌
-인증 토큰 만료
-장시간 연결 유지 실패
+```
 
 확인 대상:
 
-chat-service 로그
-프록시 설정
-SSE 응답 헤더
-토큰 갱신 타이밍
-### 17.6 패키지 경로 불일치 문제
+- apigateway
+- auth
+- payment
+- chat
+- travel
+- minio
+- chroma
+- nginx
+- grafana
+- loki
+- alloy
+- auth-mysql
+- payment-mysql
+- travel-mysql
+- chat-mongo
+- redis
+- kafka
 
-디렉토리 경로와 package 선언이 다를 경우 Android 빌드 시 오류가 발생할 수 있다.
+### 9.2 네트워크 확인
 
-확인된 사례:
+```bash
+docker network inspect app-net
+docker network inspect monitoring
+```
 
-경로: com/enco/...
-package: com.frontend...
+### 9.3 도메인 확인
 
-포팅 시 package refactor 여부를 반드시 점검해야 한다.
+브라우저 또는 curl로 아래 주소를 점검한다.
 
-### 17.7 Chroma 임베딩 적재 실패
+- `https://ssafywte.site`
+- `https://api.ssafywte.site`
+- `https://jenkins.ssafywte.site`
+- `https://logs.ssafywte.site`
 
-이전 작업에서 OpenAI embedding endpoint 호출 중 400 오류가 발생했고, 이후 gemini-embedding-001로 변경하여 정상 동작한 사례가 있었다.
-따라서 포팅 시에는 다음을 확인해야 한다.
+### 9.4 로그 확인
 
-실제 사용 임베딩 모델
-엔드포인트 주소
-요청 body 형식
-API 키 유효성
-## 18. 보안 및 운영 유의사항
-.env, Firebase 키, API 키는 Git에 커밋하지 않는다.
-DB 포트는 외부에 직접 노출하지 않는 것을 권장한다.
-Cloudflare를 통해 외부 요청을 보호한다.
-로그에 비밀번호나 토큰이 노출되지 않도록 주의한다.
-MinIO 파일 경로와 공개 URL 매핑 규칙을 명확히 관리한다.
+```bash
+docker logs apigateway --tail 100
+docker logs auth --tail 100
+docker logs payment --tail 100
+docker logs chat --tail 100
+docker logs travel --tail 100
+docker logs nginx --tail 100
+```
+
+### 9.5 기능 확인
+
+- 로그인 및 인증 기능
+- 상품 조회 기능
+- 결제 API 동작 여부
+- 채팅 연결 및 WebSocket 통신
+- 이미지 업로드 및 조회
+- Grafana 로그 수집 여부
+- Jenkins 수동 빌드 및 자동 배포 여부
+
+---
+
+## 10. 운영상 주의사항
+
+### 10.1 절대경로 의존
+
+현재 Compose와 Nginx 설정은 `/home/ubuntu/...` 경로에 강하게 의존한다.
+신규 서버에서도 동일한 경로 구조를 유지하는 것이 안전하다.
+
+### 10.2 민감정보 관리
+
+현재 `.env` 파일에 운영 환경 정보가 직접 포함되어 있는 구조이므로 포팅 시에는 다음을 권장한다.
+
+- DB 비밀번호 변경
+- JWT Secret 재발급
+- MinIO 계정 변경
+- Firebase 키 재검토 또는 재발급
+- 외부 API Key 교체
+- Jenkins Credentials 재등록
+
+### 10.3 누락 가능 자산 확인
+
+현재 워크스페이스에서 직접 확인된 것은 아래까지이다.
+
+- 서비스별 Docker Compose
+- Nginx 프록시 설정
+- Jenkins Job Script
+- Website Dockerfile
+
+반면 아래 항목은 별도 위치에서 관리될 가능성이 있다.
+
+- Jenkins 실제 실행 스크립트 또는 Jenkins 컨테이너 런타임 정의
+- website 배포 스크립트 `deploy-shopping-mall.sh`
+- DNS 또는 Cloudflare 설정
+- SSL 인증서 발급 절차
+- 백업 및 복구 스크립트
+
+따라서 포팅 전에 위 항목의 실제 저장 위치를 추가 확인하는 것이 좋다.
+
+---
+
+## 11. 권장 포팅 순서 요약
+
+1. 신규 서버에 Docker 및 기본 패키지 설치
+2. `/home/ubuntu/...` 디렉터리 구조 생성
+3. `app-net`, `monitoring` 네트워크 생성
+4. `.env`, 인증서, Secret 파일 이관
+5. DB 및 스토리지 데이터 이관
+6. 공용 인프라 기동
+7. MinIO, Chroma 기동
+8. 백엔드 서비스 기동
+9. website 배포 스크립트 또는 Jenkins Job 이관
+10. Nginx 기동
+11. 모니터링 기동
+12. Jenkins Job 수동 실행 및 배포 검증
+13. 도메인 및 기능 테스트 수행
+
+---
+
+## 12. 운영 파일
+
+- `/home/ubuntu/backend-infra/docker-compose.yml`
+- `/home/ubuntu/backend-infra/monitoring/docker-compose.yml`
+- `/home/ubuntu/backend-infra/monitoring/alloy/config.alloy`
+- `/home/ubuntu/apigateway/docker-compose.yml`
+- `/home/ubuntu/auth/docker-compose.yml`
+- `/home/ubuntu/payment/docker-compose.yml`
+- `/home/ubuntu/chat/docker-compose.yml`
+- `/home/ubuntu/travel/docker-compose.yml`
+- `/home/ubuntu/minio/docker-compose.yml`
+- `/home/ubuntu/chroma/docker-compose.yml`
+- `/home/ubuntu/nginx/docker-compose.yml`
+- `/home/ubuntu/nginx/conf.d/default.conf`
+- `/home/ubuntu/website/Dockerfile`
+- `/home/ubuntu/jenkins-data/jobs/api-gateway/config.xml`
+- `/home/ubuntu/jenkins-data/jobs/auth/config.xml`
+- `/home/ubuntu/jenkins-data/jobs/chat/config.xml`
+- `/home/ubuntu/jenkins-data/jobs/webpage/config.xml`
