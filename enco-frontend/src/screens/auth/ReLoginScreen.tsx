@@ -143,7 +143,7 @@ export default function ReLoginScreen({
           className="bg-[#1428A0] rounded-2xl py-4 items-center"
           onPress={handleEmailNext}
         >
-          <Text weight="bold" color="white" style={{ fontSize: 18 }}>
+          <Text weight="bold" color="white" className="text-lg">
             다음
           </Text>
         </Pressable>
