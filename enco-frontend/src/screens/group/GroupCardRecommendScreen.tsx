@@ -222,7 +222,7 @@ export default function GroupCardRecommendScreen() {
         </TouchableOpacity>
       )}
       {/* 하단 고정 버튼 영역만큼 여백 확보 */}
-      <View style={{ height: 90 }} />
+      <View className="h-[90px]" />
     </>
   );
 
