@@ -22,7 +22,6 @@ export default function ChatMessage({
   onRetry,
   onCancel,
 }: ChatMsgProps) {
-
   const formatTime = (isoString: string) => {
     const date = new Date(isoString);
     if (isNaN(date.getTime())) return '';
@@ -35,18 +34,14 @@ export default function ChatMessage({
   if (isMe) {
     return (
       <View style={styles.userMessageRow}>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+        <View className="flex-row items-end">
           {/* 상태 표시 */}
           {status === 'sending' && (
-            <ActivityIndicator
-              size="small"
-              color="#999"
-              style={{ marginRight: 4 }}
-            />
+            <ActivityIndicator size="small" color="#999" className="mr-1" />
           )}
           {status === 'failed' && (
-            <View style={{ flexDirection: 'row', marginRight: 6 }}>
-              <TouchableOpacity onPress={onRetry} style={{ marginRight: 4 }}>
+            <View className="flex-row mr-1.5">
+              <TouchableOpacity onPress={onRetry} className="mr-1">
                 <Text style={styles.retryText}>재전송</Text>
               </TouchableOpacity>
               <TouchableOpacity onPress={onCancel}>
@@ -81,7 +76,7 @@ export default function ChatMessage({
       />
       <View>
         <Text style={styles.senderText}>{senderName ?? senderId}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end' }}>
+        <View className="flex-row items-end">
           <View style={styles.otherBubble}>
             <Text style={styles.otherBubbleText}>{content}</Text>
           </View>

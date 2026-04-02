@@ -109,7 +109,7 @@ export default function NotificationCenterScreen() {
             data={notifications}
             keyExtractor={it => it.id}
             contentContainerStyle={styles.listContent}
-            ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+            ItemSeparatorComponent={() => <View className="h-3" />}
             renderItem={({ item }) => {
               const isUnread = !item.isRead;
 

@@ -378,7 +378,7 @@ export default function GroupPayScreen({
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      className="flex-1"
       behavior={Platform.select({ ios: 'padding', android: undefined })}
     >
       <ScreenLayout>
@@ -424,7 +424,7 @@ export default function GroupPayScreen({
                 <Text style={styles.amountUnit}>원</Text>
               </View>
 
-              <Text style={[styles.sectionLabel, { marginTop: 28 }]}>
+              <Text className="mt-7" style={[styles.sectionLabel]}>
                 미납 금액
               </Text>
 

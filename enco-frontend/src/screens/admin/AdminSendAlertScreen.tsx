@@ -215,9 +215,7 @@ export default function AdminSendAlertScreen() {
   if (loading) {
     return (
       <ScreenLayout>
-        <View
-          style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
-        >
+        <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#1428A0" />
         </View>
       </ScreenLayout>
@@ -271,16 +269,11 @@ export default function AdminSendAlertScreen() {
 
         {/* 납부 완료 섹션 */}
         {paidMembers.length > 0 && (
-          <View style={[styles.sectionCard, { marginTop: 16 }]}>
+          <View className="mt-4" style={[styles.sectionCard]}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>납부 완료</Text>
-              <View
-                style={[
-                  styles.sectionCountPill,
-                  { backgroundColor: '#DCFCE7' },
-                ]}
-              >
-                <Text style={[styles.sectionCountText, { color: '#16A34A' }]}>
+              <View className="bg-[#DCFCE7]" style={[styles.sectionCountPill]}>
+                <Text color="#16A34A" style={[styles.sectionCountText]}>
                   {paidMembers.length}
                 </Text>
               </View>

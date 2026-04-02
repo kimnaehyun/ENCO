@@ -78,9 +78,9 @@ export default function QRScanner() {
   if (!device) return <Text>카메라 찾는 중...</Text>;
 
   return (
-    <View style={{ flex: 1 }}>
+    <View className="flex-1">
       <Camera
-        style={{ flex: 1 }}
+        className="flex-1"
         device={device}
         isActive={true}
         codeScanner={codeScanner}
@@ -88,12 +88,10 @@ export default function QRScanner() {
 
       <View className="absolute inset-0 items-center justify-center">
         <View
+          className="border-4 rounded-2xl border-white"
           style={{
             width: BOX_SIZE,
             height: BOX_SIZE,
-            borderWidth: 4,
-            borderColor: 'white',
-            borderRadius: 16,
           }}
         />
       </View>

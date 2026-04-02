@@ -225,7 +225,7 @@ export default function AdminCardRecommendScreen() {
           </Text>
         </TouchableOpacity>
       )}
-      <View style={{ height: 90 }} />
+      <View className="h-[90px]" />
     </>
   );
 

@@ -18,7 +18,6 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { CommonParams } from '../../types/common';
 import {
   getGroupDashboardReport,
   getGroupTransactions,

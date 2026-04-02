@@ -6,7 +6,6 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Text,
   UIManager,
   View,
   ScrollView,
@@ -17,6 +16,7 @@ import { CommonParams } from '../../types/common';
 import { AdminMemberPay } from '../../types/admin';
 import { GroupStackParamList } from '@/types/navigation';
 import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
+import Text from '@/components/typography/Text';
 
 type AdminSettleRouteProp = RouteProp<GroupStackParamList, 'AdminSettle'>;
 type AdminSettleNavigationProp = NativeStackNavigationProp<
@@ -146,7 +146,9 @@ export default function AdminSettleScreen() {
         </Pressable>
       </View>
 
-      <Text style={{ marginTop: 10, fontWeight: '800' }}>{groupName}</Text>
+      <Text className="mt-4.5" weight="bold">
+        {groupName}
+      </Text>
 
       <View style={styles.divider} />
 
@@ -156,7 +158,7 @@ export default function AdminSettleScreen() {
           const expanded = expandedId === m.id;
 
           return (
-            <View key={m.id} style={{ marginTop: 14 }}>
+            <View key={m.id} className="mt-3.5">
               <Pressable
                 onPress={() => toggleExpand(m.id)}
                 style={styles.row}
@@ -165,7 +167,7 @@ export default function AdminSettleScreen() {
                 <View style={styles.avatar} />
                 <Text style={styles.name}>{m.name}</Text>
 
-                <View style={{ marginLeft: 'auto', alignItems: 'flex-end' }}>
+                <View className="ml-auto items-end ">
                   <View
                     style={[
                       styles.badge,

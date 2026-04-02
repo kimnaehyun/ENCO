@@ -68,9 +68,9 @@ export default function EditMyPageScreen() {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
+    <View className="flex-1 bg-[#F0F4FF]">
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        className="flex-1"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
@@ -78,67 +78,43 @@ export default function EditMyPageScreen() {
           keyboardShouldPersistTaps="handled"
         >
           {/* 헤더 */}
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingHorizontal: 20,
-              paddingTop: 56,
-              paddingBottom: 12,
-            }}
-          >
+          <View className="flex-row items-center justify-between px-5 pt-14 pb-3">
             <Pressable onPress={() => navigation.goBack()}>
               <Text variant="bodyMd" color="muted">
                 취소
               </Text>
             </Pressable>
-            <Text weight="bold" color="dark" style={{ fontSize: 18 }}>
+            <Text weight="bold" color="dark" className="text-lg">
               내 정보 수정
             </Text>
-            <View style={{ width: 30 }} />
+            <View className="w-[30px]" />
           </View>
 
           {/* 입력 영역 */}
-          <View style={{ paddingHorizontal: 20, marginTop: 32 }}>
-            <Text
-              variant="caption"
-              color="placeholder"
-              style={{ marginBottom: 10 }}
-            >
+          <View className="px-5 mt-8">
+            <Text variant="caption" color="placeholder" className="mb-2.5">
               프로필 이미지
             </Text>
 
             <View
+              className="bg-white rounded-[20px] px-4 py-4.5 mb-6"
               style={{
-                backgroundColor: '#FFFFFF',
-                borderRadius: 20,
-                paddingHorizontal: 16,
-                paddingVertical: 18,
                 shadowColor: '#1428A0',
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.06,
                 shadowRadius: 8,
                 elevation: 2,
-                marginBottom: 24,
               }}
             >
-              <View style={{ alignItems: 'center', marginBottom: 16 }}>
+              <View className="items-center mb-4">
                 <Image
                   source={getProfileImage(profileUrl)}
-                  style={{ width: 88, height: 88, borderRadius: 44 }}
+                  className="w-[88px] h-[88px] rounden-[44px] "
                   resizeMode="cover"
                 />
               </View>
 
-              <View
-                style={{
-                  flexDirection: 'row',
-                  flexWrap: 'wrap',
-                  gap: 12,
-                  justifyContent: 'center',
-                }}
-              >
+              <View className="flex-row flex-wrap justify-center gap-3">
                 {PROFILE_OPTIONS.map(option => {
                   const selected = profileUrl === option;
 
@@ -147,18 +123,15 @@ export default function EditMyPageScreen() {
                       key={option}
                       onPress={() => setProfileUrl(option)}
                       style={{
-                        width: 56,
-                        height: 56,
-                        borderRadius: 28,
-                        overflow: 'hidden',
                         borderWidth: selected ? 3 : 2,
                         borderColor: selected ? '#1428A0' : '#D1D5DB',
                         backgroundColor: selected ? '#EEF2FF' : '#FFFFFF',
                       }}
+                      className="w-14 h-14 rounded-[28px] overflow-hidden "
                     >
                       <Image
                         source={getProfileImage(option)}
-                        style={{ width: '100%', height: '100%' }}
+                        className="w-full h-full"
                         resizeMode="cover"
                       />
                     </Pressable>
@@ -167,27 +140,19 @@ export default function EditMyPageScreen() {
               </View>
             </View>
 
-            <Text
-              variant="caption"
-              color="placeholder"
-              style={{ marginBottom: 10 }}
-            >
+            <Text variant="caption" color="placeholder" className="mb-2.5">
               휴대폰번호
             </Text>
 
             <View
               style={{
-                backgroundColor: '#FFFFFF',
-                borderRadius: 16,
-                paddingHorizontal: 16,
-                paddingVertical: 4,
                 shadowColor: '#1428A0',
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.06,
                 shadowRadius: 8,
                 elevation: 2,
-                marginBottom: 24,
               }}
+              className="bg-white rounded-2xl px-4 py-1 mb-6"
             >
               <TextInput
                 value={phoneNumber}
@@ -195,56 +160,44 @@ export default function EditMyPageScreen() {
                 placeholder="예) 01012345678"
                 placeholderTextColor="#C7D2FE"
                 keyboardType="phone-pad"
-                style={{ color: '#111827', fontSize: 15, paddingVertical: 12 }}
+                className="text-[#111827] text-sm py-3"
               />
             </View>
 
-            <Text
-              variant="caption"
-              color="placeholder"
-              style={{ marginBottom: 10 }}
-            >
+            <Text variant="caption" color="placeholder" className="mb-2.5">
               집 주소
             </Text>
 
             <View
               style={{
-                backgroundColor: '#FFFFFF',
-                borderRadius: 16,
-                paddingHorizontal: 16,
-                paddingVertical: 4,
                 shadowColor: '#1428A0',
                 shadowOffset: { width: 0, height: 2 },
                 shadowOpacity: 0.06,
                 shadowRadius: 8,
                 elevation: 2,
               }}
+              className="bg-white rounded-2xl px-4 py-1"
             >
               <TextInput
                 value={address}
                 onChangeText={setAddress}
                 placeholder="예) 서울시 강남구 테헤란로 212"
                 placeholderTextColor="#C7D2FE"
-                style={{ color: '#111827', fontSize: 15, paddingVertical: 12 }}
+                className="text-[#111827] text-sm py-3"
                 autoFocus
               />
             </View>
           </View>
 
           {/* 저장 버튼 */}
-          <View
-            style={{ paddingHorizontal: 20, marginTop: 'auto', paddingTop: 32 }}
-          >
+          <View className="px-5 mt-auto pt-8">
             <Pressable
               onPress={handleSave}
               disabled={saving}
               style={{
                 backgroundColor: saving ? '#A5B4FC' : '#1428A0',
-                borderRadius: 28,
-                height: 56,
-                justifyContent: 'center',
-                alignItems: 'center',
               }}
+              className="rounded-[28px] h-14 justify-center items-center"
             >
               {saving ? (
                 <ActivityIndicator color="#FFFFFF" />

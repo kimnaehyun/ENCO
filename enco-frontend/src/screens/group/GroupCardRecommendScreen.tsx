@@ -15,7 +15,6 @@ import {
   getCardList,
   getCardDetail,
   getRecommendedCards,
-  CardListItem,
 } from '../../services/paymentService';
 import { RootStackParamList } from '@/types/navigation';
 import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
@@ -223,7 +222,7 @@ export default function GroupCardRecommendScreen() {
         </TouchableOpacity>
       )}
       {/* 하단 고정 버튼 영역만큼 여백 확보 */}
-      <View style={{ height: 90 }} />
+      <View className="h-[90px]" />
     </>
   );
 

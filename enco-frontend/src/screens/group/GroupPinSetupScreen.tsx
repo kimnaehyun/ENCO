@@ -11,7 +11,7 @@ import { useAuthStore } from '../../store/useAuthStore';
 type Props = NativeStackScreenProps<RootStackParamList, 'GroupPinSetup'>;
 
 export default function GroupPinSetupScreen({ route, navigation }: Props) {
-  const { groupName, address, tags, selectedCardId } = route.params;
+  const { groupName, tags, selectedCardId } = route.params;
   const profile = useAuthStore(s => s.profile);
   const user = useAuthStore(s => s.user);
 

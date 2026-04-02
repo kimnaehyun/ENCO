@@ -16,7 +16,6 @@ type CalendarCell = {
 
 const WEEK_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 
-
 function ProgressBar({
   ratio,
   threshold,
@@ -77,8 +76,10 @@ export default function GroupAttendanceScreen() {
   const rewardPoint = event?.rewardPoint ?? 100;
   const targetMemberCount = event?.targetMemberCount ?? 0;
   const currentMemberCount = event?.currentMemberCount ?? 0;
-  const participationRatio = targetMemberCount > 0 ? currentMemberCount / targetMemberCount : 0;
-  const rewardUnlocked = targetMemberCount > 0 && currentMemberCount >= targetMemberCount;
+  const participationRatio =
+    targetMemberCount > 0 ? currentMemberCount / targetMemberCount : 0;
+  const rewardUnlocked =
+    targetMemberCount > 0 && currentMemberCount >= targetMemberCount;
   const membersNeeded = Math.max(targetMemberCount - currentMemberCount, 0);
 
   const calendarCells = useMemo<CalendarCell[]>(() => {
@@ -116,7 +117,6 @@ export default function GroupAttendanceScreen() {
     return cells;
   }, [attendedDates, currentMonth, currentYear, todayDate]);
 
-
   return (
     <ScreenLayout>
       <ScrollView
@@ -140,17 +140,6 @@ export default function GroupAttendanceScreen() {
             <Text style={styles.errorText}>{attendanceError}</Text>
           </View>
         )}
-        
-        {/* 출석이벤트 삭제 */}
-        {/* {!isLoadingAttendance && event && (
-          <View style={styles.eventInfoCard}>
-            <Text style={styles.eventName}>{event.name}</Text>
-            <Text style={styles.eventDesc}>{event.description}</Text>
-            <Text style={styles.eventPeriod}>
-              {event.startDate} ~ {event.endDate}
-            </Text>
-          </View>
-        )} */}
 
         <AttendanceHeroCard
           hasActiveEvent={hasActiveEvent}
@@ -179,9 +168,11 @@ export default function GroupAttendanceScreen() {
             <View style={styles.rewardFlexChild}>
               <Text style={styles.rewardTitle}>🏅 이벤트 참여 현황</Text>
               <Text style={styles.rewardDesc}>
-                모임원 <Text style={styles.highlight}>{targetMemberCount}명</Text>이
+                모임원{' '}
+                <Text style={styles.highlight}>{targetMemberCount}명</Text>이
                 출석하면 각자{' '}
-                <Text style={styles.highlight}>{rewardPoint}포인트</Text>가 지급돼요.
+                <Text style={styles.highlight}>{rewardPoint}포인트</Text>가
+                지급돼요.
               </Text>
             </View>
 
@@ -230,7 +221,11 @@ export default function GroupAttendanceScreen() {
               {currentYear}년 {currentMonth + 1}월
             </Text>
             <Text style={styles.calendarSummary}>
-              이번 달 <Text style={styles.calendarSummaryStrong}>{attendedDates.length}일</Text> 출석
+              이번 달{' '}
+              <Text style={styles.calendarSummaryStrong}>
+                {attendedDates.length}일
+              </Text>{' '}
+              출석
             </Text>
           </View>
 

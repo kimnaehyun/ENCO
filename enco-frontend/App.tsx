@@ -340,7 +340,7 @@ function App() {
   }, [navigationRef]);
   return (
     <NotificationsProvider>
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <GestureHandlerRootView className="flex-1">
         <SafeAreaProvider>
           <NavigationContainer
             linking={linking}

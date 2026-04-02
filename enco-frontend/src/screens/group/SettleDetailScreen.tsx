@@ -591,16 +591,14 @@ export default function SettleDetailScreen() {
 
           {/* 납부 완료 섹션 */}
           {!isSettled && settleMembers.filter(m => m.isPaid).length > 0 && (
-            <View style={[styles.sectionCard, { marginTop: 16 }]}>
+            <View className="mt-4" style={[styles.sectionCard]}>
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>납부 완료</Text>
                 <View
-                  style={[
-                    styles.sectionCountPill,
-                    { backgroundColor: '#DCFCE7' },
-                  ]}
+                  className="bg-[#DCFCCE7]"
+                  style={[styles.sectionCountPill]}
                 >
-                  <Text style={[styles.sectionCountText, { color: '#16A34A' }]}>
+                  <Text color="#16A34A" style={[styles.sectionCountText]}>
                     {settleMembers.filter(m => m.isPaid).length}
                   </Text>
                 </View>
