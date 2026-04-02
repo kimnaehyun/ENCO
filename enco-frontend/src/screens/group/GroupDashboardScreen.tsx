@@ -16,7 +16,6 @@ import {
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
-import { CommonParams } from '../../types/common';
 import { useNotifications } from '../../contexts/NotificationsContext';
 import { images } from '../../types/images';
 import AttendanceDashboardCard from '../../components/attendance/AttendanceDashboardCard';
