@@ -83,12 +83,9 @@ export default function AdminMenuScreen() {
 
   return (
     <ScreenLayout>
-      <View style={{ flex: 1 }}>
+      <View className="flex-1">
         {/* 헤더 */}
-        <View
-          className="rounded-3xl px-6 py-4 mb-6 items-start justify-center"
-          style={{ backgroundColor: '#1428A0' }}
-        >
+        <View className="rounded-3xl px-6 py-4 mb-6 items-start justify-center bg-[#1428A0] ">
           <Text variant="bodyLg" weight="bold" color="white">
             모임 관리
           </Text>
@@ -101,16 +98,15 @@ export default function AdminMenuScreen() {
               key={m.key}
               onPress={m.onPress}
               hitSlop={8}
-              className="bg-white rounded-3xl px-6 justify-center"
+              className="bg-white rounded-3xl px-6 justify-center h-[72px]"
               style={{
-                height: 72,
                 shadowColor: '#1428A0',
                 shadowOpacity: 0.05,
                 shadowRadius: 8,
                 elevation: 1,
               }}
             >
-              <Text weight="bold" color="dark" style={{ fontSize: 18 }}>
+              <Text variant="bodyLg" weight="bold" color="dark">
                 {m.title}
               </Text>
             </Pressable>
@@ -120,8 +116,7 @@ export default function AdminMenuScreen() {
         {/* 모임 해산하기 */}
         <Pressable
           onPress={onPressDissolve}
-          className="rounded-3xl items-center justify-center mt-6 mb-8"
-          style={{ height: 56, backgroundColor: '#FFBDBD' }}
+          className="rounded-3xl items-center justify-center mt-6 mb-8 h-14 bg-[#FFBDBD]"
         >
           <Text weight="bold" color="#C0392B">
             모임 해산하기
