@@ -18,11 +18,9 @@ import {
   getGroupMembers,
   type GroupMember,
 } from '../../services/groupService';
-import {
-  getGroupCards,
-  type GroupCardItem,
-} from '../../services/paymentService';
+import { getGroupCards } from '../../services/paymentService';
 import { GroupStackParamList } from '@/types/navigation';
+import { GroupCardItem } from '@/types/payment';
 
 const TAGS = ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'];
 
