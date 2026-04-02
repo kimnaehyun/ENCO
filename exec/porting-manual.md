@@ -527,3 +527,127 @@ docker logs nginx --tail 100
 - `/home/ubuntu/jenkins-data/jobs/auth/config.xml`
 - `/home/ubuntu/jenkins-data/jobs/chat/config.xml`
 - `/home/ubuntu/jenkins-data/jobs/webpage/config.xml`
+
+------------------------------------------------------------------------
+
+## 13. 트러블슈팅
+
+### 13.1 컨테이너는 정상 기동되었으나 API 호출 실패
+
+**원인** - DB 연결 실패 - Kafka 연결 실패 - Redis 연결 실패
+
+**확인**
+
+``` bash
+docker logs apigateway --tail 100
+docker logs auth --tail 100
+docker logs payment --tail 100
+```
+
+------------------------------------------------------------------------
+
+### 13.2 Nginx 502 / 504 오류
+
+**원인** - upstream 이름 불일치 - Docker network 연결 문제
+
+**확인**
+
+``` bash
+docker network inspect app-net
+docker logs nginx
+```
+
+------------------------------------------------------------------------
+
+### 13.3 이미지 업로드 실패
+
+**원인** - volume mount 누락 - nginx alias mismatch
+
+------------------------------------------------------------------------
+
+### 13.4 Grafana 로그 미수집
+
+``` bash
+docker logs alloy
+docker logs loki
+```
+
+------------------------------------------------------------------------
+
+## 14. 서비스 헬스체크 기준
+
+  서비스       확인 방법          정상 기준
+  ------------ ------------------ -----------
+  apigateway   /actuator/health   UP
+  auth         로그인 API         200
+  payment      카드 조회          정상
+  chat         WebSocket          연결 성공
+  travel       상품 조회          정상
+
+------------------------------------------------------------------------
+
+## 15. Kafka / DB 초기화
+
+``` bash
+docker exec -it kafka kafka-topics.sh --create --topic payment-topic --bootstrap-server localhost:9092
+```
+
+------------------------------------------------------------------------
+
+## 16. Jenkins Fallback 실행
+
+``` bash
+docker run -d -p 8080:8080 -v /home/ubuntu/jenkins-data:/var/jenkins_home jenkins/jenkins:lts
+```
+
+------------------------------------------------------------------------
+
+## 17. Docker 운영 설정
+
+``` yaml
+restart: always
+```
+
+------------------------------------------------------------------------
+
+## 18. 버전 관리
+
+-   Docker: 작성 필요
+-   MySQL: 8.x
+-   MongoDB: 7.x
+
+------------------------------------------------------------------------
+
+## 19. DNS / Cloudflare
+
+-   A Record 설정
+-   SSL Mode: Full
+
+------------------------------------------------------------------------
+
+## 20. 보안 설정
+
+``` bash
+sudo ufw allow 22
+sudo ufw allow 80
+sudo ufw allow 443
+```
+
+------------------------------------------------------------------------
+
+## 21. 전체 실행 스크립트
+
+``` bash
+#!/bin/bash
+
+cd /home/ubuntu/backend-infra && docker compose up -d
+cd /home/ubuntu/minio && docker compose up -d
+cd /home/ubuntu/chroma && docker compose up -d
+cd /home/ubuntu/auth && docker compose up -d
+cd /home/ubuntu/payment && docker compose up -d
+cd /home/ubuntu/travel && docker compose up -d
+cd /home/ubuntu/chat && docker compose up -d
+cd /home/ubuntu/apigateway && docker compose up -d
+cd /home/ubuntu/nginx && docker compose up -d
+cd /home/ubuntu/backend-infra/monitoring && docker compose up -d
+```
