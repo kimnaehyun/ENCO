@@ -89,7 +89,7 @@ type ApiMessage = {
   roomId: number | string;
   senderId?: number;
   content: string;
-  metadata?: null | Record<string, any>;
+  metadata?: null | Record<string, unknown>;
   createdAt: string;
   // 레거시 호환 필드
   messageId?: string;
@@ -110,4 +110,18 @@ export interface ChatMessageListProps {
   isLoadingOlderRef: React.RefObject<boolean>;
 }
 
-export type { ChatMsgProps, ChatAction, ChatItem, ApiMessage };
+type BotUnpaidCardItem = Extract<ChatItem, { type: 'bot-unpaid-card' }>;
+type BotLedgerCardItem = Extract<ChatItem, { type: 'bot-ledger-card' }>;
+type ChatbotItem = Extract<ChatItem, { type: 'chatbot' }>;
+type BotActionsItem = Extract<ChatItem, { type: 'bot-actions' }>;
+
+export type {
+  ChatMsgProps,
+  ChatAction,
+  ChatItem,
+  ApiMessage,
+  BotActionsItem,
+  BotUnpaidCardItem,
+  BotLedgerCardItem,
+  ChatbotItem,
+};

@@ -2,19 +2,22 @@
 import React from 'react';
 import { FlatList, Pressable, StyleSheet, View } from 'react-native';
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import {
   useNotifications,
   NotificationItem,
 } from '../../contexts/NotificationsContext';
+import { GroupStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-type Params = { groupId?: string; groupName?: string };
+type UserNotificationsNavigationProp = NativeStackNavigationProp<
+  GroupStackParamList,
+  'UserNotifications'
+>;
 
 export default function NotificationCenterScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const params = (route.params ?? {}) as Params;
+  const navigation = useNavigation<UserNotificationsNavigationProp>();
 
   const { notifications, markRead, markAllRead, clearAll } = useNotifications();
 
@@ -106,7 +109,7 @@ export default function NotificationCenterScreen() {
             data={notifications}
             keyExtractor={it => it.id}
             contentContainerStyle={styles.listContent}
-            ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+            ItemSeparatorComponent={() => <View className="h-3" />}
             renderItem={({ item }) => {
               const isUnread = !item.isRead;
 

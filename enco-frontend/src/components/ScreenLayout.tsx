@@ -10,13 +10,14 @@ export default function ScreenLayout({
 }: ScreenLayoutProps & { noBottomSafe?: boolean }) {
   return (
     <SafeAreaView
-      edges={noBottomSafe ? ['top', 'left', 'right'] : ['top', 'left', 'right', 'bottom']}
-      style={{ flex: 1, backgroundColor: '#F0F4FF' }}
+      edges={
+        noBottomSafe
+          ? ['top', 'left', 'right']
+          : ['top', 'left', 'right', 'bottom']
+      }
+      className="flex-1 bg-[#F0F4FF]"
     >
-      <View
-        className={className}
-        style={[{ flex: 1, paddingHorizontal: 16, paddingTop: 12 }, style]}
-      >
+      <View className={`flex-1 px-4 pt-3 ${className ?? ''}`} style={style}>
         {children}
       </View>
     </SafeAreaView>

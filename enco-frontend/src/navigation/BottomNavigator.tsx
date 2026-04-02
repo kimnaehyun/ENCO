@@ -6,7 +6,6 @@ import HomeStackNavigator from './HomeStackNavigator';
 import OnsitePaymentNavigator from './OnsitePaymentNavigator';
 import UserStackNavigator from './UserStackNavigator';
 import { images } from '../types/images';
-import InternetPayNavigator from './InternetPaymentNavigator';
 
 const Tab = createBottomTabNavigator();
 

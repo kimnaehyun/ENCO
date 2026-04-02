@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Image, Pressable, ActivityIndicator } from 'react-native'
-import Text from '@/components/typography';;
+import { View, Image, Pressable, ActivityIndicator } from 'react-native';
+import Text from '@/components/typography';
 import { images } from '../../types/images';
 import { AuthScreenProps } from '../../types/navigation';
 import { getDeviceToken } from '../../utils/tokenStorage';
@@ -34,7 +34,7 @@ export default function AuthLandingScreen({
       <View className="flex-1 justify-center items-center">
         <Image
           source={images.logo}
-          style={{ width: 350, height: 350 }}
+          className="w-[350px] h-[350px]"
           resizeMode="contain"
         />
         <Pressable
@@ -45,9 +45,7 @@ export default function AuthLandingScreen({
           {checking ? (
             <ActivityIndicator color="white" size="small" />
           ) : (
-            <Text weight="bold" color='white'
-              
-             style={{ fontSize: 24 }}>
+            <Text weight="bold" color="white" className="text-2xl">
               LOGIN
             </Text>
           )}
@@ -55,17 +53,9 @@ export default function AuthLandingScreen({
       </View>
 
       <View className="items-center mb-10">
-        <Text
-          
-        >
-          ENCO에 처음 오셨나요?
-        </Text>
+        <Text>ENCO에 처음 오셨나요?</Text>
         <Pressable onPress={() => navigation.navigate('SignupVerify')}>
-          <Text color='blue'
-            
-          >
-            회원가입하러 가기
-          </Text>
+          <Text color="blue">회원가입하러 가기</Text>
         </Pressable>
       </View>
     </View>

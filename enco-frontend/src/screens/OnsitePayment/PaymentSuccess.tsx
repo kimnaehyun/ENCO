@@ -1,16 +1,34 @@
 import { View, BackHandler, StyleSheet, Pressable } from 'react-native';
 import React, { useEffect } from 'react';
-import { useRoute } from '@react-navigation/native';
-import { ROUTES } from '../../constants/routes';
+import {
+  CommonActions,
+  RouteProp,
+  useNavigation,
+  useRoute,
+} from '@react-navigation/native';
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import ScreenLayout from '@/components/ScreenLayout';
+import { RootStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-export default function PaymentSuccess({ navigation }: { navigation: any }) {
-  const route = useRoute<any>();
+type PaymentSuccessNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'PaymentSuccess'
+>;
+type PaymentSuccessRouteProp = RouteProp<RootStackParamList, 'PaymentSuccess'>;
+
+export default function PaymentSuccess() {
+  const navigation = useNavigation<PaymentSuccessNavigationProp>();
+  const route = useRoute<PaymentSuccessRouteProp>();
   const { storeName, amount } = route.params;
 
   const goHome = () => {
-    navigation.navigate('App', { screen: ROUTES.TAB_HOME });
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: 'App' }],
+      }),
+    );
   };
 
   useEffect(() => {

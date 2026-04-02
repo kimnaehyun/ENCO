@@ -19,7 +19,9 @@ export default function ChatInput({
   const shouldShowHamcoMention =
     !!onSelectHamcoMention &&
     (trimmed === '@' ||
-      (trimmed.startsWith('@') && '@햄코'.includes(trimmed) && trimmed !== '@햄코'));
+      (trimmed.startsWith('@') &&
+        '@햄코'.includes(trimmed) &&
+        trimmed !== '@햄코'));
 
   return (
     <View className="mx-3.5 mb-3.5">
@@ -38,8 +40,7 @@ export default function ChatInput({
           onChangeText={onChangeMsg}
           placeholder={placeholder ?? '메시지를 입력하세요'}
           placeholderTextColor="#9CA3AF"
-          className="flex-1 h-11 text-base text-[#111111]"
-          style={{ paddingVertical: 0 }}
+          className="flex-1 h-11 text-base text-[#111111] py-0"
           multiline={false}
           blurOnSubmit={false}
           returnKeyType="send"

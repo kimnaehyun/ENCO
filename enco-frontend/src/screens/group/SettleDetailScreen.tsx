@@ -1,5 +1,5 @@
 // src/screens/group/SettleDetailScreen.tsx
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -11,8 +11,8 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import Text, {FONT_FAMILY, COLORS} from '@/components/typography';
-import {useNavigation, useRoute} from '@react-navigation/native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import {
   deleteSettlement,
@@ -20,32 +20,18 @@ import {
   getSettlementDetail,
   sendSettlementReminder,
 } from '../../services/receiptService';
-import {getGroupMembers} from '../../services/groupService';
-import type {SettlementDetailResponse} from '../../types/receipt';
-import {getProfileImage} from '../../types/images';
+import { getGroupMembers } from '../../services/groupService';
+import type { SettlementDetailResponse } from '../../types/receipt';
+import { getProfileImage } from '../../types/images';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { GroupStackParamList } from '@/types/navigation';
+import { SettleMember } from '@/types/group';
 
-type SettleMember = {
-  id: string;
-  userId: number;
-  name: string;
-  profileUrl?: string | number | null;
-  isPaid: boolean;
-  amount?: number;
-  remainingAmount?: number;
-};
-
-type RouteParams = {
-  expenseId?: number;
-  amount: number;
-  storeName: string;
-  date: string;
-  memo: string;
-  receiptUri: string | null;
-  groupName: string;
-  groupId?: string;
-  settleMembers?: SettleMember[];
-  isSettled?: boolean;
-};
+type SettleDetailRouteProp = RouteProp<GroupStackParamList, 'SettleDetail'>;
+type SettleDetailNavigationProp = NativeStackNavigationProp<
+  GroupStackParamList,
+  'SettleDetail'
+>;
 
 const formatSettlementDate = (value: string) => {
   if (!value) {
@@ -60,7 +46,13 @@ const formatSettlementDate = (value: string) => {
   return value;
 };
 
-function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
+function InfoRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <View className="flex-row items-center justify-between py-3 border-b border-gray-100">
       <Text style={styles.infoLabel}>{label}</Text>
@@ -70,9 +62,9 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 }
 
 export default function SettleDetailScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const params = (route.params ?? {}) as RouteParams;
+  const navigation = useNavigation<SettleDetailNavigationProp>();
+  const route = useRoute<SettleDetailRouteProp>();
+  const params = route.params;
 
   const {
     expenseId,
@@ -102,7 +94,9 @@ export default function SettleDetailScreen() {
   const [modalVisible, setModalVisible] = useState(false);
   const [modalMode, setModalMode] = useState<'confirm' | 'done'>('confirm');
   const [modalMessage, setModalMessage] = useState('');
-  const [pendingAction, setPendingAction] = useState<(() => Promise<void>) | null>(null);
+  const [pendingAction, setPendingAction] = useState<
+    (() => Promise<void>) | null
+  >(null);
   const [modalSubmitting, setModalSubmitting] = useState(false);
 
   const closeModal = () => {
@@ -127,7 +121,10 @@ export default function SettleDetailScreen() {
   }, [modalSubmitting, pendingAction]);
 
   useEffect(() => {
-    if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
+    if (
+      !Number.isFinite(numericGroupId) ||
+      !Number.isFinite(numericExpenseId)
+    ) {
       return;
     }
 
@@ -144,14 +141,15 @@ export default function SettleDetailScreen() {
         setDetail(response);
         setMemoText(response.memo || memo);
       })
-      .catch((error: any) => {
+      .catch((error: unknown) => {
         if (!mounted) {
           return;
         }
 
         setDetailError(
-          error?.response?.data?.message ||
-            error?.message ||
+          (error as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message ||
+            (error as { message?: string })?.message ||
             '정산 상세 정보를 불러오지 못했습니다.',
         );
       })
@@ -167,7 +165,10 @@ export default function SettleDetailScreen() {
   }, [memo, numericExpenseId, numericGroupId]);
 
   useEffect(() => {
-    if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
+    if (
+      !Number.isFinite(numericGroupId) ||
+      !Number.isFinite(numericExpenseId)
+    ) {
       return;
     }
 
@@ -176,7 +177,10 @@ export default function SettleDetailScreen() {
 
     Promise.all([
       getSettlementDefaulters(numericGroupId, numericExpenseId),
-      getGroupMembers(numericGroupId).catch(() => ({message: '', result: []})),
+      getGroupMembers(numericGroupId).catch(() => ({
+        message: '',
+        result: [],
+      })),
     ])
       .then(([defaultersResponse, membersResponse]) => {
         if (!mounted) {
@@ -188,23 +192,30 @@ export default function SettleDetailScreen() {
             member.userId,
             {
               name: member.name?.trim() || `멤버 ${member.userId}`,
-              profileUrl: member.profileImage ?? member.profileUrl ?? member.profileImg ?? null,
+              profileUrl:
+                member.profileImage ??
+                member.profileUrl ??
+                member.profileImg ??
+                null,
             },
           ]),
         );
 
-        const nextMembers = defaultersResponse.participants.map(participant => ({
-          id: String(participant.chargeTargetId || participant.userId),
-          userId: participant.userId,
-          name:
-            memberNameMap.get(participant.userId)?.name ||
-            `멤버 ${participant.userId}`,
-          profileUrl: memberNameMap.get(participant.userId)?.profileUrl ?? null,
-          isPaid:
-            participant.status === 'PAID' || participant.remainingAmount <= 0,
-          amount: participant.amount,
-          remainingAmount: participant.remainingAmount,
-        }));
+        const nextMembers = defaultersResponse.participants.map(
+          participant => ({
+            id: String(participant.chargeTargetId || participant.userId),
+            userId: participant.userId,
+            name:
+              memberNameMap.get(participant.userId)?.name ||
+              `멤버 ${participant.userId}`,
+            profileUrl:
+              memberNameMap.get(participant.userId)?.profileUrl ?? null,
+            isPaid:
+              participant.status === 'PAID' || participant.remainingAmount <= 0,
+            amount: participant.amount,
+            remainingAmount: participant.remainingAmount,
+          }),
+        );
 
         setSettleMembers(nextMembers);
       })
@@ -226,7 +237,9 @@ export default function SettleDetailScreen() {
     };
   }, [numericExpenseId, numericGroupId, params.settleMembers]);
 
-  const fallbackPaidCount = settleMembers.filter(member => member.isPaid).length;
+  const fallbackPaidCount = settleMembers.filter(
+    member => member.isPaid,
+  ).length;
   const fallbackTotalCount = settleMembers.length;
   const paidCount = detail?.paidCount ?? fallbackPaidCount;
   const totalCount = detail?.totalCount ?? fallbackTotalCount;
@@ -238,13 +251,17 @@ export default function SettleDetailScreen() {
   const effectiveAmount =
     amount > 0
       ? amount
-      : detail?.paymentInfo?.totalAmount ?? detail?.amount ?? 0;
+      : (detail?.paymentInfo?.totalAmount ?? detail?.amount ?? 0);
   const effectiveStoreName =
-    detail?.paymentInfo?.merchantName || detail?.displayName || storeName || '정산 요청';
+    detail?.paymentInfo?.merchantName ||
+    detail?.displayName ||
+    storeName ||
+    '정산 요청';
   const effectiveDate = formatSettlementDate(detail?.paidAt || date);
   const effectiveReceiptUri = detail?.receiptImageUrl || receiptUri;
   const unpaidMembers = settleMembers.filter(member => !member.isPaid);
-  const perPerson = totalCount > 0 ? Math.ceil(effectiveAmount / totalCount) : 0;
+  const perPerson =
+    totalCount > 0 ? Math.ceil(effectiveAmount / totalCount) : 0;
   const canDeleteSettlement =
     Number.isFinite(numericGroupId) && Number.isFinite(numericExpenseId);
 
@@ -252,17 +269,34 @@ export default function SettleDetailScreen() {
     `₩ ${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 
   const doSendReminder = async () => {
-    if (!Number.isFinite(numericGroupId) || !Number.isFinite(numericExpenseId)) {
+    if (
+      !Number.isFinite(numericGroupId) ||
+      !Number.isFinite(numericExpenseId)
+    ) {
       Alert.alert('안내', '알림 전송에 필요한 정산 정보가 없습니다.');
       return;
     }
     try {
       setSendingReminder(true);
-      const response = await sendSettlementReminder(numericGroupId, numericExpenseId);
-      console.log('[SettlementReminder] response:', JSON.stringify(response, null, 2));
+      const response = await sendSettlementReminder(
+        numericGroupId,
+        numericExpenseId,
+      );
+      console.log(
+        '[SettlementReminder] response:',
+        JSON.stringify(response, null, 2),
+      );
       return response;
-    } catch (error: any) {
-      console.log('[SettlementReminder] error:', JSON.stringify(error?.response?.data ?? error?.message, null, 2));
+    } catch (error: unknown) {
+      console.log(
+        '[SettlementReminder] error:',
+        JSON.stringify(
+          (error as { response?: { data?: { message?: string } } })?.response
+            ?.data ?? (error as { message?: string })?.message,
+          null,
+          2,
+        ),
+      );
       throw error;
     } finally {
       setSendingReminder(false);
@@ -272,16 +306,23 @@ export default function SettleDetailScreen() {
   const onSendAlertSingle = (member: SettleMember) => {
     const memberAmount = member.remainingAmount ?? member.amount ?? perPerson;
     setModalMode('confirm');
-    setModalMessage(`${member.name}님에게 ${formatKRW(memberAmount)} 입금 요청 알림을 보냅니다.`);
+    setModalMessage(
+      `${member.name}님에게 ${formatKRW(memberAmount)} 입금 요청 알림을 보냅니다.`,
+    );
     setPendingAction(() => async () => {
       try {
         await doSendReminder();
         setSentUserIds(prev => new Set(prev).add(member.userId));
         setModalMode('done');
         setModalMessage(`${member.name}님에게 알림을 전송했습니다.`);
-      } catch (error: any) {
+      } catch (error: unknown) {
         setModalMode('done');
-        setModalMessage(error?.response?.data?.message || '알림 전송에 실패했습니다.');
+        setModalMessage(
+          (error as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message ||
+            (error as { message?: string })?.message ||
+            '알림 전송에 실패했습니다.',
+        );
       }
     });
     setModalVisible(true);
@@ -305,9 +346,14 @@ export default function SettleDetailScreen() {
         setSentUserIds(newSet);
         setModalMode('done');
         setModalMessage(`미납자 ${unsent.length}명에게 알림을 전송했습니다.`);
-      } catch (error: any) {
+      } catch (error: unknown) {
         setModalMode('done');
-        setModalMessage(error?.response?.data?.message || '알림 전송에 실패했습니다.');
+        setModalMessage(
+          (error as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message ||
+            (error as { message?: string })?.message ||
+            '알림 전송에 실패했습니다.',
+        );
       }
     });
     setModalVisible(true);
@@ -320,14 +366,17 @@ export default function SettleDetailScreen() {
     }
 
     Alert.alert('정산 요청 삭제', '이 정산 요청을 삭제할까요?', [
-      {text: '취소', style: 'cancel'},
+      { text: '취소', style: 'cancel' },
       {
         text: '삭제',
         style: 'destructive',
         onPress: async () => {
           try {
             setDeleting(true);
-            const response = await deleteSettlement(numericGroupId, numericExpenseId);
+            const response = await deleteSettlement(
+              numericGroupId,
+              numericExpenseId,
+            );
             Alert.alert('완료', response.message, [
               {
                 text: '확인',
@@ -340,11 +389,12 @@ export default function SettleDetailScreen() {
                 },
               },
             ]);
-          } catch (error: any) {
+          } catch (error: unknown) {
             Alert.alert(
               '삭제 실패',
-              error?.response?.data?.message ||
-                error?.message ||
+              (error as { response?: { data?: { message?: string } } })
+                ?.response?.data?.message ||
+                (error as { message?: string })?.message ||
                 '정산 요청 삭제 중 오류가 발생했습니다.',
             );
           } finally {
@@ -371,243 +421,282 @@ export default function SettleDetailScreen() {
           contentContainerStyle={styles.scrollContent}
           scrollEnabled={!modalVisible}
         >
-
-        {/* 헤더 */}
-        <View className="flex-row items-center justify-between mb-5">
-          <Text style={styles.headerTitle}>모임 장부</Text>
-          <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
-            <Text style={styles.closeText}>닫기</Text>
-          </Pressable>
-        </View>
-
-        {loadingDetail ? (
-          <View style={styles.loadingCard}>
-            <ActivityIndicator color="#1428A0" />
-            <Text style={styles.loadingText}>정산 상세 정보를 불러오는 중...</Text>
+          {/* 헤더 */}
+          <View className="flex-row items-center justify-between mb-5">
+            <Text style={styles.headerTitle}>모임 장부</Text>
+            <Pressable onPress={() => navigation.goBack()} hitSlop={12}>
+              <Text style={styles.closeText}>닫기</Text>
+            </Pressable>
           </View>
-        ) : null}
 
-        {loadingParticipants ? (
-          <View style={styles.loadingCard}>
-            <ActivityIndicator color="#1428A0" />
-            <Text style={styles.loadingText}>정산 인원 정보를 불러오는 중...</Text>
-          </View>
-        ) : null}
-
-        {detailError ? (
-          <View style={styles.errorCard}>
-            <Text style={styles.errorText}>{detailError}</Text>
-          </View>
-        ) : null}
-
-        <Text style={styles.storeDateText}>{effectiveDate} {effectiveStoreName}</Text>
-
-        <Text style={styles.amountText}>-{effectiveAmount.toLocaleString()}원</Text>
-
-        {/* 정보 카드 */}
-        <View
-          className="bg-white rounded-3xl px-6 py-5 mb-4"
-          style={styles.shadowCard}
-        >
-          <InfoRow label="사용카드">
-            <Text style={styles.infoValueText}>총무개인카드</Text>
-          </InfoRow>
-
-          <InfoRow label="상태">
-            <View style={[styles.statusBadge, { backgroundColor: isSettled ? '#22C55E' : '#EF4444' }]}>
-              <Text style={styles.statusBadgeText}>
-                {settlementStatusText}
+          {loadingDetail ? (
+            <View style={styles.loadingCard}>
+              <ActivityIndicator color="#1428A0" />
+              <Text style={styles.loadingText}>
+                정산 상세 정보를 불러오는 중...
               </Text>
             </View>
-          </InfoRow>
+          ) : null}
 
-          <InfoRow label="거래구분">
-            <Text style={styles.tradeTypeText}>출금 (정산 필요)</Text>
-          </InfoRow>
-
-          {/* 메모 (편집 가능) */}
-          <View className="flex-row items-center justify-between py-3 border-b border-gray-100">
-            <Text style={styles.infoLabel}>메모</Text>
-            <TextInput
-              value={memoText}
-              onChangeText={setMemoText}
-              placeholder="내용을 입력하세요"
-              placeholderTextColor="#D1D5DB"
-              style={styles.memoInput}
-            />
-          </View>
-
-          {/* 영수증 */}
-          <View className="flex-row items-start justify-between pt-3">
-            <Text style={styles.infoLabel}>영수증</Text>
-            <View style={styles.infoValueWrap}>
-              {effectiveReceiptUri ? (
-                <Image
-                  source={{ uri: effectiveReceiptUri }}
-                  style={styles.receiptImage}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.receiptPlaceholder}>
-                  <Text style={styles.receiptEmoji}>🧾</Text>
-                  <Text style={styles.receiptPlaceholderText}>
-                    RECEIPT{'\n'}(임시 영수증)
-                  </Text>
-                </View>
-              )}
+          {loadingParticipants ? (
+            <View style={styles.loadingCard}>
+              <ActivityIndicator color="#1428A0" />
+              <Text style={styles.loadingText}>
+                정산 인원 정보를 불러오는 중...
+              </Text>
             </View>
-          </View>
-        </View>
+          ) : null}
 
-        {/* ── 미완료 시 미납자 섹션 (AdminSendAlert 디자인) ── */}
-        {!isSettled && unpaidCount > 0 && unpaidMembers.length > 0 && (
-          <View style={styles.sectionCard}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>미납자</Text>
-              <View style={styles.sectionCountPill}>
-                <Text style={styles.sectionCountText}>{unpaidCount}</Text>
-              </View>
+          {detailError ? (
+            <View style={styles.errorCard}>
+              <Text style={styles.errorText}>{detailError}</Text>
             </View>
+          ) : null}
 
-            {unpaidMembers.map((m, index) => {
-              const isSent = sentUserIds.has(m.userId);
-              const memberAmount = m.remainingAmount ?? m.amount ?? perPerson;
-              return (
-                <View
-                  key={m.id}
-                  style={[
-                    styles.alertMemberCard,
-                    styles.alertMemberCardUnpaid,
-                    index !== unpaidMembers.length - 1 && styles.alertMemberCardSpacing,
-                  ]}
-                >
-                  <View style={styles.alertMemberRow}>
-                    <View style={styles.alertAvatarWrap}>
-                      <Image
-                        source={getProfileImage(m.profileUrl)}
-                        style={styles.alertAvatarImage}
-                        resizeMode="cover"
-                      />
-                    </View>
-                    <View style={styles.alertMemberInfo}>
-                      <View style={styles.alertNameRow}>
-                        <Text style={styles.alertMemberName}>{m.name}</Text>
-                        <View style={styles.alertBadgeUnpaid}>
-                          <Text style={styles.alertBadgeUnpaidText}>미납</Text>
-                        </View>
-                      </View>
-                      <Text style={styles.alertMemberDue}>
-                        미납 금액: {formatKRW(memberAmount)}
-                      </Text>
-                    </View>
-                    <Pressable
-                      onPress={() => onSendAlertSingle(m)}
-                      disabled={isSent || sendingReminder}
-                      style={[styles.sendBadge, isSent && styles.sendBadgeSent]}
-                    >
-                      <Text style={[styles.sendBadgeText, isSent && styles.sendBadgeTextSent]}>
-                        {isSent ? '전송됨' : '전송'}
-                      </Text>
-                    </Pressable>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
+          <Text style={styles.storeDateText}>
+            {effectiveDate} {effectiveStoreName}
+          </Text>
 
-        {/* 납부 완료 섹션 */}
-        {!isSettled && settleMembers.filter(m => m.isPaid).length > 0 && (
-          <View style={[styles.sectionCard, { marginTop: 16 }]}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>납부 완료</Text>
-              <View style={[styles.sectionCountPill, { backgroundColor: '#DCFCE7' }]}>
-                <Text style={[styles.sectionCountText, { color: '#16A34A' }]}>
-                  {settleMembers.filter(m => m.isPaid).length}
-                </Text>
-              </View>
-            </View>
+          <Text style={styles.amountText}>
+            -{effectiveAmount.toLocaleString()}원
+          </Text>
 
-            {settleMembers.filter(m => m.isPaid).map((m, index, arr) => (
+          {/* 정보 카드 */}
+          <View
+            className="bg-white rounded-3xl px-6 py-5 mb-4"
+            style={styles.shadowCard}
+          >
+            <InfoRow label="사용카드">
+              <Text style={styles.infoValueText}>총무개인카드</Text>
+            </InfoRow>
+
+            <InfoRow label="상태">
               <View
-                key={m.id}
                 style={[
-                  styles.alertMemberCard,
-                  index !== arr.length - 1 && styles.alertMemberCardSpacing,
+                  styles.statusBadge,
+                  { backgroundColor: isSettled ? '#22C55E' : '#EF4444' },
                 ]}
               >
-                <View style={styles.alertMemberRow}>
-                  <View style={styles.alertAvatarWrap}>
-                    <Image
-                      source={getProfileImage(m.profileUrl)}
-                      style={styles.alertAvatarImage}
-                      resizeMode="cover"
-                    />
-                  </View>
-                  <View style={styles.alertMemberInfo}>
-                    <View style={styles.alertNameRow}>
-                      <Text style={styles.alertMemberName}>{m.name}</Text>
-                      <View style={styles.alertBadgePaid}>
-                        <Text style={styles.alertBadgePaidText}>납부 완료</Text>
-                      </View>
-                    </View>
-                    <Text style={styles.alertMemberDue}>
-                      납부 금액: {formatKRW(m.amount ?? perPerson)}
+                <Text style={styles.statusBadgeText}>
+                  {settlementStatusText}
+                </Text>
+              </View>
+            </InfoRow>
+
+            <InfoRow label="거래구분">
+              <Text style={styles.tradeTypeText}>출금 (정산 필요)</Text>
+            </InfoRow>
+
+            {/* 메모 (편집 가능) */}
+            <View className="flex-row items-center justify-between py-3 border-b border-gray-100">
+              <Text style={styles.infoLabel}>메모</Text>
+              <TextInput
+                value={memoText}
+                onChangeText={setMemoText}
+                placeholder="내용을 입력하세요"
+                placeholderTextColor="#D1D5DB"
+                style={styles.memoInput}
+              />
+            </View>
+
+            {/* 영수증 */}
+            <View className="flex-row items-start justify-between pt-3">
+              <Text style={styles.infoLabel}>영수증</Text>
+              <View style={styles.infoValueWrap}>
+                {effectiveReceiptUri ? (
+                  <Image
+                    source={{ uri: effectiveReceiptUri }}
+                    style={styles.receiptImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={styles.receiptPlaceholder}>
+                    <Text style={styles.receiptEmoji}>🧾</Text>
+                    <Text style={styles.receiptPlaceholderText}>
+                      RECEIPT{'\n'}(임시 영수증)
                     </Text>
                   </View>
+                )}
+              </View>
+            </View>
+          </View>
+
+          {/* ── 미완료 시 미납자 섹션 (AdminSendAlert 디자인) ── */}
+          {!isSettled && unpaidCount > 0 && unpaidMembers.length > 0 && (
+            <View style={styles.sectionCard}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>미납자</Text>
+                <View style={styles.sectionCountPill}>
+                  <Text style={styles.sectionCountText}>{unpaidCount}</Text>
                 </View>
               </View>
-            ))}
-          </View>
-        )}
 
-        {/* 미납자 전체 알림 전송 버튼 */}
-        {!isSettled && unpaidMembers.length > 0 && (
-          <Pressable
-            onPress={onSendAlertAll}
-            disabled={sendingReminder}
-            style={[styles.bulkSendButton, sendingReminder && styles.bulkSendButtonDisabled]}
-          >
-            <Text style={styles.bulkSendButtonText}>
-              {sendingReminder ? '알림 전송 중...' : `미납자 전체 알림 전송 (${unpaidCount}명)`}
-            </Text>
-          </Pressable>
-        )}
+              {unpaidMembers.map((m, index) => {
+                const isSent = sentUserIds.has(m.userId);
+                const memberAmount = m.remainingAmount ?? m.amount ?? perPerson;
+                return (
+                  <View
+                    key={m.id}
+                    style={[
+                      styles.alertMemberCard,
+                      styles.alertMemberCardUnpaid,
+                      index !== unpaidMembers.length - 1 &&
+                        styles.alertMemberCardSpacing,
+                    ]}
+                  >
+                    <View style={styles.alertMemberRow}>
+                      <View style={styles.alertAvatarWrap}>
+                        <Image
+                          source={getProfileImage(m.profileUrl)}
+                          style={styles.alertAvatarImage}
+                          resizeMode="cover"
+                        />
+                      </View>
+                      <View style={styles.alertMemberInfo}>
+                        <View style={styles.alertNameRow}>
+                          <Text style={styles.alertMemberName}>{m.name}</Text>
+                          <View style={styles.alertBadgeUnpaid}>
+                            <Text style={styles.alertBadgeUnpaidText}>
+                              미납
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={styles.alertMemberDue}>
+                          미납 금액: {formatKRW(memberAmount)}
+                        </Text>
+                      </View>
+                      <Pressable
+                        onPress={() => onSendAlertSingle(m)}
+                        disabled={isSent || sendingReminder}
+                        style={[
+                          styles.sendBadge,
+                          isSent && styles.sendBadgeSent,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.sendBadgeText,
+                            isSent && styles.sendBadgeTextSent,
+                          ]}
+                        >
+                          {isSent ? '전송됨' : '전송'}
+                        </Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )}
 
-        {settleMembers.length > 0 ? (
-          <Pressable
-            onPress={() => navigation.navigate('SettleMemberSelect', {
-              amount: effectiveAmount,
-              storeName: effectiveStoreName,
-              date: effectiveDate,
-              memo: memoText,
-              receiptUri: effectiveReceiptUri,
-              expenseId: numericExpenseId,
-              groupName,
-              groupId,
-              settleMembers,
-              isNewSettle: false,
-            })}
-            className="rounded-2xl py-4 items-center justify-center"
-            style={styles.settleDetailButton}
-          >
-            <Text style={styles.settleDetailButtonText}>정산인원 보기</Text>
-          </Pressable>
-        ) : null}
+          {/* 납부 완료 섹션 */}
+          {!isSettled && settleMembers.filter(m => m.isPaid).length > 0 && (
+            <View className="mt-4" style={[styles.sectionCard]}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>납부 완료</Text>
+                <View
+                  className="bg-[#DCFCCE7]"
+                  style={[styles.sectionCountPill]}
+                >
+                  <Text color="#16A34A" style={[styles.sectionCountText]}>
+                    {settleMembers.filter(m => m.isPaid).length}
+                  </Text>
+                </View>
+              </View>
 
-        {canDeleteSettlement ? (
-          <Pressable
-            onPress={handleDeleteSettlement}
-            disabled={deleting}
-            className="rounded-2xl py-4 items-center justify-center"
-            style={[styles.deleteSettlementButton, deleting && styles.deleteSettlementButtonDisabled]}
-          >
-            <Text style={styles.deleteSettlementButtonText}>
-              {deleting ? '정산 요청 삭제 중...' : '정산 요청 삭제'}
-            </Text>
-          </Pressable>
-        ) : null}
+              {settleMembers
+                .filter(m => m.isPaid)
+                .map((m, index, arr) => (
+                  <View
+                    key={m.id}
+                    style={[
+                      styles.alertMemberCard,
+                      index !== arr.length - 1 && styles.alertMemberCardSpacing,
+                    ]}
+                  >
+                    <View style={styles.alertMemberRow}>
+                      <View style={styles.alertAvatarWrap}>
+                        <Image
+                          source={getProfileImage(m.profileUrl)}
+                          style={styles.alertAvatarImage}
+                          resizeMode="cover"
+                        />
+                      </View>
+                      <View style={styles.alertMemberInfo}>
+                        <View style={styles.alertNameRow}>
+                          <Text style={styles.alertMemberName}>{m.name}</Text>
+                          <View style={styles.alertBadgePaid}>
+                            <Text style={styles.alertBadgePaidText}>
+                              납부 완료
+                            </Text>
+                          </View>
+                        </View>
+                        <Text style={styles.alertMemberDue}>
+                          납부 금액: {formatKRW(m.amount ?? perPerson)}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+            </View>
+          )}
 
+          {/* 미납자 전체 알림 전송 버튼 */}
+          {!isSettled && unpaidMembers.length > 0 && (
+            <Pressable
+              onPress={onSendAlertAll}
+              disabled={sendingReminder}
+              style={[
+                styles.bulkSendButton,
+                sendingReminder && styles.bulkSendButtonDisabled,
+              ]}
+            >
+              <Text style={styles.bulkSendButtonText}>
+                {sendingReminder
+                  ? '알림 전송 중...'
+                  : `미납자 전체 알림 전송 (${unpaidCount}명)`}
+              </Text>
+            </Pressable>
+          )}
+
+          {settleMembers.length > 0 ? (
+            <Pressable
+              onPress={() =>
+                navigation.navigate('SettleMemberSelect', {
+                  amount: effectiveAmount,
+                  storeName: effectiveStoreName,
+                  date: effectiveDate,
+                  memo: memoText,
+                  receiptUri: effectiveReceiptUri,
+                  expenseId: numericExpenseId,
+                  groupName,
+                  groupId,
+                  settleMembers,
+                  isNewSettle: false,
+                })
+              }
+              className="rounded-2xl py-4 items-center justify-center"
+              style={styles.settleDetailButton}
+            >
+              <Text style={styles.settleDetailButtonText}>정산인원 보기</Text>
+            </Pressable>
+          ) : null}
+
+          {canDeleteSettlement ? (
+            <Pressable
+              onPress={handleDeleteSettlement}
+              disabled={deleting}
+              className="rounded-2xl py-4 items-center justify-center"
+              style={[
+                styles.deleteSettlementButton,
+                deleting && styles.deleteSettlementButtonDisabled,
+              ]}
+            >
+              <Text style={styles.deleteSettlementButtonText}>
+                {deleting ? '정산 요청 삭제 중...' : '정산 요청 삭제'}
+              </Text>
+            </Pressable>
+          ) : null}
         </ScrollView>
       </View>
 

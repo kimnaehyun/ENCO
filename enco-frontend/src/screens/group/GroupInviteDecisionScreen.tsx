@@ -1,13 +1,26 @@
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import { ROUTES } from '../../constants/routes';
 import ScreenLayout from '../../components/ScreenLayout';
+import { GroupStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
 
 const TAGS = ['여행', '음식'];
 
-function InfoRow({ label, children }: { label: string; children: React.ReactNode }) {
+type GroupInviteDecisionNavigationProp = NativeStackNavigationProp<
+  GroupStackParamList,
+  'GroupInviteDecision'
+>;
+
+function InfoRow({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <View style={styles.infoRow}>
       <Text style={styles.infoLabel}>{label}</Text>
@@ -17,7 +30,7 @@ function InfoRow({ label, children }: { label: string; children: React.ReactNode
 }
 
 export default function GroupInviteDecisionScreen() {
-  const navigation = useNavigation<any>();
+  const navigation = useNavigation<GroupInviteDecisionNavigationProp>();
 
   const groupName = '모임명';
   const intro = '회식좋아하는사람들';
@@ -38,7 +51,7 @@ export default function GroupInviteDecisionScreen() {
             },
           },
         ],
-      })
+      }),
     );
   };
 

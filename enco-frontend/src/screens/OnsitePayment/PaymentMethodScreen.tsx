@@ -12,7 +12,11 @@ export default function PaymentMethodScreen() {
   const insets = useSafeAreaInsets();
 
   const route = useRoute();
-  const params = route.params as { title: string; groupId: number; isLeader?: boolean };
+  const params = route.params as {
+    title: string;
+    groupId: number;
+    isLeader?: boolean;
+  };
 
   const isLeader = params.isLeader ?? true;
 
@@ -34,9 +38,7 @@ export default function PaymentMethodScreen() {
       >
         <PaymentToggleButton />
       </View>
-      <View className="flex-1">
-        {isBarcode ? <Barcode groupId={params.groupId} isLeader /> : <QR />}
-      </View>
+      <View className="flex-1">{isBarcode ? <Barcode /> : <QR />}</View>
     </View>
   );
 }

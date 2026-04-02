@@ -22,5 +22,5 @@ export type VoteDetail = {
   votedCount: number;
   approveCount: number;
   rejectCount: number;
-  histories: any[];
+  histories: { userId: number; choice: string }[];
 };

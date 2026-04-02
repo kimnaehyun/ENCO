@@ -6,21 +6,30 @@ import {
   Platform,
   Pressable,
   StyleSheet,
-  Text,
   UIManager,
   View,
   ScrollView,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
 import { AdminMemberPay } from '../../types/admin';
+import { GroupStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
+import Text from '@/components/typography/Text';
 
-const formatKRW = (n: number) => `₩ ${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
+type AdminSettleRouteProp = RouteProp<GroupStackParamList, 'AdminSettle'>;
+type AdminSettleNavigationProp = NativeStackNavigationProp<
+  GroupStackParamList,
+  'AdminSettle'
+>;
+
+const formatKRW = (n: number) =>
+  `₩ ${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
 
 export default function AdminSettleScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
+  const navigation = useNavigation<AdminSettleNavigationProp>();
+  const route = useRoute<AdminSettleRouteProp>();
   const params = (route.params ?? {}) as CommonParams;
 
   const groupName = params.groupName ?? '모임명';
@@ -30,7 +39,10 @@ export default function AdminSettleScreen() {
 
   // Android expand 애니메이션
   useEffect(() => {
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+    if (
+      Platform.OS === 'android' &&
+      UIManager.setLayoutAnimationEnabledExperimental
+    ) {
       UIManager.setLayoutAnimationEnabledExperimental(true);
     }
   }, []);
@@ -38,12 +50,40 @@ export default function AdminSettleScreen() {
   // ✅ 임시 데이터(나중에 API로 교체)
   const members: AdminMemberPay[] = useMemo(
     () => [
-      { id: 'm1', name: '김싸피', joinedAt: '2026-03-01', memo: '총무(임시)', isPaid: true, dueAmount: 10000 },
-      { id: 'm2', name: '이싸피', joinedAt: '2026-03-02', memo: '회계 담당(임시)', isPaid: false, dueAmount: 10000 },
-      { id: 'm3', name: '박싸피', joinedAt: '2026-03-03', memo: '지출 잦음(임시)', isPaid: false, dueAmount: 10000 },
-      { id: 'm4', name: '홍싸피', joinedAt: '2026-03-04', memo: '늦게 납부(임시)', isPaid: true, dueAmount: 10000 },
+      {
+        id: 'm1',
+        name: '김싸피',
+        joinedAt: '2026-03-01',
+        memo: '총무(임시)',
+        isPaid: true,
+        dueAmount: 10000,
+      },
+      {
+        id: 'm2',
+        name: '이싸피',
+        joinedAt: '2026-03-02',
+        memo: '회계 담당(임시)',
+        isPaid: false,
+        dueAmount: 10000,
+      },
+      {
+        id: 'm3',
+        name: '박싸피',
+        joinedAt: '2026-03-03',
+        memo: '지출 잦음(임시)',
+        isPaid: false,
+        dueAmount: 10000,
+      },
+      {
+        id: 'm4',
+        name: '홍싸피',
+        joinedAt: '2026-03-04',
+        memo: '늦게 납부(임시)',
+        isPaid: true,
+        dueAmount: 10000,
+      },
     ],
-    []
+    [],
   );
 
   const toggleExpand = (id: string) => {
@@ -55,7 +95,7 @@ export default function AdminSettleScreen() {
     // TODO: 실제 알림/푸시/챗봇 연동
     Alert.alert(
       '입금요청 알림(임시)',
-      `${m.name}에게 ${formatKRW(m.dueAmount)} 입금 요청 알림을 보냅니다.`
+      `${m.name}에게 ${formatKRW(m.dueAmount)} 입금 요청 알림을 보냅니다.`,
     );
   };
 
@@ -76,7 +116,7 @@ export default function AdminSettleScreen() {
             Alert.alert('완료', '입금요청 알림 발송(임시 완료)');
           },
         },
-      ]
+      ],
     );
   };
 
@@ -89,16 +129,26 @@ export default function AdminSettleScreen() {
 
       {/* top right actions */}
       <View style={styles.topActionsRow}>
-        <Pressable onPress={sendRequestAllUnpaid} style={styles.actionBtn} hitSlop={10}>
+        <Pressable
+          onPress={sendRequestAllUnpaid}
+          style={styles.actionBtn}
+          hitSlop={10}
+        >
           <Text style={styles.actionBtnText}>미납자 일괄요청</Text>
         </Pressable>
 
-        <Pressable onPress={() => navigation.goBack()} style={styles.actionBtn} hitSlop={10}>
+        <Pressable
+          onPress={() => navigation.goBack()}
+          style={styles.actionBtn}
+          hitSlop={10}
+        >
           <Text style={styles.actionBtnText}>닫기</Text>
         </Pressable>
       </View>
 
-      <Text style={{ marginTop: 10, fontWeight: '800' }}>{groupName}</Text>
+      <Text className="mt-4.5" weight="bold">
+        {groupName}
+      </Text>
 
       <View style={styles.divider} />
 
@@ -108,28 +158,51 @@ export default function AdminSettleScreen() {
           const expanded = expandedId === m.id;
 
           return (
-            <View key={m.id} style={{ marginTop: 14 }}>
-              <Pressable onPress={() => toggleExpand(m.id)} style={styles.row} hitSlop={10}>
+            <View key={m.id} className="mt-3.5">
+              <Pressable
+                onPress={() => toggleExpand(m.id)}
+                style={styles.row}
+                hitSlop={10}
+              >
                 <View style={styles.avatar} />
                 <Text style={styles.name}>{m.name}</Text>
 
-                <View style={{ marginLeft: 'auto', alignItems: 'flex-end' }}>
-                  <View style={[styles.badge, m.isPaid ? styles.badgePaid : styles.badgeUnpaid]}>
-                    <Text style={styles.badgeText}>{m.isPaid ? '납부' : '미납'}</Text>
+                <View className="ml-auto items-end ">
+                  <View
+                    style={[
+                      styles.badge,
+                      m.isPaid ? styles.badgePaid : styles.badgeUnpaid,
+                    ]}
+                  >
+                    <Text style={styles.badgeText}>
+                      {m.isPaid ? '납부' : '미납'}
+                    </Text>
                   </View>
-                  <Text style={styles.smallText}>{expanded ? '접기' : '펼치기'}</Text>
+                  <Text style={styles.smallText}>
+                    {expanded ? '접기' : '펼치기'}
+                  </Text>
                 </View>
               </Pressable>
 
               {expanded && (
                 <View style={styles.expandBox}>
                   <Text style={styles.expandLine}>가입일: {m.joinedAt}</Text>
-                  <Text style={styles.expandLine}>메모: {m.memo ?? '(없음)'}</Text>
-                  <Text style={styles.expandLine}>회비: {formatKRW(m.dueAmount)}</Text>
+                  <Text style={styles.expandLine}>
+                    메모: {m.memo ?? '(없음)'}
+                  </Text>
+                  <Text style={styles.expandLine}>
+                    회비: {formatKRW(m.dueAmount)}
+                  </Text>
 
                   {!m.isPaid ? (
-                    <Pressable onPress={() => sendRequest(m)} style={styles.requestBtn} hitSlop={10}>
-                      <Text style={styles.requestBtnText}>입금요청 알림 보내기</Text>
+                    <Pressable
+                      onPress={() => sendRequest(m)}
+                      style={styles.requestBtn}
+                      hitSlop={10}
+                    >
+                      <Text style={styles.requestBtnText}>
+                        입금요청 알림 보내기
+                      </Text>
                     </Pressable>
                   ) : (
                     <View style={[styles.requestBtn, { opacity: 0.4 }]}>
@@ -159,7 +232,12 @@ const styles = StyleSheet.create({
   },
   headerText: { fontSize: 18, fontWeight: '800' },
 
-  topActionsRow: { marginTop: 14, flexDirection: 'row', justifyContent: 'flex-end', gap: 10 },
+  topActionsRow: {
+    marginTop: 14,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
   actionBtn: {
     backgroundColor: '#D9D9D9',
     borderRadius: 16,
@@ -168,7 +246,12 @@ const styles = StyleSheet.create({
   },
   actionBtnText: { fontWeight: '900' },
 
-  divider: { height: 1, backgroundColor: '#111827', marginTop: 12, opacity: 0.6 },
+  divider: {
+    height: 1,
+    backgroundColor: '#111827',
+    marginTop: 12,
+    opacity: 0.6,
+  },
 
   row: {
     backgroundColor: '#D9D9D9',
@@ -179,14 +262,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 12,
   },
-  avatar: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#BDBDBD' },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#BDBDBD',
+  },
   name: { fontSize: 18, fontWeight: '900' },
 
   badge: { borderRadius: 12, paddingHorizontal: 10, paddingVertical: 6 },
   badgePaid: { backgroundColor: '#C7F9CC' },
   badgeUnpaid: { backgroundColor: '#FFD6A5' },
   badgeText: { fontSize: 12, fontWeight: '900' },
-  smallText: { marginTop: 6, fontSize: 12, fontWeight: '800', color: '#374151' },
+  smallText: {
+    marginTop: 6,
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#374151',
+  },
 
   expandBox: {
     marginTop: 10,

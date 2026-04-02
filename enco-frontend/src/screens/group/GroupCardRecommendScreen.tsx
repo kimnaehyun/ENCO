@@ -1,9 +1,23 @@
 import React, { useState, useEffect } from 'react';
-import { ActivityIndicator, Alert, Image, StyleSheet, TouchableOpacity, View, FlatList } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  FlatList,
+} from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { getCardList, getCardDetail, getRecommendedCards, CardListItem } from '../../services/paymentService';
+import {
+  getCardList,
+  getCardDetail,
+  getRecommendedCards,
+} from '../../services/paymentService';
+import { RootStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
 
 type DisplayCard = {
   id: number;
@@ -16,9 +30,18 @@ type DisplayCard = {
   benefits: { categoryName: string; discountRate: number }[];
 };
 
+type GroupCardRecommendRouteProp = RouteProp<
+  RootStackParamList,
+  'GroupCardRecommend'
+>;
+type GroupCardRecommendNavigationProp = NativeStackNavigationProp<
+  RootStackParamList,
+  'GroupCardRecommend'
+>;
+
 export default function GroupCardRecommendScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
+  const navigation = useNavigation<GroupCardRecommendNavigationProp>();
+  const route = useRoute<GroupCardRecommendRouteProp>();
 
   const { groupName, address, tags } = route.params;
   const isRecommendMode = tags && tags.length > 0;
@@ -35,7 +58,10 @@ export default function GroupCardRecommendScreen() {
         if (isRecommendMode) {
           // GET /cards/recommend?categories=... → { message, result: CardDetailResult[] }
           const res = await getRecommendedCards(tags);
-          console.log('[GroupCardRecommend] GET /cards/recommend 응답:', JSON.stringify(res, null, 2));
+          console.log(
+            '[GroupCardRecommend] GET /cards/recommend 응답:',
+            JSON.stringify(res, null, 2),
+          );
           const list = res?.result ?? [];
           cards = (Array.isArray(list) ? list : []).map(card => ({
             id: card.id,
@@ -50,7 +76,10 @@ export default function GroupCardRecommendScreen() {
         } else {
           // GET /cards → { message, result: CardListItem[] }
           const res = await getCardList();
-          console.log('[GroupCardRecommend] GET /cards 응답:', JSON.stringify(res, null, 2));
+          console.log(
+            '[GroupCardRecommend] GET /cards 응답:',
+            JSON.stringify(res, null, 2),
+          );
           const list = res?.result ?? [];
           cards = (Array.isArray(list) ? list : []).map(card => ({
             id: card.id,
@@ -97,7 +126,10 @@ export default function GroupCardRecommendScreen() {
     try {
       // GET /cards/{id} → { message, result: CardDetailResult }
       const res = await getCardDetail(card.id);
-      console.log(`[GroupCardRecommend] GET /cards/${card.id} 응답:`, JSON.stringify(res, null, 2));
+      console.log(
+        `[GroupCardRecommend] GET /cards/${card.id} 응답:`,
+        JSON.stringify(res, null, 2),
+      );
       const d = res.result;
       setDetailCard({
         ...card,
@@ -108,7 +140,10 @@ export default function GroupCardRecommendScreen() {
         backImageUrl: d.backImageUrl || card.backImageUrl,
       });
     } catch (err) {
-      console.warn(`[GroupCardRecommend] 카드 상세 조회 실패 (id=${card.id}):`, err);
+      console.warn(
+        `[GroupCardRecommend] 카드 상세 조회 실패 (id=${card.id}):`,
+        err,
+      );
     } finally {
       setDetailLoading(false);
     }
@@ -120,7 +155,10 @@ export default function GroupCardRecommendScreen() {
       return;
     }
     const selected = allCards.find(c => c.id === selectedCardId);
-    console.log('[GroupCardRecommend] 카드 선택 완료:', { selectedCardId, name: selected?.name });
+    console.log('[GroupCardRecommend] 카드 선택 완료:', {
+      selectedCardId,
+      name: selected?.name,
+    });
     navigation.navigate('GroupCreate', {
       selectedCardId: String(selectedCardId),
       selectedCardImage: selected?.imageUrl,
@@ -163,7 +201,9 @@ export default function GroupCardRecommendScreen() {
     <>
       <Text style={styles.pageTitle}>모임통장 개설하기</Text>
       <Text style={styles.pageSubtitle}>
-        {isRecommendMode ? `"${tags.join(', ')}" 태그 기반 추천 카드` : '전체 카드 목록'}
+        {isRecommendMode
+          ? `"${tags.join(', ')}" 태그 기반 추천 카드`
+          : '전체 카드 목록'}
       </Text>
     </>
   );
@@ -176,11 +216,13 @@ export default function GroupCardRecommendScreen() {
           onPress={() => setVisibleCount(prev => prev + PAGE_SIZE)}
           style={styles.showMoreButton}
         >
-          <Text style={styles.showMoreText}>더보기 ({allCards.length - visibleCount}개 남음)</Text>
+          <Text style={styles.showMoreText}>
+            더보기 ({allCards.length - visibleCount}개 남음)
+          </Text>
         </TouchableOpacity>
       )}
       {/* 하단 고정 버튼 영역만큼 여백 확보 */}
-      <View style={{ height: 90 }} />
+      <View className="h-[90px]" />
     </>
   );
 
@@ -200,7 +242,7 @@ export default function GroupCardRecommendScreen() {
       <ScreenLayout>
         <FlatList
           data={displayCards}
-          keyExtractor={(item) => String(item.id)}
+          keyExtractor={item => String(item.id)}
           renderItem={renderItem}
           ListHeaderComponent={ListHeader}
           ListFooterComponent={ListFooter}
@@ -219,7 +261,10 @@ export default function GroupCardRecommendScreen() {
           activeOpacity={0.8}
           onPress={handleComplete}
           disabled={!selectedCardId}
-          style={[styles.completeButton, !selectedCardId && styles.completeButtonDisabled]}
+          style={[
+            styles.completeButton,
+            !selectedCardId && styles.completeButtonDisabled,
+          ]}
         >
           <Text style={styles.completeButtonText}>완료</Text>
         </TouchableOpacity>

@@ -1,29 +1,36 @@
 // src/screens/admin/AdminCardScreen.tsx
 // 카드 추가 발급 — API 연동, PIN 제거, card-add 직접 호출
 import React, { useMemo, useState, useEffect } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  View,
+} from 'react-native';
 import Text from '@/components/typography';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
 import { getMyGroups } from '../../services/groupService';
 import { cardAdd } from '../../services/paymentService';
 import { useAuthStore } from '../../store/useAuthStore';
+import { GroupStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
 
 const TAG_OPTIONS = ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'];
 
+type AdminCardRouteProp = RouteProp<GroupStackParamList, 'AdminCard'>;
+type AdminCardNavigationProp = NativeStackNavigationProp<
+  GroupStackParamList,
+  'AdminCard'
+>;
+
 export default function AdminCardScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
-  const params = (route.params ?? {}) as CommonParams & {
-    accountId?: number;
-    selectedCardId?: string;
-    selectedCardImage?: string;
-    selectedCardName?: string;
-    selectedTags?: string[];
-    recommendPressed?: boolean;
-    viewAllPressed?: boolean;
-  };
+  const navigation = useNavigation<AdminCardNavigationProp>();
+  const route = useRoute<AdminCardRouteProp>();
+  const params = route.params ?? {};
 
   const groupName = params.groupName ?? '모임명';
   const groupId = params.groupId;
@@ -38,12 +45,12 @@ export default function AdminCardScreen() {
       email: profile?.email ?? '',
       phone: profile?.phoneNumber ?? '',
     }),
-    [profile, user]
+    [profile, user],
   );
 
   // accountId: params로 받거나 API에서 조회
   const [accountId, setAccountId] = useState<number | null>(
-    params.accountId ?? null
+    params.accountId ?? null,
   );
   const [accountLoading, setAccountLoading] = useState(!params.accountId);
 
@@ -53,13 +60,19 @@ export default function AdminCardScreen() {
       try {
         const res = await getMyGroups();
         const group = res.result.find(
-          (g) => String(g.groupId) === String(groupId)
+          g => String(g.groupId) === String(groupId),
         );
         if (group) {
           setAccountId(group.account.accountId);
-          console.log('[AdminCard] accountId 조회 성공:', group.account.accountId);
+          console.log(
+            '[AdminCard] accountId 조회 성공:',
+            group.account.accountId,
+          );
         } else {
-          console.warn('[AdminCard] 해당 groupId에 대한 모임을 찾을 수 없음:', groupId);
+          console.warn(
+            '[AdminCard] 해당 groupId에 대한 모임을 찾을 수 없음:',
+            groupId,
+          );
         }
       } catch (err) {
         console.warn('[AdminCard] accountId 조회 실패:', err);
@@ -72,25 +85,22 @@ export default function AdminCardScreen() {
 
   // 상태 관리
   const [selectedTags, setSelectedTags] = useState<string[]>(
-    params.selectedTags ?? []
+    params.selectedTags ?? [],
   );
   const [selectedCardId, setSelectedCardId] = useState<string | null>(
-    params.selectedCardId ?? null
+    params.selectedCardId ?? null,
   );
   const [selectedCardImage, setSelectedCardImage] = useState<string | null>(
-    params.selectedCardImage ?? null
-  );
-  const [selectedCardBackImage, setSelectedCardBackImage] = useState<string | null>(
-    params.selectedCardBackImage ?? null
+    params.selectedCardImage ?? null,
   );
   const [selectedCardName, setSelectedCardName] = useState<string | null>(
-    params.selectedCardName ?? null
+    params.selectedCardName ?? null,
   );
   const [recommendPressed, setRecommendPressed] = useState(
-    params.recommendPressed ?? false
+    params.recommendPressed ?? false,
   );
   const [viewAllPressed, setViewAllPressed] = useState(
-    params.viewAllPressed ?? false
+    params.viewAllPressed ?? false,
   );
   const [submitting, setSubmitting] = useState(false);
 
@@ -99,7 +109,6 @@ export default function AdminCardScreen() {
     if (route.params?.selectedCardId) {
       setSelectedCardId(route.params.selectedCardId);
       setSelectedCardImage(route.params.selectedCardImage ?? null);
-      setSelectedCardBackImage(route.params.selectedCardBackImage ?? null);
       setSelectedCardName(route.params.selectedCardName ?? null);
       setRecommendPressed(route.params.recommendPressed ?? false);
       setViewAllPressed(route.params.viewAllPressed ?? false);
@@ -121,8 +130,8 @@ export default function AdminCardScreen() {
   ]);
 
   const toggleTag = (tag: string) => {
-    setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag],
     );
   };
 
@@ -134,7 +143,7 @@ export default function AdminCardScreen() {
     navigation.navigate('AdminCardRecommend', {
       groupId,
       groupName,
-      accountId,
+      accountId: accountId ?? undefined, // null → undefined
       tags: selectedTags,
       prevTags: selectedTags,
       prevRecommendPressed: true,
@@ -146,7 +155,7 @@ export default function AdminCardScreen() {
     navigation.navigate('AdminCardRecommend', {
       groupId,
       groupName,
-      accountId,
+      accountId: accountId ?? undefined, // null → undefined
       tags: [],
       prevTags: selectedTags,
       prevRecommendPressed: recommendPressed,
@@ -161,7 +170,10 @@ export default function AdminCardScreen() {
       return;
     }
     if (!accountId) {
-      Alert.alert('오류', '모임 계좌 정보를 불러오지 못했습니다. 다시 시도해주세요.');
+      Alert.alert(
+        '오류',
+        '모임 계좌 정보를 불러오지 못했습니다. 다시 시도해주세요.',
+      );
       return;
     }
 
@@ -184,9 +196,14 @@ export default function AdminCardScreen() {
         cardNumber: res.result.cardNumber,
         frontImageUrl: res.result.frontImageUrl,
       });
-    } catch (err: any) {
-      console.error('[AdminCard] card-add 실패:', err?.response?.data ?? err);
-      const errorMsg = err?.response?.data?.message ?? '카드 발급에 실패했습니다. 다시 시도해주세요.';
+    } catch (err: unknown) {
+      console.error(
+        '[AdminCard] card-add 실패:',
+        (err as { response?: { data?: unknown } })?.response?.data ?? err,
+      );
+      const errorMsg =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? '카드 발급에 실패했습니다. 다시 시도해주세요.';
       Alert.alert('발급 실패', errorMsg);
     } finally {
       setSubmitting(false);
@@ -200,23 +217,20 @@ export default function AdminCardScreen() {
         showsVerticalScrollIndicator={false}
       >
         {/* 헤더 */}
-        <Text variant="h2" color="dark" style={{ marginBottom: 6 }}>
+        <Text variant="h2" color="dark" className="mb-1.5">
           카드 추가 발급
         </Text>
-        <Text variant="caption" color="placeholder" style={{ marginBottom: 28 }}>
+        <Text variant="caption" color="placeholder" className="mb-7">
           {groupName}
         </Text>
 
         {/* 총무 정보(자동 입력) */}
-        <Text variant="bodySm" color="muted" style={{ marginBottom: 8 }}>
+        <Text variant="bodySm" color="muted" className="mb-2">
           총무 정보(자동 입력)
         </Text>
         <View
+          className="bg-white rouded-[20px] px-[18px] mb-5 "
           style={{
-            backgroundColor: '#FFFFFF',
-            borderRadius: 20,
-            paddingHorizontal: 18,
-            marginBottom: 20,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 1 },
             shadowOpacity: 0.05,
@@ -231,11 +245,8 @@ export default function AdminCardScreen() {
           ].map((item, i) => (
             <View
               key={item.label}
+              className="flex-row justify-between items-center py-3.5"
               style={{
-                flexDirection: 'row',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                paddingVertical: 14,
                 borderBottomWidth: i < 2 ? 1 : 0,
                 borderBottomColor: '#F3F4F6',
               }}
@@ -251,30 +262,19 @@ export default function AdminCardScreen() {
         </View>
 
         {/* 모임 성향 태그 */}
-        <Text variant="bodySm" color="muted" style={{ marginBottom: 12 }}>
+        <Text variant="bodySm" color="muted" className="mb-3">
           모임 성향(옵션 태그)
         </Text>
-        <View
-          style={{
-            flexDirection: 'row',
-            flexWrap: 'wrap',
-            gap: 10,
-            marginBottom: 6,
-          }}
-        >
-          {TAG_OPTIONS.map((tag) => {
+        <View className="flex-row flex-wrap mb-1.5 gap-[10px]">
+          {TAG_OPTIONS.map(tag => {
             const selected = selectedTags.includes(tag);
             return (
               <Pressable
                 key={tag}
                 onPress={() => toggleTag(tag)}
+                className="rouded-[18px] py-[18px] w-[30%] justify-center items-center"
                 style={{
-                  width: '31%',
-                  paddingVertical: 18,
-                  borderRadius: 18,
                   backgroundColor: selected ? '#1428A0' : '#C7D2FE',
-                  justifyContent: 'center',
-                  alignItems: 'center',
                   shadowColor: selected ? '#1428A0' : '#000',
                   shadowOffset: { width: 0, height: selected ? 4 : 1 },
                   shadowOpacity: selected ? 0.25 : 0.05,
@@ -289,19 +289,20 @@ export default function AdminCardScreen() {
             );
           })}
         </View>
-        <Text variant="tiny" color="placeholder" align="center" style={{ marginBottom: 28 }}>
+        <Text
+          variant="tiny"
+          color="placeholder"
+          align="center"
+          className="mb-7"
+        >
           중복 선택 가능
         </Text>
 
         {/* 선택된 카드 프리뷰 */}
         {selectedCardImage && (
           <View
+            className="bg-white rounded-[20px] p-[18px] items-center mb-5 "
             style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: 20,
-              padding: 18,
-              alignItems: 'center',
-              marginBottom: 20,
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: 0.05,
@@ -309,24 +310,20 @@ export default function AdminCardScreen() {
               elevation: 1,
             }}
           >
-            <Text variant="caption" color="placeholder" style={{ marginBottom: 12 }}>
+            <Text variant="caption" color="placeholder" className="mb-3">
               선택한 카드
             </Text>
-            <View style={{ flexDirection: 'row', gap: 10, width: '100%', justifyContent: 'center' }}>
-              <Image
-                source={{ uri: selectedCardImage }}
-                style={{ width: '47%', aspectRatio: 1.58, borderRadius: 12 }}
-                resizeMode="contain"
-              />
-              {selectedCardBackImage && (
-                <Image
-                  source={{ uri: selectedCardBackImage }}
-                  style={{ width: '47%', aspectRatio: 1.58, borderRadius: 12 }}
-                  resizeMode="contain"
-                />
-              )}
-            </View>
-            <Text variant="bodySm" weight="bold" color="dark" style={{ marginTop: 10 }}>
+            <Image
+              source={{ uri: selectedCardImage }}
+              className="w-[60%] rounded-xl aspect-[2/1]"
+              resizeMode="contain"
+            />
+            <Text
+              variant="bodySm"
+              weight="bold"
+              color="dark"
+              className="mt-[10px]"
+            >
               {selectedCardName}
             </Text>
           </View>
@@ -334,29 +331,25 @@ export default function AdminCardScreen() {
 
         {/* accountId 로딩 표시 */}
         {accountLoading && (
-          <View style={{ alignItems: 'center', marginBottom: 16 }}>
+          <View className="items-center mb-4">
             <ActivityIndicator size="small" color="#1428A0" />
-            <Text variant="caption" color="placeholder" style={{ marginTop: 6 }}>
+            <Text variant="caption" color="placeholder" className="mt-[6px]">
               계좌 정보 확인 중...
             </Text>
           </View>
         )}
 
         {/* 버튼 */}
-        <View style={{ gap: 10 }}>
-          <View style={{ flexDirection: 'row', gap: 10 }}>
+        <View className="gap-[10px]">
+          <View className="flex-row gap-[10px] ">
             <Pressable
               onPress={() => {
                 setRecommendPressed(true);
                 handleRecommend();
               }}
+              className="flex-1 h-[54px] rounded-2xl justify-center items-center"
               style={{
-                flex: 1,
-                height: 54,
-                borderRadius: 16,
                 backgroundColor: recommendPressed ? '#C7D2FE' : '#1428A0',
-                justifyContent: 'center',
-                alignItems: 'center',
               }}
             >
               <Text variant="bodySm" weight="bold" color="white">
@@ -369,13 +362,9 @@ export default function AdminCardScreen() {
                 setViewAllPressed(true);
                 handleViewAll();
               }}
+              className="flex-1 h-[54px] rounded-2xl justify-center items-center"
               style={{
-                flex: 1,
-                height: 54,
-                borderRadius: 16,
                 backgroundColor: viewAllPressed ? '#C7D2FE' : '#1428A0',
-                justifyContent: 'center',
-                alignItems: 'center',
               }}
             >
               <Text variant="bodySm" weight="bold" color="white">
@@ -389,12 +378,8 @@ export default function AdminCardScreen() {
             <Pressable
               onPress={handleSubmit}
               disabled={submitting || accountLoading}
+              className="h-[54px] rounded-2xl justify-center items-center bg-[#1428A0]"
               style={{
-                height: 54,
-                borderRadius: 16,
-                backgroundColor: '#1428A0',
-                justifyContent: 'center',
-                alignItems: 'center',
                 opacity: submitting || accountLoading ? 0.5 : 1,
               }}
             >

@@ -5,16 +5,17 @@ import {
   NavigatorScreenParams,
 } from '@react-navigation/native';
 import { CommonParams } from './common';
-import type {ReceiptDraft} from './receipt';
+import type { ReceiptDraft } from './receipt';
 
 export type GroupPayStep = 'summary' | 'form' | 'pin' | 'success';
 
 export type GroupPaySource = 'default' | 'due' | 'settlement';
 
 export type GroupPayParams = CommonParams & {
+  isAdmin?: boolean;
+  paySource?: 'default' | 'due' | 'settlement';
   presetAmount?: number;
   presetMemo?: string;
-  paySource?: GroupPaySource;
   presetUnpaidId?: string;
 };
 
@@ -145,7 +146,12 @@ export type GroupStackParamList = {
     | { imageUri?: string; groupName?: string; groupId?: string }
     | undefined;
   TransactionReceiptOcr:
-    | { imageUri?: string; groupName?: string; groupId?: string; transactionId: number }
+    | {
+        imageUri?: string;
+        groupName?: string;
+        groupId?: string;
+        transactionId: number;
+      }
     | undefined;
   SettleDetail: {
     expenseId?: number;
@@ -166,7 +172,7 @@ export type GroupStackParamList = {
     receiptDraft?: ReceiptDraft | null;
     groupName: string;
     groupId?: string;
-    settleMembers?: any[];
+    settleMembers?: SettleMember[];
     isNewSettle?: boolean;
   };
 };
@@ -219,7 +225,12 @@ export type HomeStackParamList = {
     | { imageUri?: string; groupName?: string; groupId?: string }
     | undefined;
   TransactionReceiptOcr:
-    | { imageUri?: string; groupName?: string; groupId?: string; transactionId: number }
+    | {
+        imageUri?: string;
+        groupName?: string;
+        groupId?: string;
+        transactionId: number;
+      }
     | undefined;
   GroupLedgerDetail: {
     groupId?: string;
@@ -256,7 +267,7 @@ export type HomeStackParamList = {
     receiptDraft?: ReceiptDraft | null;
     groupName: string;
     groupId?: string;
-    settleMembers?: any[];
+    settleMembers?: SettleMember[];
     isNewSettle?: boolean;
   };
   UserNotifications: CommonParams | undefined;
@@ -321,15 +332,20 @@ export type GroupScreenProps<T extends keyof GroupStackParamList> =
     BottomTabScreenProps<BottomTabParamList>
   >;
 
-export type GroupProps<T extends keyof GroupStackParamList> = GroupScreenProps<T>;
+export type GroupProps<T extends keyof GroupStackParamList> =
+  GroupScreenProps<T>;
 
 export type SignupStep = 'name' | 'birth' | 'phone' | 'email' | 'done';
 
 // ── 모임 장부 관련 타입 ──
 export type SettleMember = {
   id: string;
+  userId: number;
   name: string;
+  profileUrl?: string | number | null;
   isPaid: boolean;
+  amount?: number;
+  remainingAmount?: number;
 };
 
 export type LedgerItem = {

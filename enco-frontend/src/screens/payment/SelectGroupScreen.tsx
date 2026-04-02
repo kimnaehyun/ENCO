@@ -5,9 +5,18 @@ import Header from '../../components/internet/Header';
 import ScreenLayout from '../../components/ScreenLayout';
 import { authApi } from '@/services/authService';
 import { Group } from '@/types/payment';
+import { InternetPayStackParamList } from '@/types/navigation';
+import { RouteProp, useRoute } from '@react-navigation/native';
 
-export default function SelectGroupScreen({ route }: any) {
-  const { paymentType, amount, storeName, callbackUrl, orderId } = route.params;
+type SelectGroupRouteProp = RouteProp<
+  InternetPayStackParamList,
+  'SelectGroupScreen'
+>;
+
+export default function SelectGroupScreen() {
+  const route = useRoute<SelectGroupRouteProp>();
+  const { paymentType, amount, storeName, callbackUrl, orderId } =
+    route.params ?? {};
   const [groups, setGroups] = useState<Group[]>([]);
 
   useEffect(() => {

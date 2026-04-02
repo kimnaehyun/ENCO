@@ -7,6 +7,17 @@ export function useGroupSettings() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  type ApiErrorResponse = {
+    message?: string;
+  };
+
+  type ApiError = {
+    response?: {
+      data?: ApiErrorResponse;
+      status?: number;
+    };
+  };
+
   const fetchGroupSettings = async (groupId: number | string) => {
     try {
       console.log('[useGroupSettings] 조회 시작');
@@ -17,16 +28,15 @@ export function useGroupSettings() {
       console.log('[useGroupSettings] 조회 성공:', data);
 
       return data.result;
-    } catch (e: any) {
-      console.log('[useGroupSettings] 조회 실패:', e);
-      console.log('[useGroupSettings] 서버 에러:', e?.response?.data);
-      console.log('[useGroupSettings] status:', e?.response?.status);
+    } catch (e: unknown) {
+      const err = e as ApiError;
 
-      const errorData = e?.response?.data;
+      console.log('[useGroupSettings] 조회 실패:', e);
+      console.log('[useGroupSettings] 서버 에러:', err.response?.data);
+      console.log('[useGroupSettings] status:', err.response?.status);
+
       const errorMessage =
-        typeof errorData === 'object' && errorData?.message
-          ? errorData.message
-          : '모임 설정 정보 조회에 실패했습니다.';
+        err.response?.data?.message ?? '모임 설정 정보 조회에 실패했습니다.';
 
       setError(errorMessage);
       return null;

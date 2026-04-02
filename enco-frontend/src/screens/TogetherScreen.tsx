@@ -1,11 +1,15 @@
 // src/screens/TogetherScreen.tsx
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ScreenLayout from '../components/ScreenLayout';
+import { RootStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import Text from '@/components/typography/Text';
 
 export default function TogetherScreen() {
-  const navigation = useNavigation<any>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   const onPressCreateGroup = () => {
     navigation.navigate('GroupCreate');
@@ -13,20 +17,13 @@ export default function TogetherScreen() {
 
   return (
     <ScreenLayout>
-      <Text style={{ fontSize: 22, fontWeight: '800' }}>모임 목록</Text>
+      <Text variant="h2">모임 목록</Text>
 
       <Pressable
         onPress={onPressCreateGroup}
-        style={{
-          marginTop: 12,
-          height: 56,
-          borderRadius: 16,
-          backgroundColor: '#D1D5DB',
-          justifyContent: 'center',
-          alignItems: 'center',
-        }}
+        className="mt-3 h-14 rounded-2xl bg-[#D1D5DB] justify-center items-center"
       >
-        <Text style={{ fontSize: 16, fontWeight: '700' }}>+ 모임 만들기</Text>
+        <Text weight="bold">+ 모임 만들기</Text>
       </Pressable>
     </ScreenLayout>
   );

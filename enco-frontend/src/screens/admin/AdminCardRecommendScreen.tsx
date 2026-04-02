@@ -1,11 +1,25 @@
 // src/screens/admin/AdminCardRecommendScreen.tsx
 // 카드 추가 발급 > 카드 추천/전체목록 — API 연동 버전
 import React, { useState, useEffect } from 'react';
-import { ActivityIndicator, Alert, Image, StyleSheet, TouchableOpacity, View, FlatList } from 'react-native';
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+  FlatList,
+} from 'react-native';
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { getCardList, getCardDetail, getRecommendedCards } from '../../services/paymentService';
+import {
+  getCardList,
+  getCardDetail,
+  getRecommendedCards,
+} from '../../services/paymentService';
+import { GroupStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
 
 type DisplayCard = {
   id: number;
@@ -18,9 +32,18 @@ type DisplayCard = {
   benefits: { categoryName: string; discountRate: number }[];
 };
 
+type AdminCardRecommendRouteProp = RouteProp<
+  GroupStackParamList,
+  'AdminCardRecommend'
+>;
+type AdminCardRecommendNavigationProp = NativeStackNavigationProp<
+  GroupStackParamList,
+  'AdminCardRecommend'
+>;
+
 export default function AdminCardRecommendScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute<any>();
+  const navigation = useNavigation<AdminCardRecommendNavigationProp>();
+  const route = useRoute<AdminCardRecommendRouteProp>();
 
   const { groupId, groupName, accountId, tags } = route.params;
   const isRecommendMode = tags && tags.length > 0;
@@ -37,7 +60,10 @@ export default function AdminCardRecommendScreen() {
         if (isRecommendMode) {
           // GET /cards/recommend?categories=... → { message, result: CardDetailResult[] }
           const res = await getRecommendedCards(tags);
-          console.log('[AdminCardRecommend] GET /cards/recommend 응답:', JSON.stringify(res, null, 2));
+          console.log(
+            '[AdminCardRecommend] GET /cards/recommend 응답:',
+            JSON.stringify(res, null, 2),
+          );
           const list = res?.result ?? [];
           cards = (Array.isArray(list) ? list : []).map(card => ({
             id: card.id,
@@ -52,7 +78,10 @@ export default function AdminCardRecommendScreen() {
         } else {
           // GET /cards → { message, result: CardListItem[] }
           const res = await getCardList();
-          console.log('[AdminCardRecommend] GET /cards 응답:', JSON.stringify(res, null, 2));
+          console.log(
+            '[AdminCardRecommend] GET /cards 응답:',
+            JSON.stringify(res, null, 2),
+          );
           const list = res?.result ?? [];
           cards = (Array.isArray(list) ? list : []).map(card => ({
             id: card.id,
@@ -98,7 +127,10 @@ export default function AdminCardRecommendScreen() {
     setDetailCard(card);
     try {
       const res = await getCardDetail(card.id);
-      console.log(`[AdminCardRecommend] GET /cards/${card.id} 응답:`, JSON.stringify(res, null, 2));
+      console.log(
+        `[AdminCardRecommend] GET /cards/${card.id} 응답:`,
+        JSON.stringify(res, null, 2),
+      );
       const d = res.result;
       setDetailCard({
         ...card,
@@ -109,7 +141,10 @@ export default function AdminCardRecommendScreen() {
         backImageUrl: d.backImageUrl || card.backImageUrl,
       });
     } catch (err) {
-      console.warn(`[AdminCardRecommend] 카드 상세 조회 실패 (id=${card.id}):`, err);
+      console.warn(
+        `[AdminCardRecommend] 카드 상세 조회 실패 (id=${card.id}):`,
+        err,
+      );
     } finally {
       setDetailLoading(false);
     }
@@ -121,7 +156,10 @@ export default function AdminCardRecommendScreen() {
       return;
     }
     const selected = allCards.find(c => c.id === selectedCardId);
-    console.log('[AdminCardRecommend] 카드 선택 완료:', { selectedCardId, name: selected?.name });
+    console.log('[AdminCardRecommend] 카드 선택 완료:', {
+      selectedCardId,
+      name: selected?.name,
+    });
     navigation.navigate('AdminCard', {
       groupId,
       groupName,
@@ -167,7 +205,9 @@ export default function AdminCardRecommendScreen() {
       <Text style={styles.pageTitle}>카드 추가 발급</Text>
       <Text style={styles.pageCaption}>{groupName}</Text>
       <Text style={styles.pageSubtitle}>
-        {isRecommendMode ? `"${tags.join(', ')}" 태그 기반 추천 카드` : '전체 카드 목록'}
+        {isRecommendMode
+          ? `"${tags.join(', ')}" 태그 기반 추천 카드`
+          : '전체 카드 목록'}
       </Text>
     </>
   );
@@ -180,10 +220,12 @@ export default function AdminCardRecommendScreen() {
           onPress={() => setVisibleCount(prev => prev + PAGE_SIZE)}
           style={styles.showMoreButton}
         >
-          <Text style={styles.showMoreText}>더보기 ({allCards.length - visibleCount}개 남음)</Text>
+          <Text style={styles.showMoreText}>
+            더보기 ({allCards.length - visibleCount}개 남음)
+          </Text>
         </TouchableOpacity>
       )}
-      <View style={{ height: 90 }} />
+      <View className="h-[90px]" />
     </>
   );
 
@@ -203,7 +245,7 @@ export default function AdminCardRecommendScreen() {
       <ScreenLayout>
         <FlatList
           data={displayCards}
-          keyExtractor={(item) => String(item.id)}
+          keyExtractor={item => String(item.id)}
           renderItem={renderItem}
           ListHeaderComponent={ListHeader}
           ListFooterComponent={ListFooter}
@@ -222,7 +264,10 @@ export default function AdminCardRecommendScreen() {
           activeOpacity={0.8}
           onPress={handleComplete}
           disabled={!selectedCardId}
-          style={[styles.completeButton, !selectedCardId && styles.completeButtonDisabled]}
+          style={[
+            styles.completeButton,
+            !selectedCardId && styles.completeButtonDisabled,
+          ]}
         >
           <Text style={styles.completeButtonText}>완료</Text>
         </TouchableOpacity>
@@ -283,33 +328,170 @@ export default function AdminCardRecommendScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 16, fontSize: 14, color: COLORS.muted, fontFamily: FONT_FAMILY.medium },
-  pageTitle: { fontSize: 22, color: COLORS.dark, fontFamily: FONT_FAMILY.bold, marginBottom: 6 },
-  pageCaption: { fontSize: 13, color: COLORS.placeholder, fontFamily: FONT_FAMILY.medium, marginBottom: 24 },
-  pageSubtitle: { fontSize: 14, color: COLORS.muted, fontFamily: FONT_FAMILY.medium, marginBottom: 16 },
-  cardItem: { borderRadius: 16, borderWidth: 2, borderColor: 'transparent', marginBottom: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 1 },
-  cardItemSelected: { borderColor: '#1428A0', shadowColor: '#1428A0', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 8, elevation: 4 },
-  cardImageWrap: { borderRadius: 14, overflow: 'hidden', backgroundColor: '#F9FAFB', padding: 8 },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  pageTitle: {
+    fontSize: 22,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
+    marginBottom: 6,
+  },
+  pageCaption: {
+    fontSize: 13,
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
+    marginBottom: 24,
+  },
+  pageSubtitle: {
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+    marginBottom: 16,
+  },
+  cardItem: {
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'transparent',
+    marginBottom: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  cardItemSelected: {
+    borderColor: '#1428A0',
+    shadowColor: '#1428A0',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  cardImageWrap: {
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#F9FAFB',
+    padding: 8,
+  },
   cardImageRow: { flexDirection: 'row', gap: 8 },
   cardImageHalf: { flex: 1, aspectRatio: 0.63 },
   emptyContainer: { alignItems: 'center', paddingVertical: 40 },
-  emptyText: { fontSize: 14, color: COLORS.placeholder, fontFamily: FONT_FAMILY.medium },
-  showMoreButton: { marginTop: 4, height: 48, borderRadius: 14, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E5E7EB', justifyContent: 'center', alignItems: 'center' },
-  showMoreText: { fontSize: 14, color: COLORS.subtle, fontFamily: FONT_FAMILY.medium },
-  fixedBottomContainer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#F0F4FF', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 24 },
-  completeButton: { height: 54, borderRadius: 16, backgroundColor: '#1428A0', justifyContent: 'center', alignItems: 'center' },
+  emptyText: {
+    fontSize: 14,
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  showMoreButton: {
+    marginTop: 4,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  showMoreText: {
+    fontSize: 14,
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  fixedBottomContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: '#F0F4FF',
+    paddingHorizontal: 16,
+    paddingTop: 12,
+    paddingBottom: 24,
+  },
+  completeButton: {
+    height: 54,
+    borderRadius: 16,
+    backgroundColor: '#1428A0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   completeButtonDisabled: { opacity: 0.4 },
-  completeButtonText: { color: COLORS.white, fontSize: 16, fontFamily: FONT_FAMILY.bold },
-  modalOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(17,24,39,0.5)', justifyContent: 'center', alignItems: 'center', padding: 24, zIndex: 999 },
-  modalCard: { width: '100%', borderRadius: 24, backgroundColor: '#FFFFFF', padding: 22 },
-  modalCardName: { fontSize: 18, color: COLORS.dark, fontFamily: FONT_FAMILY.bold, marginBottom: 16 },
+  completeButtonText: {
+    color: COLORS.white,
+    fontSize: 16,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  modalOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(17,24,39,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    zIndex: 999,
+  },
+  modalCard: {
+    width: '100%',
+    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    padding: 22,
+  },
+  modalCardName: {
+    fontSize: 18,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
+    marginBottom: 16,
+  },
   modalCardImageHalf: { flex: 1, aspectRatio: 0.63, borderRadius: 14 },
-  modalBrand: { marginTop: 14, fontSize: 13, color: COLORS.placeholder, fontFamily: FONT_FAMILY.medium },
-  modalSummary: { marginTop: 4, fontSize: 15, color: COLORS.dark, fontFamily: FONT_FAMILY.bold },
-  modalDetail: { marginTop: 8, fontSize: 14, color: COLORS.muted, fontFamily: FONT_FAMILY.medium, lineHeight: 22 },
+  modalBrand: {
+    marginTop: 14,
+    fontSize: 13,
+    color: COLORS.placeholder,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  modalSummary: {
+    marginTop: 4,
+    fontSize: 15,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.bold,
+  },
+  modalDetail: {
+    marginTop: 8,
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+    lineHeight: 22,
+  },
   modalButtonRow: { flexDirection: 'row', gap: 10, marginTop: 20 },
-  modalCloseButton: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' },
-  modalCloseText: { fontSize: 15, color: COLORS.subtle, fontFamily: FONT_FAMILY.medium },
-  modalSelectButton: { flex: 1, height: 50, borderRadius: 14, backgroundColor: '#1428A0', justifyContent: 'center', alignItems: 'center' },
-  modalSelectText: { fontSize: 15, color: COLORS.white, fontFamily: FONT_FAMILY.bold },
+  modalCloseButton: {
+    flex: 1,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: '#F3F4F6',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCloseText: {
+    fontSize: 15,
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  modalSelectButton: {
+    flex: 1,
+    height: 50,
+    borderRadius: 14,
+    backgroundColor: '#1428A0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalSelectText: {
+    fontSize: 15,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.bold,
+  },
 });

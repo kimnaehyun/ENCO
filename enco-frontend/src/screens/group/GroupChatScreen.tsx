@@ -1,8 +1,17 @@
 import { useState } from 'react';
-import { Image, KeyboardAvoidingView, Platform, Pressable, View } from 'react-native';
+import {
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  View,
+} from 'react-native';
 import Text from '@/components/typography';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 import { CommonParams } from '../../types/common';
 import { images } from '@/types/images';
 import { useChat } from '@/hooks/useChat';
@@ -10,11 +19,19 @@ import { useChatbot } from '@/hooks/useChatbot';
 import { useAuthStore } from '@/store/useAuthStore';
 import ChatInput from '@/components/groupChat/ChatInput';
 import ChatMessageList from '@/components/groupChat/ChatMessageList';
+import { GroupStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
+
+type GroupChatRouteProp = RouteProp<GroupStackParamList, 'GroupChat'>;
+type GroupChatNavigationProp = NativeStackNavigationProp<
+  GroupStackParamList,
+  'GroupChat'
+>;
 
 export default function GroupChatScreen() {
-  const route = useRoute();
-  const navigation = useNavigation<any>();
-  const params = (route.params ?? {}) as CommonParams;
+  const route = useRoute<GroupChatRouteProp>();
+  const navigation = useNavigation<GroupChatNavigationProp>();
+  const params = route.params ?? {};
 
   const groupName = params.groupName ?? '';
   const groupId = params.groupId;
@@ -35,10 +52,16 @@ export default function GroupChatScreen() {
     isLoadingOlderRef,
   } = useChat(String(groupId), userId);
 
-  const { pickMode, handleHamcoTrigger, handleActionPress, sendPickMessage, exitPickMode } = useChatbot({
+  const {
+    pickMode,
+    handleHamcoTrigger,
+    handleActionPress,
+    sendPickMessage,
+    exitPickMode,
+  } = useChatbot({
     isAdmin,
     userId,
-    groupId: groupId,
+    groupId,
     groupName,
     navigation,
     appendChatItem,

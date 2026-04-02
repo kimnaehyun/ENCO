@@ -1,13 +1,25 @@
 import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, View } from 'react-native'
-import { useFocusEffect } from '@react-navigation/native';
-import Text from '@/components/typography';;
+import {
+  ActivityIndicator,
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  View,
+} from 'react-native';
+import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import Text from '@/components/typography';
 import { getProfileImage } from '../../types/images';
 import { useAuthStore } from '../../store/useAuthStore';
 import { GetMyPage } from '../../services/userService';
 import { clearTokens, clearDeviceToken } from '../../utils/tokenStorage';
+import { RootStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-export default function MyPageScreen({ navigation }: any) {
+type MyPageNavigationProp = NativeStackNavigationProp<RootStackParamList>;
+
+export default function MyPageScreen() {
+  const navigation = useNavigation<MyPageNavigationProp>();
   const profile = useAuthStore(s => s.profile);
   const setProfile = useAuthStore(s => s.setProfile);
   const logout = useAuthStore(s => s.logout);
@@ -21,7 +33,7 @@ export default function MyPageScreen({ navigation }: any) {
         .then(({ result }) => setProfile(result))
         .catch(() => {})
         .finally(() => setLoading(false));
-    }, [setProfile])
+    }, [setProfile]),
   );
 
   const handleLogout = () => {
@@ -41,9 +53,9 @@ export default function MyPageScreen({ navigation }: any) {
 
   if (loading && !profile) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#F0F4FF', justifyContent: 'center', alignItems: 'center' }}>
+      <View className="flex-1 bg-[#F0F4FF] justify-center">
         <ActivityIndicator size="large" color="#1428A0" />
-        <Text variant="bodySm" color="muted"  style={{ marginTop: 12 }}>
+        <Text variant="bodySm" color="muted" className="mt-3">
           프로필 불러오는 중...
         </Text>
       </View>
@@ -51,60 +63,40 @@ export default function MyPageScreen({ navigation }: any) {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F0F4FF' }}>
+    <View className="flex-1 bg-[#F0F4FF]">
       <ScrollView
         contentContainerStyle={{ paddingBottom: 40 }}
         showsVerticalScrollIndicator={false}
       >
         {/* 헤더 */}
-        <View
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            paddingHorizontal: 20,
-            paddingTop: 56,
-            paddingBottom: 12,
-          }}
-        >
-          <Text variant="bodyLg" weight="bold" color="dark" >
+        <View className="px-5 pt-14 pb-3 flex-row items-center justify-between">
+          <Text variant="bodyLg" weight="bold" color="dark">
             마이페이지
           </Text>
           <Pressable onPress={() => navigation.navigate('EditMyPage')}>
-            <Text variant="bodyMd" color="brand" >
+            <Text variant="bodyMd" color="brand">
               수정
             </Text>
           </Pressable>
         </View>
 
         {/* 프로필 이미지 */}
-        <View style={{ alignItems: 'center', marginTop: 24, marginBottom: 36 }}>
-          <View
-            style={{
-              width: 120,
-              height: 120,
-              borderRadius: 60,
-              overflow: 'hidden',
-              borderWidth: 3,
-              borderColor: '#C7D2FE',
-              backgroundColor: '#EEF2FF',
-            }}
-          >
+        <View className="items-center mt-6 mb-9">
+          <View className="h-[120px] w-[120px] rounded-[60px] overflow-hidden border-[3px] border-[#C7D2FE] bg-[#EEF2FF]">
             <Image
               source={getProfileImage(profile?.profileUrl)}
-              style={{ width: '100%', height: '100%' }}
+              className="w-full h-full"
               resizeMode="cover"
             />
           </View>
           {/* 이름 표시 */}
-          <Text variant="bodyLg" weight="bold" color="dark"
-           style={{ marginTop: 16 }}>
+          <Text variant="bodyLg" weight="bold" color="dark" className="mt-4">
             {profile?.name ?? '사용자'}
           </Text>
         </View>
 
         {/* 기본 정보 섹션 */}
-        <View style={{ paddingHorizontal: 20, gap: 12 }}>
+        <View className="px-5 gap-3">
           <InfoCard title="기본정보">
             <InfoRow label="이메일" value={profile?.email ?? '-'} />
             <Divider />
@@ -112,7 +104,10 @@ export default function MyPageScreen({ navigation }: any) {
             <Divider />
             <InfoRow label="생년월일" value={profile?.birthDay ?? '-'} />
             <Divider />
-            <InfoRow label="성별" value={profile?.gender === 'M' ? '남성' : '여성'} />
+            <InfoRow
+              label="성별"
+              value={profile?.gender === 'M' ? '남성' : '여성'}
+            />
           </InfoCard>
 
           {/* 집 주소 섹션 */}
@@ -120,28 +115,23 @@ export default function MyPageScreen({ navigation }: any) {
             {profile?.address ? (
               <InfoRow label="주소" value={profile.address} />
             ) : (
-              <Text variant="bodySm" color="placeholder" align="center"
-              >
+              <Text variant="bodySm" color="placeholder" align="center">
                 등록된 주소가 없어요{'\n'}
-                <Text style={{ fontSize: 12, color: '#C7D2FE' }}>수정을 눌러 추가할 수 있어요</Text>
+                <Text variant="tiny" color="#C7D2FE">
+                  수정을 눌러 추가할 수 있어요
+                </Text>
               </Text>
             )}
           </InfoCard>
         </View>
 
         {/* 로그아웃 버튼 */}
-        <View style={{ paddingHorizontal: 20, marginTop: 32 }}>
+        <View className="mt-8 px-5">
           <Pressable
             onPress={handleLogout}
-            style={{
-              backgroundColor: '#FFD6D6',
-              borderRadius: 28,
-              height: 56,
-              justifyContent: 'center',
-              alignItems: 'center',
-            }}
+            className="bg-[#FFD6D6] rounded-[28px] h-14 justify-center items-center"
           >
-            <Text weight="bold" color='#D44' >
+            <Text weight="bold" color="#D44">
               로그아웃
             </Text>
           </Pressable>
@@ -151,15 +141,17 @@ export default function MyPageScreen({ navigation }: any) {
   );
 }
 
-function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
+function InfoCard({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) {
   return (
     <View
+      className="bg-white rounded-[20px] px-5 py-4 gap-2.5 "
       style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: 20,
-        paddingHorizontal: 20,
-        paddingVertical: 16,
-        gap: 10,
         shadowColor: '#1428A0',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.06,
@@ -167,7 +159,7 @@ function InfoCard({ title, children }: { title: string; children: React.ReactNod
         elevation: 2,
       }}
     >
-      <Text variant="caption" color="placeholder"  style={{ marginBottom: 2 }}>
+      <Text variant="caption" color="placeholder" className="mb-0.5">
         {title}
       </Text>
       {children}
@@ -177,11 +169,11 @@ function InfoCard({ title, children }: { title: string; children: React.ReactNod
 
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-      <Text variant="bodySm" color="muted" >
+    <View className="flex-row justify-between items-center">
+      <Text variant="bodySm" color="muted">
         {label}
       </Text>
-      <Text variant="bodySm" weight="bold" color="dark" >
+      <Text variant="bodySm" weight="bold" color="dark">
         {value}
       </Text>
     </View>
@@ -189,5 +181,5 @@ function InfoRow({ label, value }: { label: string; value: string }) {
 }
 
 function Divider() {
-  return <View style={{ height: 1, backgroundColor: '#F3F4F6' }} />;
+  return <View className="h-px bg-[#F3F4F6]" />;
 }

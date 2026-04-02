@@ -7,8 +7,8 @@ import {
   Alert,
 } from 'react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { Text } from 'react-native-gesture-handler';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import Text from '../../typography/Text';
 import { InteractionManager } from 'react-native';
 import PointToggleButton from '../../payment/PointToggleButton';
 import Geolocation from 'react-native-geolocation-service';
@@ -18,16 +18,26 @@ import { locationApi } from '@/services/payment/location';
 import { getGroupCards, onsiteBarcodePayment } from '@/services/paymentService';
 import { voteApi } from '@/services/payment/vote';
 import { getPoint } from '@/services/authService';
+import { RootStackParamList } from '@/types/navigation';
+import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
 
-export default function index({ groupId, isLeader = true }: { groupId: number; isLeader?: boolean }) {
-  const navigation = useNavigation();
+export default function index() {
+  const route = useRoute();
+  const { groupId, isLeader } = route.params as {
+    groupId: number;
+    isLeader: boolean;
+  };
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const [cardNumber, setCardNumber] = useState<number>(0);
   const [isGPS, setIsGPS] = useState<boolean>(false);
 
   const [latitude, setLatitude] = useState<number>(0);
   const [longitude, setLongitude] = useState<number>(0);
 
-  const [cardsInfo, setCardsInfo] = useState<any>();
+  const [cardsInfo, setCardsInfo] = useState<
+    { image: string; cardId: string | number }[]
+  >([]);
   const selectedCard = cardsInfo?.[cardNumber];
 
   const [pointUsage, setPointUsage] = useState<boolean>(true);
@@ -47,7 +57,10 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
     qrData: string;
   } | null>(null);
 
-  const [memberCount, setMemberCount] = useState<{ nearby: number; total: number } | null>(null);
+  const [memberCount, setMemberCount] = useState<{
+    nearby: number;
+    total: number;
+  } | null>(null);
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   // 최신 lat/lng를 stale closure 없이 참조하기 위한 ref
@@ -134,7 +147,10 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
         const response = await locationApi.check(groupId, lat, lng, isLeader);
         const result = response.data?.result;
         if (result) {
-          setMemberCount({ nearby: result.nearbyMemberCount, total: result.totalMemberCount });
+          setMemberCount({
+            nearby: result.nearbyMemberCount,
+            total: result.totalMemberCount,
+          });
         }
         if (result?.barcode !== null) {
           if (intervalRef.current !== null) {
@@ -181,65 +197,65 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
       const merchantName = '아웃백 스테이크하우스 명지 스타필드점'; // TODO: 실제 매장명 입력값으로 대체
       await onsiteBarcodePayment(
         barcodeInfo.barcodeNumber,
-        selectedCard.cardId,
+        Number(selectedCard.cardId),
         pointUsage,
         amount,
-        merchantName
+        merchantName,
       );
       // 결제 완료 시 스택을 PaymentSuccess만 남기고 리셋
       navigation.reset({
         index: 0,
         routes: [
-          { name: 'PaymentSuccess', params: { storeName: merchantName, amount } },
+          {
+            name: 'PaymentSuccess',
+            params: { storeName: merchantName, amount },
+          },
         ],
       });
-    } catch (error: any) {
-      console.log(error.response?.data);
-      Alert.alert(
-        '결제 실패',
-        error.response?.data?.message ?? '알 수 없는 오류',
-      );
+    } catch (error: unknown) {
+      const errorMessage = (
+        error as { response?: { data?: { message?: string } } }
+      )?.response?.data?.message;
+      console.log(errorMessage);
+      Alert.alert('결제 실패', errorMessage ?? '알 수 없는 오류');
     }
   };
 
   return (
     <View className="flex-1 gap-3">
       {/* QR + 포인트를 하나의 모듈 카드로 묶음 */}
-      <View style={{
-        backgroundColor: '#FFFFFF',
-        borderRadius: 24,
-        paddingHorizontal: 24,
-        paddingTop: 28,
-        paddingBottom: 20,
-        alignItems: 'center',
-        shadowColor: '#1428A0',
-        shadowOpacity: 0.08,
-        shadowRadius: 14,
-        shadowOffset: { width: 0, height: 4 },
-        elevation: 4,
-      }}>
+      <View
+        className="bg-white rounded-3xl px-6 pt-7 pb-5 items-center"
+        style={{
+          shadowColor: '#1428A0',
+          shadowOpacity: 0.08,
+          shadowRadius: 14,
+          shadowOffset: { width: 0, height: 4 },
+          elevation: 4,
+        }}
+      >
         {/* QR 코드 영역 */}
         {isGPS ? (
           selectedCard && barcodeInfo ? (
             <Pressable onPress={handlePayment}>
               <BarcodeQR
-                cardId={selectedCard.cardId}
+                cardId={Number(selectedCard.cardId)}
                 qrData={barcodeInfo.qrData}
               />
             </Pressable>
           ) : (
-            <View style={{ width: 210, height: 210, justifyContent: 'center', alignItems: 'center' }}>
+            <View className=" justify-center items-center w-[210px] h-[210px]">
               <ActivityIndicator size="large" />
             </View>
           )
         ) : (
-          <View style={{ width: 210, height: 210, justifyContent: 'center', alignItems: 'center' }}>
+          <View className=" justify-center items-center w-[210px] h-[210px]">
             <ActivityIndicator size="large" />
-            <Text style={{ fontFamily: 'GmarketSansTTFMedium', textAlign: 'center', marginTop: 8 }}>
+            <Text align="center" className="mt-2">
               주변 모임원 찾는 중...
             </Text>
             {memberCount && (
-              <Text style={{ fontFamily: 'GmarketSansTTFMedium', textAlign: 'center', marginTop: 4, color: '#1428A0', fontSize: 16 }}>
+              <Text align="center" color="brand" className="mt-1">
                 {memberCount.nearby} / {memberCount.total}명
               </Text>
             )}
@@ -247,13 +263,13 @@ export default function index({ groupId, isLeader = true }: { groupId: number; i
         )}
 
         {/* 구분선 */}
-        <View style={{ width: '100%', height: 1, backgroundColor: '#F0F4FF', marginVertical: 16 }} />
+        <View className="w-full bg-[#F0F4FF] my-4 h-[1px]" />
 
         {/* 포인트 영역 */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-            <Text style={{ fontSize: 16, fontFamily: 'GmarketSansTTFMedium' }}>보유 포인트</Text>
-            <Text style={{ fontSize: 16, color: '#1428A0', fontFamily: 'GmarketSansTTFMedium' }}>{point}P</Text>
+        <View className="flex-row w-full items-center justify-between">
+          <View className="flex-row items-center gap-1">
+            <Text>보유 포인트</Text>
+            <Text color="brand">{point}P</Text>
           </View>
           <PointToggleButton
             pointUsage={pointUsage}

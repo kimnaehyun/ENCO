@@ -12,19 +12,21 @@ import {
 } from 'react-native';
 import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import {
+  RouteProp,
   useFocusEffect,
   useNavigation,
   useRoute,
 } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { CommonParams } from '../../types/common';
 import {
   getGroupDashboardReport,
   getGroupTransactions,
-  GroupTransactionItem,
 } from '../../services/paymentService';
 import { generatePDF } from 'react-native-html-to-pdf';
 import RNFS from 'react-native-fs';
+import { NativeStackNavigationProp } from 'node_modules/@react-navigation/native-stack/lib/typescript/src/types';
+import { GroupStackParamList } from '@/types/navigation';
+import { GroupTransactionItem } from '@/types/payment';
 
 // ─── helpers ───
 function formatMoney(n: number) {
@@ -65,13 +67,29 @@ type LedgerStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELED';
 function getTransactionStatusMeta(status?: LedgerStatus) {
   switch (status) {
     case 'PENDING':
-      return { label: '진행중', backgroundColor: '#F59E0B', textColor: '#FFFFFF' };
+      return {
+        label: '진행중',
+        backgroundColor: '#F59E0B',
+        textColor: '#FFFFFF',
+      };
     case 'REJECTED':
-      return { label: '거절', backgroundColor: '#EF4444', textColor: '#FFFFFF' };
+      return {
+        label: '거절',
+        backgroundColor: '#EF4444',
+        textColor: '#FFFFFF',
+      };
     case 'CANCELED':
-      return { label: '취소', backgroundColor: '#9CA3AF', textColor: '#FFFFFF' };
+      return {
+        label: '취소',
+        backgroundColor: '#9CA3AF',
+        textColor: '#FFFFFF',
+      };
     case 'APPROVED':
-      return { label: '완료', backgroundColor: '#1428A0', textColor: '#FFFFFF' };
+      return {
+        label: '완료',
+        backgroundColor: '#1428A0',
+        textColor: '#FFFFFF',
+      };
     default:
       return null;
   }
@@ -244,10 +262,16 @@ type PeriodPreset = '1m' | '3m' | 'custom';
 type SortOrder = 'latest' | 'oldest';
 type TxFilter = 'all' | 'deposit' | 'withdraw';
 
+type GroupLedgerRouteProp = RouteProp<GroupStackParamList, 'GroupLedger'>;
+type GroupLedgerNavigationProp = NativeStackNavigationProp<
+  GroupStackParamList,
+  'GroupLedger'
+>;
+
 export default function GroupLedgerScreen() {
-  const navigation = useNavigation<any>();
-  const route = useRoute();
-  const params = (route.params ?? {}) as CommonParams;
+  const navigation = useNavigation<GroupLedgerNavigationProp>();
+  const route = useRoute<GroupLedgerRouteProp>();
+  const params = route.params ?? {};
   const groupName = params.groupName ?? '모임명';
   const isAdmin = !!params.isAdmin;
   const groupId = params.groupId ?? '';
@@ -268,10 +292,16 @@ export default function GroupLedgerScreen() {
       setBalance(result.balance ?? 0);
       setPaidAmount(result.paidAmount ?? 0);
       setPointAmount(result.pointAmount ?? 0);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('모임비 대시보드 조회 실패:', error);
-      console.error('error.response?.status:', error?.response?.status);
-      console.error('error.response?.data:', error?.response?.data);
+      console.error(
+        'error.response?.status:',
+        (error as { response?: { status?: number } })?.response?.status,
+      );
+      console.error(
+        'error.response?.data:',
+        (error as { response?: { data?: unknown } })?.response?.data,
+      );
     }
   }, [groupId]);
 
@@ -295,7 +325,7 @@ export default function GroupLedgerScreen() {
       setTransactions(result.result.items);
       setNextCursor(result.result.nextCursor);
       setHasNext(result.result.hasNext);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[GroupTransactions] failed:', error);
       setTransactionError('거래내역을 불러오지 못했습니다.');
     } finally {
@@ -460,7 +490,11 @@ export default function GroupLedgerScreen() {
         const signedAmount = isDeposit ? amount : -amount;
         const txDate = toSafeDateText(it.transactionDate);
         const balanceAfter = toSafeNumber(it.balanceAfter);
-        const amountColor = isPoint ? '#F59E0B' : isDeposit ? '#1428A0' : '#EF4444';
+        const amountColor = isPoint
+          ? '#F59E0B'
+          : isDeposit
+            ? '#1428A0'
+            : '#EF4444';
         return `
         <tr>
           <td style="padding:10px 12px; border-bottom:1px solid #E5E7EB; font-size:13px; color:#6B7280;">${txDate}</td>
@@ -565,7 +599,7 @@ export default function GroupLedgerScreen() {
       } else {
         Alert.alert('저장 완료', `PDF가 저장되었습니다.\n${pdfFileName}`);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('PDF 생성 실패:', err);
       Alert.alert('오류', 'PDF 생성에 실패했습니다. 다시 시도해주세요.');
     }
@@ -691,7 +725,9 @@ export default function GroupLedgerScreen() {
                   : null;
               const directionMeta = getDirectionMeta(it.type);
               const isInactiveTransaction =
-                it.referenceType === 'TRANSACTION' && it.status && it.status !== 'APPROVED';
+                it.referenceType === 'TRANSACTION' &&
+                it.status &&
+                it.status !== 'APPROVED';
               const amount = toSafeNumber(it.amount);
               const signedAmount = isDeposit ? amount : -amount;
               const txDate = toSafeDateText(it.transactionDate);
@@ -832,9 +868,9 @@ export default function GroupLedgerScreen() {
                               ? '#9CA3AF'
                               : it.referenceType === 'POINT'
                                 ? '#F59E0B'
-                              : isDeposit
-                                ? '#1428A0'
-                                : '#EF4444',
+                                : isDeposit
+                                  ? '#1428A0'
+                                  : '#EF4444',
                           },
                         ]}
                       >

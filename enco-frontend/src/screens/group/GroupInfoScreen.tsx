@@ -1,20 +1,26 @@
 // src/screens/group/GroupInfoScreen.tsx
 import React, { useEffect, useState } from 'react';
-import { Alert, Image, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
-import { useNavigation, useRoute } from '@react-navigation/native';
+import {
+  Alert,
+  Image,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+  View,
+} from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
+import { RouteProp, useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
-import { CommonParams } from '../../types/common';
 import {
   getGroupSettings,
   updateGroupSettings,
   getGroupMembers,
   type GroupMember,
 } from '../../services/groupService';
-import {
-  getGroupCards,
-  type GroupCardItem,
-} from '../../services/paymentService';
+import { getGroupCards } from '../../services/paymentService';
+import { GroupStackParamList } from '@/types/navigation';
+import { GroupCardItem } from '@/types/payment';
 
 const TAGS = ['여행', '스포츠', '문화생활', '경조사', '공과금', '음식'];
 
@@ -34,6 +40,8 @@ type IssuedCardUI = {
   backImage: { uri: string };
   isBasic: boolean;
 };
+
+type GroupInfoRouteProp = RouteProp<GroupStackParamList, 'GroupInfo'>;
 
 function InfoRow({
   label,
@@ -58,10 +66,24 @@ type DuesState = {
   rate: string;
 };
 
+type GroupSettingsResult = {
+  duePolicy?: {
+    dayOfMonth?: number;
+    amount?: number;
+    monthlyFee?: number;
+    voteCriteria?: number;
+  };
+  policy?: {
+    dayOfMonth?: number;
+    amount?: number;
+    monthlyFee?: number;
+    voteCriteria?: number;
+  };
+};
+
 export default function GroupInfoScreen() {
-  const navigation = useNavigation();
-  const route = useRoute();
-  const params = (route.params ?? {}) as CommonParams;
+  const route = useRoute<GroupInfoRouteProp>();
+  const params = route.params ?? {};
 
   const isAdmin = !!params.isAdmin;
   const groupId = params.groupId;
@@ -106,13 +128,11 @@ export default function GroupInfoScreen() {
         // createdAt 포맷: 'YYYY-MM-DDTHH:...' → 'YYYY.M.D'
         if (result.createdAt) {
           const d = new Date(result.createdAt);
-          setCreatedAt(
-            `${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`
-          );
+          setCreatedAt(`${d.getFullYear()}.${d.getMonth() + 1}.${d.getDate()}`);
         }
 
         // GET 응답 필드명이 duePolicy / policy 두 가지일 수 있으므로 방어적으로 읽음
-        const rawResult = result as any;
+        const rawResult = result as GroupSettingsResult;
         const policyData = rawResult.duePolicy ?? rawResult.policy;
         if (policyData) {
           setDues(prev => ({
@@ -132,17 +152,19 @@ export default function GroupInfoScreen() {
         console.log('모임 카드 목록 조회 성공:', cardsData);
         console.log('카드 배열:', cardsData.result);
 
-        const mappedCards: IssuedCardUI[] = cardsData.result.map((card: GroupCardItem) => ({
-          id: String(card.cardId),
-          name: card.cardName,
-          image: {
-            uri: card.frontCardImageUrl.replace(/^http:\/\//, 'https://'),
-          },
-          backImage: {
-            uri: card.backCardImageUrl.replace(/^http:\/\//, 'https://'),
-          },
-          isBasic: card.isBasic,
-        }));
+        const mappedCards: IssuedCardUI[] = cardsData.result.map(
+          (card: GroupCardItem) => ({
+            id: String(card.cardId),
+            name: card.cardName,
+            image: {
+              uri: card.frontCardImageUrl.replace(/^http:\/\//, 'https://'),
+            },
+            backImage: {
+              uri: card.backCardImageUrl.replace(/^http:\/\//, 'https://'),
+            },
+            isBasic: card.isBasic,
+          }),
+        );
 
         setIssuedCards(mappedCards);
 
@@ -152,12 +174,24 @@ export default function GroupInfoScreen() {
         } else if (mappedCards.length > 0) {
           setRepresentativeCardId(mappedCards[0].id);
         }
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('조회 실패 전체:', error);
-        console.error('error.message:', error?.message);
-        console.error('error.response?.status:', error?.response?.status);
-        console.error('error.response?.data:', error?.response?.data);
-        console.error('error.config?.url:', error?.config?.url);
+        console.error(
+          'error.message:',
+          (error as { message?: string }).message,
+        );
+        console.error(
+          'error.response?.status:',
+          (error as { response?: { status?: number } }).response?.status,
+        );
+        console.error(
+          'error.response?.data:',
+          (error as { response?: { data?: unknown } }).response?.data,
+        );
+        console.error(
+          'error.config?.url:',
+          (error as { config?: { url?: string } }).config?.url,
+        );
       }
     };
 
@@ -178,7 +212,10 @@ export default function GroupInfoScreen() {
       },
       groundRule: groundRules,
     };
-    console.log('[GroupInfo] updateGroupSettings requestBody:', JSON.stringify(body, null, 2));
+    console.log(
+      '[GroupInfo] updateGroupSettings requestBody:',
+      JSON.stringify(body, null, 2),
+    );
     return body;
   };
 
@@ -202,13 +239,11 @@ export default function GroupInfoScreen() {
         Alert.alert('저장', '모임 설정이 저장되었습니다.', [
           { text: '확인', onPress: () => setIsEdit(false) },
         ]);
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('모임 설정 수정 실패:', error);
-        console.error('error.response?.data:', error?.response?.data);
-
-        Alert.alert(
-          '오류',
-          error?.response?.data?.message ?? '모임 설정 저장 중 오류가 발생했습니다.',
+        console.error(
+          'error.response?.data:',
+          (error as { response?: { data?: unknown } })?.response?.data,
         );
       }
 
@@ -225,7 +260,6 @@ export default function GroupInfoScreen() {
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
       >
-
         {/* 헤더 */}
         <View className="flex-row items-center justify-between mb-5">
           <Text style={styles.headerTitle}>모임 정보</Text>
@@ -234,10 +268,18 @@ export default function GroupInfoScreen() {
               {isEdit && (
                 <Pressable
                   onPress={() => {
-                    Alert.alert('확인', '수정 중인 내용이 있습니다. 취소할까요?', [
-                      { text: '아니오', style: 'cancel' },
-                      { text: '취소', style: 'destructive', onPress: () => setIsEdit(false) },
-                    ]);
+                    Alert.alert(
+                      '확인',
+                      '수정 중인 내용이 있습니다. 취소할까요?',
+                      [
+                        { text: '아니오', style: 'cancel' },
+                        {
+                          text: '취소',
+                          style: 'destructive',
+                          onPress: () => setIsEdit(false),
+                        },
+                      ],
+                    );
                   }}
                   hitSlop={12}
                 >
@@ -282,7 +324,8 @@ export default function GroupInfoScreen() {
                       className="rounded-2xl px-3 py-1"
                       style={[
                         styles.tagButtonEdit,
-                        selectedTags.includes(tag) && styles.tagButtonEditActive,
+                        selectedTags.includes(tag) &&
+                          styles.tagButtonEditActive,
                       ]}
                     >
                       <Text
@@ -386,7 +429,10 @@ export default function GroupInfoScreen() {
         </View>
 
         {/* 그라운드룰 카드 */}
-        <View className="bg-white rounded-3xl px-6 py-5 mb-4" style={styles.card}>
+        <View
+          className="bg-white rounded-3xl px-6 py-5 mb-4"
+          style={styles.card}
+        >
           <Text style={styles.sectionTitle}>그라운드룰</Text>
           {isEdit ? (
             <TextInput
@@ -413,7 +459,9 @@ export default function GroupInfoScreen() {
 
           {isEdit ? (
             issuedCards.length === 0 ? (
-              <Text style={styles.groundRulesText}>발급된 카드가 없습니다.</Text>
+              <Text style={styles.groundRulesText}>
+                발급된 카드가 없습니다.
+              </Text>
             ) : (
               <View style={styles.cardListContainer}>
                 {issuedCards.map(card => {
@@ -449,28 +497,29 @@ export default function GroupInfoScreen() {
                 })}
               </View>
             )
+          ) : representativeCard ? (
+            <View style={styles.cardImageRow}>
+              <Image
+                source={representativeCard.image}
+                style={styles.repCardImageHalf}
+                resizeMode="contain"
+              />
+              <Image
+                source={representativeCard.backImage}
+                style={styles.repCardImageHalf}
+                resizeMode="contain"
+              />
+            </View>
           ) : (
-            representativeCard ? (
-              <View style={styles.cardImageRow}>
-                <Image
-                  source={representativeCard.image}
-                  style={styles.repCardImageHalf}
-                  resizeMode="contain"
-                />
-                <Image
-                  source={representativeCard.backImage}
-                  style={styles.repCardImageHalf}
-                  resizeMode="contain"
-                />
-              </View>
-            ) : (
-              <Text style={styles.groundRulesText}>발급된 카드가 없습니다.</Text>
-            )
+            <Text style={styles.groundRulesText}>발급된 카드가 없습니다.</Text>
           )}
         </View>
 
         {/* 모임원 목록 테스트 */}
-        <View className="bg-white rounded-3xl px-6 py-5 mt-4" style={styles.card}>
+        <View
+          className="bg-white rounded-3xl px-6 py-5 mt-4"
+          style={styles.card}
+        >
           <Text style={styles.sectionTitle}>모임원 목록</Text>
 
           {members.length === 0 ? (
@@ -494,7 +543,6 @@ export default function GroupInfoScreen() {
   );
 }
 
-
 const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 32 },
   infoRowContent: { flex: 1 },
@@ -506,46 +554,181 @@ const styles = StyleSheet.create({
   cardItemSelected: { borderColor: '#1428A0' },
 
   // 헤더
-  headerTitle: { fontSize: 20, fontFamily: FONT_FAMILY.bold, color: COLORS.dark },
-  cancelText: { fontSize: 14, color: COLORS.muted, fontFamily: FONT_FAMILY.medium },
-  editText: { fontSize: 14, color: COLORS.brand, fontFamily: FONT_FAMILY.medium },
+  headerTitle: {
+    fontSize: 20,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+  },
+  cancelText: {
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  editText: {
+    fontSize: 14,
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.medium,
+  },
 
   // 공통 카드 그림자
-  card: { shadowColor: '#1428A0', shadowOpacity: 0.06, shadowRadius: 12, elevation: 2 },
+  card: {
+    shadowColor: '#1428A0',
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 2,
+  },
 
   // InfoRow
-  infoLabel: { width: 80, fontSize: 14, color: COLORS.muted, fontFamily: FONT_FAMILY.medium },
-  groupNameText: { fontSize: 18, fontFamily: FONT_FAMILY.bold, color: COLORS.dark, textAlign: 'right' },
-  introText: { fontSize: 14, color: COLORS.dark, fontFamily: FONT_FAMILY.medium, textAlign: 'right' },
-  infoValueText: { fontSize: 14, color: COLORS.dark, fontFamily: FONT_FAMILY.medium, textAlign: 'right' },
+  infoLabel: {
+    width: 80,
+    fontSize: 14,
+    color: COLORS.muted,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  groupNameText: {
+    fontSize: 18,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+    textAlign: 'right',
+  },
+  introText: {
+    fontSize: 14,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
+    textAlign: 'right',
+  },
+  infoValueText: {
+    fontSize: 14,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
+    textAlign: 'right',
+  },
 
   // 태그
   tagText: { fontSize: 13, fontFamily: FONT_FAMILY.medium },
   tagInactive: { backgroundColor: '#F3F4F6' },
-  tagTextInactive: { fontSize: 13, color: COLORS.subtle, fontFamily: FONT_FAMILY.medium },
+  tagTextInactive: {
+    fontSize: 13,
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
+  },
 
   // 회비
-  duesValue: { flex: 1, fontSize: 13, color: COLORS.dark, fontFamily: FONT_FAMILY.medium, textAlign: 'right' },
-  inputRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8, marginBottom: 10 },
-  inputRowLast: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 8 },
-  inputPill: { backgroundColor: '#E5E7EB', borderRadius: 50, paddingHorizontal: 20, height: 32, justifyContent: 'center', alignItems: 'center', minWidth: 80 },
-  inputPillWide: { backgroundColor: '#E5E7EB', borderRadius: 50, paddingHorizontal: 20, height: 32, justifyContent: 'center', alignItems: 'center', minWidth: 120 },
-  pillInput: { width: '100%', fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', paddingVertical: 0, includeFontPadding: false },
-  pillInputCompact: { width: '100%', fontSize: 16, color: COLORS.brand, fontFamily: FONT_FAMILY.medium, textAlign: 'center', padding: 0 },
+  duesValue: {
+    flex: 1,
+    fontSize: 13,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
+    textAlign: 'right',
+  },
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
+    marginBottom: 10,
+  },
+  inputRowLast: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: 8,
+  },
+  inputPill: {
+    backgroundColor: '#E5E7EB',
+    borderRadius: 50,
+    paddingHorizontal: 20,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 80,
+  },
+  inputPillWide: {
+    backgroundColor: '#E5E7EB',
+    borderRadius: 50,
+    paddingHorizontal: 20,
+    height: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    minWidth: 120,
+  },
+  pillInput: {
+    width: '100%',
+    fontSize: 16,
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.medium,
+    textAlign: 'center',
+    paddingVertical: 0,
+    includeFontPadding: false,
+  },
+  pillInputCompact: {
+    width: '100%',
+    fontSize: 16,
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.medium,
+    textAlign: 'center',
+    padding: 0,
+  },
   unitText: { fontSize: 13, color: '#000', fontFamily: FONT_FAMILY.medium },
 
   // 그라운드룰
-  sectionTitle: { fontSize: 15, fontFamily: FONT_FAMILY.bold, color: COLORS.dark, marginBottom: 12 },
-  groundRulesInput: { fontSize: 14, color: COLORS.dark, fontFamily: FONT_FAMILY.medium, lineHeight: 22, textAlignVertical: 'top', minHeight: 100, backgroundColor: '#F9FAFB', borderRadius: 12, padding: 12 },
-  groundRulesText: { fontSize: 14, color: COLORS.subtle, fontFamily: FONT_FAMILY.medium, lineHeight: 24 },
+  sectionTitle: {
+    fontSize: 15,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+    marginBottom: 12,
+  },
+  groundRulesInput: {
+    fontSize: 14,
+    color: COLORS.dark,
+    fontFamily: FONT_FAMILY.medium,
+    lineHeight: 22,
+    textAlignVertical: 'top',
+    minHeight: 100,
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 12,
+  },
+  groundRulesText: {
+    fontSize: 14,
+    color: COLORS.subtle,
+    fontFamily: FONT_FAMILY.medium,
+    lineHeight: 24,
+  },
 
   // 카드 섹션
-  cardSectionTitle: { fontSize: 15, fontFamily: FONT_FAMILY.bold, color: COLORS.dark },
-  cardHintText: { fontSize: 12, color: COLORS.brand, fontFamily: FONT_FAMILY.medium },
-  cardItem: { borderRadius: 16, borderWidth: 2, overflow: 'hidden', padding: 8, backgroundColor: '#F9FAFB' },
+  cardSectionTitle: {
+    fontSize: 15,
+    fontFamily: FONT_FAMILY.bold,
+    color: COLORS.dark,
+  },
+  cardHintText: {
+    fontSize: 12,
+    color: COLORS.brand,
+    fontFamily: FONT_FAMILY.medium,
+  },
+  cardItem: {
+    borderRadius: 16,
+    borderWidth: 2,
+    overflow: 'hidden',
+    padding: 8,
+    backgroundColor: '#F9FAFB',
+  },
   cardImageRow: { flexDirection: 'row', gap: 8 },
   cardImageHalf: { flex: 1, aspectRatio: 0.63, borderRadius: 12 },
-  repBadge: { position: 'absolute', top: 10, right: 10, backgroundColor: '#1428A0', borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4 },
-  repBadgeText: { fontSize: 11, color: COLORS.white, fontFamily: FONT_FAMILY.medium },
+  repBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: '#1428A0',
+    borderRadius: 20,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  repBadgeText: {
+    fontSize: 11,
+    color: COLORS.white,
+    fontFamily: FONT_FAMILY.medium,
+  },
   repCardImageHalf: { flex: 1, aspectRatio: 0.63, borderRadius: 16 },
 });

@@ -1,16 +1,26 @@
 // src/screens/admin/AdminSendAlertScreen.tsx
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, Modal, Pressable, ScrollView, StyleSheet, View, Image } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
+import {
+  ActivityIndicator,
+  Alert,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  View,
+  Image,
+} from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import { useRoute } from '@react-navigation/native';
 import ScreenLayout from '../../components/ScreenLayout';
 import { CommonParams } from '../../types/common';
-import { sendDuesReminder, sendDuesReminderAll } from '../../services/receiptService';
 import {
-  getGroupPaymentStatus,
-  type PaymentStatusMember,
-} from '../../services/paymentService';
+  sendDuesReminder,
+  sendDuesReminderAll,
+} from '../../services/receiptService';
+import { getGroupPaymentStatus } from '../../services/paymentService';
 import { getProfileImage } from '../../types/images';
+import { PaymentStatusMember } from '@/types/payment';
 
 const formatKRW = (n: number) =>
   `₩ ${n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',')}`;
@@ -33,11 +43,25 @@ export default function AdminSendAlertScreen() {
       const res = await getGroupPaymentStatus(groupId);
       setUnpaidMembers(res.result.unpaidMembers);
       setPaidMembers(res.result.paidMembers);
-    } catch (err: any) {
-      console.log('[AdminSendAlert] groupId:', groupId);
-      console.log('[AdminSendAlert] request URL:', `/groups/${groupId}/members/payment-status`);
-      console.log('[AdminSendAlert] status:', err?.response?.status);
-      console.log('[AdminSendAlert] error:', JSON.stringify(err?.response?.data ?? err?.message, null, 2));
+    } catch (err: unknown) {
+      console.error('[AdminSendAlert] groupId:', groupId);
+      console.error(
+        '[AdminSendAlert] request URL:',
+        `/groups/${groupId}/members/payment-status`,
+      );
+      console.error(
+        '[AdminSendAlert] status:',
+        (err as { response?: { status?: number } })?.response?.status,
+      );
+      console.error(
+        '[AdminSendAlert] error:',
+        JSON.stringify(
+          (err as { response?: { data?: unknown } })?.response?.data ??
+            (err as { message?: string }).message,
+          null,
+          2,
+        ),
+      );
       Alert.alert('오류', '납부 현황을 불러오지 못했습니다.');
     } finally {
       setLoading(false);
@@ -64,7 +88,9 @@ export default function AdminSendAlertScreen() {
 
   const onSendAlert = (member: PaymentStatusMember) => {
     setModalMode('confirm');
-    setModalMessage(`${member.name}님에게 ${formatKRW(member.unpaidAmount)} 입금 요청 알림을 보냅니다.`);
+    setModalMessage(
+      `${member.name}님에게 ${formatKRW(member.unpaidAmount)} 입금 요청 알림을 보냅니다.`,
+    );
     setPendingAction(() => async () => {
       try {
         await sendDuesReminder(groupId, member.userId);
@@ -73,7 +99,10 @@ export default function AdminSendAlertScreen() {
         setModalMessage(`${member.name}님에게 알림을 전송했습니다.`);
       } catch {
         closeModal();
-        Alert.alert('전송 실패', '알림 전송에 실패했습니다. 다시 시도해주세요.');
+        Alert.alert(
+          '전송 실패',
+          '알림 전송에 실패했습니다. 다시 시도해주세요.',
+        );
       }
     });
     setModalVisible(true);
@@ -100,13 +129,21 @@ export default function AdminSendAlertScreen() {
         setModalMessage(`미납자 ${unsent.length}명에게 알림을 전송했습니다.`);
       } catch {
         closeModal();
-        Alert.alert('전송 실패', '알림 전송에 실패했습니다. 다시 시도해주세요.');
+        Alert.alert(
+          '전송 실패',
+          '알림 전송에 실패했습니다. 다시 시도해주세요.',
+        );
       }
     });
     setModalVisible(true);
   };
 
-  const renderMemberCard = (member: PaymentStatusMember, index: number, isLast: boolean, isUnpaid: boolean) => {
+  const renderMemberCard = (
+    member: PaymentStatusMember,
+    index: number,
+    isLast: boolean,
+    isUnpaid: boolean,
+  ) => {
     const isSent = sentIds.has(member.userId);
 
     return (
@@ -130,8 +167,18 @@ export default function AdminSendAlertScreen() {
           <View style={styles.memberInfo}>
             <View style={styles.nameRow}>
               <Text style={styles.memberName}>{member.name}</Text>
-              <View style={[styles.badge, isUnpaid ? styles.badgeUnpaid : styles.badgePaid]}>
-                <Text style={[styles.badgeText, isUnpaid ? styles.badgeUnpaidText : styles.badgePaidText]}>
+              <View
+                style={[
+                  styles.badge,
+                  isUnpaid ? styles.badgeUnpaid : styles.badgePaid,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.badgeText,
+                    isUnpaid ? styles.badgeUnpaidText : styles.badgePaidText,
+                  ]}
+                >
                   {isUnpaid ? '미납' : '납부 완료'}
                 </Text>
               </View>
@@ -150,7 +197,12 @@ export default function AdminSendAlertScreen() {
               disabled={isSent}
               style={[styles.sendBadge, isSent && styles.sendBadgeSent]}
             >
-              <Text style={[styles.sendBadgeText, isSent && styles.sendBadgeTextSent]}>
+              <Text
+                style={[
+                  styles.sendBadgeText,
+                  isSent && styles.sendBadgeTextSent,
+                ]}
+              >
                 {isSent ? '전송됨' : '전송'}
               </Text>
             </Pressable>
@@ -163,7 +215,7 @@ export default function AdminSendAlertScreen() {
   if (loading) {
     return (
       <ScreenLayout>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color="#1428A0" />
         </View>
       </ScreenLayout>
@@ -186,7 +238,9 @@ export default function AdminSendAlertScreen() {
           </View>
 
           <View style={styles.countBadge}>
-            <Text style={styles.countBadgeText}>미납 {unpaidMembers.length}명</Text>
+            <Text style={styles.countBadgeText}>
+              미납 {unpaidMembers.length}명
+            </Text>
           </View>
         </View>
 
@@ -196,32 +250,45 @@ export default function AdminSendAlertScreen() {
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>미납자</Text>
               <View style={styles.sectionCountPill}>
-                <Text style={styles.sectionCountText}>{unpaidMembers.length}</Text>
+                <Text style={styles.sectionCountText}>
+                  {unpaidMembers.length}
+                </Text>
               </View>
             </View>
 
             {unpaidMembers.map((member, index) =>
-              renderMemberCard(member, index, index === unpaidMembers.length - 1, true),
+              renderMemberCard(
+                member,
+                index,
+                index === unpaidMembers.length - 1,
+                true,
+              ),
             )}
           </View>
         )}
 
         {/* 납부 완료 섹션 */}
         {paidMembers.length > 0 && (
-          <View style={[styles.sectionCard, { marginTop: 16 }]}>
+          <View className="mt-4" style={[styles.sectionCard]}>
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>납부 완료</Text>
-              <View style={[styles.sectionCountPill, { backgroundColor: '#DCFCE7' }]}>
-                <Text style={[styles.sectionCountText, { color: '#16A34A' }]}>{paidMembers.length}</Text>
+              <View className="bg-[#DCFCE7]" style={[styles.sectionCountPill]}>
+                <Text color="#16A34A" style={[styles.sectionCountText]}>
+                  {paidMembers.length}
+                </Text>
               </View>
             </View>
 
             {paidMembers.map((member, index) =>
-              renderMemberCard(member, index, index === paidMembers.length - 1, false),
+              renderMemberCard(
+                member,
+                index,
+                index === paidMembers.length - 1,
+                false,
+              ),
             )}
           </View>
         )}
-
       </ScrollView>
 
       {/* 하단 일괄 전송 버튼 */}
@@ -268,7 +335,10 @@ export default function AdminSendAlertScreen() {
 
             {modalMode === 'confirm' ? (
               <View style={styles.modalButtonRow}>
-                <Pressable onPress={closeModal} style={styles.modalCancelButton}>
+                <Pressable
+                  onPress={closeModal}
+                  style={styles.modalCancelButton}
+                >
                   <Text style={styles.modalCancelText}>취소</Text>
                 </Pressable>
                 <Pressable

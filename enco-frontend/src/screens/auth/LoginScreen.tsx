@@ -31,7 +31,10 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
 
       // accessToken 저장
       if (response.result?.accessToken) {
-        console.log('[Login] Bearer token:', `Bearer ${response.result.accessToken}`);
+        console.log(
+          '[Login] Bearer token:',
+          `Bearer ${response.result.accessToken}`,
+        );
         await saveTokens(response.result.accessToken, '');
       }
 
@@ -51,10 +54,10 @@ export default function LoginScreen({ navigation }: AuthScreenProps<'Login'>) {
         },
         r.id,
       );
-    } catch (err: any) {
+    } catch (err: unknown) {
       const message =
-        err?.response?.data?.message ||
-        '로그인에 실패했습니다. 다시 시도해주세요.';
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message || '로그인에 실패했습니다. 다시 시도해주세요.';
       Alert.alert('로그인 실패', message);
       setResetKey(prev => prev + 1);
     } finally {

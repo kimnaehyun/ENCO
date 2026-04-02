@@ -175,7 +175,7 @@ export default function InputInfoScreen({
                         }`}
                       >
                         <Text
-                          style={{ fontSize: 18 }}
+                          className="text-lg"
                           color={gender === g ? 'white' : 'subtle'}
                         >
                           {g === 'M' ? '남성' : '여성'}
@@ -199,11 +199,8 @@ export default function InputInfoScreen({
                         <Pressable
                           key={num}
                           onPress={() => handleProfileSelect(num)}
+                          className="w-16 h-16 rounded-[32px] overflow-hidden"
                           style={{
-                            width: 64,
-                            height: 64,
-                            borderRadius: 32,
-                            overflow: 'hidden',
                             borderWidth: sel ? 3 : 2,
                             borderColor: sel ? '#1428A0' : '#D1D5DB',
                             backgroundColor: sel ? '#EEF2FF' : '#FFFFFF',
@@ -211,7 +208,7 @@ export default function InputInfoScreen({
                         >
                           <Image
                             source={getProfileImage(num)}
-                            style={{ width: '100%', height: '100%' }}
+                            className="w-full h-full"
                             resizeMode="cover"
                           />
                         </Pressable>

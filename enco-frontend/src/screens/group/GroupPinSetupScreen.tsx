@@ -1,44 +1,44 @@
-import { useState } from "react";
-import { Alert, StyleSheet, View } from "react-native"
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
-import PinEntry from "../../components/pin/PinEntry";
-import { NativeStackScreenProps } from "@react-navigation/native-stack";
-import { RootStackParamList } from "../../types/navigation";
-import { createGroup } from "../../services/authService";
-import { getMyGroups } from "../../services/groupService";
-import { useAuthStore } from "../../store/useAuthStore";
+import { useState } from 'react';
+import { Alert, StyleSheet, View } from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
+import PinEntry from '../../components/pin/PinEntry';
+import { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { RootStackParamList } from '../../types/navigation';
+import { createGroup } from '../../services/authService';
+import { getMyGroups } from '../../services/groupService';
+import { useAuthStore } from '../../store/useAuthStore';
 
-type Props = NativeStackScreenProps<RootStackParamList, "GroupPinSetup">;
+type Props = NativeStackScreenProps<RootStackParamList, 'GroupPinSetup'>;
 
 export default function GroupPinSetupScreen({ route, navigation }: Props) {
-  const { groupName, address, tags, selectedCardId } = route.params;
+  const { groupName, tags, selectedCardId } = route.params;
   const profile = useAuthStore(s => s.profile);
   const user = useAuthStore(s => s.user);
 
-  const [step, setStep] = useState<"set" | "confirm">("set");
+  const [step, setStep] = useState<'set' | 'confirm'>('set');
   const [firstPin, setFirstPin] = useState<string | null>(null);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [resetKey, setResetKey] = useState(0);
   const [submitting, setSubmitting] = useState(false);
 
-  const resetPinEntry = () => setResetKey((k) => k + 1);
+  const resetPinEntry = () => setResetKey(k => k + 1);
 
   const handleComplete = async (pin: string) => {
-    if (step === "set") {
+    if (step === 'set') {
       setFirstPin(pin);
-      setError("");
-      setStep("confirm");
+      setError('');
+      setStep('confirm');
       resetPinEntry();
       return;
     }
 
     if (pin !== firstPin) {
-      setError("비밀번호가 맞지 않아요");
+      setError('비밀번호가 맞지 않아요');
       resetPinEntry();
       return;
     }
 
-    setError("");
+    setError('');
 
     // ── createGroup API 호출 ──
     setSubmitting(true);
@@ -50,10 +50,16 @@ export default function GroupPinSetupScreen({ route, navigation }: Props) {
         cardProductId: Number(selectedCardId),
         password: pin,
       };
-      console.log('[GroupPinSetup] POST /groups/account 요청:', JSON.stringify(payload, null, 2));
+      console.log(
+        '[GroupPinSetup] POST /groups/account 요청:',
+        JSON.stringify(payload, null, 2),
+      );
 
       const res = await createGroup(payload);
-      console.log('[GroupPinSetup] POST /groups/account 응답:', JSON.stringify(res, null, 2));
+      console.log(
+        '[GroupPinSetup] POST /groups/account 응답:',
+        JSON.stringify(res, null, 2),
+      );
 
       const { groupId, groupName: resGroupName } = res.result;
 
@@ -70,16 +76,16 @@ export default function GroupPinSetupScreen({ route, navigation }: Props) {
         index: 0,
         routes: [
           {
-            name: "App",
+            name: 'App',
             state: {
               routes: [
                 {
-                  name: "HomeTab",
+                  name: 'HomeTab',
                   state: {
                     routes: [
-                      { name: "Home" },
+                      { name: 'Home' },
                       {
-                        name: "GroupDashboard",
+                        name: 'GroupDashboard',
                         params: {
                           groupId: String(groupId),
                           groupName: resGroupName,
@@ -94,13 +100,14 @@ export default function GroupPinSetupScreen({ route, navigation }: Props) {
           },
         ],
       });
-    } catch (err: any) {
-      console.warn("[GroupPinSetup] 모임통장 개설 실패:", err);
+    } catch (err: unknown) {
+      console.warn('[GroupPinSetup] 모임통장 개설 실패:', err);
       const message =
-        err?.response?.data?.message ?? "모임통장 개설에 실패했습니다. 다시 시도해주세요.";
-      Alert.alert("개설 실패", message);
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? '모임통장 개설에 실패했습니다. 다시 시도해주세요.';
+      Alert.alert('개설 실패', message);
       // PIN 재입력할 수 있도록 리셋
-      setStep("set");
+      setStep('set');
       setFirstPin(null);
       resetPinEntry();
     } finally {
@@ -121,9 +128,9 @@ export default function GroupPinSetupScreen({ route, navigation }: Props) {
           title={
             error
               ? `비밀번호가 맞지 않아요\n다시 입력해주세요`
-              : step === "set"
-              ? `결제 비밀번호를\n설정해주세요`
-              : `비밀번호를\n한 번 더 입력해주세요`
+              : step === 'set'
+                ? `결제 비밀번호를\n설정해주세요`
+                : `비밀번호를\n한 번 더 입력해주세요`
           }
           resetKey={resetKey}
           onComplete={handleComplete}

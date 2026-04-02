@@ -1,6 +1,6 @@
 import React from 'react';
-import { Pressable, StyleSheet, View } from 'react-native'
-import Text, { FONT_FAMILY, COLORS } from '@/components/typography';;
+import { Pressable, StyleSheet, View } from 'react-native';
+import Text, { FONT_FAMILY, COLORS } from '@/components/typography';
 import Svg, { Circle, Line, Path } from 'react-native-svg';
 
 export type MonthlyExpense = {
@@ -27,13 +27,9 @@ function AreaTrendChart({ data }: { data: MonthlyExpense[] }) {
   const maxValue = Math.max(...values, 1);
 
   const points = data.map((item, index) => {
-    const x =
-      padding +
-      (index * (width - padding * 2)) / (data.length - 1);
+    const x = padding + (index * (width - padding * 2)) / (data.length - 1);
     const y =
-      height -
-      padding -
-      (item.amount / maxValue) * (height - padding * 2);
+      height - padding - (item.amount / maxValue) * (height - padding * 2);
     return { x, y };
   });
 
@@ -46,7 +42,7 @@ function AreaTrendChart({ data }: { data: MonthlyExpense[] }) {
   } L ${points[0].x} ${height - padding} Z`;
 
   return (
-    <View style={{ marginTop: 6 }}>
+    <View className="mt-1.5">
       <Svg width={width} height={height}>
         <Line
           x1={padding}
@@ -59,13 +55,7 @@ function AreaTrendChart({ data }: { data: MonthlyExpense[] }) {
         <Path d={areaPath} fill="#DBEAFE" />
         <Path d={linePath} stroke="#1428A0" strokeWidth="3" fill="none" />
         {points.map((p, idx) => (
-          <Circle
-            key={idx}
-            cx={p.x}
-            cy={p.y}
-            r="4"
-            fill="#1428A0"
-          />
+          <Circle key={idx} cx={p.x} cy={p.y} r="4" fill="#1428A0" />
         ))}
       </Svg>
 
@@ -94,8 +84,8 @@ export default function MonthlyTrendCard({
   const displayDescription = hasNoData
     ? '최근 6개월 지출 데이터가 없습니다.'
     : hasInsufficientData
-    ? '월별 추이를 보기엔 데이터가 부족합니다.'
-    : description;
+      ? '월별 추이를 보기엔 데이터가 부족합니다.'
+      : description;
 
   return (
     <Pressable onPress={onPress} style={[styles.sectionCard, { height }]}>
@@ -109,7 +99,9 @@ export default function MonthlyTrendCard({
         </View>
       ) : hasInsufficientData ? (
         <View style={styles.emptyWrap}>
-          <Text style={styles.emptyText}>추이를 보기엔 데이터가 부족합니다.</Text>
+          <Text style={styles.emptyText}>
+            추이를 보기엔 데이터가 부족합니다.
+          </Text>
         </View>
       ) : (
         <AreaTrendChart data={data} />

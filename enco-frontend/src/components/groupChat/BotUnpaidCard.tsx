@@ -12,8 +12,9 @@ import {
   unpaidTitlePrefix,
   unpaidTitleRow,
 } from '@/assets/styles/chatStyles';
+import { BotUnpaidCardItem } from '@/types/chat';
 
-export default function BotUnpaidCard({ item }: { item: any }) {
+export default function BotUnpaidCard({ item }: { item: BotUnpaidCardItem }) {
   const handleSendReminder = async (memberName: string, userId: number) => {
     try {
       await sendNonPaymentNotification(item.groupId, userId);
