@@ -194,7 +194,7 @@ export default function AdminMembersScreen() {
             <Text variant="bodyLg" weight="bold" color="dark">
               멤버 관리
             </Text>
-            <Text variant="caption" color="muted" style={{ marginTop: 6 }}>
+            <Text variant="caption" color="muted" className="mt-1.5">
               {groupName} 멤버를 관리할 수 있어요
             </Text>
           </View>
@@ -203,11 +203,8 @@ export default function AdminMembersScreen() {
             <Pressable
               onPress={onPressInvite}
               disabled={inviteLoading}
-              className="rounded-2xl px-4 py-2"
-              style={[
-                { backgroundColor: '#1428A0' },
-                inviteLoading && { opacity: 0.6 },
-              ]}
+              className="rounded-2xl px-4 py-2 bg-[#1428A0]"
+              style={[inviteLoading && { opacity: 0.6 }]}
             >
               {inviteLoading ? (
                 <ActivityIndicator size="small" color="#fff" />
@@ -240,21 +237,12 @@ export default function AdminMembersScreen() {
             elevation: 2,
           }}
         >
-          <Text
-            variant="bodyMd"
-            weight="bold"
-            color="dark"
-            style={{ marginBottom: 16 }}
-          >
+          <Text variant="bodyMd" weight="bold" color="dark" className="mb-4">
             전체 멤버
           </Text>
 
           {loadingMembers ? (
-            <ActivityIndicator
-              size="large"
-              color="#1428A0"
-              style={{ paddingVertical: 40 }}
-            />
+            <ActivityIndicator size="large" color="#1428A0" className="py-10" />
           ) : members.length === 0 ? (
             <Text style={styles.emptyText}>모임원이 없습니다.</Text>
           ) : (
@@ -425,9 +413,9 @@ export default function AdminMembersScreen() {
               <Pressable
                 onPress={() => onChangeRole('USER')}
                 disabled={roleLoading || roleTarget.role === 'USER'}
+                className="mt-2.5"
                 style={[
                   styles.roleButton,
-                  { marginTop: 10 },
                   roleTarget.role === 'USER' && styles.roleButtonActive,
                   roleLoading && { opacity: 0.5 },
                 ]}
